@@ -1,0 +1,56 @@
+'use strict';
+
+var react = require('react');
+var jsxRuntime = require('react/jsx-runtime');
+
+// src/navigation/NavigationContext.tsx
+var NavigationContext = react.createContext(null);
+function NavigationProvider({ adapter, children }) {
+  return /* @__PURE__ */ jsxRuntime.jsx(NavigationContext.Provider, { value: adapter, children });
+}
+function useNavigationAdapter() {
+  const adapter = react.useContext(NavigationContext);
+  if (!adapter) {
+    return {
+      useSearchParams: () => new URLSearchParams(),
+      Link: ({ href, children, className }) => /* @__PURE__ */ jsxRuntime.jsx("a", { href, className, children })
+    };
+  }
+  return adapter;
+}
+var BrowserNavigationAdapter = {
+  /**
+   * Returns URLSearchParams from current window.location.search
+   * Note: Not reactive - reads once on component mount
+   * This is sufficient for auth flows where we read initial URL params
+   */
+  useSearchParams() {
+    const [searchParams] = react.useState(() => {
+      if (typeof window === "undefined") {
+        return new URLSearchParams();
+      }
+      return new URLSearchParams(window.location.search);
+    });
+    return searchParams;
+  },
+  /**
+   * Native <a> tag for navigation
+   * Uses full page reload
+   */
+  Link({ href, className, children }) {
+    return /* @__PURE__ */ jsxRuntime.jsx("a", { href, className, children });
+  }
+};
+
+// src/navigation/useSearchParams.ts
+function useSearchParams() {
+  const adapter = useNavigationAdapter();
+  return adapter.useSearchParams();
+}
+
+exports.BrowserNavigationAdapter = BrowserNavigationAdapter;
+exports.NavigationProvider = NavigationProvider;
+exports.useNavigationAdapter = useNavigationAdapter;
+exports.useSearchParams = useSearchParams;
+//# sourceMappingURL=navigation.cjs.map
+//# sourceMappingURL=navigation.cjs.map

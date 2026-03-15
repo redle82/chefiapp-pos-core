@@ -7,6 +7,10 @@ import { describe, expect, it, vi } from "vitest";
 import { MemoryRouter } from "react-router-dom";
 import { AdminSidebar } from "./AdminSidebar";
 
+vi.mock("react-i18next", () => ({
+  useTranslation: () => ({ t: (key: string) => key }),
+}));
+
 vi.mock("../../../../ui/design-system/sovereign/OSSignature", () => ({
   OSSignature: () => <div data-testid="os-signature">ChefIApp OS</div>,
 }));

@@ -18,10 +18,10 @@ export const LOGOUT_IN_PROGRESS_KEY = "chefiapp_logout_in_progress";
 export const JUST_LOGGED_OUT_KEY = "chefiapp_just_logged_out";
 
 export function isJustLoggedOut(): boolean {
-  if (typeof window === "undefined") return false;
+  if (typeof window === "undefined" || typeof sessionStorage === "undefined") return false;
   return (
     sessionStorage.getItem(JUST_LOGGED_OUT_KEY) === "1" ||
-    localStorage.getItem(JUST_LOGGED_OUT_KEY) === "1"
+    (typeof localStorage !== "undefined" && localStorage.getItem(JUST_LOGGED_OUT_KEY) === "1")
   );
 }
 
@@ -64,22 +64,27 @@ const DEFAULT_CLIENT_ID = "merchant-portal";
 const SESSION_KEY = "chefiapp_keycloak_session";
 const TOKEN_EXPIRY_KEY = "chefiapp_keycloak_expiry";
 
+/** Lê env em Vite e Node (sem import.meta neste ficheiro para compilar no Jest). */
+function getKeycloakEnv(key: string): string {
+  const g = typeof globalThis !== "undefined" ? (globalThis as Record<string, unknown>) : null;
+  const v = g?.[key];
+  if (typeof v === "string" && v) return v;
+  if (typeof process !== "undefined" && process.env?.[key]) return process.env[key] ?? "";
+  return "";
+}
+
 function getKeycloakBase(): string {
-  if (
-    typeof import.meta !== "undefined" &&
-    import.meta.env?.VITE_KEYCLOAK_URL
-  ) {
-    return String(import.meta.env.VITE_KEYCLOAK_URL).replace(/\/$/, "");
-  }
+  const url = getKeycloakEnv("VITE_KEYCLOAK_URL");
+  if (url) return String(url).replace(/\/$/, "");
   return DEFAULT_KEYCLOAK_BASE;
 }
 
 function getRealm(): string {
-  return import.meta.env?.VITE_KEYCLOAK_REALM ?? DEFAULT_REALM;
+  return getKeycloakEnv("VITE_KEYCLOAK_REALM") || DEFAULT_REALM;
 }
 
 function getClientId(): string {
-  return import.meta.env?.VITE_KEYCLOAK_CLIENT_ID ?? DEFAULT_CLIENT_ID;
+  return getKeycloakEnv("VITE_KEYCLOAK_CLIENT_ID") || DEFAULT_CLIENT_ID;
 }
 
 function getRedirectUri(): string {
@@ -241,7 +246,7 @@ async function refreshAccessToken(
  * 3. Senão, devolve null (utilizador precisa fazer login)
  */
 export async function getKeycloakSession(): Promise<KeycloakAuthState> {
-  if (typeof window === "undefined") {
+  if (typeof window === "undefined" || typeof sessionStorage === "undefined") {
     return { session: null, user: null };
   }
 

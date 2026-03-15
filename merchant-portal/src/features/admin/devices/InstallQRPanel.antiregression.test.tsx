@@ -125,7 +125,7 @@ describe("Anti-regression: i18n coverage (no hardcoded strings in QR panel)", ()
   it("desktop section renders translated text, not raw key", () => {
     render(<InstallQRPanel {...BASE_PROPS} deviceType="TPV" />);
     expectTranslationOrKey(
-      /código de vinculación|linkage code|código de vinculação/i,
+      /desktop|escritorio|ligação|link.*TPV/i,
       "qr.desktopLinkTitle",
       "Desktop title should render with translation or i18n-key fallback",
     );
@@ -134,18 +134,18 @@ describe("Anti-regression: i18n coverage (no hardcoded strings in QR panel)", ()
   it("mobile panel renders translated text, not raw keys", () => {
     render(<InstallQRPanel {...BASE_PROPS} deviceType="APPSTAFF" />);
     expectTranslationOrKey(
-      /código de vinculación.*móvil|mobile/i,
+      /móvil|mobile|appstaff|ligação.*móvel/i,
       "qr.mobileLinkTitle",
       "Mobile title should render with translation or i18n-key fallback",
     );
     expectTranslationOrKey(
-      /iphone|ios/i,
-      "qr_iosTitle",
+      /iphone|ipad|ios/i,
+      "qr.iosName",
       "iOS title should render with translation or i18n-key fallback",
     );
     expectTranslationOrKey(
       /android/i,
-      "qr_androidTitle",
+      "qr.androidName",
       "Android title should render with translation or i18n-key fallback",
     );
   });

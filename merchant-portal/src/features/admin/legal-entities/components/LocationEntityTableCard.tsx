@@ -1,19 +1,21 @@
 /**
- * Card 3 — Relação Ubicación → Entidade legal.
- * Tabela: Ubicación | Entidad legal asociada.
- * Fase 1: 1 entidade; todas as ubicaciones usam a mesma.
+ * Card 3 — Relação Localização → Entidade legal.
+ * Tabela: Localização | Entidade legal associada.
+ * Fase 1: 1 entidade; todas as localizações usam a mesma.
  */
 
 import { useMemo } from "react";
+import { useTranslation } from "react-i18next";
 import type { Location } from "../../locations/types";
 import { locationsStore } from "../../locations/store/locationsStore";
 import { legalEntitiesStore } from "../store/legalEntitiesStore";
 
 export function LocationEntityTableCard() {
+  const { t } = useTranslation("config");
   const locations = useMemo(() => locationsStore.getLocations(), []);
   const entity = useMemo(() => legalEntitiesStore.getEntity(), []);
 
-  /** Fase 1: 1 entidade → todas as ubicaciones usam a mesma. */
+  /** Fase 1: 1 entidade → todas as localizações usam a mesma. */
   const entityName = entity?.legalName ?? "—";
 
   return (
@@ -33,7 +35,7 @@ export function LocationEntityTableCard() {
           color: "var(--text-primary)",
         }}
       >
-        Asociación a ubicaciones
+        {t("legalEntities.cardTitle")}
       </h3>
       <p
         style={{
@@ -42,8 +44,7 @@ export function LocationEntityTableCard() {
           color: "var(--text-secondary)",
         }}
       >
-        Qué entidad legal se usa en cada ubicación. Resuelve franquicias,
-        multi-empresa y grupos.
+        {t("legalEntities.cardDesc")}
       </p>
       <div style={{ overflowX: "auto" }}>
         <table
@@ -62,7 +63,7 @@ export function LocationEntityTableCard() {
                   fontWeight: 600,
                 }}
               >
-                Ubicación
+                {t("legalEntities.columnLocation")}
               </th>
               <th
                 style={{
@@ -71,7 +72,7 @@ export function LocationEntityTableCard() {
                   fontWeight: 600,
                 }}
               >
-                Entidad legal asociada
+                {t("legalEntities.columnEntity")}
               </th>
             </tr>
           </thead>
@@ -87,8 +88,7 @@ export function LocationEntityTableCard() {
                     fontSize: 14,
                   }}
                 >
-                  No hay ubicaciones. Crea ubicaciones en Configuración →
-                  Ubicaciones.
+                  {t("legalEntities.emptyLocations")}
                 </td>
               </tr>
             ) : (
@@ -114,8 +114,7 @@ export function LocationEntityTableCard() {
             color: "var(--color-warning)",
           }}
         >
-          Define la entidad legal principal en el primer card para que se
-          asocie a las ubicaciones.
+          {t("legalEntities.warningNoEntity")}
         </p>
       )}
     </div>

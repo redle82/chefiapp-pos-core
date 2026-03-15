@@ -95,6 +95,8 @@ async function seed() {
     // If Anon, we hope triggers did the work or RLS allows insert.
     // If Admin, we verify/insert.
 
+    let restaurantId: string | undefined;
+
     // Attempt logic (best effort if Anon)
     if (SERVICE_KEY) {
         // ---------------------------------------------------------------------
@@ -126,8 +128,6 @@ async function seed() {
             }
         }
 
-        let restaurantId: string | undefined;
-
         if (companyId) {
             // Check gm_restaurants
             const { data: rests } = await supabase
@@ -149,6 +149,26 @@ async function seed() {
                     .single();
                 if (restErr) {
                     console.warn('Warning: Restaurant create failed:', restErr.message);
+                    // Fallback: use existing restaurant with same slug so membership can be created (re-run / shared slug)
+                    const { data: existingBySlugRows } = await supabase
+                        .from('gm_restaurants')
+                        .select('id')
+                        .eq('slug', 'sovereign-burger-hub')
+                        .limit(1);
+                    const existingRow = Array.isArray(existingBySlugRows) ? existingBySlugRows[0] : existingBySlugRows;
+                    if (existingRow?.id) {
+                        restaurantId = existingRow.id;
+                        console.log('   Using existing restaurant (slug already present) for membership.');
+                    }
+                    if (!restaurantId) {
+                        const { data: retryRests } = await supabase
+                            .from('gm_restaurants')
+                            .select('id')
+                            .eq('owner_id', userId)
+                            .limit(1);
+                        const r = Array.isArray(retryRests) ? retryRests[0] : retryRests;
+                        if (r?.id) restaurantId = r.id;
+                    }
                 } else {
                     restaurantId = newRest?.id;
                 }
@@ -181,11 +201,144 @@ async function seed() {
                 }
             }
         }
+
+        // P4.1 TPV→KDS: uma categoria + um produto para o restaurante soberano (E2E criar pedido)
+        if (restaurantId) {
+            const { data: existingCat } = await supabase
+                .from('gm_menu_categories')
+                .select('id')
+                .eq('restaurant_id', restaurantId)
+                .limit(1);
+            const catRow = Array.isArray(existingCat) ? existingCat[0] : existingCat;
+            let categoryId = catRow?.id as string | undefined;
+            if (!categoryId) {
+                const { data: newCat, error: catErr } = await supabase
+                    .from('gm_menu_categories')
+                    .insert({
+                        restaurant_id: restaurantId,
+                        name: 'E2E Categoria',
+                        sort_order: 0
+                    })
+                    .select('id')
+                    .single();
+                if (!catErr && newCat?.id) categoryId = newCat.id;
+            }
+            if (categoryId) {
+                const { data: existingProd } = await supabase
+                    .from('gm_products')
+                    .select('id')
+                    .eq('restaurant_id', restaurantId)
+                    .eq('name', 'E2E Burger')
+                    .limit(1);
+                const prodRow = Array.isArray(existingProd) ? existingProd[0] : existingProd;
+                if (!prodRow?.id) {
+                    const { error: prodErr } = await supabase
+                        .from('gm_products')
+                        .insert({
+                            restaurant_id: restaurantId,
+                            category_id: categoryId,
+                            name: 'E2E Burger',
+                            price_cents: 999,
+                            available: true,
+                            station: 'KITCHEN',
+                            prep_category: 'main'
+                        });
+                    if (!prodErr) console.log('   Produto E2E Burger criado (TPV→KDS).');
+                }
+                const { data: existingDrink } = await supabase
+                    .from('gm_products')
+                    .select('id')
+                    .eq('restaurant_id', restaurantId)
+                    .eq('name', 'E2E Drink')
+                    .limit(1);
+                const drinkRow = Array.isArray(existingDrink) ? existingDrink[0] : existingDrink;
+                if (!drinkRow?.id) {
+                    const { error: drinkErr } = await supabase
+                        .from('gm_products')
+                        .insert({
+                            restaurant_id: restaurantId,
+                            category_id: categoryId,
+                            name: 'E2E Drink',
+                            price_cents: 399,
+                            available: true,
+                            station: 'BAR',
+                            prep_category: 'drink'
+                        });
+                    if (!drinkErr) console.log('   Produto E2E Drink criado (KDS Bar).');
+                }
+            }
+            // Mesa 1 para QR Mesa E2E (/public/:slug/mesa/1) e Garçom E2E (/app/waiter/table/:id)
+            const { data: existingTable } = await supabase
+                .from('gm_tables')
+                .select('id')
+                .eq('restaurant_id', restaurantId)
+                .eq('number', 1)
+                .limit(1);
+            let tableId: string | undefined;
+            const tableRow = Array.isArray(existingTable) ? existingTable[0] : existingTable;
+            if (tableRow?.id) {
+                tableId = tableRow.id;
+            } else {
+                const { data: inserted, error: tableErr } = await supabase
+                    .from('gm_tables')
+                    .insert({ restaurant_id: restaurantId, number: 1, status: 'open' })
+                    .select('id')
+                    .single();
+                if (!tableErr && inserted?.id) {
+                    tableId = inserted.id;
+                    console.log('   Mesa 1 criada (QR Mesa E2E).');
+                }
+            }
+        }
     } else {
         console.log('ℹ️  Skipping direct DB inserts (Anon Key). Relying on Database Triggers.');
     }
 
+    // Obter table_id para waiter E2E (mesa 1)
+    let tableIdForCreds: string | undefined;
+    if (SERVICE_KEY && restaurantId) {
+        const { data: tableForCreds } = await supabase
+            .from('gm_tables')
+            .select('id')
+            .eq('restaurant_id', restaurantId)
+            .eq('number', 1)
+            .limit(1)
+            .maybeSingle();
+        tableIdForCreds = (tableForCreds as { id?: string } | null)?.id;
+    }
+
+    // Persist full sovereign payload for smoke/E2E (user_id + restaurant_id + table_id para Garçom)
+    const sovereignPayload = {
+        ...TEST_USER,
+        user_id: userId ?? undefined,
+        restaurant_id: restaurantId,
+        slug: 'sovereign-burger-hub',
+        table_id: tableIdForCreds,
+    };
+    fs.writeFileSync(CREDENTIALS_PATH, JSON.stringify(sovereignPayload, null, 2));
+
+    console.log('');
     console.log('✅ Seeding Complete.');
+    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+    console.log(' Owner Soberano (Supabase Backend)');
+    console.log('   Email:   ', TEST_USER.email);
+    console.log('   Password:', TEST_USER.password);
+    console.log('   Name:    ', TEST_USER.name);
+    console.log('   User ID: ', userId);
+    if (SERVICE_KEY && restaurantId) {
+        console.log('   Backend: Supabase (SERVICE_KEY mode)');
+        console.log('   Restaurant ID:', restaurantId);
+        console.log('   Restaurante: Sovereign Burger Hub (gm_restaurants, owner_id = userId)');
+        console.log('   Membership: gm_restaurant_members(role = owner)');
+    } else {
+        console.log('   Backend: Supabase (ANON mode) — restaurantes/membership podem depender de triggers.');
+    }
+    console.log('');
+    console.log(' Próximos passos:');
+    console.log('   1) Configure a app local para usar este backend (VITE_SUPABASE_URL / VITE_SUPABASE_ANON_KEY).');
+    console.log('   2) Faça login no Admin com o email/password acima.');
+    console.log('   3) Verifique em /admin/modules que o restaurante aparece ligado a este utilizador.');
+    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
 }
 
 seed().catch(err => {

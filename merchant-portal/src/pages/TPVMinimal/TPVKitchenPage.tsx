@@ -190,7 +190,8 @@ const matchesOriginFilter = (order: CoreOrder, filter: OriginFilter) => {
   if (filter === "GARCOM")
     return ["GARCOM", "GARÇOM", "WAITER", "MOBILE"].includes(key);
   if (filter === "QR_MESA") return ["QR_MESA", "QRMESA"].includes(key);
-  if (filter === "APP") return ["APPSTAFF", "MANAGER", "OWNER"].includes(key);
+  if (filter === "APP")
+    return ["APPSTAFF", "APPSTAFF_MANAGER", "APPSTAFF_OWNER", "MANAGER", "OWNER"].includes(key);
   return key === filter;
 };
 

@@ -14,6 +14,10 @@ describe("BrowserBlockGuard", () => {
   const originalUserAgent = navigator.userAgent;
 
   beforeEach(() => {
+    vi.stubEnv("VITE_ALLOW_BROWSER_TPV_DEV", "false");
+    vi.stubEnv("VITE_ALLOW_BROWSER_RUNTIME_DEV", "false");
+    vi.stubEnv("VITE_ALLOW_BROWSER_APPSTAFF_DEV", "false");
+
     Object.defineProperty(window, "matchMedia", {
       writable: true,
       value: vi.fn().mockImplementation(() => ({
@@ -39,6 +43,7 @@ describe("BrowserBlockGuard", () => {
   });
 
   afterEach(() => {
+    vi.unstubAllEnvs();
     cleanup();
     Object.defineProperty(window, "matchMedia", {
       writable: true,

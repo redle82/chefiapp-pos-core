@@ -14,8 +14,10 @@
 
 import { useEffect, useState } from "react";
 import { Link, Navigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { CONFIG } from "../../config";
 import { useGlobalUIState } from "../../context/GlobalUIStateContext";
+import { isDesktopApp } from "../../core/operational/platformDetection";
 import { useRestaurantRuntime } from "../../context/RestaurantRuntimeContext";
 import { useCurrency } from "../../core/currency/useCurrency";
 import { useRestaurantIdentity } from "../../core/identity/useRestaurantIdentity";
@@ -114,6 +116,8 @@ export function TPVMinimal({
   mode?: "preview" | "live";
 } = {}) {
   const isPreview = mode === "preview";
+  const { t } = useTranslation("tpv");
+  const { t: tShift } = useTranslation("shift");
 
   // --- HOOKS ---
   const readiness = useOperationalReadiness("TPV");
@@ -442,26 +446,28 @@ export function TPVMinimal({
     return (
       <>
         <DevicePairingView deviceType="tpv" />
-        <div
-          style={{
-            position: "absolute",
-            bottom: 24,
-            left: 0,
-            right: 0,
-            textAlign: "center",
-          }}
-        >
-          <Link
-            to="/admin/modules"
+        {!isDesktopApp() && (
+          <div
             style={{
-              fontSize: 14,
-              color: "#a3a3a3",
-              textDecoration: "underline",
+              position: "absolute",
+              bottom: 24,
+              left: 0,
+              right: 0,
+              textAlign: "center",
             }}
           >
-            Ou instalar TPV no portal
-          </Link>
-        </div>
+            <Link
+              to="/admin/modules"
+              style={{
+                fontSize: 14,
+                color: "#a3a3a3",
+                textDecoration: "underline",
+              }}
+            >
+              Ou instalar TPV no portal
+            </Link>
+          </div>
+        )}
       </>
     );
   }
@@ -473,7 +479,7 @@ export function TPVMinimal({
   if (readiness.loading && !isPreview) {
     return (
       <GlobalLoadingView
-        message="Verificando estado operacional..."
+        message={t("toast.checkingOperationalState")}
         layout="operational"
         variant="fullscreen"
       />
@@ -566,7 +572,7 @@ export function TPVMinimal({
       setCreating(true);
       setSuccess(null);
       setTimeout(() => {
-        setSuccess("Preview — pedido simulado (não gravado)");
+        setSuccess(t("previewOrderSimulated"));
         setCart([]);
         setSaleContext("balcao");
         setPaymentMethod("cash");
@@ -762,7 +768,7 @@ export function TPVMinimal({
   if (globalUI.isLoadingCritical) {
     return (
       <GlobalLoadingView
-        message="Carregando produtos..."
+        message={t("loadingProducts")}
         layout="operational"
         variant="fullscreen"
       />
@@ -791,9 +797,9 @@ export function TPVMinimal({
           gap: 16,
         }}
       >
-        <h1 style={{ margin: 0, color: "#fafafa" }}>TPV Mínimo</h1>
+        <h1 style={{ margin: 0, color: "#fafafa" }}>{t("minimalTitle")}</h1>
         <p style={{ color: "#a3a3a3", textAlign: "center", maxWidth: 400 }}>
-          Complete o bootstrap e tenha o Core online para criar pedidos.
+          {t("bootstrapRequired")}
         </p>
         <Link
           to="/bootstrap"
@@ -803,7 +809,7 @@ export function TPVMinimal({
             fontWeight: 600,
           }}
         >
-          Ir ao Bootstrap
+          {t("goToBootstrap")}
         </Link>
       </div>
     );
@@ -827,10 +833,9 @@ export function TPVMinimal({
           gap: 16,
         }}
       >
-        <h1 style={{ margin: 0, color: "#fafafa" }}>TPV Mínimo</h1>
+        <h1 style={{ margin: 0, color: "#fafafa" }}>{t("minimalTitle")}</h1>
         <p style={{ color: "#a3a3a3", textAlign: "center", maxWidth: 400 }}>
-          Sistema em preparação. Complete o bootstrap e tenha o Core online para
-          criar pedidos.
+          {t("bootstrapPreparing")}
         </p>
         <Link
           to="/bootstrap"
@@ -840,7 +845,7 @@ export function TPVMinimal({
             fontWeight: 600,
           }}
         >
-          Ir para Bootstrap
+          {t("goToBootstrapAlt")}
         </Link>
       </div>
     );
@@ -876,8 +881,7 @@ export function TPVMinimal({
           }}
         >
           <div>
-            <strong>Caixa Fechado:</strong> Para realizar vendas reais, você
-            precisa abrir o turno.
+            <strong>{tShift("gate.closedTitle")}</strong> {tShift("gate.openToSell")}
           </div>
           <button
             type="button"
@@ -887,13 +891,11 @@ export function TPVMinimal({
                 preflight.coreStatus !== "UP" &&
                 preflight.coreStatus !== "DEGRADED"
               ) {
-                toast.warning(
-                  "Core offline — não é possível abrir turno agora.",
-                );
+                toast.warning(t("toast.coreOffline"));
                 return;
               }
               if (!effectiveRestaurantId) {
-                toast.error("Restaurante não identificado.");
+                toast.error(t("toast.restaurantNotIdentified"));
                 return;
               }
               setOpeningTurn(true);
@@ -902,8 +904,8 @@ export function TPVMinimal({
                   "open_cash_register_atomic",
                   {
                     p_restaurant_id: effectiveRestaurantId,
-                    p_name: "Caixa Principal",
-                    p_opened_by: "Caixa TPV",
+                    p_name: tShift("gate.defaultRegisterName"),
+                    p_opened_by: tShift("gate.defaultOperatorName"),
                     p_opening_balance_cents: 0,
                   },
                 );
@@ -914,22 +916,22 @@ export function TPVMinimal({
                     // Backend diz que já está aberto: alinhar UI e informar, sem erro.
                     shift?.markShiftOpen?.();
                     await shift?.refreshShiftStatus?.();
-                    toast.success("Caixa já estava aberto. Pode vender.");
+                    toast.success(t("toast.cashAlreadyOpen"));
                     return;
                   }
-                  toast.error(rpcError.message || "Erro ao abrir turno.");
+                  toast.error(rpcError.message || t("toast.errorOpenTurn"));
                   return;
                 }
                 const rpcData = data as { id?: string } | null;
                 if (rpcData?.id) {
                   await shift?.refreshShiftStatus?.();
-                  toast.success("Turno aberto. Pode vender.");
+                  toast.success(t("toast.turnOpenCanSell"));
                 } else {
-                  toast.error("Erro ao abrir turno. Tente de novo.");
+                  toast.error(t("toast.errorOpenTurnRetry"));
                 }
               } catch (err: unknown) {
                 const msg =
-                  err instanceof Error ? err.message : "Erro ao abrir turno.";
+                  err instanceof Error ? err.message : t("toast.errorOpenTurn");
                 toast.error(msg);
               } finally {
                 setOpeningTurn(false);
@@ -945,7 +947,7 @@ export function TPVMinimal({
               fontWeight: "bold",
             }}
           >
-            {openingTurn ? "A abrir…" : "Abrir Turno"}
+            {openingTurn ? tShift("gate.opening") : tShift("gate.openTitle")}
           </button>
         </div>
       )}
@@ -959,11 +961,11 @@ export function TPVMinimal({
       >
         <RestaurantLogo
           logoUrl={identity.logoUrl}
-          name={identity.name || "Restaurante"}
+          name={identity.name || t("restaurantFallback")}
           size={44}
         />
         <h1 style={{ margin: 0, color: "#fafafa" }}>
-          TPV Mínimo — {identity.name || "Criar Pedido"}
+          {t("minimalTitle")} — {identity.name || t("createOrderFallback")}
         </h1>
       </div>
       <div
@@ -976,7 +978,7 @@ export function TPVMinimal({
         <div style={{ marginBottom: "10px" }}>
           <GlobalErrorView
             message={globalUI.errorMessage}
-            title="Erro"
+            title={t("errorTitle")}
             layout="operational"
             variant="inline"
           />
@@ -1008,7 +1010,7 @@ export function TPVMinimal({
         }}
       >
         <span style={{ color: "#a3a3a3", fontSize: "0.9rem" }}>
-          Venda para:
+          {t("saleContextLabel")}
         </span>
         <button
           type="button"
@@ -1022,10 +1024,10 @@ export function TPVMinimal({
             color: "#fafafa",
             cursor: "pointer",
             fontWeight: saleContext === "balcao" ? 600 : 400,
-          }}
-        >
-          Balcão
-        </button>
+            }}
+          >
+            {t("balcao")}
+          </button>
         {tables.map((t) => (
           <button
             key={t.id}
@@ -1049,7 +1051,7 @@ export function TPVMinimal({
                   : 400,
             }}
           >
-            Mesa {t.number}
+            {t("tableNumber", { number: t.number })}
           </button>
         ))}
       </div>
@@ -1155,11 +1157,11 @@ export function TPVMinimal({
 
         {/* Carrinho */}
         <div>
-          <h2 style={{ margin: "0 0 12px 0", color: "#fafafa" }}>Carrinho</h2>
+          <h2 style={{ margin: "0 0 12px 0", color: "#fafafa" }}>{t("cartTitle")}</h2>
           {cart.length === 0 ? (
             <GlobalEmptyView
-              title="Carrinho vazio"
-              description="Adicione produtos ao carrinho para criar um pedido."
+              title={t("emptyCartTitle")}
+              description={t("emptyCartDescription")}
               layout="operational"
               variant="inline"
             />
@@ -1233,7 +1235,7 @@ export function TPVMinimal({
                           cursor: "pointer",
                         }}
                       >
-                        Remover
+                        {t("remove")}
                       </button>
                     </div>
                   </div>
@@ -1250,7 +1252,7 @@ export function TPVMinimal({
                 }}
               >
                 <span style={{ color: "#a3a3a3", fontSize: "0.9rem" }}>
-                  Pagamento:
+                  {t("paymentLabel")}
                 </span>
                 {(["cash", "card", "other"] as const).map((method) => (
                   <button
@@ -1269,10 +1271,10 @@ export function TPVMinimal({
                     }}
                   >
                     {method === "cash"
-                      ? "Dinheiro"
+                      ? t("payment.method.cashLabel")
                       : method === "card"
-                      ? "Cartão"
-                      : "Outro"}
+                      ? t("payment.method.cardLabel")
+                      : t("payment.method.otherLabel")}
                   </button>
                 ))}
               </div>
@@ -1325,17 +1327,17 @@ export function TPVMinimal({
               >
                 {isPreview
                   ? creating
-                    ? "A simular..."
-                    : "Simular venda"
+                    ? t("simulating")
+                    : t("simulateSale")
                   : creating
-                  ? "Criando Pedido..."
+                  ? t("creatingOrder")
                   : globalUI.isBlockedByShift
-                  ? "Caixa Fechado"
+                  ? t("cashClosedButton")
                   : bootstrap.coreStatus !== "online" ||
                     bootstrap.publishStatus !== "publicado" ||
                     !canCreateOrder
-                  ? "Publicação ou Core em falta"
-                  : "Criar Pedido"}
+                  ? t("publishOrCoreMissing")
+                  : t("createOrder")}
               </button>
             </>
           )}

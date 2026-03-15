@@ -5,7 +5,8 @@
   "main": "index.js",
   "workspaces": [
     "merchant-portal",
-    "mobile-app"
+    "mobile-app",
+    "desktop-app"
   ],
   "directories": {
     "test": "tests"
@@ -88,8 +89,11 @@
     "unsave": "bash scripts/wip-save.sh --undo",
     "switch": "bash scripts/safe-switch.sh",
     "kill:5175": "lsof -ti:5175 | xargs kill -9 2>/dev/null || true",
+    "fix:portal-dev": "bash scripts/fix-portal-vite-dev.sh",
     "dev:desktop": "bash scripts/start-desktop-dev.sh",
     "build:desktop": "cd desktop-app && node scripts/build-electron.mjs",
+    "prepare-tpv-release": "bash scripts/prepare-tpv-release.sh",
+    "enable-tpv-download": "bash scripts/enable-tpv-download-now.sh",
     "vite:up": "bash scripts/vite-persistent.sh",
     "vite:up:https": "bash scripts/vite-persistent.sh https",
     "vite:down": "bash scripts/vite-persistent.sh stop",
@@ -147,6 +151,11 @@
   "overrides": {
     "react-helmet-async": {
       "react": "$react"
+    }
+  },
+  "pnpm": {
+    "overrides": {
+      "vite": "^6.0.4"
     }
   }
 }

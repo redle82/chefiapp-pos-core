@@ -14,7 +14,27 @@ import {
   removeTabIsolated,
   setTabIsolated,
 } from "../../core/storage/TabIsolatedStorage";
+import { CONFIG } from "../../config";
 import { dockerCoreClient } from "../docker-core/connection";
+
+/** Select para gm_restaurants quando backend é Supabase (schema pode não ter type, product_mode, billing_status, trial_ends_at). */
+const RESTAURANT_SELECT_SUPABASE =
+  "id,name,slug,status,tenant_id,country,timezone,currency,locale,logo_url,created_at,updated_at,city,address,description";
+/** Select completo (Docker Core). */
+const RESTAURANT_SELECT_FULL =
+  "id,name,slug,status,tenant_id,product_mode,billing_status,trial_ends_at,country,timezone,currency,locale,type,logo_url,created_at,updated_at";
+/** Select identidade completo (Docker Core). */
+const IDENTITY_SELECT_FULL =
+  "id,name,slug,status,tenant_id,type,city,address,description,logo_url,country,timezone,currency,locale,created_at,updated_at";
+/** Select identidade Supabase (sem type). */
+const IDENTITY_SELECT_SUPABASE =
+  "id,name,slug,status,tenant_id,city,address,description,logo_url,country,timezone,currency,locale,created_at,updated_at";
+/** Select mínimo para retry quando Supabase não tem city/address/description/etc. (apenas colunas base). */
+const IDENTITY_SELECT_MINIMAL =
+  "id,name,slug,status,tenant_id,created_at,updated_at";
+/** Select mínimo para fetchRestaurant quando Supabase falha com "does not exist". */
+const RESTAURANT_SELECT_MINIMAL =
+  "id,name,slug,status,tenant_id,created_at,updated_at";
 
 const RESTAURANT_CACHE_TTL_MS = 10_000; // 10 segundos
 let restaurantCache: {
@@ -81,6 +101,12 @@ export interface CoreSetupStatusRow {
 
 const SEED_RESTAURANT_ID = "00000000-0000-0000-0000-000000000100";
 
+/** Supabase: quando ambas as fontes (gm_restaurants e gm_restaurant_members) falham por schema, não repetir requests. */
+let supabaseFirstRestaurantFailedOnce = false;
+
+/** Promessa partilhada para resolver primeiro restaurant_id a partir da API; evita N×2 requests quando vários consumidores chamam getOrCreateRestaurantId em paralelo. */
+let resolveFirstIdFromApiPromise: Promise<string | null> | null = null;
+
 /** IDs placeholder que não existem no Core; nunca devolver para evitar 404 e loops. */
 const INVALID_OR_SEED_RESTAURANT_IDS = new Set([
   "00000000-0000-0000-0000-000000000100",
@@ -90,6 +116,8 @@ const INVALID_OR_SEED_RESTAURANT_IDS = new Set([
 /**
  * Verifica se o restaurante existe no Core (só DB; ignora mock e cache).
  * Usado em getOrCreateRestaurantId para validar o ID guardado.
+ * Supabase: se o erro for de schema (ex.: "column does not exist"), devolve true
+ * para não invalidar o ID guardado e permitir que a página carregue.
  */
 export async function restaurantExistsInCore(
   restaurantId: string,
@@ -99,19 +127,28 @@ export async function restaurantExistsInCore(
     .select("id")
     .eq("id", restaurantId)
     .maybeSingle();
-  if (error) return false;
+  if (error) {
+    if (CONFIG.isSupabaseBackend && error.message?.includes("does not exist")) {
+      return true;
+    }
+    return false;
+  }
   return data != null;
 }
 
 /**
  * Retorna o primeiro restaurante do Core (para dev / get-or-create).
+ * Supabase: evita .order() se o schema/RLS referir disabled_at ou outras colunas em falta.
  */
 export async function fetchFirstRestaurantId(): Promise<string | null> {
-  const { data, error } = await dockerCoreClient
+  const baseQuery = dockerCoreClient
     .from("gm_restaurants")
     .select("id")
-    .limit(1)
-    .order("created_at", { ascending: true });
+    .limit(1);
+  const query = CONFIG.isSupabaseBackend
+    ? baseQuery
+    : baseQuery.order("created_at", { ascending: true });
+  const { data, error } = await query;
 
   if (error) {
     Logger.warn("[RuntimeReader] fetchFirstRestaurantId", {
@@ -122,6 +159,47 @@ export async function fetchFirstRestaurantId(): Promise<string | null> {
   const rows = Array.isArray(data) ? data : data ? [data] : [];
   const first = rows[0] as { id: string } | undefined;
   return first?.id ?? null;
+}
+
+/**
+ * Supabase: obtém o primeiro restaurant_id dos memberships do utilizador autenticado (RLS aplica user_id).
+ * Não consulta gm_restaurants — evita 400 quando gm_restaurants tem coluna em falta (ex.: disabled_at).
+ */
+async function fetchFirstRestaurantIdFromMembers(): Promise<string | null> {
+  if (!CONFIG.isSupabaseBackend) return null;
+  const { data, error } = await dockerCoreClient
+    .from("gm_restaurant_members")
+    .select("restaurant_id")
+    .limit(1);
+  if (error) return null;
+  const rows = Array.isArray(data) ? data : data ? [data] : [];
+  const first = rows[0] as { restaurant_id: string } | undefined;
+  return first?.restaurant_id ?? null;
+}
+
+/**
+ * Resolve o primeiro restaurant_id a partir da API.
+ * Supabase: primeiro gm_restaurant_members (evita 400 de gm_restaurants por schema); se null, fallback gm_restaurants.
+ * Docker: apenas gm_restaurants.
+ * Single-flight: várias chamadas concorrentes partilham a mesma promessa.
+ */
+async function resolveFirstRestaurantIdFromApi(): Promise<string | null> {
+  if (CONFIG.isSupabaseBackend && supabaseFirstRestaurantFailedOnce) return null;
+  if (resolveFirstIdFromApiPromise !== null) return resolveFirstIdFromApiPromise;
+  resolveFirstIdFromApiPromise = (async () => {
+    let firstId: string | null;
+    if (CONFIG.isSupabaseBackend) {
+      firstId = await fetchFirstRestaurantIdFromMembers();
+      if (!firstId) firstId = await fetchFirstRestaurantId();
+    } else {
+      firstId = await fetchFirstRestaurantId();
+    }
+    if (CONFIG.isSupabaseBackend && !firstId) {
+      supabaseFirstRestaurantFailedOnce = true;
+    }
+    return firstId;
+  })();
+  return resolveFirstIdFromApiPromise;
 }
 
 /**
@@ -169,24 +247,28 @@ export async function fetchRestaurant(
     }
   }
 
+  const restaurantSelect = CONFIG.isSupabaseBackend
+    ? RESTAURANT_SELECT_SUPABASE
+    : "id,name,slug,status,tenant_id,product_mode,billing_status,trial_ends_at,country,timezone,currency,locale,type,logo_url,created_at,updated_at";
   const { data: rawData1, error: error1 } = await dockerCoreClient
     .from("gm_restaurants")
-    .select(
-      "id,name,slug,status,tenant_id,product_mode,billing_status,trial_ends_at,country,timezone,currency,locale,type,logo_url,created_at,updated_at",
-    )
+    .select(restaurantSelect)
     .eq("id", restaurantId)
     .maybeSingle();
 
   let rawData = rawData1;
   let error = error1;
 
-  // Backwards compat: retry without logo_url if the column does not exist yet
-  if (error?.message?.includes("logo_url")) {
+  // Retry: se alguma coluna não existe (type, city, product_mode, etc.), usar select mínimo
+  const needRetrySchema = error?.message?.includes("does not exist");
+  const needRetryLogo = error?.message?.includes("logo_url");
+  if (needRetrySchema || needRetryLogo) {
+    const fallbackSelect = needRetrySchema
+      ? RESTAURANT_SELECT_MINIMAL
+      : RESTAURANT_SELECT_SUPABASE.replace(",logo_url", "");
     const { data: rawData2, error: error2 } = await dockerCoreClient
       .from("gm_restaurants")
-      .select(
-        "id,name,slug,status,tenant_id,product_mode,billing_status,trial_ends_at,country,timezone,currency,locale,type,created_at,updated_at",
-      )
+      .select(fallbackSelect)
       .eq("id", restaurantId)
       .maybeSingle();
     rawData = rawData2;
@@ -196,7 +278,7 @@ export async function fetchRestaurant(
   const data = rawData
     ? ({
         ...(rawData as Omit<CoreRestaurantRow, "logo_url">),
-        logo_url: null,
+        logo_url: (rawData as { logo_url?: string }).logo_url ?? null,
       } as CoreRestaurantRow)
     : null;
 
@@ -263,24 +345,30 @@ export async function fetchRestaurantForIdentity(
     }
   }
 
+  const identitySelect = CONFIG.isSupabaseBackend
+    ? IDENTITY_SELECT_SUPABASE
+    : IDENTITY_SELECT_FULL;
   const { data: rawData1, error: error1 } = await dockerCoreClient
     .from("gm_restaurants")
-    .select(
-      "id,name,slug,status,tenant_id,type,city,address,description,logo_url,country,timezone,currency,locale,created_at,updated_at",
-    )
+    .select(identitySelect)
     .eq("id", restaurantId)
     .maybeSingle();
 
   let rawData = rawData1;
   let error = error1;
 
-  // Backwards compat: retry without logo_url if the column does not exist yet
-  if (error?.message?.includes("logo_url")) {
+  // Retry: se alguma coluna não existe no Supabase (type, city, address, etc.), usar select mínimo
+  const needRetrySchema = error?.message?.includes("does not exist");
+  const needRetryWithoutLogo = error?.message?.includes("logo_url");
+
+  if (needRetrySchema || needRetryWithoutLogo) {
+    const fallbackIdentity =
+      needRetrySchema
+        ? IDENTITY_SELECT_MINIMAL
+        : IDENTITY_SELECT_SUPABASE.replace(",logo_url", "");
     const { data: rawData2, error: error2 } = await dockerCoreClient
       .from("gm_restaurants")
-      .select(
-        "id,name,slug,status,tenant_id,type,city,address,description,country,timezone,currency,locale,created_at,updated_at",
-      )
+      .select(fallbackIdentity)
       .eq("id", restaurantId)
       .maybeSingle();
     rawData = rawData2;
@@ -290,7 +378,7 @@ export async function fetchRestaurantForIdentity(
   const data = rawData
     ? ({
         ...(rawData as Omit<CoreRestaurantIdentityRow, "logo_url">),
-        logo_url: null,
+        logo_url: (rawData as { logo_url?: string }).logo_url ?? null,
       } as CoreRestaurantIdentityRow)
     : null;
 
@@ -331,6 +419,7 @@ export async function fetchInstalledModules(
 
 /**
  * Busca status do onboarding (sections) do Core.
+ * Supabase: tabela restaurant_setup_status pode não existir → devolve {}.
  */
 export async function fetchSetupStatus(
   restaurantId: string,
@@ -341,9 +430,13 @@ export async function fetchSetupStatus(
     .eq("restaurant_id", restaurantId)
     .maybeSingle();
 
-  if (error || !data) {
+  if (error) {
+    if (CONFIG.isSupabaseBackend && (error.message?.includes("does not exist") || (error as { code?: string }).code === "PGRST116")) {
+      return {};
+    }
     return {};
   }
+  if (!data) return {};
   const sections = (data as CoreSetupStatusRow).sections;
   return typeof sections === "object" && sections !== null ? sections : {};
 }
@@ -426,7 +519,20 @@ export async function getOrCreateRestaurantId(): Promise<string | null> {
     stored = null;
   }
 
-  const firstId = await fetchFirstRestaurantId();
+  const isDev =
+    (globalThis as any)?.import?.meta?.env?.DEV ??
+    (typeof process !== "undefined"
+      ? process.env.NODE_ENV === "development"
+      : false);
+
+  if (CONFIG.isSupabaseBackend && isDev && CONFIG.SUPABASE_SKIP_RESTAURANT_API) {
+    if (typeof window !== "undefined") {
+      localStorage.setItem("chefiapp_restaurant_id", SEED_RESTAURANT_ID);
+    }
+    return SEED_RESTAURANT_ID;
+  }
+
+  const firstId = await resolveFirstRestaurantIdFromApi();
   if (firstId) {
     // Production guard: ensure the resolved ID is not a seed/mock
     assertValidRestaurantId(firstId);
@@ -435,12 +541,6 @@ export async function getOrCreateRestaurantId(): Promise<string | null> {
     }
     return firstId;
   }
-
-  const isDev =
-    (globalThis as any)?.import?.meta?.env?.DEV ??
-    (typeof process !== "undefined"
-      ? process.env.NODE_ENV === "development"
-      : false);
 
   if (isDev) {
     if (typeof window !== "undefined") {

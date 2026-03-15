@@ -2,10 +2,11 @@
  * @vitest-environment jsdom
  *
  * Verifica comportamento contextual de /admin/devices com ?type=
+ * e redirect para /admin/devices/tpv quando type=TPV (fluxo único TPV).
  */
 
-import { render, screen, waitFor } from "@testing-library/react";
-import { MemoryRouter } from "react-router-dom";
+import { render, screen } from "@testing-library/react";
+import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { describe, expect, it, vi } from "vitest";
 import type { Terminal } from "./api/devicesApi";
 import { AdminDevicesPage } from "./AdminDevicesPage";
@@ -51,48 +52,38 @@ vi.mock("../dashboard/components/AdminPageHeader", () => ({
 }));
 
 describe("AdminDevicesPage contextual filtering", () => {
-  it("quando type=TPV, pré-seleciona TPV e filtra tabela só para terminais TPV", async () => {
-    fetchTerminalsMock.mockResolvedValueOnce([
-      {
-        id: "t-tpv-1",
-        restaurant_id: "rest-ctx-1",
-        type: "TPV",
-        name: "TPV_CAIXA_01",
-        registered_at: "2024-01-01T00:00:00.000Z",
-        last_heartbeat_at: null,
-        last_seen_at: null,
-        status: "active",
-        metadata: {},
-      },
-      {
-        id: "t-app-1",
-        restaurant_id: "rest-ctx-1",
-        type: "APPSTAFF",
-        name: "STAFF_IPHONE_01",
-        registered_at: "2024-01-02T00:00:00.000Z",
-        last_heartbeat_at: null,
-        last_seen_at: null,
-        status: "active",
-        metadata: {},
-      },
-    ]);
-
+  it("quando type=TPV, redireciona para /admin/devices/tpv (fluxo único TPV)", () => {
     render(
       <MemoryRouter initialEntries={["/admin/devices?type=TPV"]}>
-        <AdminDevicesPage />
+        <Routes>
+          <Route path="/admin/devices" element={<AdminDevicesPage />} />
+          <Route
+            path="/admin/devices/tpv"
+            element={<div data-testid="tpv-terminals-page">TPV page</div>}
+          />
+        </Routes>
       </MemoryRouter>,
     );
 
-    // Select "Tipo" principal (QR de instalação) deve vir pré-preenchido com TPV
-    const tipoSelects = await screen.findAllByLabelText("Tipo");
-    const tipoSelect = tipoSelects[0] as HTMLSelectElement;
-    expect(tipoSelect.value).toBe("TPV");
+    expect(screen.getByTestId("tpv-terminals-page")).toBeTruthy();
+    expect(screen.getByText("TPV page")).toBeTruthy();
+  });
 
-    // Tabela deve mostrar apenas o terminal TPV
-    await waitFor(() => {
-      expect(screen.getByText("TPV_CAIXA_01")).toBeTruthy();
-    });
-    expect(screen.queryByText("STAFF_IPHONE_01")).toBeNull();
+  it("quando type=KDS ou module=kds, redireciona para /admin/devices/tpv (KDS nasce do TPV)", async () => {
+    render(
+      <MemoryRouter initialEntries={["/admin/devices?type=KDS"]}>
+        <Routes>
+          <Route path="/admin/devices" element={<AdminDevicesPage />} />
+          <Route
+            path="/admin/devices/tpv"
+            element={<div data-testid="tpv-terminals-page">TPV page</div>}
+          />
+        </Routes>
+      </MemoryRouter>,
+    );
+
+    expect(await screen.findByTestId("tpv-terminals-page")).toBeTruthy();
+    expect(screen.getByText("TPV page")).toBeTruthy();
   });
 });
 

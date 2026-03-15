@@ -17,7 +17,7 @@ export function OriginBadge({ origin }: OriginBadgeProps) {
   // Normalizar origem (pode vir do sync_metadata)
   const normalizedOrigin = origin?.toUpperCase() || 'CAIXA';
 
-  // Mapeamento de origem para cor e ícone
+  // Convenção: docs/architecture/APPSTAFF_ORDER_ORIGINS_CONVENTION.md — origem ≠ só garçom
   const originMap: Record<string, { color: string; icon: string; label: string }> = {
     'CAIXA': { color: '#22c55e', icon: '💰', label: 'CAIXA' },
     'TPV': { color: '#22c55e', icon: '💰', label: 'CAIXA' },
@@ -26,9 +26,9 @@ export function OriginBadge({ origin }: OriginBadgeProps) {
     'GARÇOM': { color: '#3b82f6', icon: '📱', label: 'GARÇOM' },
     'GARCOM': { color: '#3b82f6', icon: '📱', label: 'GARÇOM' },
     'MOBILE': { color: '#3b82f6', icon: '📱', label: 'GARÇOM' },
-    'APPSTAFF': { color: '#8b5cf6', icon: '👤', label: 'APPSTAFF' },
-    'APPSTAFF_MANAGER': { color: '#8b5cf6', icon: '👤', label: 'APPSTAFF' },
-    'APPSTAFF_OWNER': { color: '#8b5cf6', icon: '👤', label: 'APPSTAFF' },
+    'APPSTAFF': { color: '#3b82f6', icon: '📱', label: 'SALÃO' },
+    'APPSTAFF_MANAGER': { color: '#8b5cf6', icon: '👔', label: 'GERENTE' },
+    'APPSTAFF_OWNER': { color: '#a855f7', icon: '👤', label: 'DONO' },
     'QR_MESA': { color: '#ec4899', icon: '📋', label: 'QR MESA' },
     'QRMESA': { color: '#ec4899', icon: '📋', label: 'QR MESA' },
   };

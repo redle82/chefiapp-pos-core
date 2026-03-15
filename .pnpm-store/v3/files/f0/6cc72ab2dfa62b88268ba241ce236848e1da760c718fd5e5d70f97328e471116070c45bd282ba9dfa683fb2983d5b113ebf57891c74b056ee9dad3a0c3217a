@@ -1,0 +1,3530 @@
+import * as React2 from 'react';
+import { createContext, forwardRef, useContext, useState, useMemo, useRef, useEffect, useCallback } from 'react';
+import { jsxs, jsx as jsx$1 } from 'react/jsx-runtime';
+import { AlertTriangle, Check, EyeOff, Eye, Loader2, CircleCheck } from 'lucide-react';
+import { InsforgeContext } from '@insforge/shared/react';
+
+var __create = Object.create;
+var __defProp = Object.defineProperty;
+var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
+var __getOwnPropNames = Object.getOwnPropertyNames;
+var __getProtoOf = Object.getPrototypeOf;
+var __hasOwnProp = Object.prototype.hasOwnProperty;
+var __commonJS = (cb, mod) => function __require() {
+  return mod || (0, cb[__getOwnPropNames(cb)[0]])((mod = { exports: {} }).exports, mod), mod.exports;
+};
+var __copyProps = (to, from2, except, desc) => {
+  if (from2 && typeof from2 === "object" || typeof from2 === "function") {
+    for (let key of __getOwnPropNames(from2))
+      if (!__hasOwnProp.call(to, key) && key !== except)
+        __defProp(to, key, { get: () => from2[key], enumerable: !(desc = __getOwnPropDesc(from2, key)) || desc.enumerable });
+  }
+  return to;
+};
+var __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__getProtoOf(mod)) : {}, __copyProps(
+  // If the importer is in node compatibility mode or this is not an ESM
+  // file that has been converted to a CommonJS file using a Babel-
+  // compatible transform (i.e. "__esModule" has not been set), then set
+  // "default" to the CommonJS "module.exports" for node compatibility.
+  !mod || !mod.__esModule ? __defProp(target, "default", { value: mod, enumerable: true }) : target,
+  mod
+));
+
+// node_modules/react-is/cjs/react-is.production.min.js
+var require_react_is_production_min = __commonJS({
+  "node_modules/react-is/cjs/react-is.production.min.js"(exports$1) {
+    var b = "function" === typeof Symbol && Symbol.for;
+    var c = b ? /* @__PURE__ */ Symbol.for("react.element") : 60103;
+    var d = b ? /* @__PURE__ */ Symbol.for("react.portal") : 60106;
+    var e = b ? /* @__PURE__ */ Symbol.for("react.fragment") : 60107;
+    var f = b ? /* @__PURE__ */ Symbol.for("react.strict_mode") : 60108;
+    var g = b ? /* @__PURE__ */ Symbol.for("react.profiler") : 60114;
+    var h = b ? /* @__PURE__ */ Symbol.for("react.provider") : 60109;
+    var k = b ? /* @__PURE__ */ Symbol.for("react.context") : 60110;
+    var l = b ? /* @__PURE__ */ Symbol.for("react.async_mode") : 60111;
+    var m = b ? /* @__PURE__ */ Symbol.for("react.concurrent_mode") : 60111;
+    var n = b ? /* @__PURE__ */ Symbol.for("react.forward_ref") : 60112;
+    var p = b ? /* @__PURE__ */ Symbol.for("react.suspense") : 60113;
+    var q = b ? /* @__PURE__ */ Symbol.for("react.suspense_list") : 60120;
+    var r = b ? /* @__PURE__ */ Symbol.for("react.memo") : 60115;
+    var t = b ? /* @__PURE__ */ Symbol.for("react.lazy") : 60116;
+    var v = b ? /* @__PURE__ */ Symbol.for("react.block") : 60121;
+    var w = b ? /* @__PURE__ */ Symbol.for("react.fundamental") : 60117;
+    var x = b ? /* @__PURE__ */ Symbol.for("react.responder") : 60118;
+    var y = b ? /* @__PURE__ */ Symbol.for("react.scope") : 60119;
+    function z(a) {
+      if ("object" === typeof a && null !== a) {
+        var u = a.$$typeof;
+        switch (u) {
+          case c:
+            switch (a = a.type, a) {
+              case l:
+              case m:
+              case e:
+              case g:
+              case f:
+              case p:
+                return a;
+              default:
+                switch (a = a && a.$$typeof, a) {
+                  case k:
+                  case n:
+                  case t:
+                  case r:
+                  case h:
+                    return a;
+                  default:
+                    return u;
+                }
+            }
+          case d:
+            return u;
+        }
+      }
+    }
+    function A(a) {
+      return z(a) === m;
+    }
+    exports$1.AsyncMode = l;
+    exports$1.ConcurrentMode = m;
+    exports$1.ContextConsumer = k;
+    exports$1.ContextProvider = h;
+    exports$1.Element = c;
+    exports$1.ForwardRef = n;
+    exports$1.Fragment = e;
+    exports$1.Lazy = t;
+    exports$1.Memo = r;
+    exports$1.Portal = d;
+    exports$1.Profiler = g;
+    exports$1.StrictMode = f;
+    exports$1.Suspense = p;
+    exports$1.isAsyncMode = function(a) {
+      return A(a) || z(a) === l;
+    };
+    exports$1.isConcurrentMode = A;
+    exports$1.isContextConsumer = function(a) {
+      return z(a) === k;
+    };
+    exports$1.isContextProvider = function(a) {
+      return z(a) === h;
+    };
+    exports$1.isElement = function(a) {
+      return "object" === typeof a && null !== a && a.$$typeof === c;
+    };
+    exports$1.isForwardRef = function(a) {
+      return z(a) === n;
+    };
+    exports$1.isFragment = function(a) {
+      return z(a) === e;
+    };
+    exports$1.isLazy = function(a) {
+      return z(a) === t;
+    };
+    exports$1.isMemo = function(a) {
+      return z(a) === r;
+    };
+    exports$1.isPortal = function(a) {
+      return z(a) === d;
+    };
+    exports$1.isProfiler = function(a) {
+      return z(a) === g;
+    };
+    exports$1.isStrictMode = function(a) {
+      return z(a) === f;
+    };
+    exports$1.isSuspense = function(a) {
+      return z(a) === p;
+    };
+    exports$1.isValidElementType = function(a) {
+      return "string" === typeof a || "function" === typeof a || a === e || a === m || a === g || a === f || a === p || a === q || "object" === typeof a && null !== a && (a.$$typeof === t || a.$$typeof === r || a.$$typeof === h || a.$$typeof === k || a.$$typeof === n || a.$$typeof === w || a.$$typeof === x || a.$$typeof === y || a.$$typeof === v);
+    };
+    exports$1.typeOf = z;
+  }
+});
+
+// node_modules/react-is/cjs/react-is.development.js
+var require_react_is_development = __commonJS({
+  "node_modules/react-is/cjs/react-is.development.js"(exports$1) {
+    if (process.env.NODE_ENV !== "production") {
+      (function() {
+        var hasSymbol = typeof Symbol === "function" && Symbol.for;
+        var REACT_ELEMENT_TYPE = hasSymbol ? /* @__PURE__ */ Symbol.for("react.element") : 60103;
+        var REACT_PORTAL_TYPE = hasSymbol ? /* @__PURE__ */ Symbol.for("react.portal") : 60106;
+        var REACT_FRAGMENT_TYPE = hasSymbol ? /* @__PURE__ */ Symbol.for("react.fragment") : 60107;
+        var REACT_STRICT_MODE_TYPE = hasSymbol ? /* @__PURE__ */ Symbol.for("react.strict_mode") : 60108;
+        var REACT_PROFILER_TYPE = hasSymbol ? /* @__PURE__ */ Symbol.for("react.profiler") : 60114;
+        var REACT_PROVIDER_TYPE = hasSymbol ? /* @__PURE__ */ Symbol.for("react.provider") : 60109;
+        var REACT_CONTEXT_TYPE = hasSymbol ? /* @__PURE__ */ Symbol.for("react.context") : 60110;
+        var REACT_ASYNC_MODE_TYPE = hasSymbol ? /* @__PURE__ */ Symbol.for("react.async_mode") : 60111;
+        var REACT_CONCURRENT_MODE_TYPE = hasSymbol ? /* @__PURE__ */ Symbol.for("react.concurrent_mode") : 60111;
+        var REACT_FORWARD_REF_TYPE = hasSymbol ? /* @__PURE__ */ Symbol.for("react.forward_ref") : 60112;
+        var REACT_SUSPENSE_TYPE = hasSymbol ? /* @__PURE__ */ Symbol.for("react.suspense") : 60113;
+        var REACT_SUSPENSE_LIST_TYPE = hasSymbol ? /* @__PURE__ */ Symbol.for("react.suspense_list") : 60120;
+        var REACT_MEMO_TYPE = hasSymbol ? /* @__PURE__ */ Symbol.for("react.memo") : 60115;
+        var REACT_LAZY_TYPE = hasSymbol ? /* @__PURE__ */ Symbol.for("react.lazy") : 60116;
+        var REACT_BLOCK_TYPE = hasSymbol ? /* @__PURE__ */ Symbol.for("react.block") : 60121;
+        var REACT_FUNDAMENTAL_TYPE = hasSymbol ? /* @__PURE__ */ Symbol.for("react.fundamental") : 60117;
+        var REACT_RESPONDER_TYPE = hasSymbol ? /* @__PURE__ */ Symbol.for("react.responder") : 60118;
+        var REACT_SCOPE_TYPE = hasSymbol ? /* @__PURE__ */ Symbol.for("react.scope") : 60119;
+        function isValidElementType(type) {
+          return typeof type === "string" || typeof type === "function" || // Note: its typeof might be other than 'symbol' or 'number' if it's a polyfill.
+          type === REACT_FRAGMENT_TYPE || type === REACT_CONCURRENT_MODE_TYPE || type === REACT_PROFILER_TYPE || type === REACT_STRICT_MODE_TYPE || type === REACT_SUSPENSE_TYPE || type === REACT_SUSPENSE_LIST_TYPE || typeof type === "object" && type !== null && (type.$$typeof === REACT_LAZY_TYPE || type.$$typeof === REACT_MEMO_TYPE || type.$$typeof === REACT_PROVIDER_TYPE || type.$$typeof === REACT_CONTEXT_TYPE || type.$$typeof === REACT_FORWARD_REF_TYPE || type.$$typeof === REACT_FUNDAMENTAL_TYPE || type.$$typeof === REACT_RESPONDER_TYPE || type.$$typeof === REACT_SCOPE_TYPE || type.$$typeof === REACT_BLOCK_TYPE);
+        }
+        function typeOf(object) {
+          if (typeof object === "object" && object !== null) {
+            var $$typeof = object.$$typeof;
+            switch ($$typeof) {
+              case REACT_ELEMENT_TYPE:
+                var type = object.type;
+                switch (type) {
+                  case REACT_ASYNC_MODE_TYPE:
+                  case REACT_CONCURRENT_MODE_TYPE:
+                  case REACT_FRAGMENT_TYPE:
+                  case REACT_PROFILER_TYPE:
+                  case REACT_STRICT_MODE_TYPE:
+                  case REACT_SUSPENSE_TYPE:
+                    return type;
+                  default:
+                    var $$typeofType = type && type.$$typeof;
+                    switch ($$typeofType) {
+                      case REACT_CONTEXT_TYPE:
+                      case REACT_FORWARD_REF_TYPE:
+                      case REACT_LAZY_TYPE:
+                      case REACT_MEMO_TYPE:
+                      case REACT_PROVIDER_TYPE:
+                        return $$typeofType;
+                      default:
+                        return $$typeof;
+                    }
+                }
+              case REACT_PORTAL_TYPE:
+                return $$typeof;
+            }
+          }
+          return void 0;
+        }
+        var AsyncMode = REACT_ASYNC_MODE_TYPE;
+        var ConcurrentMode = REACT_CONCURRENT_MODE_TYPE;
+        var ContextConsumer = REACT_CONTEXT_TYPE;
+        var ContextProvider = REACT_PROVIDER_TYPE;
+        var Element = REACT_ELEMENT_TYPE;
+        var ForwardRef = REACT_FORWARD_REF_TYPE;
+        var Fragment4 = REACT_FRAGMENT_TYPE;
+        var Lazy = REACT_LAZY_TYPE;
+        var Memo = REACT_MEMO_TYPE;
+        var Portal = REACT_PORTAL_TYPE;
+        var Profiler = REACT_PROFILER_TYPE;
+        var StrictMode = REACT_STRICT_MODE_TYPE;
+        var Suspense = REACT_SUSPENSE_TYPE;
+        var hasWarnedAboutDeprecatedIsAsyncMode = false;
+        function isAsyncMode(object) {
+          {
+            if (!hasWarnedAboutDeprecatedIsAsyncMode) {
+              hasWarnedAboutDeprecatedIsAsyncMode = true;
+              console["warn"]("The ReactIs.isAsyncMode() alias has been deprecated, and will be removed in React 17+. Update your code to use ReactIs.isConcurrentMode() instead. It has the exact same API.");
+            }
+          }
+          return isConcurrentMode(object) || typeOf(object) === REACT_ASYNC_MODE_TYPE;
+        }
+        function isConcurrentMode(object) {
+          return typeOf(object) === REACT_CONCURRENT_MODE_TYPE;
+        }
+        function isContextConsumer(object) {
+          return typeOf(object) === REACT_CONTEXT_TYPE;
+        }
+        function isContextProvider(object) {
+          return typeOf(object) === REACT_PROVIDER_TYPE;
+        }
+        function isElement(object) {
+          return typeof object === "object" && object !== null && object.$$typeof === REACT_ELEMENT_TYPE;
+        }
+        function isForwardRef(object) {
+          return typeOf(object) === REACT_FORWARD_REF_TYPE;
+        }
+        function isFragment(object) {
+          return typeOf(object) === REACT_FRAGMENT_TYPE;
+        }
+        function isLazy(object) {
+          return typeOf(object) === REACT_LAZY_TYPE;
+        }
+        function isMemo(object) {
+          return typeOf(object) === REACT_MEMO_TYPE;
+        }
+        function isPortal(object) {
+          return typeOf(object) === REACT_PORTAL_TYPE;
+        }
+        function isProfiler(object) {
+          return typeOf(object) === REACT_PROFILER_TYPE;
+        }
+        function isStrictMode(object) {
+          return typeOf(object) === REACT_STRICT_MODE_TYPE;
+        }
+        function isSuspense(object) {
+          return typeOf(object) === REACT_SUSPENSE_TYPE;
+        }
+        exports$1.AsyncMode = AsyncMode;
+        exports$1.ConcurrentMode = ConcurrentMode;
+        exports$1.ContextConsumer = ContextConsumer;
+        exports$1.ContextProvider = ContextProvider;
+        exports$1.Element = Element;
+        exports$1.ForwardRef = ForwardRef;
+        exports$1.Fragment = Fragment4;
+        exports$1.Lazy = Lazy;
+        exports$1.Memo = Memo;
+        exports$1.Portal = Portal;
+        exports$1.Profiler = Profiler;
+        exports$1.StrictMode = StrictMode;
+        exports$1.Suspense = Suspense;
+        exports$1.isAsyncMode = isAsyncMode;
+        exports$1.isConcurrentMode = isConcurrentMode;
+        exports$1.isContextConsumer = isContextConsumer;
+        exports$1.isContextProvider = isContextProvider;
+        exports$1.isElement = isElement;
+        exports$1.isForwardRef = isForwardRef;
+        exports$1.isFragment = isFragment;
+        exports$1.isLazy = isLazy;
+        exports$1.isMemo = isMemo;
+        exports$1.isPortal = isPortal;
+        exports$1.isProfiler = isProfiler;
+        exports$1.isStrictMode = isStrictMode;
+        exports$1.isSuspense = isSuspense;
+        exports$1.isValidElementType = isValidElementType;
+        exports$1.typeOf = typeOf;
+      })();
+    }
+  }
+});
+
+// node_modules/react-is/index.js
+var require_react_is = __commonJS({
+  "node_modules/react-is/index.js"(exports$1, module) {
+    if (process.env.NODE_ENV === "production") {
+      module.exports = require_react_is_production_min();
+    } else {
+      module.exports = require_react_is_development();
+    }
+  }
+});
+
+// node_modules/hoist-non-react-statics/dist/hoist-non-react-statics.cjs.js
+var require_hoist_non_react_statics_cjs = __commonJS({
+  "node_modules/hoist-non-react-statics/dist/hoist-non-react-statics.cjs.js"(exports$1, module) {
+    var reactIs = require_react_is();
+    var REACT_STATICS = {
+      childContextTypes: true,
+      contextType: true,
+      contextTypes: true,
+      defaultProps: true,
+      displayName: true,
+      getDefaultProps: true,
+      getDerivedStateFromError: true,
+      getDerivedStateFromProps: true,
+      mixins: true,
+      propTypes: true,
+      type: true
+    };
+    var KNOWN_STATICS = {
+      name: true,
+      length: true,
+      prototype: true,
+      caller: true,
+      callee: true,
+      arguments: true,
+      arity: true
+    };
+    var FORWARD_REF_STATICS = {
+      "$$typeof": true,
+      render: true,
+      defaultProps: true,
+      displayName: true,
+      propTypes: true
+    };
+    var MEMO_STATICS = {
+      "$$typeof": true,
+      compare: true,
+      defaultProps: true,
+      displayName: true,
+      propTypes: true,
+      type: true
+    };
+    var TYPE_STATICS = {};
+    TYPE_STATICS[reactIs.ForwardRef] = FORWARD_REF_STATICS;
+    TYPE_STATICS[reactIs.Memo] = MEMO_STATICS;
+    function getStatics(component) {
+      if (reactIs.isMemo(component)) {
+        return MEMO_STATICS;
+      }
+      return TYPE_STATICS[component["$$typeof"]] || REACT_STATICS;
+    }
+    var defineProperty = Object.defineProperty;
+    var getOwnPropertyNames = Object.getOwnPropertyNames;
+    var getOwnPropertySymbols = Object.getOwnPropertySymbols;
+    var getOwnPropertyDescriptor = Object.getOwnPropertyDescriptor;
+    var getPrototypeOf = Object.getPrototypeOf;
+    var objectPrototype = Object.prototype;
+    function hoistNonReactStatics(targetComponent, sourceComponent, blacklist) {
+      if (typeof sourceComponent !== "string") {
+        if (objectPrototype) {
+          var inheritedComponent = getPrototypeOf(sourceComponent);
+          if (inheritedComponent && inheritedComponent !== objectPrototype) {
+            hoistNonReactStatics(targetComponent, inheritedComponent, blacklist);
+          }
+        }
+        var keys = getOwnPropertyNames(sourceComponent);
+        if (getOwnPropertySymbols) {
+          keys = keys.concat(getOwnPropertySymbols(sourceComponent));
+        }
+        var targetStatics = getStatics(targetComponent);
+        var sourceStatics = getStatics(sourceComponent);
+        for (var i = 0; i < keys.length; ++i) {
+          var key = keys[i];
+          if (!KNOWN_STATICS[key] && !(blacklist && blacklist[key]) && !(sourceStatics && sourceStatics[key]) && !(targetStatics && targetStatics[key])) {
+            var descriptor = getOwnPropertyDescriptor(sourceComponent, key);
+            try {
+              defineProperty(targetComponent, key, descriptor);
+            } catch (e) {
+            }
+          }
+        }
+      }
+      return targetComponent;
+    }
+    module.exports = hoistNonReactStatics;
+  }
+});
+
+// node_modules/@babel/runtime/helpers/extends.js
+var require_extends = __commonJS({
+  "node_modules/@babel/runtime/helpers/extends.js"(exports$1, module) {
+    function _extends2() {
+      return module.exports = _extends2 = Object.assign ? Object.assign.bind() : function(n) {
+        for (var e = 1; e < arguments.length; e++) {
+          var t = arguments[e];
+          for (var r in t) ({}).hasOwnProperty.call(t, r) && (n[r] = t[r]);
+        }
+        return n;
+      }, module.exports.__esModule = true, module.exports["default"] = module.exports, _extends2.apply(null, arguments);
+    }
+    module.exports = _extends2, module.exports.__esModule = true, module.exports["default"] = module.exports;
+  }
+});
+
+// node_modules/@babel/runtime/helpers/esm/extends.js
+function _extends() {
+  return _extends = Object.assign ? Object.assign.bind() : function(n) {
+    for (var e = 1; e < arguments.length; e++) {
+      var t = arguments[e];
+      for (var r in t) ({}).hasOwnProperty.call(t, r) && (n[r] = t[r]);
+    }
+    return n;
+  }, _extends.apply(null, arguments);
+}
+function sheetForTag(tag) {
+  if (tag.sheet) {
+    return tag.sheet;
+  }
+  for (var i = 0; i < document.styleSheets.length; i++) {
+    if (document.styleSheets[i].ownerNode === tag) {
+      return document.styleSheets[i];
+    }
+  }
+  return void 0;
+}
+function createStyleElement(options) {
+  var tag = document.createElement("style");
+  tag.setAttribute("data-emotion", options.key);
+  if (options.nonce !== void 0) {
+    tag.setAttribute("nonce", options.nonce);
+  }
+  tag.appendChild(document.createTextNode(""));
+  tag.setAttribute("data-s", "");
+  return tag;
+}
+var StyleSheet = /* @__PURE__ */ (function() {
+  function StyleSheet2(options) {
+    var _this = this;
+    this._insertTag = function(tag) {
+      var before;
+      if (_this.tags.length === 0) {
+        if (_this.insertionPoint) {
+          before = _this.insertionPoint.nextSibling;
+        } else if (_this.prepend) {
+          before = _this.container.firstChild;
+        } else {
+          before = _this.before;
+        }
+      } else {
+        before = _this.tags[_this.tags.length - 1].nextSibling;
+      }
+      _this.container.insertBefore(tag, before);
+      _this.tags.push(tag);
+    };
+    this.isSpeedy = options.speedy === void 0 ? true : options.speedy;
+    this.tags = [];
+    this.ctr = 0;
+    this.nonce = options.nonce;
+    this.key = options.key;
+    this.container = options.container;
+    this.prepend = options.prepend;
+    this.insertionPoint = options.insertionPoint;
+    this.before = null;
+  }
+  var _proto = StyleSheet2.prototype;
+  _proto.hydrate = function hydrate(nodes) {
+    nodes.forEach(this._insertTag);
+  };
+  _proto.insert = function insert(rule) {
+    if (this.ctr % (this.isSpeedy ? 65e3 : 1) === 0) {
+      this._insertTag(createStyleElement(this));
+    }
+    var tag = this.tags[this.tags.length - 1];
+    if (this.isSpeedy) {
+      var sheet = sheetForTag(tag);
+      try {
+        sheet.insertRule(rule, sheet.cssRules.length);
+      } catch (e) {
+      }
+    } else {
+      tag.appendChild(document.createTextNode(rule));
+    }
+    this.ctr++;
+  };
+  _proto.flush = function flush() {
+    this.tags.forEach(function(tag) {
+      var _tag$parentNode;
+      return (_tag$parentNode = tag.parentNode) == null ? void 0 : _tag$parentNode.removeChild(tag);
+    });
+    this.tags = [];
+    this.ctr = 0;
+  };
+  return StyleSheet2;
+})();
+
+// node_modules/stylis/src/Enum.js
+var MS = "-ms-";
+var MOZ = "-moz-";
+var WEBKIT = "-webkit-";
+var COMMENT = "comm";
+var RULESET = "rule";
+var DECLARATION = "decl";
+var IMPORT = "@import";
+var KEYFRAMES = "@keyframes";
+var LAYER = "@layer";
+
+// node_modules/stylis/src/Utility.js
+var abs = Math.abs;
+var from = String.fromCharCode;
+var assign = Object.assign;
+function hash(value, length2) {
+  return charat(value, 0) ^ 45 ? (((length2 << 2 ^ charat(value, 0)) << 2 ^ charat(value, 1)) << 2 ^ charat(value, 2)) << 2 ^ charat(value, 3) : 0;
+}
+function trim(value) {
+  return value.trim();
+}
+function match(value, pattern) {
+  return (value = pattern.exec(value)) ? value[0] : value;
+}
+function replace(value, pattern, replacement) {
+  return value.replace(pattern, replacement);
+}
+function indexof(value, search) {
+  return value.indexOf(search);
+}
+function charat(value, index) {
+  return value.charCodeAt(index) | 0;
+}
+function substr(value, begin, end) {
+  return value.slice(begin, end);
+}
+function strlen(value) {
+  return value.length;
+}
+function sizeof(value) {
+  return value.length;
+}
+function append(value, array) {
+  return array.push(value), value;
+}
+function combine(array, callback) {
+  return array.map(callback).join("");
+}
+
+// node_modules/stylis/src/Tokenizer.js
+var line = 1;
+var column = 1;
+var length = 0;
+var position = 0;
+var character = 0;
+var characters = "";
+function node(value, root, parent, type, props, children, length2) {
+  return { value, root, parent, type, props, children, line, column, length: length2, return: "" };
+}
+function copy(root, props) {
+  return assign(node("", null, null, "", null, null, 0), root, { length: -root.length }, props);
+}
+function char() {
+  return character;
+}
+function prev() {
+  character = position > 0 ? charat(characters, --position) : 0;
+  if (column--, character === 10)
+    column = 1, line--;
+  return character;
+}
+function next() {
+  character = position < length ? charat(characters, position++) : 0;
+  if (column++, character === 10)
+    column = 1, line++;
+  return character;
+}
+function peek() {
+  return charat(characters, position);
+}
+function caret() {
+  return position;
+}
+function slice(begin, end) {
+  return substr(characters, begin, end);
+}
+function token(type) {
+  switch (type) {
+    // \0 \t \n \r \s whitespace token
+    case 0:
+    case 9:
+    case 10:
+    case 13:
+    case 32:
+      return 5;
+    // ! + , / > @ ~ isolate token
+    case 33:
+    case 43:
+    case 44:
+    case 47:
+    case 62:
+    case 64:
+    case 126:
+    // ; { } breakpoint token
+    case 59:
+    case 123:
+    case 125:
+      return 4;
+    // : accompanied token
+    case 58:
+      return 3;
+    // " ' ( [ opening delimit token
+    case 34:
+    case 39:
+    case 40:
+    case 91:
+      return 2;
+    // ) ] closing delimit token
+    case 41:
+    case 93:
+      return 1;
+  }
+  return 0;
+}
+function alloc(value) {
+  return line = column = 1, length = strlen(characters = value), position = 0, [];
+}
+function dealloc(value) {
+  return characters = "", value;
+}
+function delimit(type) {
+  return trim(slice(position - 1, delimiter(type === 91 ? type + 2 : type === 40 ? type + 1 : type)));
+}
+function whitespace(type) {
+  while (character = peek())
+    if (character < 33)
+      next();
+    else
+      break;
+  return token(type) > 2 || token(character) > 3 ? "" : " ";
+}
+function escaping(index, count) {
+  while (--count && next())
+    if (character < 48 || character > 102 || character > 57 && character < 65 || character > 70 && character < 97)
+      break;
+  return slice(index, caret() + (count < 6 && peek() == 32 && next() == 32));
+}
+function delimiter(type) {
+  while (next())
+    switch (character) {
+      // ] ) " '
+      case type:
+        return position;
+      // " '
+      case 34:
+      case 39:
+        if (type !== 34 && type !== 39)
+          delimiter(character);
+        break;
+      // (
+      case 40:
+        if (type === 41)
+          delimiter(type);
+        break;
+      // \
+      case 92:
+        next();
+        break;
+    }
+  return position;
+}
+function commenter(type, index) {
+  while (next())
+    if (type + character === 47 + 10)
+      break;
+    else if (type + character === 42 + 42 && peek() === 47)
+      break;
+  return "/*" + slice(index, position - 1) + "*" + from(type === 47 ? type : next());
+}
+function identifier(index) {
+  while (!token(peek()))
+    next();
+  return slice(index, position);
+}
+
+// node_modules/stylis/src/Parser.js
+function compile(value) {
+  return dealloc(parse("", null, null, null, [""], value = alloc(value), 0, [0], value));
+}
+function parse(value, root, parent, rule, rules, rulesets, pseudo, points, declarations) {
+  var index = 0;
+  var offset = 0;
+  var length2 = pseudo;
+  var atrule = 0;
+  var property = 0;
+  var previous = 0;
+  var variable = 1;
+  var scanning = 1;
+  var ampersand = 1;
+  var character2 = 0;
+  var type = "";
+  var props = rules;
+  var children = rulesets;
+  var reference = rule;
+  var characters2 = type;
+  while (scanning)
+    switch (previous = character2, character2 = next()) {
+      // (
+      case 40:
+        if (previous != 108 && charat(characters2, length2 - 1) == 58) {
+          if (indexof(characters2 += replace(delimit(character2), "&", "&\f"), "&\f") != -1)
+            ampersand = -1;
+          break;
+        }
+      // " ' [
+      case 34:
+      case 39:
+      case 91:
+        characters2 += delimit(character2);
+        break;
+      // \t \n \r \s
+      case 9:
+      case 10:
+      case 13:
+      case 32:
+        characters2 += whitespace(previous);
+        break;
+      // \
+      case 92:
+        characters2 += escaping(caret() - 1, 7);
+        continue;
+      // /
+      case 47:
+        switch (peek()) {
+          case 42:
+          case 47:
+            append(comment(commenter(next(), caret()), root, parent), declarations);
+            break;
+          default:
+            characters2 += "/";
+        }
+        break;
+      // {
+      case 123 * variable:
+        points[index++] = strlen(characters2) * ampersand;
+      // } ; \0
+      case 125 * variable:
+      case 59:
+      case 0:
+        switch (character2) {
+          // \0 }
+          case 0:
+          case 125:
+            scanning = 0;
+          // ;
+          case 59 + offset:
+            if (ampersand == -1) characters2 = replace(characters2, /\f/g, "");
+            if (property > 0 && strlen(characters2) - length2)
+              append(property > 32 ? declaration(characters2 + ";", rule, parent, length2 - 1) : declaration(replace(characters2, " ", "") + ";", rule, parent, length2 - 2), declarations);
+            break;
+          // @ ;
+          case 59:
+            characters2 += ";";
+          // { rule/at-rule
+          default:
+            append(reference = ruleset(characters2, root, parent, index, offset, rules, points, type, props = [], children = [], length2), rulesets);
+            if (character2 === 123)
+              if (offset === 0)
+                parse(characters2, root, reference, reference, props, rulesets, length2, points, children);
+              else
+                switch (atrule === 99 && charat(characters2, 3) === 110 ? 100 : atrule) {
+                  // d l m s
+                  case 100:
+                  case 108:
+                  case 109:
+                  case 115:
+                    parse(value, reference, reference, rule && append(ruleset(value, reference, reference, 0, 0, rules, points, type, rules, props = [], length2), children), rules, children, length2, points, rule ? props : children);
+                    break;
+                  default:
+                    parse(characters2, reference, reference, reference, [""], children, 0, points, children);
+                }
+        }
+        index = offset = property = 0, variable = ampersand = 1, type = characters2 = "", length2 = pseudo;
+        break;
+      // :
+      case 58:
+        length2 = 1 + strlen(characters2), property = previous;
+      default:
+        if (variable < 1) {
+          if (character2 == 123)
+            --variable;
+          else if (character2 == 125 && variable++ == 0 && prev() == 125)
+            continue;
+        }
+        switch (characters2 += from(character2), character2 * variable) {
+          // &
+          case 38:
+            ampersand = offset > 0 ? 1 : (characters2 += "\f", -1);
+            break;
+          // ,
+          case 44:
+            points[index++] = (strlen(characters2) - 1) * ampersand, ampersand = 1;
+            break;
+          // @
+          case 64:
+            if (peek() === 45)
+              characters2 += delimit(next());
+            atrule = peek(), offset = length2 = strlen(type = characters2 += identifier(caret())), character2++;
+            break;
+          // -
+          case 45:
+            if (previous === 45 && strlen(characters2) == 2)
+              variable = 0;
+        }
+    }
+  return rulesets;
+}
+function ruleset(value, root, parent, index, offset, rules, points, type, props, children, length2) {
+  var post = offset - 1;
+  var rule = offset === 0 ? rules : [""];
+  var size = sizeof(rule);
+  for (var i = 0, j = 0, k = 0; i < index; ++i)
+    for (var x = 0, y = substr(value, post + 1, post = abs(j = points[i])), z = value; x < size; ++x)
+      if (z = trim(j > 0 ? rule[x] + " " + y : replace(y, /&\f/g, rule[x])))
+        props[k++] = z;
+  return node(value, root, parent, offset === 0 ? RULESET : type, props, children, length2);
+}
+function comment(value, root, parent) {
+  return node(value, root, parent, COMMENT, from(char()), substr(value, 2, -2), 0);
+}
+function declaration(value, root, parent, length2) {
+  return node(value, root, parent, DECLARATION, substr(value, 0, length2), substr(value, length2 + 1, -1), length2);
+}
+
+// node_modules/stylis/src/Serializer.js
+function serialize(children, callback) {
+  var output = "";
+  var length2 = sizeof(children);
+  for (var i = 0; i < length2; i++)
+    output += callback(children[i], i, children, callback) || "";
+  return output;
+}
+function stringify(element, index, children, callback) {
+  switch (element.type) {
+    case LAYER:
+      if (element.children.length) break;
+    case IMPORT:
+    case DECLARATION:
+      return element.return = element.return || element.value;
+    case COMMENT:
+      return "";
+    case KEYFRAMES:
+      return element.return = element.value + "{" + serialize(element.children, callback) + "}";
+    case RULESET:
+      element.value = element.props.join(",");
+  }
+  return strlen(children = serialize(element.children, callback)) ? element.return = element.value + "{" + children + "}" : "";
+}
+
+// node_modules/stylis/src/Middleware.js
+function middleware(collection) {
+  var length2 = sizeof(collection);
+  return function(element, index, children, callback) {
+    var output = "";
+    for (var i = 0; i < length2; i++)
+      output += collection[i](element, index, children, callback) || "";
+    return output;
+  };
+}
+function rulesheet(callback) {
+  return function(element) {
+    if (!element.root) {
+      if (element = element.return)
+        callback(element);
+    }
+  };
+}
+
+// node_modules/@emotion/weak-memoize/dist/emotion-weak-memoize.esm.js
+var weakMemoize = function weakMemoize2(func) {
+  var cache = /* @__PURE__ */ new WeakMap();
+  return function(arg) {
+    if (cache.has(arg)) {
+      return cache.get(arg);
+    }
+    var ret = func(arg);
+    cache.set(arg, ret);
+    return ret;
+  };
+};
+
+// node_modules/@emotion/memoize/dist/emotion-memoize.esm.js
+function memoize(fn) {
+  var cache = /* @__PURE__ */ Object.create(null);
+  return function(arg) {
+    if (cache[arg] === void 0) cache[arg] = fn(arg);
+    return cache[arg];
+  };
+}
+
+// node_modules/@emotion/cache/dist/emotion-cache.esm.js
+var isBrowser = typeof document !== "undefined";
+var identifierWithPointTracking = function identifierWithPointTracking2(begin, points, index) {
+  var previous = 0;
+  var character2 = 0;
+  while (true) {
+    previous = character2;
+    character2 = peek();
+    if (previous === 38 && character2 === 12) {
+      points[index] = 1;
+    }
+    if (token(character2)) {
+      break;
+    }
+    next();
+  }
+  return slice(begin, position);
+};
+var toRules = function toRules2(parsed, points) {
+  var index = -1;
+  var character2 = 44;
+  do {
+    switch (token(character2)) {
+      case 0:
+        if (character2 === 38 && peek() === 12) {
+          points[index] = 1;
+        }
+        parsed[index] += identifierWithPointTracking(position - 1, points, index);
+        break;
+      case 2:
+        parsed[index] += delimit(character2);
+        break;
+      case 4:
+        if (character2 === 44) {
+          parsed[++index] = peek() === 58 ? "&\f" : "";
+          points[index] = parsed[index].length;
+          break;
+        }
+      // fallthrough
+      default:
+        parsed[index] += from(character2);
+    }
+  } while (character2 = next());
+  return parsed;
+};
+var getRules = function getRules2(value, points) {
+  return dealloc(toRules(alloc(value), points));
+};
+var fixedElements = /* @__PURE__ */ new WeakMap();
+var compat = function compat2(element) {
+  if (element.type !== "rule" || !element.parent || // positive .length indicates that this rule contains pseudo
+  // negative .length indicates that this rule has been already prefixed
+  element.length < 1) {
+    return;
+  }
+  var value = element.value;
+  var parent = element.parent;
+  var isImplicitRule = element.column === parent.column && element.line === parent.line;
+  while (parent.type !== "rule") {
+    parent = parent.parent;
+    if (!parent) return;
+  }
+  if (element.props.length === 1 && value.charCodeAt(0) !== 58 && !fixedElements.get(parent)) {
+    return;
+  }
+  if (isImplicitRule) {
+    return;
+  }
+  fixedElements.set(element, true);
+  var points = [];
+  var rules = getRules(value, points);
+  var parentRules = parent.props;
+  for (var i = 0, k = 0; i < rules.length; i++) {
+    for (var j = 0; j < parentRules.length; j++, k++) {
+      element.props[k] = points[i] ? rules[i].replace(/&\f/g, parentRules[j]) : parentRules[j] + " " + rules[i];
+    }
+  }
+};
+var removeLabel = function removeLabel2(element) {
+  if (element.type === "decl") {
+    var value = element.value;
+    if (
+      // charcode for l
+      value.charCodeAt(0) === 108 && // charcode for b
+      value.charCodeAt(2) === 98
+    ) {
+      element["return"] = "";
+      element.value = "";
+    }
+  }
+};
+function prefix(value, length2) {
+  switch (hash(value, length2)) {
+    // color-adjust
+    case 5103:
+      return WEBKIT + "print-" + value + value;
+    // animation, animation-(delay|direction|duration|fill-mode|iteration-count|name|play-state|timing-function)
+    case 5737:
+    case 4201:
+    case 3177:
+    case 3433:
+    case 1641:
+    case 4457:
+    case 2921:
+    // text-decoration, filter, clip-path, backface-visibility, column, box-decoration-break
+    case 5572:
+    case 6356:
+    case 5844:
+    case 3191:
+    case 6645:
+    case 3005:
+    // mask, mask-image, mask-(mode|clip|size), mask-(repeat|origin), mask-position, mask-composite,
+    case 6391:
+    case 5879:
+    case 5623:
+    case 6135:
+    case 4599:
+    case 4855:
+    // background-clip, columns, column-(count|fill|gap|rule|rule-color|rule-style|rule-width|span|width)
+    case 4215:
+    case 6389:
+    case 5109:
+    case 5365:
+    case 5621:
+    case 3829:
+      return WEBKIT + value + value;
+    // appearance, user-select, transform, hyphens, text-size-adjust
+    case 5349:
+    case 4246:
+    case 4810:
+    case 6968:
+    case 2756:
+      return WEBKIT + value + MOZ + value + MS + value + value;
+    // flex, flex-direction
+    case 6828:
+    case 4268:
+      return WEBKIT + value + MS + value + value;
+    // order
+    case 6165:
+      return WEBKIT + value + MS + "flex-" + value + value;
+    // align-items
+    case 5187:
+      return WEBKIT + value + replace(value, /(\w+).+(:[^]+)/, WEBKIT + "box-$1$2" + MS + "flex-$1$2") + value;
+    // align-self
+    case 5443:
+      return WEBKIT + value + MS + "flex-item-" + replace(value, /flex-|-self/, "") + value;
+    // align-content
+    case 4675:
+      return WEBKIT + value + MS + "flex-line-pack" + replace(value, /align-content|flex-|-self/, "") + value;
+    // flex-shrink
+    case 5548:
+      return WEBKIT + value + MS + replace(value, "shrink", "negative") + value;
+    // flex-basis
+    case 5292:
+      return WEBKIT + value + MS + replace(value, "basis", "preferred-size") + value;
+    // flex-grow
+    case 6060:
+      return WEBKIT + "box-" + replace(value, "-grow", "") + WEBKIT + value + MS + replace(value, "grow", "positive") + value;
+    // transition
+    case 4554:
+      return WEBKIT + replace(value, /([^-])(transform)/g, "$1" + WEBKIT + "$2") + value;
+    // cursor
+    case 6187:
+      return replace(replace(replace(value, /(zoom-|grab)/, WEBKIT + "$1"), /(image-set)/, WEBKIT + "$1"), value, "") + value;
+    // background, background-image
+    case 5495:
+    case 3959:
+      return replace(value, /(image-set\([^]*)/, WEBKIT + "$1$`$1");
+    // justify-content
+    case 4968:
+      return replace(replace(value, /(.+:)(flex-)?(.*)/, WEBKIT + "box-pack:$3" + MS + "flex-pack:$3"), /s.+-b[^;]+/, "justify") + WEBKIT + value + value;
+    // (margin|padding)-inline-(start|end)
+    case 4095:
+    case 3583:
+    case 4068:
+    case 2532:
+      return replace(value, /(.+)-inline(.+)/, WEBKIT + "$1$2") + value;
+    // (min|max)?(width|height|inline-size|block-size)
+    case 8116:
+    case 7059:
+    case 5753:
+    case 5535:
+    case 5445:
+    case 5701:
+    case 4933:
+    case 4677:
+    case 5533:
+    case 5789:
+    case 5021:
+    case 4765:
+      if (strlen(value) - 1 - length2 > 6) switch (charat(value, length2 + 1)) {
+        // (m)ax-content, (m)in-content
+        case 109:
+          if (charat(value, length2 + 4) !== 45) break;
+        // (f)ill-available, (f)it-content
+        case 102:
+          return replace(value, /(.+:)(.+)-([^]+)/, "$1" + WEBKIT + "$2-$3$1" + MOZ + (charat(value, length2 + 3) == 108 ? "$3" : "$2-$3")) + value;
+        // (s)tretch
+        case 115:
+          return ~indexof(value, "stretch") ? prefix(replace(value, "stretch", "fill-available"), length2) + value : value;
+      }
+      break;
+    // position: sticky
+    case 4949:
+      if (charat(value, length2 + 1) !== 115) break;
+    // display: (flex|inline-flex)
+    case 6444:
+      switch (charat(value, strlen(value) - 3 - (~indexof(value, "!important") && 10))) {
+        // stic(k)y
+        case 107:
+          return replace(value, ":", ":" + WEBKIT) + value;
+        // (inline-)?fl(e)x
+        case 101:
+          return replace(value, /(.+:)([^;!]+)(;|!.+)?/, "$1" + WEBKIT + (charat(value, 14) === 45 ? "inline-" : "") + "box$3$1" + WEBKIT + "$2$3$1" + MS + "$2box$3") + value;
+      }
+      break;
+    // writing-mode
+    case 5936:
+      switch (charat(value, length2 + 11)) {
+        // vertical-l(r)
+        case 114:
+          return WEBKIT + value + MS + replace(value, /[svh]\w+-[tblr]{2}/, "tb") + value;
+        // vertical-r(l)
+        case 108:
+          return WEBKIT + value + MS + replace(value, /[svh]\w+-[tblr]{2}/, "tb-rl") + value;
+        // horizontal(-)tb
+        case 45:
+          return WEBKIT + value + MS + replace(value, /[svh]\w+-[tblr]{2}/, "lr") + value;
+      }
+      return WEBKIT + value + MS + value + value;
+  }
+  return value;
+}
+var prefixer = function prefixer2(element, index, children, callback) {
+  if (element.length > -1) {
+    if (!element["return"]) switch (element.type) {
+      case DECLARATION:
+        element["return"] = prefix(element.value, element.length);
+        break;
+      case KEYFRAMES:
+        return serialize([copy(element, {
+          value: replace(element.value, "@", "@" + WEBKIT)
+        })], callback);
+      case RULESET:
+        if (element.length) return combine(element.props, function(value) {
+          switch (match(value, /(::plac\w+|:read-\w+)/)) {
+            // :read-(only|write)
+            case ":read-only":
+            case ":read-write":
+              return serialize([copy(element, {
+                props: [replace(value, /:(read-\w+)/, ":" + MOZ + "$1")]
+              })], callback);
+            // :placeholder
+            case "::placeholder":
+              return serialize([copy(element, {
+                props: [replace(value, /:(plac\w+)/, ":" + WEBKIT + "input-$1")]
+              }), copy(element, {
+                props: [replace(value, /:(plac\w+)/, ":" + MOZ + "$1")]
+              }), copy(element, {
+                props: [replace(value, /:(plac\w+)/, MS + "input-$1")]
+              })], callback);
+          }
+          return "";
+        });
+    }
+  }
+};
+var getServerStylisCache = isBrowser ? void 0 : weakMemoize(function() {
+  return memoize(function() {
+    return {};
+  });
+});
+var defaultStylisPlugins = [prefixer];
+var createCache = function createCache2(options) {
+  var key = options.key;
+  if (isBrowser && key === "css") {
+    var ssrStyles = document.querySelectorAll("style[data-emotion]:not([data-s])");
+    Array.prototype.forEach.call(ssrStyles, function(node2) {
+      var dataEmotionAttribute = node2.getAttribute("data-emotion");
+      if (dataEmotionAttribute.indexOf(" ") === -1) {
+        return;
+      }
+      document.head.appendChild(node2);
+      node2.setAttribute("data-s", "");
+    });
+  }
+  var stylisPlugins = options.stylisPlugins || defaultStylisPlugins;
+  var inserted = {};
+  var container;
+  var nodesToHydrate = [];
+  if (isBrowser) {
+    container = options.container || document.head;
+    Array.prototype.forEach.call(
+      // this means we will ignore elements which don't have a space in them which
+      // means that the style elements we're looking at are only Emotion 11 server-rendered style elements
+      document.querySelectorAll('style[data-emotion^="' + key + ' "]'),
+      function(node2) {
+        var attrib = node2.getAttribute("data-emotion").split(" ");
+        for (var i = 1; i < attrib.length; i++) {
+          inserted[attrib[i]] = true;
+        }
+        nodesToHydrate.push(node2);
+      }
+    );
+  }
+  var _insert;
+  var omnipresentPlugins = [compat, removeLabel];
+  if (!getServerStylisCache) {
+    var currentSheet;
+    var finalizingPlugins = [stringify, rulesheet(function(rule) {
+      currentSheet.insert(rule);
+    })];
+    var serializer = middleware(omnipresentPlugins.concat(stylisPlugins, finalizingPlugins));
+    var stylis = function stylis2(styles) {
+      return serialize(compile(styles), serializer);
+    };
+    _insert = function insert(selector, serialized, sheet, shouldCache) {
+      currentSheet = sheet;
+      stylis(selector ? selector + "{" + serialized.styles + "}" : serialized.styles);
+      if (shouldCache) {
+        cache.inserted[serialized.name] = true;
+      }
+    };
+  } else {
+    var _finalizingPlugins = [stringify];
+    var _serializer = middleware(omnipresentPlugins.concat(stylisPlugins, _finalizingPlugins));
+    var _stylis = function _stylis2(styles) {
+      return serialize(compile(styles), _serializer);
+    };
+    var serverStylisCache = getServerStylisCache(stylisPlugins)(key);
+    var getRules3 = function getRules4(selector, serialized) {
+      var name = serialized.name;
+      if (serverStylisCache[name] === void 0) {
+        serverStylisCache[name] = _stylis(selector ? selector + "{" + serialized.styles + "}" : serialized.styles);
+      }
+      return serverStylisCache[name];
+    };
+    _insert = function _insert2(selector, serialized, sheet, shouldCache) {
+      var name = serialized.name;
+      var rules = getRules3(selector, serialized);
+      if (cache.compat === void 0) {
+        if (shouldCache) {
+          cache.inserted[name] = true;
+        }
+        return rules;
+      } else {
+        if (shouldCache) {
+          cache.inserted[name] = rules;
+        } else {
+          return rules;
+        }
+      }
+    };
+  }
+  var cache = {
+    key,
+    sheet: new StyleSheet({
+      key,
+      container,
+      nonce: options.nonce,
+      speedy: options.speedy,
+      prepend: options.prepend,
+      insertionPoint: options.insertionPoint
+    }),
+    nonce: options.nonce,
+    inserted,
+    registered: {},
+    insert: _insert
+  };
+  cache.sheet.hydrate(nodesToHydrate);
+  return cache;
+};
+
+// node_modules/@emotion/utils/dist/emotion-utils.esm.js
+var isBrowser2 = typeof document !== "undefined";
+function getRegisteredStyles(registered, registeredStyles, classNames) {
+  var rawClassName = "";
+  classNames.split(" ").forEach(function(className) {
+    if (registered[className] !== void 0) {
+      registeredStyles.push(registered[className] + ";");
+    } else if (className) {
+      rawClassName += className + " ";
+    }
+  });
+  return rawClassName;
+}
+var registerStyles = function registerStyles2(cache, serialized, isStringTag) {
+  var className = cache.key + "-" + serialized.name;
+  if (
+    // we only need to add the styles to the registered cache if the
+    // class name could be used further down
+    // the tree but if it's a string tag, we know it won't
+    // so we don't have to add it to registered cache.
+    // this improves memory usage since we can avoid storing the whole style string
+    (isStringTag === false || // we need to always store it if we're in compat mode and
+    // in node since emotion-server relies on whether a style is in
+    // the registered cache to know whether a style is global or not
+    // also, note that this check will be dead code eliminated in the browser
+    isBrowser2 === false && cache.compat !== void 0) && cache.registered[className] === void 0
+  ) {
+    cache.registered[className] = serialized.styles;
+  }
+};
+var insertStyles = function insertStyles2(cache, serialized, isStringTag) {
+  registerStyles(cache, serialized, isStringTag);
+  var className = cache.key + "-" + serialized.name;
+  if (cache.inserted[serialized.name] === void 0) {
+    var stylesForSSR = "";
+    var current = serialized;
+    do {
+      var maybeStyles = cache.insert(serialized === current ? "." + className : "", current, cache.sheet, true);
+      if (!isBrowser2 && maybeStyles !== void 0) {
+        stylesForSSR += maybeStyles;
+      }
+      current = current.next;
+    } while (current !== void 0);
+    if (!isBrowser2 && stylesForSSR.length !== 0) {
+      return stylesForSSR;
+    }
+  }
+};
+
+// node_modules/@emotion/hash/dist/emotion-hash.esm.js
+function murmur2(str) {
+  var h = 0;
+  var k, i = 0, len = str.length;
+  for (; len >= 4; ++i, len -= 4) {
+    k = str.charCodeAt(i) & 255 | (str.charCodeAt(++i) & 255) << 8 | (str.charCodeAt(++i) & 255) << 16 | (str.charCodeAt(++i) & 255) << 24;
+    k = /* Math.imul(k, m): */
+    (k & 65535) * 1540483477 + ((k >>> 16) * 59797 << 16);
+    k ^= /* k >>> r: */
+    k >>> 24;
+    h = /* Math.imul(k, m): */
+    (k & 65535) * 1540483477 + ((k >>> 16) * 59797 << 16) ^ /* Math.imul(h, m): */
+    (h & 65535) * 1540483477 + ((h >>> 16) * 59797 << 16);
+  }
+  switch (len) {
+    case 3:
+      h ^= (str.charCodeAt(i + 2) & 255) << 16;
+    case 2:
+      h ^= (str.charCodeAt(i + 1) & 255) << 8;
+    case 1:
+      h ^= str.charCodeAt(i) & 255;
+      h = /* Math.imul(h, m): */
+      (h & 65535) * 1540483477 + ((h >>> 16) * 59797 << 16);
+  }
+  h ^= h >>> 13;
+  h = /* Math.imul(h, m): */
+  (h & 65535) * 1540483477 + ((h >>> 16) * 59797 << 16);
+  return ((h ^ h >>> 15) >>> 0).toString(36);
+}
+
+// node_modules/@emotion/unitless/dist/emotion-unitless.esm.js
+var unitlessKeys = {
+  animationIterationCount: 1,
+  aspectRatio: 1,
+  borderImageOutset: 1,
+  borderImageSlice: 1,
+  borderImageWidth: 1,
+  boxFlex: 1,
+  boxFlexGroup: 1,
+  boxOrdinalGroup: 1,
+  columnCount: 1,
+  columns: 1,
+  flex: 1,
+  flexGrow: 1,
+  flexPositive: 1,
+  flexShrink: 1,
+  flexNegative: 1,
+  flexOrder: 1,
+  gridRow: 1,
+  gridRowEnd: 1,
+  gridRowSpan: 1,
+  gridRowStart: 1,
+  gridColumn: 1,
+  gridColumnEnd: 1,
+  gridColumnSpan: 1,
+  gridColumnStart: 1,
+  msGridRow: 1,
+  msGridRowSpan: 1,
+  msGridColumn: 1,
+  msGridColumnSpan: 1,
+  fontWeight: 1,
+  lineHeight: 1,
+  opacity: 1,
+  order: 1,
+  orphans: 1,
+  scale: 1,
+  tabSize: 1,
+  widows: 1,
+  zIndex: 1,
+  zoom: 1,
+  WebkitLineClamp: 1,
+  // SVG-related properties
+  fillOpacity: 1,
+  floodOpacity: 1,
+  stopOpacity: 1,
+  strokeDasharray: 1,
+  strokeDashoffset: 1,
+  strokeMiterlimit: 1,
+  strokeOpacity: 1,
+  strokeWidth: 1
+};
+var hyphenateRegex = /[A-Z]|^ms/g;
+var animationRegex = /_EMO_([^_]+?)_([^]*?)_EMO_/g;
+var isCustomProperty = function isCustomProperty2(property) {
+  return property.charCodeAt(1) === 45;
+};
+var isProcessableValue = function isProcessableValue2(value) {
+  return value != null && typeof value !== "boolean";
+};
+var processStyleName = /* @__PURE__ */ memoize(function(styleName) {
+  return isCustomProperty(styleName) ? styleName : styleName.replace(hyphenateRegex, "-$&").toLowerCase();
+});
+var processStyleValue = function processStyleValue2(key, value) {
+  switch (key) {
+    case "animation":
+    case "animationName": {
+      if (typeof value === "string") {
+        return value.replace(animationRegex, function(match2, p1, p2) {
+          cursor = {
+            name: p1,
+            styles: p2,
+            next: cursor
+          };
+          return p1;
+        });
+      }
+    }
+  }
+  if (unitlessKeys[key] !== 1 && !isCustomProperty(key) && typeof value === "number" && value !== 0) {
+    return value + "px";
+  }
+  return value;
+};
+function handleInterpolation(mergedProps, registered, interpolation) {
+  if (interpolation == null) {
+    return "";
+  }
+  var componentSelector = interpolation;
+  if (componentSelector.__emotion_styles !== void 0) {
+    return componentSelector;
+  }
+  switch (typeof interpolation) {
+    case "boolean": {
+      return "";
+    }
+    case "object": {
+      var keyframes3 = interpolation;
+      if (keyframes3.anim === 1) {
+        cursor = {
+          name: keyframes3.name,
+          styles: keyframes3.styles,
+          next: cursor
+        };
+        return keyframes3.name;
+      }
+      var serializedStyles = interpolation;
+      if (serializedStyles.styles !== void 0) {
+        var next2 = serializedStyles.next;
+        if (next2 !== void 0) {
+          while (next2 !== void 0) {
+            cursor = {
+              name: next2.name,
+              styles: next2.styles,
+              next: cursor
+            };
+            next2 = next2.next;
+          }
+        }
+        var styles = serializedStyles.styles + ";";
+        return styles;
+      }
+      return createStringFromObject(mergedProps, registered, interpolation);
+    }
+    case "function": {
+      if (mergedProps !== void 0) {
+        var previousCursor = cursor;
+        var result = interpolation(mergedProps);
+        cursor = previousCursor;
+        return handleInterpolation(mergedProps, registered, result);
+      }
+      break;
+    }
+  }
+  var asString = interpolation;
+  if (registered == null) {
+    return asString;
+  }
+  var cached = registered[asString];
+  return cached !== void 0 ? cached : asString;
+}
+function createStringFromObject(mergedProps, registered, obj) {
+  var string = "";
+  if (Array.isArray(obj)) {
+    for (var i = 0; i < obj.length; i++) {
+      string += handleInterpolation(mergedProps, registered, obj[i]) + ";";
+    }
+  } else {
+    for (var key in obj) {
+      var value = obj[key];
+      if (typeof value !== "object") {
+        var asString = value;
+        if (registered != null && registered[asString] !== void 0) {
+          string += key + "{" + registered[asString] + "}";
+        } else if (isProcessableValue(asString)) {
+          string += processStyleName(key) + ":" + processStyleValue(key, asString) + ";";
+        }
+      } else {
+        if (Array.isArray(value) && typeof value[0] === "string" && (registered == null || registered[value[0]] === void 0)) {
+          for (var _i = 0; _i < value.length; _i++) {
+            if (isProcessableValue(value[_i])) {
+              string += processStyleName(key) + ":" + processStyleValue(key, value[_i]) + ";";
+            }
+          }
+        } else {
+          var interpolated = handleInterpolation(mergedProps, registered, value);
+          switch (key) {
+            case "animation":
+            case "animationName": {
+              string += processStyleName(key) + ":" + interpolated + ";";
+              break;
+            }
+            default: {
+              string += key + "{" + interpolated + "}";
+            }
+          }
+        }
+      }
+    }
+  }
+  return string;
+}
+var labelPattern = /label:\s*([^\s;{]+)\s*(;|$)/g;
+var cursor;
+function serializeStyles(args, registered, mergedProps) {
+  if (args.length === 1 && typeof args[0] === "object" && args[0] !== null && args[0].styles !== void 0) {
+    return args[0];
+  }
+  var stringMode = true;
+  var styles = "";
+  cursor = void 0;
+  var strings = args[0];
+  if (strings == null || strings.raw === void 0) {
+    stringMode = false;
+    styles += handleInterpolation(mergedProps, registered, strings);
+  } else {
+    var asTemplateStringsArr = strings;
+    styles += asTemplateStringsArr[0];
+  }
+  for (var i = 1; i < args.length; i++) {
+    styles += handleInterpolation(mergedProps, registered, args[i]);
+    if (stringMode) {
+      var templateStringsArr = strings;
+      styles += templateStringsArr[i];
+    }
+  }
+  labelPattern.lastIndex = 0;
+  var identifierName = "";
+  var match2;
+  while ((match2 = labelPattern.exec(styles)) !== null) {
+    identifierName += "-" + match2[1];
+  }
+  var name = murmur2(styles) + identifierName;
+  return {
+    name,
+    styles,
+    next: cursor
+  };
+}
+var isBrowser3 = typeof document !== "undefined";
+var syncFallback = function syncFallback2(create) {
+  return create();
+};
+var useInsertionEffect2 = React2["useInsertionEffect"] ? React2["useInsertionEffect"] : false;
+var useInsertionEffectAlwaysWithSyncFallback = !isBrowser3 ? syncFallback : useInsertionEffect2 || syncFallback;
+var isBrowser4 = typeof document !== "undefined";
+var EmotionCacheContext = /* @__PURE__ */ React2.createContext(
+  // we're doing this to avoid preconstruct's dead code elimination in this one case
+  // because this module is primarily intended for the browser and node
+  // but it's also required in react native and similar environments sometimes
+  // and we could have a special build just for that
+  // but this is much easier and the native packages
+  // might use a different theme context in the future anyway
+  typeof HTMLElement !== "undefined" ? /* @__PURE__ */ createCache({
+    key: "css"
+  }) : null
+);
+EmotionCacheContext.Provider;
+var withEmotionCache = function withEmotionCache2(func) {
+  return /* @__PURE__ */ forwardRef(function(props, ref) {
+    var cache = useContext(EmotionCacheContext);
+    return func(props, cache, ref);
+  });
+};
+if (!isBrowser4) {
+  withEmotionCache = function withEmotionCache3(func) {
+    return function(props) {
+      var cache = useContext(EmotionCacheContext);
+      if (cache === null) {
+        cache = createCache({
+          key: "css"
+        });
+        return /* @__PURE__ */ React2.createElement(EmotionCacheContext.Provider, {
+          value: cache
+        }, func(props, cache));
+      } else {
+        return func(props, cache);
+      }
+    };
+  };
+}
+var ThemeContext = /* @__PURE__ */ React2.createContext({});
+var hasOwn = {}.hasOwnProperty;
+var typePropName = "__EMOTION_TYPE_PLEASE_DO_NOT_USE__";
+var createEmotionProps = function createEmotionProps2(type, props) {
+  var newProps = {};
+  for (var _key in props) {
+    if (hasOwn.call(props, _key)) {
+      newProps[_key] = props[_key];
+    }
+  }
+  newProps[typePropName] = type;
+  return newProps;
+};
+var Insertion = function Insertion2(_ref) {
+  var cache = _ref.cache, serialized = _ref.serialized, isStringTag = _ref.isStringTag;
+  registerStyles(cache, serialized, isStringTag);
+  var rules = useInsertionEffectAlwaysWithSyncFallback(function() {
+    return insertStyles(cache, serialized, isStringTag);
+  });
+  if (!isBrowser4 && rules !== void 0) {
+    var _ref2;
+    var serializedNames = serialized.name;
+    var next2 = serialized.next;
+    while (next2 !== void 0) {
+      serializedNames += " " + next2.name;
+      next2 = next2.next;
+    }
+    return /* @__PURE__ */ React2.createElement("style", (_ref2 = {}, _ref2["data-emotion"] = cache.key + " " + serializedNames, _ref2.dangerouslySetInnerHTML = {
+      __html: rules
+    }, _ref2.nonce = cache.sheet.nonce, _ref2));
+  }
+  return null;
+};
+var Emotion = /* @__PURE__ */ withEmotionCache(function(props, cache, ref) {
+  var cssProp = props.css;
+  if (typeof cssProp === "string" && cache.registered[cssProp] !== void 0) {
+    cssProp = cache.registered[cssProp];
+  }
+  var WrappedComponent = props[typePropName];
+  var registeredStyles = [cssProp];
+  var className = "";
+  if (typeof props.className === "string") {
+    className = getRegisteredStyles(cache.registered, registeredStyles, props.className);
+  } else if (props.className != null) {
+    className = props.className + " ";
+  }
+  var serialized = serializeStyles(registeredStyles, void 0, React2.useContext(ThemeContext));
+  className += cache.key + "-" + serialized.name;
+  var newProps = {};
+  for (var _key2 in props) {
+    if (hasOwn.call(props, _key2) && _key2 !== "css" && _key2 !== typePropName && true) {
+      newProps[_key2] = props[_key2];
+    }
+  }
+  newProps.className = className;
+  if (ref) {
+    newProps.ref = ref;
+  }
+  return /* @__PURE__ */ React2.createElement(React2.Fragment, null, /* @__PURE__ */ React2.createElement(Insertion, {
+    cache,
+    serialized,
+    isStringTag: typeof WrappedComponent === "string"
+  }), /* @__PURE__ */ React2.createElement(WrappedComponent, newProps));
+});
+var Emotion$1 = Emotion;
+__toESM(require_extends());
+__toESM(require_hoist_non_react_statics_cjs());
+var jsx = function jsx2(type, props) {
+  var args = arguments;
+  if (props == null || !hasOwn.call(props, "css")) {
+    return React2.createElement.apply(void 0, args);
+  }
+  var argsLength = args.length;
+  var createElementArgArray = new Array(argsLength);
+  createElementArgArray[0] = Emotion$1;
+  createElementArgArray[1] = createEmotionProps(type, props);
+  for (var i = 2; i < argsLength; i++) {
+    createElementArgArray[i] = args[i];
+  }
+  return React2.createElement.apply(null, createElementArgArray);
+};
+(function(_jsx) {
+  var JSX;
+  /* @__PURE__ */ (function(_JSX) {
+  })(JSX || (JSX = _jsx.JSX || (_jsx.JSX = {})));
+})(jsx || (jsx = {}));
+function css() {
+  for (var _len = arguments.length, args = new Array(_len), _key = 0; _key < _len; _key++) {
+    args[_key] = arguments[_key];
+  }
+  return serializeStyles(args);
+}
+function keyframes() {
+  var insertable = css.apply(void 0, arguments);
+  var name = "animation-" + insertable.name;
+  return {
+    name,
+    styles: "@keyframes " + name + "{" + insertable.styles + "}",
+    anim: 1,
+    toString: function toString() {
+      return "_EMO_" + this.name + "_" + this.styles + "_EMO_";
+    }
+  };
+}
+
+// node_modules/@emotion/is-prop-valid/dist/emotion-is-prop-valid.esm.js
+var reactPropsRegex = /^((children|dangerouslySetInnerHTML|key|ref|autoFocus|defaultValue|defaultChecked|innerHTML|suppressContentEditableWarning|suppressHydrationWarning|valueLink|abbr|accept|acceptCharset|accessKey|action|allow|allowUserMedia|allowPaymentRequest|allowFullScreen|allowTransparency|alt|async|autoComplete|autoPlay|capture|cellPadding|cellSpacing|challenge|charSet|checked|cite|classID|className|cols|colSpan|content|contentEditable|contextMenu|controls|controlsList|coords|crossOrigin|data|dateTime|decoding|default|defer|dir|disabled|disablePictureInPicture|disableRemotePlayback|download|draggable|encType|enterKeyHint|fetchpriority|fetchPriority|form|formAction|formEncType|formMethod|formNoValidate|formTarget|frameBorder|headers|height|hidden|high|href|hrefLang|htmlFor|httpEquiv|id|inputMode|integrity|is|keyParams|keyType|kind|label|lang|list|loading|loop|low|marginHeight|marginWidth|max|maxLength|media|mediaGroup|method|min|minLength|multiple|muted|name|nonce|noValidate|open|optimum|pattern|placeholder|playsInline|popover|popoverTarget|popoverTargetAction|poster|preload|profile|radioGroup|readOnly|referrerPolicy|rel|required|reversed|role|rows|rowSpan|sandbox|scope|scoped|scrolling|seamless|selected|shape|size|sizes|slot|span|spellCheck|src|srcDoc|srcLang|srcSet|start|step|style|summary|tabIndex|target|title|translate|type|useMap|value|width|wmode|wrap|about|datatype|inlist|prefix|property|resource|typeof|vocab|autoCapitalize|autoCorrect|autoSave|color|incremental|fallback|inert|itemProp|itemScope|itemType|itemID|itemRef|on|option|results|security|unselectable|accentHeight|accumulate|additive|alignmentBaseline|allowReorder|alphabetic|amplitude|arabicForm|ascent|attributeName|attributeType|autoReverse|azimuth|baseFrequency|baselineShift|baseProfile|bbox|begin|bias|by|calcMode|capHeight|clip|clipPathUnits|clipPath|clipRule|colorInterpolation|colorInterpolationFilters|colorProfile|colorRendering|contentScriptType|contentStyleType|cursor|cx|cy|d|decelerate|descent|diffuseConstant|direction|display|divisor|dominantBaseline|dur|dx|dy|edgeMode|elevation|enableBackground|end|exponent|externalResourcesRequired|fill|fillOpacity|fillRule|filter|filterRes|filterUnits|floodColor|floodOpacity|focusable|fontFamily|fontSize|fontSizeAdjust|fontStretch|fontStyle|fontVariant|fontWeight|format|from|fr|fx|fy|g1|g2|glyphName|glyphOrientationHorizontal|glyphOrientationVertical|glyphRef|gradientTransform|gradientUnits|hanging|horizAdvX|horizOriginX|ideographic|imageRendering|in|in2|intercept|k|k1|k2|k3|k4|kernelMatrix|kernelUnitLength|kerning|keyPoints|keySplines|keyTimes|lengthAdjust|letterSpacing|lightingColor|limitingConeAngle|local|markerEnd|markerMid|markerStart|markerHeight|markerUnits|markerWidth|mask|maskContentUnits|maskUnits|mathematical|mode|numOctaves|offset|opacity|operator|order|orient|orientation|origin|overflow|overlinePosition|overlineThickness|panose1|paintOrder|pathLength|patternContentUnits|patternTransform|patternUnits|pointerEvents|points|pointsAtX|pointsAtY|pointsAtZ|preserveAlpha|preserveAspectRatio|primitiveUnits|r|radius|refX|refY|renderingIntent|repeatCount|repeatDur|requiredExtensions|requiredFeatures|restart|result|rotate|rx|ry|scale|seed|shapeRendering|slope|spacing|specularConstant|specularExponent|speed|spreadMethod|startOffset|stdDeviation|stemh|stemv|stitchTiles|stopColor|stopOpacity|strikethroughPosition|strikethroughThickness|string|stroke|strokeDasharray|strokeDashoffset|strokeLinecap|strokeLinejoin|strokeMiterlimit|strokeOpacity|strokeWidth|surfaceScale|systemLanguage|tableValues|targetX|targetY|textAnchor|textDecoration|textRendering|textLength|to|transform|u1|u2|underlinePosition|underlineThickness|unicode|unicodeBidi|unicodeRange|unitsPerEm|vAlphabetic|vHanging|vIdeographic|vMathematical|values|vectorEffect|version|vertAdvY|vertOriginX|vertOriginY|viewBox|viewTarget|visibility|widths|wordSpacing|writingMode|x|xHeight|x1|x2|xChannelSelector|xlinkActuate|xlinkArcrole|xlinkHref|xlinkRole|xlinkShow|xlinkTitle|xlinkType|xmlBase|xmlns|xmlnsXlink|xmlLang|xmlSpace|y|y1|y2|yChannelSelector|z|zoomAndPan|for|class|autofocus)|(([Dd][Aa][Tt][Aa]|[Aa][Rr][Ii][Aa]|x)-.*))$/;
+var isPropValid = /* @__PURE__ */ memoize(
+  function(prop) {
+    return reactPropsRegex.test(prop) || prop.charCodeAt(0) === 111 && prop.charCodeAt(1) === 110 && prop.charCodeAt(2) < 91;
+  }
+  /* Z+1 */
+);
+
+// node_modules/@emotion/styled/base/dist/emotion-styled-base.esm.js
+var isBrowser5 = typeof document !== "undefined";
+var testOmitPropsOnStringTag = isPropValid;
+var testOmitPropsOnComponent = function testOmitPropsOnComponent2(key) {
+  return key !== "theme";
+};
+var getDefaultShouldForwardProp = function getDefaultShouldForwardProp2(tag) {
+  return typeof tag === "string" && // 96 is one less than the char code
+  // for "a" so this is checking that
+  // it's a lowercase character
+  tag.charCodeAt(0) > 96 ? testOmitPropsOnStringTag : testOmitPropsOnComponent;
+};
+var composeShouldForwardProps = function composeShouldForwardProps2(tag, options, isReal) {
+  var shouldForwardProp;
+  if (options) {
+    var optionsShouldForwardProp = options.shouldForwardProp;
+    shouldForwardProp = tag.__emotion_forwardProp && optionsShouldForwardProp ? function(propName) {
+      return tag.__emotion_forwardProp(propName) && optionsShouldForwardProp(propName);
+    } : optionsShouldForwardProp;
+  }
+  if (typeof shouldForwardProp !== "function" && isReal) {
+    shouldForwardProp = tag.__emotion_forwardProp;
+  }
+  return shouldForwardProp;
+};
+var Insertion3 = function Insertion4(_ref) {
+  var cache = _ref.cache, serialized = _ref.serialized, isStringTag = _ref.isStringTag;
+  registerStyles(cache, serialized, isStringTag);
+  var rules = useInsertionEffectAlwaysWithSyncFallback(function() {
+    return insertStyles(cache, serialized, isStringTag);
+  });
+  if (!isBrowser5 && rules !== void 0) {
+    var _ref2;
+    var serializedNames = serialized.name;
+    var next2 = serialized.next;
+    while (next2 !== void 0) {
+      serializedNames += " " + next2.name;
+      next2 = next2.next;
+    }
+    return /* @__PURE__ */ React2.createElement("style", (_ref2 = {}, _ref2["data-emotion"] = cache.key + " " + serializedNames, _ref2.dangerouslySetInnerHTML = {
+      __html: rules
+    }, _ref2.nonce = cache.sheet.nonce, _ref2));
+  }
+  return null;
+};
+var createStyled = function createStyled2(tag, options) {
+  var isReal = tag.__emotion_real === tag;
+  var baseTag = isReal && tag.__emotion_base || tag;
+  var identifierName;
+  var targetClassName;
+  if (options !== void 0) {
+    identifierName = options.label;
+    targetClassName = options.target;
+  }
+  var shouldForwardProp = composeShouldForwardProps(tag, options, isReal);
+  var defaultShouldForwardProp = shouldForwardProp || getDefaultShouldForwardProp(baseTag);
+  var shouldUseAs = !defaultShouldForwardProp("as");
+  return function() {
+    var args = arguments;
+    var styles = isReal && tag.__emotion_styles !== void 0 ? tag.__emotion_styles.slice(0) : [];
+    if (identifierName !== void 0) {
+      styles.push("label:" + identifierName + ";");
+    }
+    if (args[0] == null || args[0].raw === void 0) {
+      styles.push.apply(styles, args);
+    } else {
+      var templateStringsArr = args[0];
+      styles.push(templateStringsArr[0]);
+      var len = args.length;
+      var i = 1;
+      for (; i < len; i++) {
+        styles.push(args[i], templateStringsArr[i]);
+      }
+    }
+    var Styled = withEmotionCache(function(props, cache, ref) {
+      var FinalTag = shouldUseAs && props.as || baseTag;
+      var className = "";
+      var classInterpolations = [];
+      var mergedProps = props;
+      if (props.theme == null) {
+        mergedProps = {};
+        for (var key in props) {
+          mergedProps[key] = props[key];
+        }
+        mergedProps.theme = React2.useContext(ThemeContext);
+      }
+      if (typeof props.className === "string") {
+        className = getRegisteredStyles(cache.registered, classInterpolations, props.className);
+      } else if (props.className != null) {
+        className = props.className + " ";
+      }
+      var serialized = serializeStyles(styles.concat(classInterpolations), cache.registered, mergedProps);
+      className += cache.key + "-" + serialized.name;
+      if (targetClassName !== void 0) {
+        className += " " + targetClassName;
+      }
+      var finalShouldForwardProp = shouldUseAs && shouldForwardProp === void 0 ? getDefaultShouldForwardProp(FinalTag) : defaultShouldForwardProp;
+      var newProps = {};
+      for (var _key in props) {
+        if (shouldUseAs && _key === "as") continue;
+        if (finalShouldForwardProp(_key)) {
+          newProps[_key] = props[_key];
+        }
+      }
+      newProps.className = className;
+      if (ref) {
+        newProps.ref = ref;
+      }
+      return /* @__PURE__ */ React2.createElement(React2.Fragment, null, /* @__PURE__ */ React2.createElement(Insertion3, {
+        cache,
+        serialized,
+        isStringTag: typeof FinalTag === "string"
+      }), /* @__PURE__ */ React2.createElement(FinalTag, newProps));
+    });
+    Styled.displayName = identifierName !== void 0 ? identifierName : "Styled(" + (typeof baseTag === "string" ? baseTag : baseTag.displayName || baseTag.name || "Component") + ")";
+    Styled.defaultProps = tag.defaultProps;
+    Styled.__emotion_real = Styled;
+    Styled.__emotion_base = baseTag;
+    Styled.__emotion_styles = styles;
+    Styled.__emotion_forwardProp = shouldForwardProp;
+    Object.defineProperty(Styled, "toString", {
+      value: function value() {
+        return "." + targetClassName;
+      }
+    });
+    Styled.withComponent = function(nextTag, nextOptions) {
+      var newStyled = createStyled2(nextTag, _extends({}, options, nextOptions, {
+        shouldForwardProp: composeShouldForwardProps(Styled, nextOptions, true)
+      }));
+      return newStyled.apply(void 0, styles);
+    };
+    return Styled;
+  };
+};
+
+// node_modules/@emotion/styled/dist/emotion-styled.esm.js
+__toESM(require_extends());
+var tags = [
+  "a",
+  "abbr",
+  "address",
+  "area",
+  "article",
+  "aside",
+  "audio",
+  "b",
+  "base",
+  "bdi",
+  "bdo",
+  "big",
+  "blockquote",
+  "body",
+  "br",
+  "button",
+  "canvas",
+  "caption",
+  "cite",
+  "code",
+  "col",
+  "colgroup",
+  "data",
+  "datalist",
+  "dd",
+  "del",
+  "details",
+  "dfn",
+  "dialog",
+  "div",
+  "dl",
+  "dt",
+  "em",
+  "embed",
+  "fieldset",
+  "figcaption",
+  "figure",
+  "footer",
+  "form",
+  "h1",
+  "h2",
+  "h3",
+  "h4",
+  "h5",
+  "h6",
+  "head",
+  "header",
+  "hgroup",
+  "hr",
+  "html",
+  "i",
+  "iframe",
+  "img",
+  "input",
+  "ins",
+  "kbd",
+  "keygen",
+  "label",
+  "legend",
+  "li",
+  "link",
+  "main",
+  "map",
+  "mark",
+  "marquee",
+  "menu",
+  "menuitem",
+  "meta",
+  "meter",
+  "nav",
+  "noscript",
+  "object",
+  "ol",
+  "optgroup",
+  "option",
+  "output",
+  "p",
+  "param",
+  "picture",
+  "pre",
+  "progress",
+  "q",
+  "rp",
+  "rt",
+  "ruby",
+  "s",
+  "samp",
+  "script",
+  "section",
+  "select",
+  "small",
+  "source",
+  "span",
+  "strong",
+  "style",
+  "sub",
+  "summary",
+  "sup",
+  "table",
+  "tbody",
+  "td",
+  "textarea",
+  "tfoot",
+  "th",
+  "thead",
+  "time",
+  "title",
+  "tr",
+  "track",
+  "u",
+  "ul",
+  "var",
+  "video",
+  "wbr",
+  // SVG
+  "circle",
+  "clipPath",
+  "defs",
+  "ellipse",
+  "foreignObject",
+  "g",
+  "image",
+  "line",
+  "linearGradient",
+  "mask",
+  "path",
+  "pattern",
+  "polygon",
+  "polyline",
+  "radialGradient",
+  "rect",
+  "stop",
+  "svg",
+  "text",
+  "tspan"
+];
+var styled = createStyled.bind(null);
+tags.forEach(function(tagName) {
+  styled[tagName] = styled(tagName);
+});
+
+// src/styles/theme.ts
+var theme = {
+  colors: {
+    primary: "#000000",
+    primaryHover: "#1f1f1f",
+    text: "#000000",
+    textSecondary: "#828282",
+    textMuted: "#a3a3a3",
+    textGray: "#525252",
+    border: "#d4d4d4",
+    borderGray: "#e4e4e7",
+    borderHover: "#9ca3af",
+    borderFocus: "#000000",
+    bgWhite: "#ffffff",
+    bgLight: "#fafafa",
+    bgGray: "#f5f5f5",
+    bgHover: "#f9fafb",
+    error: "#dc2626",
+    errorBg: "#fee2e2",
+    successBg: "#d1fae5",
+    successDark: "#059669",
+    black: "#000000",
+    zinc900: "#09090b"
+  },
+  spacing: {
+    1: "0.25rem",
+    // 4px
+    2: "0.5rem",
+    // 8px
+    3: "0.75rem",
+    // 12px
+    4: "1rem",
+    // 16px
+    6: "1.5rem",
+    // 32px
+    10: "2.5rem"
+    // 40px
+  },
+  radius: {
+    // 2px
+    sm: "0.25rem",
+    // 4px
+    md: "0.375rem",
+    // 6px
+    lg: "0.5rem",
+    // 8px
+    xl: "0.75rem",
+    // 12px
+    full: "9999px"
+  },
+  fontSize: {
+    xs: "0.75rem",
+    // 12px
+    sm: "0.875rem",
+    // 14px
+    base: "1rem",
+    // 20px
+    "2xl": "1.5rem"
+    // 24px
+  },
+  lineHeight: {
+    // 16px
+    normal: "1.25rem",
+    // 20px
+    relaxed: "1.5rem",
+    // 24px
+    loose: "2rem"
+    // 32px
+  },
+  fontFamily: {
+    base: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif",
+    manrope: "'Manrope', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif"
+  },
+  fontWeight: {
+    normal: 400,
+    medium: 500,
+    semibold: 600
+  },
+  shadow: {
+    md: "0 1px 2px 0 rgba(0, 0, 0, 0.1)",
+    lg: "0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)"
+  },
+  transition: {
+    fast: "150ms cubic-bezier(0.4, 0, 0.2, 1)",
+    base: "200ms cubic-bezier(0.4, 0, 0.2, 1)"
+  },
+  sizes: {
+    button: {
+      height: "2.5rem",
+      // 40px for submit
+      heightOAuth: "2.25rem"
+      // 36px for OAuth
+    },
+    // 32px
+    icon: "1.25rem",
+    // 20px
+    iconSm: "1.125rem",
+    // 18px
+    iconLg: "1.5rem",
+    // 24px
+    verifyCode: "3rem",
+    // 48px
+    verifyIcon: "4rem",
+    // 64px
+    verifyIconInner: "2rem"
+    // 32px
+  }
+};
+var keyframes2 = {
+  spin: `
+    from {
+      transform: rotate(0deg);
+    }
+    to {
+      transform: rotate(360deg);
+    }
+  `
+};
+
+// src/components/atoms/styled.ts
+var spinAnimation = keyframes`${keyframes2.spin}`;
+var AuthContainerWrapper = styled.div`
+  width: 100%;
+  max-width: 400px;
+  border-radius: ${theme.radius.xl};
+  overflow: hidden;
+  box-shadow: ${theme.shadow.lg};
+`;
+var AuthCard = styled.div`
+  background-color: ${theme.colors.bgWhite};
+  padding: ${theme.spacing[6]};
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: stretch;
+  gap: ${theme.spacing[6]};
+`;
+var AuthHeaderWrapper = styled.div`
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: flex-start;
+  gap: ${theme.spacing[2]};
+`;
+var AuthHeaderTitle = styled.h1`
+  font-size: ${theme.fontSize["2xl"]};
+  font-weight: ${theme.fontWeight.semibold};
+  color: ${theme.colors.text};
+  line-height: ${theme.lineHeight.loose};
+  margin: 0;
+  font-family: ${theme.fontFamily.base};
+`;
+var AuthHeaderSubtitle = styled.p`
+  font-size: ${theme.fontSize.sm};
+  font-weight: ${theme.fontWeight.normal};
+  color: ${theme.colors.textSecondary};
+  line-height: ${theme.lineHeight.relaxed};
+  margin: 0;
+  font-family: ${theme.fontFamily.base};
+`;
+var FormFieldWrapper = styled.div`
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: stretch;
+  gap: ${theme.spacing[1]};
+`;
+var FormFieldLabel = styled.label`
+  font-size: ${theme.fontSize.sm};
+  font-weight: ${theme.fontWeight.normal};
+  color: ${theme.colors.text};
+  line-height: ${theme.lineHeight.relaxed};
+  font-family: ${theme.fontFamily.base};
+`;
+var FormFieldInput = styled.input`
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: ${theme.spacing[2]};
+  align-self: stretch;
+  padding: ${theme.spacing[2]} ${theme.spacing[3]};
+  border-radius: ${theme.radius.sm};
+  border: 1px solid ${theme.colors.border};
+  background-color: ${theme.colors.bgWhite};
+  font-size: ${theme.fontSize.sm};
+  font-weight: ${theme.fontWeight.normal};
+  line-height: ${theme.lineHeight.normal};
+  color: ${theme.colors.text};
+  font-family: ${theme.fontFamily.base};
+  transition: border-color ${theme.transition.base};
+
+  &::placeholder {
+    color: ${theme.colors.textMuted};
+    font-size: ${theme.fontSize.sm};
+    font-weight: ${theme.fontWeight.normal};
+  }
+
+  &:focus {
+    outline: none;
+    border-color: ${theme.colors.borderFocus};
+  }
+`;
+var PasswordFieldWrapper = styled.div`
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: stretch;
+  gap: ${theme.spacing[1]};
+`;
+var PasswordFieldLabelRow = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+`;
+var PasswordFieldLabel = styled.label`
+  font-size: ${theme.fontSize.sm};
+  font-weight: ${theme.fontWeight.normal};
+  color: ${theme.colors.text};
+  line-height: ${theme.lineHeight.relaxed};
+  font-family: ${theme.fontFamily.base};
+`;
+var PasswordFieldForgotLink = styled.a`
+  font-size: ${theme.fontSize.sm};
+  font-weight: ${theme.fontWeight.normal};
+  color: ${theme.colors.textSecondary};
+  text-decoration: none;
+  transition: color ${theme.transition.fast};
+  font-family: ${theme.fontFamily.base};
+  cursor: pointer;
+`;
+var PasswordFieldInputWrapper = styled.div`
+  position: relative;
+  width: 100%;
+`;
+var PasswordFieldInput = styled.input`
+  width: 100%;
+  display: flex;
+  align-items: center;
+  align-self: stretch;
+  padding: ${theme.spacing[2]} ${theme.spacing[3]};
+  padding-right: 2.5rem;
+  border-radius: ${theme.radius.sm};
+  border: 1px solid ${theme.colors.border};
+  background-color: ${theme.colors.bgWhite};
+  font-size: ${theme.fontSize.sm};
+  font-weight: ${theme.fontWeight.normal};
+  line-height: ${theme.lineHeight.normal};
+  color: ${theme.colors.text};
+  font-family: ${theme.fontFamily.base};
+  transition: border-color ${theme.transition.base};
+
+  &::placeholder {
+    color: ${theme.colors.textMuted};
+  }
+
+  &:focus {
+    outline: none;
+    border-color: ${theme.colors.borderFocus};
+  }
+`;
+var PasswordFieldToggleButton = styled.button`
+  position: absolute;
+  right: ${theme.spacing[1]};
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: ${theme.spacing[1]};
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: ${theme.colors.textSecondary};
+  transition: color ${theme.transition.fast};
+`;
+var SubmitButton = styled.button`
+  border-radius: ${theme.radius.sm};
+  background-color: ${theme.colors.primary};
+  height: ${theme.sizes.button.height};
+  width: 100%;
+  display: flex;
+  margin-top: ${theme.spacing[4]};
+  padding: ${theme.spacing[2]} ${theme.spacing[4]};
+  justify-content: center;
+  align-items: center;
+  gap: 0.625rem;
+  align-self: stretch;
+  color: ${theme.colors.bgWhite};
+  font-weight: ${theme.fontWeight.semibold};
+  font-family: ${theme.fontFamily.manrope};
+  font-size: ${theme.fontSize.base};
+  line-height: normal;
+  border: none;
+  cursor: pointer;
+  transition: background-color ${theme.transition.base};
+
+  &:hover:not(:disabled) {
+    background-color: ${theme.colors.primaryHover};
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+`;
+var SubmitButtonIcon = styled.div`
+  width: ${theme.sizes.icon};
+  height: ${theme.sizes.icon};
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  svg {
+    width: 100%;
+    height: 100%;
+  }
+`;
+var SubmitButtonSpinner = styled.div`
+  width: ${theme.sizes.icon};
+  height: ${theme.sizes.icon};
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: ${spinAnimation} 1s linear infinite;
+
+  svg {
+    width: 100%;
+    height: 100%;
+  }
+`;
+var OAuthButton = styled.button`
+  display: flex;
+  width: 100%;
+  height: ${theme.sizes.button.heightOAuth};
+  padding: ${(props) => props.$variant === "short" || props.$variant === "iconOnly" ? theme.spacing[2] : `${theme.spacing[2]} ${theme.spacing[3]}`};
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
+  gap: ${(props) => props.$variant === "iconOnly" ? "0" : props.$variant === "short" ? theme.spacing[2] : theme.spacing[3]};
+  border-radius: ${theme.radius.md};
+  border: 1px solid ${theme.colors.borderGray};
+  background-color: ${theme.colors.bgWhite};
+  box-shadow: ${theme.shadow.md};
+  color: ${theme.colors.zinc900};
+  text-align: center;
+  font-size: ${theme.fontSize.sm};
+  font-weight: ${theme.fontWeight.medium};
+  line-height: ${theme.lineHeight.normal};
+  cursor: pointer;
+  transition: all ${theme.transition.base};
+  font-family: ${theme.fontFamily.base};
+
+  &:hover:not(:disabled) {
+    background-color: ${theme.colors.bgHover};
+    border-color: ${theme.colors.borderHover};
+  }
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+`;
+var OAuthButtonIcon = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: ${theme.sizes.iconSm};
+  height: ${theme.sizes.iconSm};
+
+  svg {
+    width: 100%;
+    height: 100%;
+  }
+`;
+var OAuthProvidersContainer = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: ${theme.spacing[3]};
+  width: 100%;
+`;
+var AuthLinkWrapper = styled.div`
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: ${theme.spacing[1]};
+  font-size: ${theme.fontSize.sm};
+  color: ${theme.colors.textSecondary};
+  font-family: ${theme.fontFamily.base};
+`;
+var AuthLinkText = styled.span`
+  font-weight: ${theme.fontWeight.normal};
+`;
+var AuthLinkLink = styled.a`
+  font-weight: ${theme.fontWeight.semibold};
+  color: ${theme.colors.text};
+  text-decoration: none;
+  transition: opacity ${theme.transition.fast};
+  cursor: pointer;
+`;
+var AuthDividerWrapper = styled.div`
+  display: flex;
+  align-items: center;
+  text-align: center;
+  width: 100%;
+  gap: ${theme.spacing[3]};
+`;
+var AuthDividerLine = styled.div`
+  flex: 1;
+  border-top: 1px solid ${theme.colors.border};
+`;
+var AuthDividerText = styled.span`
+  font-size: ${theme.fontSize.sm};
+  color: ${theme.colors.textSecondary};
+  font-weight: ${theme.fontWeight.normal};
+  font-family: ${theme.fontFamily.manrope};
+`;
+var ErrorBannerWrapper = styled.div`
+  padding: ${theme.spacing[3]};
+  background-color: ${theme.colors.errorBg};
+  border-radius: ${theme.radius.md};
+  border: 1px solid ${theme.colors.error};
+`;
+var ErrorBannerContent = styled.div`
+  display: flex;
+  align-items: center;
+  gap: ${theme.spacing[2]};
+`;
+var ErrorBannerIcon = styled.div`
+  width: ${theme.sizes.iconLg};
+  height: ${theme.sizes.iconLg};
+  flex-shrink: 0;
+  color: ${theme.colors.error};
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  svg {
+    width: 100%;
+    height: 100%;
+  }
+`;
+var ErrorBannerText = styled.p`
+  font-size: ${theme.fontSize.sm};
+  color: ${theme.colors.error};
+  font-weight: ${theme.fontWeight.normal};
+  font-family: ${theme.fontFamily.base};
+  margin: 0;
+`;
+var AuthBrandingWrapper = styled.div`
+  background-color: ${theme.colors.bgLight};
+  padding: ${theme.spacing[4]} ${theme.spacing[2]};
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
+  gap: ${theme.spacing[1]};
+`;
+var AuthBrandingText = styled.p`
+  font-size: ${theme.fontSize.xs};
+  font-weight: ${theme.fontWeight.medium};
+  color: ${theme.colors.text};
+  font-family: ${theme.fontFamily.manrope};
+  margin: 0;
+`;
+var VerificationCodeInputContainer = styled.div`
+  display: flex;
+  gap: ${theme.spacing[3]};
+  justify-content: center;
+`;
+var VerificationCodeInput = styled.input`
+  width: ${theme.sizes.verifyCode};
+  height: ${theme.sizes.verifyCode};
+  text-align: center;
+  font-size: ${theme.fontSize.base};
+  font-weight: ${theme.fontWeight.semibold};
+  border: 1px solid ${theme.colors.border};
+  border-radius: ${theme.radius.sm};
+  background-color: ${theme.colors.bgWhite};
+  color: ${theme.colors.text};
+  transition: border-color ${theme.transition.base};
+  font-family: ${theme.fontFamily.manrope};
+
+  &:focus {
+    outline: none;
+    border-color: ${theme.colors.borderFocus};
+  }
+`;
+var PasswordStrengthWrapper = styled.div`
+  margin-top: ${theme.spacing[2]};
+`;
+styled.div`
+  height: 100%;
+  transition:
+    width ${theme.transition.base},
+    background-color ${theme.transition.base};
+`;
+styled.span`
+  font-size: ${theme.fontSize.xs};
+  color: ${theme.colors.textSecondary};
+  font-family: ${theme.fontFamily.base};
+`;
+var PasswordStrengthRequirements = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: ${theme.spacing[2]};
+  font-size: ${theme.fontSize.sm};
+  color: ${theme.colors.textGray};
+  font-family: ${theme.fontFamily.base};
+`;
+var PasswordStrengthRequirement = styled.div`
+  display: flex;
+  align-items: center;
+  gap: ${theme.spacing[2]};
+`;
+function AuthBranding() {
+  return /* @__PURE__ */ jsxs(AuthBrandingWrapper, { children: [
+    /* @__PURE__ */ jsx$1(AuthBrandingText, { children: "Secured by" }),
+    /* @__PURE__ */ jsx$1("a", { href: "https://insforge.dev", target: "_blank", rel: "noopener noreferrer", children: /* @__PURE__ */ jsxs(
+      "svg",
+      {
+        width: "83",
+        height: "20",
+        viewBox: "0 0 83 20",
+        fill: "none",
+        xmlns: "http://www.w3.org/2000/svg",
+        children: [
+          /* @__PURE__ */ jsx$1(
+            "path",
+            {
+              d: "M2.16783 8.46797C1.9334 8.23325 1.9334 7.85269 2.16783 7.61797L8.11049 1.66797L16.6 1.66797L6.41259 11.868C6.17815 12.1027 5.79807 12.1027 5.56363 11.868L2.16783 8.46797Z",
+              fill: "url(#paint0_linear_2976_9475)"
+            }
+          ),
+          /* @__PURE__ */ jsx$1(
+            "path",
+            {
+              d: "M12.8858 6.44922L16.6 10.168V18.668L8.64108 10.6992L12.8858 6.44922Z",
+              fill: "url(#paint1_linear_2976_9475)"
+            }
+          ),
+          /* @__PURE__ */ jsx$1(
+            "path",
+            {
+              d: "M67.5439 6.48828C68.2894 6.48828 68.9145 6.67064 69.418 7.03516C69.5229 7.10943 69.6214 7.1907 69.7158 7.27637V6.70703H71.248V14.959C71.248 15.1583 71.2381 15.3485 71.2188 15.5283C71.2042 15.7129 71.1774 15.8925 71.1387 16.0674C71.0225 16.5776 70.7998 16.9957 70.4707 17.3213C70.1415 17.6518 69.7321 17.8972 69.2432 18.0576C68.7592 18.2179 68.2222 18.2988 67.6318 18.2988C67.1962 18.2988 66.7768 18.2308 66.375 18.0947C65.9782 17.9587 65.6202 17.7614 65.3008 17.5039C64.9813 17.2512 64.7199 16.9446 64.5166 16.585L66.1289 15.7832C66.2789 16.0698 66.4888 16.2819 66.7598 16.418C67.0356 16.5589 67.3289 16.6289 67.6387 16.6289C68.0016 16.6289 68.3258 16.5628 68.6113 16.4316C68.8969 16.3053 69.1176 16.116 69.2725 15.8633C69.4321 15.6155 69.5077 15.3047 69.498 14.9307V14.1797C69.4665 14.2037 69.4359 14.229 69.4033 14.252C68.8855 14.6164 68.2441 14.7988 67.4795 14.7988C66.7582 14.7988 66.1281 14.6165 65.5908 14.252C65.0537 13.8875 64.637 13.3915 64.3418 12.7646C64.0467 12.1378 63.8994 11.4307 63.8994 10.6436C63.8994 9.84651 64.0465 9.13673 64.3418 8.51465C64.6419 7.88768 65.0663 7.39481 65.6133 7.03516C66.1601 6.67077 66.8036 6.48836 67.5439 6.48828ZM37.5 6.48828C38.1099 6.48828 38.6496 6.58294 39.1191 6.77246C39.5935 6.96201 39.9762 7.2321 40.2666 7.58203C40.5569 7.93184 40.7359 8.34227 40.8037 8.81348L39.0176 9.13477C38.974 8.79951 38.8218 8.53424 38.5605 8.33984C38.304 8.14547 37.96 8.03605 37.5293 8.01172C37.1178 7.98742 36.7859 8.05051 36.5342 8.20117C36.2825 8.34698 36.1562 8.55398 36.1562 8.82129C36.1563 8.97184 36.208 9.10017 36.3096 9.20703C36.4112 9.31394 36.614 9.42141 36.9189 9.52832C37.2288 9.63524 37.6889 9.76635 38.2988 9.92188C38.9232 10.0823 39.4222 10.2666 39.7949 10.4756C40.1722 10.6796 40.4428 10.9254 40.6074 11.2119C40.7768 11.4987 40.8623 11.8466 40.8623 12.2549C40.8623 13.047 40.574 13.6691 39.998 14.1211C39.4268 14.5731 38.6348 14.7988 37.623 14.7988C36.6551 14.7988 35.8687 14.5799 35.2637 14.1426C34.6587 13.7052 34.2909 13.0908 34.1602 12.2988L35.9463 12.0215C36.0383 12.4102 36.2411 12.7169 36.5557 12.9404C36.8703 13.164 37.2678 13.2754 37.7471 13.2754C38.1681 13.2754 38.4922 13.1926 38.7197 13.0273C38.9521 12.8572 39.0684 12.6266 39.0684 12.335C39.0684 12.1552 39.0245 12.0122 38.9375 11.9053C38.8552 11.7935 38.6713 11.686 38.3857 11.584C38.1001 11.4819 37.6618 11.3528 37.0713 11.1973C36.4131 11.0223 35.8901 10.8359 35.5029 10.6367C35.1158 10.4327 34.8374 10.192 34.668 9.91504C34.4985 9.63801 34.4141 9.30188 34.4141 8.9082C34.4141 8.41746 34.5423 7.98943 34.7988 7.625C35.0553 7.26073 35.4135 6.98146 35.873 6.78711C36.3329 6.58784 36.8755 6.48828 37.5 6.48828ZM53.3047 6.48828C54.0937 6.48828 54.7815 6.66572 55.3672 7.02051C55.9527 7.37528 56.4072 7.86634 56.7314 8.49316C57.0558 9.11525 57.2187 9.83193 57.2188 10.6436C57.2188 11.46 57.0537 12.1817 56.7246 12.8086C56.4003 13.4307 55.9451 13.9196 55.3594 14.2744C54.7737 14.6242 54.0888 14.7988 53.3047 14.7988C52.5205 14.7988 51.8357 14.6214 51.25 14.2666C50.6643 13.9118 50.2091 13.4238 49.8848 12.8018C49.5653 12.1748 49.4053 11.4552 49.4053 10.6436C49.4053 9.81735 49.5703 9.09279 49.8994 8.4707C50.2286 7.8488 50.6859 7.36255 51.2715 7.0127C51.8572 6.66281 52.5351 6.48828 53.3047 6.48828ZM76.7471 6.48828C77.5603 6.48828 78.25 6.68053 78.8164 7.06445C79.3876 7.44351 79.812 7.97991 80.0879 8.6748C80.3638 9.36976 80.4672 10.189 80.3994 11.1318H74.7256C74.7843 11.6972 74.949 12.1516 75.2227 12.4951C75.5711 12.9325 76.0792 13.1513 76.7471 13.1514C77.1779 13.1514 77.5486 13.0567 77.8584 12.8672C78.173 12.6728 78.4146 12.3928 78.584 12.0283L80.3125 12.5537C80.0124 13.2633 79.5473 13.8153 78.918 14.209C78.2936 14.6025 77.6036 14.7988 76.8486 14.7988C76.0549 14.7988 75.358 14.6263 74.7578 14.2812C74.1576 13.9362 73.6875 13.458 73.3486 12.8457C73.0147 12.2334 72.8477 11.5284 72.8477 10.7314C72.8477 9.87126 73.0127 9.12495 73.3418 8.49316C73.671 7.85651 74.1282 7.36263 74.7139 7.0127C75.2995 6.6628 75.9775 6.48832 76.7471 6.48828ZM23.3301 14.5801H21.5801V4.08203H23.3301V14.5801ZM29.6152 6.48047C30.1959 6.48052 30.6753 6.5781 31.0527 6.77246C31.4301 6.96681 31.7305 7.21443 31.9531 7.51562C32.1758 7.81695 32.3398 8.13831 32.4463 8.47852C32.5528 8.81873 32.6213 9.14205 32.6504 9.44824C32.6843 9.74946 32.7012 9.99508 32.7012 10.1846V14.5801H30.9287V10.7891C30.9287 10.5413 30.9118 10.2669 30.8779 9.96582C30.844 9.66449 30.7645 9.37469 30.6387 9.09766C30.5177 8.81592 30.3337 8.58503 30.0869 8.40527C29.8449 8.22551 29.5157 8.13579 29.0996 8.13574C28.8769 8.13574 28.6563 8.17221 28.4385 8.24512C28.2206 8.31802 28.0219 8.4442 27.8428 8.62402C27.6685 8.79899 27.5284 9.04249 27.4219 9.35352C27.3154 9.65965 27.2617 10.0532 27.2617 10.5342V14.5801H25.4902V6.70703H27.0518V7.58301C27.2521 7.34675 27.486 7.14172 27.7559 6.96973C28.2593 6.64409 28.8794 6.48047 29.6152 6.48047ZM48.748 5.83887H44.2021V8.45605H47.876V10.2061H44.2021V14.5801H42.4521V4.08203H48.748V5.83887ZM62.5137 6.67773C62.7606 6.65829 63.001 6.66815 63.2334 6.70703V8.34766C63.001 8.27961 62.7317 8.25695 62.4268 8.28125C62.1267 8.30557 61.8553 8.39134 61.6133 8.53711C61.3715 8.66829 61.1733 8.83606 61.0186 9.04004C60.8686 9.24404 60.7572 9.47701 60.6846 9.73926C60.612 9.99685 60.5752 10.2768 60.5752 10.5781V14.5801H58.8184V6.70703H60.3652V7.96582C60.4243 7.85986 60.4888 7.75824 60.5605 7.66211C60.7251 7.4434 60.9219 7.26302 61.1494 7.12207C61.3429 6.99098 61.5559 6.88926 61.7881 6.81641C62.0251 6.73869 62.267 6.69235 62.5137 6.67773ZM67.8057 8.0625C67.3362 8.06252 66.9485 8.17982 66.6436 8.41309C66.3389 8.64144 66.1139 8.95232 65.9688 9.3457C65.8235 9.7345 65.751 10.1673 65.751 10.6436C65.751 11.1247 65.8215 11.5624 65.9619 11.9561C66.1071 12.3447 66.3269 12.6535 66.6221 12.8818C66.9174 13.1103 67.293 13.2246 67.748 13.2246C68.2174 13.2246 68.5953 13.1171 68.8809 12.9033C69.1711 12.6846 69.3811 12.3808 69.5117 11.9922C69.6473 11.6034 69.7158 11.1539 69.7158 10.6436C69.7158 10.1284 69.6473 9.67886 69.5117 9.29492C69.381 8.90617 69.1753 8.60445 68.8945 8.39062C68.6138 8.17213 68.2508 8.0625 67.8057 8.0625ZM53.3047 8.13574C52.8351 8.13574 52.4475 8.24222 52.1426 8.45605C51.8425 8.66504 51.6198 8.95977 51.4746 9.33887C51.3295 9.71303 51.2568 10.148 51.2568 10.6436C51.2568 11.4066 51.4288 12.0168 51.7725 12.4736C52.121 12.9256 52.6318 13.1514 53.3047 13.1514C54.0017 13.1514 54.5196 12.9177 54.8584 12.4512C55.1971 11.9846 55.3672 11.3822 55.3672 10.6436C55.3672 9.8807 55.1951 9.27324 54.8516 8.82129C54.5079 8.36444 53.9921 8.13575 53.3047 8.13574ZM76.8203 8.02637C76.1039 8.02637 75.5712 8.25013 75.2227 8.69727C74.9987 8.98144 74.8476 9.35094 74.7676 9.80566H78.6221C78.5589 9.29301 78.4236 8.89686 78.2139 8.61719C77.9186 8.22359 77.4543 8.02645 76.8203 8.02637Z",
+              fill: "black"
+            }
+          ),
+          /* @__PURE__ */ jsxs("defs", { children: [
+            /* @__PURE__ */ jsxs(
+              "linearGradient",
+              {
+                id: "paint0_linear_2976_9475",
+                x1: "1.85883",
+                y1: "1.92425",
+                x2: "24.3072",
+                y2: "9.64016",
+                gradientUnits: "userSpaceOnUse",
+                children: [
+                  /* @__PURE__ */ jsx$1("stop", {}),
+                  /* @__PURE__ */ jsx$1("stop", { offset: "1", stopOpacity: "0.4" })
+                ]
+              }
+            ),
+            /* @__PURE__ */ jsxs(
+              "linearGradient",
+              {
+                id: "paint1_linear_2976_9475",
+                x1: "25.6475",
+                y1: "8.65468",
+                x2: "10.7901",
+                y2: "8.65468",
+                gradientUnits: "userSpaceOnUse",
+                children: [
+                  /* @__PURE__ */ jsx$1("stop", {}),
+                  /* @__PURE__ */ jsx$1("stop", { offset: "1", stopOpacity: "0.4" })
+                ]
+              }
+            )
+          ] })
+        ]
+      }
+    ) })
+  ] });
+}
+function AuthContainer({ children }) {
+  return /* @__PURE__ */ jsxs(AuthContainerWrapper, { children: [
+    /* @__PURE__ */ jsx$1(AuthCard, { children }),
+    /* @__PURE__ */ jsx$1(AuthBranding, {})
+  ] });
+}
+function AuthHeader({ title, subtitle }) {
+  return /* @__PURE__ */ jsxs(AuthHeaderWrapper, { children: [
+    /* @__PURE__ */ jsx$1(AuthHeaderTitle, { children: title }),
+    subtitle && /* @__PURE__ */ jsx$1(AuthHeaderSubtitle, { children: subtitle })
+  ] });
+}
+function AuthErrorBanner({ error }) {
+  if (!error) {
+    return null;
+  }
+  return /* @__PURE__ */ jsx$1(ErrorBannerWrapper, { children: /* @__PURE__ */ jsxs(ErrorBannerContent, { children: [
+    /* @__PURE__ */ jsx$1(ErrorBannerIcon, { children: /* @__PURE__ */ jsx$1(AlertTriangle, {}) }),
+    /* @__PURE__ */ jsx$1(ErrorBannerText, { children: error })
+  ] }) });
+}
+function AuthFormField({ label, id, ...props }) {
+  return /* @__PURE__ */ jsxs(FormFieldWrapper, { children: [
+    /* @__PURE__ */ jsx$1(FormFieldLabel, { htmlFor: id, children: label }),
+    /* @__PURE__ */ jsx$1(FormFieldInput, { id, ...props })
+  ] });
+}
+var NavigationContext = createContext(null);
+function useNavigationAdapter() {
+  const adapter = useContext(NavigationContext);
+  if (!adapter) {
+    return {
+      useSearchParams: () => new URLSearchParams(),
+      Link: ({ href, children, className }) => /* @__PURE__ */ jsx$1("a", { href, className, children })
+    };
+  }
+  return adapter;
+}
+
+// src/navigation/useSearchParams.ts
+function useSearchParams() {
+  const adapter = useNavigationAdapter();
+  return adapter.useSearchParams();
+}
+function AuthPasswordStrengthIndicator({
+  password,
+  config
+}) {
+  const requirements = createRequirements(config);
+  return /* @__PURE__ */ jsx$1(PasswordStrengthWrapper, { children: /* @__PURE__ */ jsx$1(PasswordStrengthRequirements, { children: requirements.map((req) => /* @__PURE__ */ jsxs(PasswordStrengthRequirement, { children: [
+    /* @__PURE__ */ jsx$1(
+      "div",
+      {
+        style: {
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          width: "1rem",
+          height: "1rem",
+          borderRadius: "50%",
+          border: "2px solid",
+          borderColor: req.test(password) ? "transparent" : "#9ca3af",
+          backgroundColor: req.test(password) ? "#059669" : "white",
+          transition: "all 0.2s"
+        },
+        children: req.test(password) && /* @__PURE__ */ jsx$1(Check, { style: { width: "0.75rem", height: "0.75rem", color: "white" } })
+      }
+    ),
+    /* @__PURE__ */ jsx$1("span", { children: req.label })
+  ] }, req.label)) }) });
+}
+function createRequirements(config) {
+  const requirements = [];
+  if (config.passwordMinLength) {
+    requirements.push({
+      label: `At least ${config.passwordMinLength} characters`,
+      test: (password) => password.length >= config.passwordMinLength
+    });
+  }
+  if (config.requireLowercase) {
+    requirements.push({
+      label: "Contains lowercase letter",
+      test: (password) => /[a-z]/.test(password)
+    });
+  }
+  if (config.requireUppercase) {
+    requirements.push({
+      label: "Contains uppercase letter",
+      test: (password) => /[A-Z]/.test(password)
+    });
+  }
+  if (config.requireNumber) {
+    requirements.push({
+      label: "Contains number",
+      test: (password) => /\d/.test(password)
+    });
+  }
+  if (config.requireSpecialChar) {
+    requirements.push({
+      label: "Contains special character",
+      test: (password) => /[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]/.test(password)
+    });
+  }
+  return requirements;
+}
+
+// src/lib/path-utils.ts
+function resolveAuthPath(targetPath) {
+  if (typeof window === "undefined") {
+    return targetPath;
+  }
+  const currentPath = window.location.pathname;
+  if (currentPath.startsWith("/auth/")) {
+    if (targetPath.startsWith("/auth/")) {
+      return targetPath;
+    }
+    return `/auth${targetPath}`;
+  }
+  return targetPath;
+}
+function resolveAuthUrl(targetPath, searchParams) {
+  const resolvedPath = resolveAuthPath(targetPath);
+  if (!searchParams || searchParams.toString() === "") {
+    return resolvedPath;
+  }
+  return `${resolvedPath}?${searchParams.toString()}`;
+}
+function AuthPasswordField({
+  label,
+  id,
+  showStrengthIndicator = false,
+  authConfig,
+  forgotPasswordLink,
+  value,
+  onFocus,
+  ...props
+}) {
+  const searchParams = useSearchParams();
+  const { Link } = useNavigationAdapter();
+  const [showPassword, setShowPassword] = useState(false);
+  const [showStrength, setShowStrength] = useState(false);
+  const resolvedForgotPasswordHref = useMemo(
+    () => forgotPasswordLink ? resolveAuthUrl(forgotPasswordLink.href, searchParams) : void 0,
+    [forgotPasswordLink, searchParams]
+  );
+  const handleFocus = (e) => {
+    if (showStrengthIndicator) {
+      setShowStrength(true);
+    }
+    onFocus?.(e);
+  };
+  return /* @__PURE__ */ jsxs(PasswordFieldWrapper, { children: [
+    (label || forgotPasswordLink) && /* @__PURE__ */ jsxs(PasswordFieldLabelRow, { children: [
+      /* @__PURE__ */ jsx$1(PasswordFieldLabel, { htmlFor: id, children: label }),
+      forgotPasswordLink && resolvedForgotPasswordHref && /* @__PURE__ */ jsx$1(Link, { href: resolvedForgotPasswordHref, className: "", children: /* @__PURE__ */ jsx$1(PasswordFieldForgotLink, { as: "span", children: forgotPasswordLink.text || "Forget Password?" }) })
+    ] }),
+    /* @__PURE__ */ jsxs(PasswordFieldInputWrapper, { children: [
+      /* @__PURE__ */ jsx$1(
+        PasswordFieldInput,
+        {
+          id,
+          type: showPassword ? "text" : "password",
+          value,
+          onFocus: handleFocus,
+          ...props
+        }
+      ),
+      /* @__PURE__ */ jsx$1(
+        PasswordFieldToggleButton,
+        {
+          type: "button",
+          onClick: () => setShowPassword(!showPassword),
+          "aria-label": showPassword ? "Hide password" : "Show password",
+          children: showPassword ? /* @__PURE__ */ jsx$1(EyeOff, { size: 20 }) : /* @__PURE__ */ jsx$1(Eye, { size: 20 })
+        }
+      )
+    ] }),
+    showStrengthIndicator && showStrength && /* @__PURE__ */ jsx$1(AuthPasswordStrengthIndicator, { password: String(value || ""), config: authConfig })
+  ] });
+}
+function AuthSubmitButton({
+  children,
+  isLoading = false,
+  confirmed = false,
+  disabled = false,
+  type = "submit",
+  onClick
+}) {
+  return /* @__PURE__ */ jsxs(SubmitButton, { type, disabled: disabled || isLoading || confirmed, onClick, children: [
+    isLoading && /* @__PURE__ */ jsx$1(SubmitButtonSpinner, { children: /* @__PURE__ */ jsx$1(Loader2, { size: 20 }) }),
+    confirmed && /* @__PURE__ */ jsx$1(SubmitButtonIcon, { children: /* @__PURE__ */ jsx$1(CircleCheck, { size: 20 }) }),
+    children
+  ] });
+}
+function AuthLink({ text, linkText, href }) {
+  const searchParams = useSearchParams();
+  const { Link } = useNavigationAdapter();
+  const finalHref = resolveAuthUrl(href, searchParams);
+  return /* @__PURE__ */ jsxs(AuthLinkWrapper, { children: [
+    text && /* @__PURE__ */ jsx$1(AuthLinkText, { children: text }),
+    text && " ",
+    /* @__PURE__ */ jsx$1(Link, { href: finalHref, className: "", children: /* @__PURE__ */ jsx$1(AuthLinkLink, { as: "span", children: linkText }) })
+  ] });
+}
+function AuthDivider({ text = "or" }) {
+  return /* @__PURE__ */ jsxs(AuthDividerWrapper, { children: [
+    /* @__PURE__ */ jsx$1(AuthDividerLine, {}),
+    /* @__PURE__ */ jsx$1(AuthDividerText, { children: text }),
+    /* @__PURE__ */ jsx$1(AuthDividerLine, {})
+  ] });
+}
+var OAUTH_PROVIDER_CONFIG = {
+  google: {
+    name: "Google",
+    svg: /* @__PURE__ */ jsxs("svg", { width: "18", height: "18", viewBox: "0 0 18 18", fill: "none", children: [
+      /* @__PURE__ */ jsx$1(
+        "path",
+        {
+          d: "M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.874 2.684-6.615z",
+          fill: "#4285F4"
+        }
+      ),
+      /* @__PURE__ */ jsx$1(
+        "path",
+        {
+          d: "M9 18c2.43 0 4.467-.806 5.956-2.184l-2.908-2.258c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332C2.438 15.983 5.482 18 9 18z",
+          fill: "#34A853"
+        }
+      ),
+      /* @__PURE__ */ jsx$1(
+        "path",
+        {
+          d: "M3.964 10.707c-.18-.54-.282-1.117-.282-1.707 0-.593.102-1.17.282-1.709V4.958H.957C.347 6.173 0 7.548 0 9c0 1.452.348 2.827.957 4.042l3.007-2.335z",
+          fill: "#FBBC05"
+        }
+      ),
+      /* @__PURE__ */ jsx$1(
+        "path",
+        {
+          d: "M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0 5.482 0 2.438 2.017.957 4.958L3.964 7.29C4.672 5.163 6.656 3.58 9 3.58z",
+          fill: "#EA4335"
+        }
+      )
+    ] }),
+    className: "insforge-oauth-google"
+  },
+  github: {
+    name: "GitHub",
+    svg: /* @__PURE__ */ jsx$1("svg", { width: "18", height: "18", viewBox: "0 0 16 16", fill: "currentColor", children: /* @__PURE__ */ jsx$1("path", { d: "M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z" }) }),
+    className: "insforge-oauth-github"
+  },
+  discord: {
+    name: "Discord",
+    svg: /* @__PURE__ */ jsx$1("svg", { width: "18", height: "18", viewBox: "0 0 24 24", fill: "none", children: /* @__PURE__ */ jsx$1(
+      "path",
+      {
+        d: "M20.317 4.37a19.791 19.791 0 00-4.885-1.515.074.074 0 00-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 00-5.487 0 12.64 12.64 0 00-.617-1.25.077.077 0 00-.079-.037A19.736 19.736 0 003.677 4.37a.07.07 0 00-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 00.031.057 19.9 19.9 0 005.993 3.03.078.078 0 00.084-.028c.462-.63.874-1.295 1.226-1.994a.076.076 0 00-.041-.106 13.107 13.107 0 01-1.872-.892.077.077 0 01-.008-.128 10.2 10.2 0 00.372-.292.074.074 0 01.077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 01.078.01c.12.098.246.198.373.292a.077.077 0 01-.006.127 12.299 12.299 0 01-1.873.892.077.077 0 00-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 00.084.028 19.839 19.839 0 006.002-3.03.077.077 0 00.032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 00-.031-.03zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.956-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.946 2.418-2.157 2.418z",
+        fill: "#5865F2"
+      }
+    ) }),
+    className: "insforge-oauth-discord"
+  },
+  facebook: {
+    name: "Facebook",
+    svg: /* @__PURE__ */ jsx$1("svg", { width: "18", height: "18", viewBox: "0 0 24 24", fill: "none", children: /* @__PURE__ */ jsx$1(
+      "path",
+      {
+        d: "M24 12.073C24 5.405 18.627 0 12 0S0 5.405 0 12.073C0 18.1 4.388 23.094 10.125 24v-8.437H7.078v-3.49h3.047v-2.66c0-3.025 1.792-4.697 4.533-4.697 1.312 0 2.686.236 2.686.236v2.971H15.83c-1.49 0-1.955.93-1.955 1.886v2.264h3.328l-.532 3.49h-2.796V24C19.612 23.094 24 18.1 24 12.073z",
+        fill: "#1877F2"
+      }
+    ) }),
+    className: "insforge-oauth-facebook"
+  },
+  linkedin: {
+    name: "LinkedIn",
+    svg: /* @__PURE__ */ jsx$1("svg", { width: "18", height: "18", viewBox: "0 0 24 24", fill: "none", children: /* @__PURE__ */ jsx$1(
+      "path",
+      {
+        d: "M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 01-2.063-2.065 2.064 2.064 0 112.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z",
+        fill: "#0A66C2"
+      }
+    ) }),
+    className: "insforge-oauth-linkedin"
+  },
+  microsoft: {
+    name: "Microsoft",
+    svg: /* @__PURE__ */ jsxs("svg", { width: "18", height: "18", viewBox: "0 0 23 23", fill: "none", children: [
+      /* @__PURE__ */ jsx$1("path", { d: "M0 0h11v11H0z", fill: "#F25022" }),
+      /* @__PURE__ */ jsx$1("path", { d: "M12 0h11v11H12z", fill: "#7FBA00" }),
+      /* @__PURE__ */ jsx$1("path", { d: "M0 12h11v11H0z", fill: "#00A4EF" }),
+      /* @__PURE__ */ jsx$1("path", { d: "M12 12h11v11H12z", fill: "#FFB900" })
+    ] }),
+    className: "insforge-oauth-microsoft"
+  },
+  apple: {
+    name: "Apple",
+    svg: /* @__PURE__ */ jsx$1("svg", { width: "18", height: "18", viewBox: "0 0 24 24", fill: "currentColor", children: /* @__PURE__ */ jsx$1("path", { d: "M17.05 20.28c-.98.95-2.05.8-3.08.35-1.09-.46-2.09-.48-3.24 0-1.44.62-2.2.44-3.06-.35C2.79 15.25 3.51 7.59 9.05 7.31c1.35.07 2.29.74 3.08.8 1.18-.24 2.31-.93 3.57-.84 1.51.12 2.65.72 3.4 1.8-3.12 1.87-2.38 5.98.48 7.13-.57 1.5-1.31 2.99-2.54 4.09l.01-.01zM12.03 7.25c-.15-2.23 1.66-4.07 3.74-4.25.29 2.58-2.34 4.5-3.74 4.25z" }) }),
+    className: "insforge-oauth-apple"
+  },
+  x: {
+    name: "X",
+    svg: /* @__PURE__ */ jsx$1("svg", { width: "18", height: "18", viewBox: "0 0 24 24", fill: "currentColor", children: /* @__PURE__ */ jsx$1("path", { d: "M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" }) }),
+    className: "insforge-oauth-x"
+  },
+  instagram: {
+    name: "Instagram",
+    svg: /* @__PURE__ */ jsxs("svg", { width: "18", height: "18", viewBox: "0 0 24 24", fill: "none", children: [
+      /* @__PURE__ */ jsx$1(
+        "path",
+        {
+          d: "M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z",
+          fill: "url(#instagram-gradient)"
+        }
+      ),
+      /* @__PURE__ */ jsx$1("defs", { children: /* @__PURE__ */ jsxs("linearGradient", { id: "instagram-gradient", x1: "0%", y1: "100%", x2: "100%", y2: "0%", children: [
+        /* @__PURE__ */ jsx$1("stop", { offset: "0%", stopColor: "#FD5949" }),
+        /* @__PURE__ */ jsx$1("stop", { offset: "50%", stopColor: "#D6249F" }),
+        /* @__PURE__ */ jsx$1("stop", { offset: "100%", stopColor: "#285AEB" })
+      ] }) })
+    ] }),
+    className: "insforge-oauth-instagram"
+  },
+  tiktok: {
+    name: "TikTok",
+    svg: /* @__PURE__ */ jsx$1("svg", { width: "18", height: "18", viewBox: "0 0 24 24", fill: "none", children: /* @__PURE__ */ jsx$1(
+      "path",
+      {
+        d: "M19.589 6.686a4.793 4.793 0 01-3.77-4.245V2h-3.445v13.672a2.896 2.896 0 01-5.201 1.743l-.002-.001.002.001a2.895 2.895 0 013.183-4.51v-3.5a6.329 6.329 0 00-5.394 10.692 6.33 6.33 0 0010.857-4.424V8.687a8.182 8.182 0 004.773 1.526V6.79a4.831 4.831 0 01-1.003-.104z",
+        fill: "currentColor"
+      }
+    ) }),
+    className: "insforge-oauth-tiktok"
+  },
+  spotify: {
+    name: "Spotify",
+    svg: /* @__PURE__ */ jsx$1("svg", { width: "18", height: "18", viewBox: "0 0 24 24", fill: "none", children: /* @__PURE__ */ jsx$1(
+      "path",
+      {
+        d: "M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.66 0 12 0zm5.521 17.34c-.24.359-.66.48-1.021.24-2.82-1.74-6.36-2.101-10.561-1.141-.418.122-.779-.179-.899-.539-.12-.421.18-.78.54-.9 4.56-1.021 8.52-.6 11.64 1.32.42.18.479.659.301 1.02zm1.44-3.3c-.301.42-.841.6-1.262.3-3.239-1.98-8.159-2.58-11.939-1.38-.479.12-1.02-.12-1.14-.6-.12-.48.12-1.021.6-1.141C9.6 9.9 15 10.561 18.72 12.84c.361.181.54.78.241 1.2zm.12-3.36C15.24 8.4 8.82 8.16 5.16 9.301c-.6.179-1.2-.181-1.38-.721-.18-.601.18-1.2.72-1.381 4.26-1.26 11.28-1.02 15.721 1.621.539.3.719 1.02.419 1.56-.299.421-1.02.599-1.559.3z",
+        fill: "#1DB954"
+      }
+    ) }),
+    className: "insforge-oauth-spotify"
+  }
+};
+function getProviderConfig(provider) {
+  return OAUTH_PROVIDER_CONFIG[provider] || null;
+}
+function AuthOAuthButton({
+  provider,
+  onClick,
+  disabled,
+  loading,
+  displayMode = "full",
+  style
+}) {
+  const config = getProviderConfig(provider);
+  if (!config) {
+    return null;
+  }
+  const getButtonText = () => {
+    if (displayMode === "full") {
+      return `Continue with ${config.name}`;
+    }
+    if (displayMode === "short") {
+      return config.name;
+    }
+    return "";
+  };
+  const variant = displayMode === "icon" ? "iconOnly" : displayMode;
+  return /* @__PURE__ */ jsxs(
+    OAuthButton,
+    {
+      type: "button",
+      onClick: () => onClick(provider),
+      $variant: variant,
+      disabled: disabled || loading,
+      style,
+      children: [
+        loading ? /* @__PURE__ */ jsx$1(SubmitButtonSpinner, { children: /* @__PURE__ */ jsx$1(Loader2, { size: 18 }) }) : /* @__PURE__ */ jsx$1(OAuthButtonIcon, { children: config.svg }),
+        !loading && getButtonText() && /* @__PURE__ */ jsx$1("span", { children: getButtonText() })
+      ]
+    }
+  );
+}
+function AuthOAuthProviders({
+  providers,
+  onClick,
+  disabled,
+  loading
+}) {
+  if (!providers || providers.length === 0) {
+    return null;
+  }
+  const count = providers.length;
+  const getDisplayMode = () => {
+    if (count === 1) {
+      return "full";
+    }
+    if (count === 2 || count === 4) {
+      return "short";
+    }
+    return "icon";
+  };
+  const getGridColumnStyle = (index) => {
+    if (count === 1) {
+      return { gridColumn: "span 6" };
+    }
+    if (count === 2) {
+      return { gridColumn: "span 3" };
+    }
+    if (count === 3) {
+      return { gridColumn: "span 2 / span 2" };
+    }
+    if (count === 4) {
+      return { gridColumn: "span 3" };
+    }
+    const totalRows = Math.ceil(count / 3);
+    const lastRowStartIndex = (totalRows - 1) * 3;
+    const isInLastRow = index >= lastRowStartIndex;
+    if (!isInLastRow) {
+      return { gridColumn: "span 2 / span 2" };
+    }
+    const positionInLastRow = index - lastRowStartIndex;
+    const itemsInLastRow = count - lastRowStartIndex;
+    if (itemsInLastRow === 1) {
+      return { gridColumn: "3 / 5" };
+    } else if (itemsInLastRow === 2) {
+      if (positionInLastRow === 0) {
+        return { gridColumn: "2 / 4" };
+      } else {
+        return { gridColumn: "4 / 6" };
+      }
+    } else {
+      return { gridColumn: "span 2 / span 2" };
+    }
+  };
+  return /* @__PURE__ */ jsx$1(
+    OAuthProvidersContainer,
+    {
+      style: {
+        display: "grid",
+        gridTemplateColumns: "repeat(6, 1fr)",
+        gap: "0.75rem"
+      },
+      children: providers.map((provider, index) => /* @__PURE__ */ jsx$1(
+        AuthOAuthButton,
+        {
+          provider,
+          onClick,
+          disabled,
+          loading: loading === provider,
+          displayMode: getDisplayMode(),
+          style: getGridColumnStyle(index)
+        },
+        provider
+      ))
+    }
+  );
+}
+function AuthVerificationCodeInput({
+  length: length2 = 6,
+  value,
+  onChange,
+  disabled = false,
+  onComplete
+}) {
+  const inputRefs = useRef([]);
+  const handleChange = (index, digit) => {
+    if (digit.length > 1) {
+      return;
+    }
+    if (digit && !/^\d$/.test(digit)) {
+      return;
+    }
+    const newValue = value.split("");
+    newValue[index] = digit;
+    const updatedValue = newValue.join("");
+    onChange(updatedValue);
+    if (digit && index < length2 - 1) {
+      inputRefs.current[index + 1]?.focus();
+    }
+    if (digit && index === length2 - 1 && updatedValue.length === length2 && onComplete) {
+      onComplete(updatedValue);
+    }
+  };
+  const handleKeyDown = (index, e) => {
+    if (e.key === "Backspace") {
+      if (!value[index] && index > 0) {
+        inputRefs.current[index - 1]?.focus();
+      } else {
+        handleChange(index, "");
+      }
+    } else if (e.key === "ArrowLeft" && index > 0) {
+      inputRefs.current[index - 1]?.focus();
+    } else if (e.key === "ArrowRight" && index < length2 - 1) {
+      inputRefs.current[index + 1]?.focus();
+    }
+  };
+  const handlePaste = (e) => {
+    e.preventDefault();
+    const pastedData = e.clipboardData.getData("text/plain").trim();
+    if (/^\d+$/.test(pastedData) && pastedData.length === length2) {
+      onChange(pastedData);
+      inputRefs.current[length2 - 1]?.focus();
+      if (onComplete) {
+        onComplete(pastedData);
+      }
+    }
+  };
+  return /* @__PURE__ */ jsx$1(VerificationCodeInputContainer, { children: Array.from({ length: length2 }).map((_, index) => /* @__PURE__ */ jsx$1(
+    VerificationCodeInput,
+    {
+      ref: (el) => {
+        inputRefs.current[index] = el;
+      },
+      type: "text",
+      inputMode: "numeric",
+      maxLength: 1,
+      value: value[index] || "",
+      onChange: (e) => handleChange(index, e.target.value),
+      onKeyDown: (e) => handleKeyDown(index, e),
+      onPaste: handlePaste,
+      disabled,
+      autoComplete: "one-time-code"
+    },
+    index
+  )) });
+}
+function useInsforge() {
+  const context = useContext(InsforgeContext);
+  if (!context) {
+    return {
+      user: void 0,
+      userId: void 0,
+      isLoaded: false,
+      isSignedIn: void 0,
+      setUser: () => {
+      },
+      signIn: () => Promise.resolve({ error: "SSR mode" }),
+      signUp: () => Promise.resolve({ error: "SSR mode" }),
+      signOut: () => Promise.resolve(),
+      updateUser: () => Promise.resolve({ error: "SSR mode" }),
+      reloadAuth: () => Promise.resolve({ success: false, error: "SSR mode" }),
+      resendVerificationEmail: () => Promise.resolve(null),
+      sendResetPasswordEmail: () => Promise.resolve(null),
+      resetPassword: () => Promise.resolve(null),
+      verifyEmail: () => Promise.resolve({ error: "SSR mode" }),
+      exchangeResetPasswordToken: () => Promise.resolve({ error: { message: "SSR mode" } }),
+      loginWithOAuth: () => Promise.resolve(),
+      getPublicAuthConfig: () => Promise.resolve(null),
+      getSession: () => Promise.resolve(null),
+      baseUrl: "",
+      afterSignInUrl: "/"
+    };
+  }
+  return context;
+}
+
+// src/components/forms/styled.ts
+styled.form`
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: center;
+  gap: ${theme.spacing[6]};
+`;
+var VerificationStepWrapper = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: ${theme.spacing[6]};
+  align-items: stretch;
+`;
+var VerificationStepDescriptionContainer = styled.div`
+  width: 100%;
+  background-color: ${theme.colors.bgGray};
+  border-radius: ${theme.radius.lg};
+  padding: ${theme.spacing[3]} ${theme.spacing[3]} ${theme.spacing[6]} ${theme.spacing[3]};
+  display: flex;
+  flex-direction: column;
+  gap: ${theme.spacing[3]};
+`;
+var VerificationStepDescriptionTitle = styled.h3`
+  color: ${theme.colors.black};
+  font-family: ${theme.fontFamily.base};
+  font-size: ${theme.fontSize.base};
+  font-style: normal;
+  font-weight: ${theme.fontWeight.semibold};
+  line-height: 24px;
+  margin: 0;
+`;
+var VerificationStepDescription = styled.p`
+  font-size: ${theme.fontSize.sm};
+  color: ${theme.colors.textGray};
+  text-align: left;
+  font-family: ${theme.fontFamily.base};
+  margin: 0;
+`;
+var VerificationEmail = styled.span`
+  font-weight: ${theme.fontWeight.medium};
+  color: ${theme.colors.text};
+`;
+var VerificationStepCodeContainer = styled.div`
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: ${theme.spacing[10]};
+`;
+var VerificationStepCodeInputWrapper = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: ${theme.spacing[6]};
+`;
+styled.p`
+  font-size: ${theme.fontSize.sm};
+  color: ${theme.colors.textSecondary};
+  text-align: center;
+  font-family: ${theme.fontFamily.base};
+  margin: 0;
+`;
+var VerificationStepResendContainer = styled.div`
+  width: 100%;
+  font-size: ${theme.fontSize.sm};
+  text-align: center;
+  color: ${theme.colors.textSecondary};
+  font-family: ${theme.fontFamily.base};
+`;
+var VerificationStepResendButton = styled.button`
+  color: ${theme.colors.text};
+  font-weight: ${theme.fontWeight.medium};
+  transition: all ${theme.transition.base};
+  background: none;
+  border: none;
+  padding: 0;
+  font-family: ${theme.fontFamily.base};
+  font-size: ${theme.fontSize.sm};
+
+  &:not(:disabled) {
+    cursor: pointer;
+  }
+
+  &:disabled {
+    cursor: not-allowed;
+    opacity: 0.5;
+  }
+`;
+styled.div`
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: ${(props) => props.$stretch ? "stretch" : "center"};
+  justify-content: center;
+  gap: ${theme.spacing[6]};
+`;
+styled.div`
+  border-radius: ${theme.radius.full};
+  height: ${theme.sizes.verifyCode};
+  width: ${theme.sizes.verifyCode};
+  border-bottom: 2px solid ${theme.colors.primary};
+`;
+styled.div`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: ${theme.spacing[4]};
+`;
+styled.div`
+  width: ${theme.sizes.verifyIcon};
+  height: ${theme.sizes.verifyIcon};
+  border-radius: ${theme.radius.full};
+  background-color: ${theme.colors.successBg};
+  display: flex;
+  align-items: center;
+  justify-content: center;
+`;
+styled.div`
+  width: ${theme.sizes.verifyIconInner};
+  height: ${theme.sizes.verifyIconInner};
+  color: ${theme.colors.successDark};
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  svg {
+    width: 100%;
+    height: 100%;
+  }
+`;
+styled.p`
+  text-align: center;
+  font-family: ${theme.fontFamily.base};
+  font-size: ${theme.fontSize.sm};
+  color: ${theme.colors.text};
+  margin: 0;
+`;
+styled.div`
+  display: none;
+`;
+styled.span`
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+`;
+function AuthEmailVerificationStep({
+  email,
+  method,
+  onVerifyCode,
+  emailSent = false
+}) {
+  const { resendVerificationEmail } = useInsforge();
+  const [resendDisabled, setResendDisabled] = useState(emailSent ? true : false);
+  const [resendCountdown, setResendCountdown] = useState(emailSent ? 60 : 0);
+  const [isSending, setIsSending] = useState(false);
+  const [verificationCode, setVerificationCode] = useState("");
+  const [isVerifying, setIsVerifying] = useState(false);
+  const isLinkMethod = method === "link";
+  const displayDescription = isLinkMethod ? "We've sent an email to {email}. Please check your email to confirm your account before signing in. The confirmation link expires in 10 minutes." : "We've sent a verification code to your inbox at {email}. Enter it below to proceed.";
+  useEffect(() => {
+    if (resendDisabled && resendCountdown > 0) {
+      const timer = setInterval(() => {
+        setResendCountdown((prev2) => {
+          if (prev2 <= 1) {
+            setResendDisabled(false);
+            return 0;
+          }
+          return prev2 - 1;
+        });
+      }, 1e3);
+      return () => clearInterval(timer);
+    }
+  }, [resendDisabled, resendCountdown]);
+  const handleResend = async () => {
+    setResendDisabled(true);
+    setResendCountdown(60);
+    setIsSending(true);
+    try {
+      await resendVerificationEmail(email);
+    } catch {
+      setResendDisabled(false);
+      setResendCountdown(0);
+    } finally {
+      setIsSending(false);
+    }
+  };
+  const handleSubmit = async () => {
+    if (!onVerifyCode || verificationCode.length !== 6) {
+      return;
+    }
+    setIsVerifying(true);
+    try {
+      await onVerifyCode(verificationCode);
+    } finally {
+      setIsVerifying(false);
+      setVerificationCode("");
+    }
+  };
+  return /* @__PURE__ */ jsxs(VerificationStepWrapper, { children: [
+    isLinkMethod && /* @__PURE__ */ jsxs(VerificationStepDescriptionContainer, { children: [
+      /* @__PURE__ */ jsx$1(VerificationStepDescriptionTitle, { children: "Verify Your Email" }),
+      /* @__PURE__ */ jsx$1(VerificationStepDescription, { children: displayDescription.split("{email}").map((part, index, array) => /* @__PURE__ */ jsxs("span", { children: [
+        part,
+        index < array.length - 1 && /* @__PURE__ */ jsx$1(VerificationEmail, { children: email })
+      ] }, index)) })
+    ] }),
+    !isLinkMethod && /* @__PURE__ */ jsxs(VerificationStepCodeContainer, { children: [
+      /* @__PURE__ */ jsxs(VerificationStepCodeInputWrapper, { children: [
+        /* @__PURE__ */ jsx$1(VerificationStepDescription, { children: displayDescription.split("{email}").map((part, index, array) => /* @__PURE__ */ jsxs("span", { children: [
+          part,
+          index < array.length - 1 && /* @__PURE__ */ jsx$1(VerificationEmail, { children: email })
+        ] }, index)) }),
+        /* @__PURE__ */ jsx$1(
+          AuthVerificationCodeInput,
+          {
+            value: verificationCode,
+            onChange: setVerificationCode,
+            disabled: isVerifying
+          }
+        )
+      ] }),
+      /* @__PURE__ */ jsx$1(
+        AuthSubmitButton,
+        {
+          type: "button",
+          isLoading: isVerifying,
+          disabled: isVerifying || verificationCode.length !== 6,
+          onClick: () => {
+            void handleSubmit();
+          },
+          children: isVerifying ? "Verifying..." : "Continue"
+        }
+      )
+    ] }),
+    /* @__PURE__ */ jsxs(VerificationStepResendContainer, { children: [
+      "Didn't receive the email?",
+      " ",
+      /* @__PURE__ */ jsx$1(
+        VerificationStepResendButton,
+        {
+          onClick: () => {
+            void handleResend();
+          },
+          disabled: resendDisabled || isSending,
+          children: isSending ? "Sending..." : resendDisabled ? `Retry in (${resendCountdown}s)` : "Click to resend"
+        }
+      )
+    ] })
+  ] });
+}
+function AuthResetPasswordVerificationStep({
+  email,
+  method,
+  onVerifyCode,
+  onResendEmail
+}) {
+  const [resendDisabled, setResendDisabled] = useState(true);
+  const [resendCountdown, setResendCountdown] = useState(60);
+  const [isSending, setIsSending] = useState(false);
+  const [verificationCode, setVerificationCode] = useState("");
+  const [isVerifying, setIsVerifying] = useState(false);
+  const isLinkMethod = method === "link";
+  const displayDescription = isLinkMethod ? "We have sent an email to {email}. Please check your email to reset your password. The link expires in 10 minutes." : "We've sent a reset password code to your inbox at {email}. Enter it below to proceed.";
+  useEffect(() => {
+    if (resendCountdown > 0) {
+      const timer = setInterval(() => {
+        setResendCountdown((prev2) => {
+          if (prev2 <= 1) {
+            setResendDisabled(false);
+            return 0;
+          }
+          return prev2 - 1;
+        });
+      }, 1e3);
+      return () => clearInterval(timer);
+    }
+  }, [resendCountdown]);
+  const handleResend = useCallback(async () => {
+    setResendDisabled(true);
+    setResendCountdown(60);
+    setIsSending(true);
+    try {
+      await onResendEmail();
+    } catch {
+      setResendDisabled(false);
+      setResendCountdown(0);
+    } finally {
+      setIsSending(false);
+    }
+  }, [onResendEmail]);
+  const handleSubmit = async () => {
+    if (!onVerifyCode || verificationCode.length !== 6) {
+      return;
+    }
+    setIsVerifying(true);
+    try {
+      await onVerifyCode(verificationCode);
+    } finally {
+      setIsVerifying(false);
+      setVerificationCode("");
+    }
+  };
+  return /* @__PURE__ */ jsxs(VerificationStepWrapper, { children: [
+    isLinkMethod && /* @__PURE__ */ jsxs(VerificationStepDescriptionContainer, { children: [
+      /* @__PURE__ */ jsx$1(VerificationStepDescriptionTitle, { children: "Check Your Email" }),
+      /* @__PURE__ */ jsx$1(VerificationStepDescription, { children: displayDescription.split("{email}").map((part, index, array) => /* @__PURE__ */ jsxs("span", { children: [
+        part,
+        index < array.length - 1 && /* @__PURE__ */ jsx$1(VerificationEmail, { children: email })
+      ] }, index)) })
+    ] }),
+    !isLinkMethod && /* @__PURE__ */ jsxs(VerificationStepCodeContainer, { children: [
+      /* @__PURE__ */ jsx$1(VerificationStepCodeInputWrapper, { children: /* @__PURE__ */ jsx$1(
+        AuthVerificationCodeInput,
+        {
+          value: verificationCode,
+          onChange: setVerificationCode,
+          disabled: isVerifying
+        }
+      ) }),
+      /* @__PURE__ */ jsx$1(
+        AuthSubmitButton,
+        {
+          type: "button",
+          isLoading: isVerifying,
+          disabled: isVerifying || verificationCode.length !== 6,
+          onClick: () => {
+            void handleSubmit();
+          },
+          children: isVerifying ? "Verifying..." : "Continue"
+        }
+      )
+    ] }),
+    /* @__PURE__ */ jsxs(VerificationStepResendContainer, { children: [
+      "Didn't receive the email?",
+      " ",
+      /* @__PURE__ */ jsx$1(
+        VerificationStepResendButton,
+        {
+          onClick: () => {
+            void handleResend();
+          },
+          disabled: resendDisabled || isSending,
+          children: isSending ? "Sending..." : resendDisabled ? `Retry in (${resendCountdown}s)` : "Click to resend"
+        }
+      )
+    ] })
+  ] });
+}
+/*! Bundled license information:
+
+react-is/cjs/react-is.production.min.js:
+  (** @license React v16.13.1
+   * react-is.production.min.js
+   *
+   * Copyright (c) Facebook, Inc. and its affiliates.
+   *
+   * This source code is licensed under the MIT license found in the
+   * LICENSE file in the root directory of this source tree.
+   *)
+
+react-is/cjs/react-is.development.js:
+  (** @license React v16.13.1
+   * react-is.development.js
+   *
+   * Copyright (c) Facebook, Inc. and its affiliates.
+   *
+   * This source code is licensed under the MIT license found in the
+   * LICENSE file in the root directory of this source tree.
+   *)
+*/
+
+export { AuthBranding, AuthContainer, AuthDivider, AuthEmailVerificationStep, AuthErrorBanner, AuthFormField, AuthHeader, AuthLink, AuthOAuthButton, AuthOAuthProviders, AuthPasswordField, AuthPasswordStrengthIndicator, AuthResetPasswordVerificationStep, AuthSubmitButton, AuthVerificationCodeInput };
+//# sourceMappingURL=atoms.js.map
+//# sourceMappingURL=atoms.js.map

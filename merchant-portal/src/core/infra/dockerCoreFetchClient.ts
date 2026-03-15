@@ -5,6 +5,7 @@
  * API compatível com o que o código usa: .from(), .select(), .eq(), .is(), .rpc(), .channel().
  */
 
+import { getCoreSessionAsync } from "../auth/getCoreSession";
 import { CONFIG } from "../../config";
 import { Logger } from "../logger";
 
@@ -249,9 +250,14 @@ function buildFilterBuilder(table: string): FilterBuilder {
         url.searchParams.set("on_conflict", state.upsertOpts.onConflict);
       }
     }
+    const session = await getCoreSessionAsync();
+    const reqHeaders = new Headers(headers());
+    if (session?.access_token) {
+      reqHeaders.set("Authorization", `Bearer ${session.access_token}`);
+    }
     const init: RequestInit = {
       method: state.method,
-      headers: headers(),
+      headers: reqHeaders,
     };
     if (
       state.method === "GET" &&
@@ -542,9 +548,14 @@ export function getDockerCoreFetchClient(): DockerCoreClientShape {
             paramsKeys: Object.keys(params),
           });
         }
+        const session = await getCoreSessionAsync();
+        const rpcHeaders = new Headers(headers());
+        if (session?.access_token) {
+          rpcHeaders.set("Authorization", `Bearer ${session.access_token}`);
+        }
         const res = await fetch(rpcUrl, {
           method: "POST",
-          headers: headers(),
+          headers: rpcHeaders,
           body: JSON.stringify(params),
         });
         const text = await res.text();

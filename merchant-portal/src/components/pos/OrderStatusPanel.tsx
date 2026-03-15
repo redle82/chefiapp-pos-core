@@ -250,6 +250,7 @@ export function OrderStatusPanel({
       {/* Botões de ação */}
       <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
         <ActionButton
+          data-testid="sovereign-tpv-send-kitchen"
           label={t("tpv:orderPanel.sendToKitchen")}
           onClick={onSendToKitchen}
           disabled={!canSend}
@@ -314,16 +315,19 @@ function ActionButton({
   onClick,
   disabled,
   variant,
+  "data-testid": dataTestId,
 }: {
   label: string;
   onClick: () => void;
   disabled: boolean;
   variant: "primary" | "secondary";
+  "data-testid"?: string;
 }) {
   const isPrimary = variant === "primary";
   return (
     <button
       type="button"
+      data-testid={dataTestId}
       onClick={onClick}
       disabled={disabled}
       style={{

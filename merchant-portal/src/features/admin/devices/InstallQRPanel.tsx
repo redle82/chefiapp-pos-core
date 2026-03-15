@@ -31,7 +31,7 @@ export function InstallQRPanel({
   secondsLeft,
   baseUrl,
 }: InstallQRPanelProps) {
-  const { t } = useTranslation();
+  const { t } = useTranslation("config");
 
   const standardUrl = `${baseUrl}/install?token=${token}`;
   const isCritical = secondsLeft < 60;
@@ -48,7 +48,7 @@ export function InstallQRPanel({
           <div
             className={isCritical ? styles.expiryCritical : styles.expiryNormal}
           >
-            Expira em <strong>{secondsLeft}s</strong>
+            {t("qr.expiresIn")} <strong>{secondsLeft}s</strong>
           </div>
         </div>
 
@@ -71,17 +71,17 @@ export function InstallQRPanel({
                 }
               }}
             >
-              Copiar URL
+              {t("qr.copyUrl")}
             </button>
           </div>
         </div>
 
         <div className={styles.qrMetadata}>
           <div>
-            Tipo: <strong>{deviceType}</strong>
+            {t("qr.typeLabel")} <strong>{deviceType}</strong>
           </div>
           <div>
-            Token: <strong>{token.substring(0, 12)}...</strong>
+            {t("qr.tokenLabel")} <strong>{token.substring(0, 12)}...</strong>
           </div>
         </div>
       </div>
@@ -103,7 +103,7 @@ export function InstallQRPanel({
         <div
           className={isCritical ? styles.expiryCritical : styles.expiryNormal}
         >
-          Expira em <strong>{secondsLeft}s</strong>
+          {t("qr.expiresIn")} <strong>{secondsLeft}s</strong>
         </div>
       </div>
 
@@ -112,8 +112,8 @@ export function InstallQRPanel({
         <div className={styles.qrPlatformCol}>
           <div className={styles.qrPlatformHeader}>
             <div className={styles.qrPlatformIcon}>🍎</div>
-            <div className={styles.qrPlatformName}>iPhone / iPad</div>
-            <div className={styles.qrPlatformBrowser}>Safari</div>
+            <div className={styles.qrPlatformName}>{t("qr.iosName")}</div>
+            <div className={styles.qrPlatformBrowser}>{t("qr.iosBrowser")}</div>
           </div>
 
           <div className={styles.qrBox}>
@@ -122,20 +122,17 @@ export function InstallQRPanel({
 
           <div className={styles.qrPlatformInstructions}>
             <ol>
-              <li>Abra a aplicação Câmara no iPhone</li>
-              <li>Digitalize este código QR</li>
-              <li>Toque no link que aparece</li>
-              <li>
-                Se perguntar qual browser, selecione <strong>Safari</strong>
-              </li>
-              <li>Aceite a instalação da app</li>
+              <li>{t("qr.iosStep1")}</li>
+              <li>{t("qr.iosStep2")}</li>
+              <li>{t("qr.iosStep3")}</li>
+              <li>{t("qr.iosStep4")}</li>
+              <li>{t("qr.iosStep5")}</li>
             </ol>
           </div>
 
           <code className={styles.qrUrlSmall}>{standardUrl}</code>
           <div className={styles.iosNote}>
-            ℹ️ Se abrir noutro browser por erro, volte atrás e repita
-            selecionando Safari.
+            ℹ️ {t("qr.iosNote")}
           </div>
         </div>
 
@@ -143,8 +140,8 @@ export function InstallQRPanel({
         <div className={styles.qrPlatformCol}>
           <div className={styles.qrPlatformHeader}>
             <div className={styles.qrPlatformIcon}>🤖</div>
-            <div className={styles.qrPlatformName}>Android</div>
-            <div className={styles.qrPlatformBrowser}>Chrome</div>
+            <div className={styles.qrPlatformName}>{t("qr.androidName")}</div>
+            <div className={styles.qrPlatformBrowser}>{t("qr.androidBrowser")}</div>
           </div>
 
           <div className={styles.qrBox}>
@@ -153,9 +150,9 @@ export function InstallQRPanel({
 
           <div className={styles.qrPlatformInstructions}>
             <ol>
-              <li>Abra Chrome no Android</li>
-              <li>Digitalize este código QR</li>
-              <li>Aceite a instalação da app</li>
+              <li>{t("qr.androidStep1")}</li>
+              <li>{t("qr.androidStep2")}</li>
+              <li>{t("qr.androidStep3")}</li>
             </ol>
           </div>
 
@@ -167,10 +164,10 @@ export function InstallQRPanel({
 
       <div className={styles.qrMetadata}>
         <div>
-          Tipo: <strong>{deviceType}</strong>
+          {t("qr.typeLabel")} <strong>{deviceType}</strong>
         </div>
         <div>
-          Token: <strong>{token.substring(0, 12)}...</strong>
+          {t("qr.tokenLabel")} <strong>{token.substring(0, 12)}...</strong>
         </div>
       </div>
     </div>

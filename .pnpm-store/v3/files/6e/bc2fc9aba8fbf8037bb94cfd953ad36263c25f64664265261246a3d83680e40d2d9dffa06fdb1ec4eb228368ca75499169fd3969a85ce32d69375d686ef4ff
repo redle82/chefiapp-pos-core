@@ -1,0 +1,64 @@
+import * as react_jsx_runtime from 'react/jsx-runtime';
+import { ComponentType, ReactNode } from 'react';
+
+/**
+ * Navigation adapter interface
+ * Allows different routing implementations (browser, react-router, next.js)
+ */
+interface NavigationAdapter {
+    /**
+     * Hook to get URL search parameters
+     * Returns URLSearchParams for consistent API across adapters
+     */
+    useSearchParams(): URLSearchParams;
+    /**
+     * Link component for navigation
+     * Each adapter provides its own implementation (native <a>, React Router Link, Next.js Link, etc.)
+     */
+    Link: ComponentType<{
+        href: string;
+        className?: string;
+        children: ReactNode;
+    }>;
+}
+
+interface NavigationProviderProps {
+    adapter: NavigationAdapter;
+    children: ReactNode;
+}
+/**
+ * Navigation Provider
+ * Injects navigation adapter into the component tree
+ */
+declare function NavigationProvider({ adapter, children }: NavigationProviderProps): react_jsx_runtime.JSX.Element;
+/**
+ * Hook to access navigation adapter
+ * @throws Error if used outside NavigationProvider
+ */
+declare function useNavigationAdapter(): NavigationAdapter;
+
+/**
+ * Browser native navigation adapter
+ * Uses browser's native URLSearchParams and <a> tags
+ * Suitable for vanilla React apps without a routing library
+ */
+declare const BrowserNavigationAdapter: NavigationAdapter;
+
+/**
+ * Hook to get URL search parameters
+ * Uses the navigation adapter injected by NavigationProvider
+ *
+ * @returns URLSearchParams object
+ *
+ * @example
+ * ```tsx
+ * function MyComponent() {
+ *   const searchParams = useSearchParams();
+ *   const redirectUrl = searchParams.get('redirect') || '/';
+ *   // ...
+ * }
+ * ```
+ */
+declare function useSearchParams(): URLSearchParams;
+
+export { BrowserNavigationAdapter, type NavigationAdapter, NavigationProvider, type NavigationProviderProps, useNavigationAdapter, useSearchParams };

@@ -1,0 +1,20 @@
+'use strict';
+
+var react = require('react');
+
+// src/react/contexts.tsx
+var InsforgeContext = react.createContext(void 0);
+InsforgeContext.displayName = "InsforgeContext";
+var InsforgeAuthStateContext = react.createContext(void 0);
+InsforgeAuthStateContext.displayName = "InsforgeAuthStateContext";
+var InsforgeMethodsContext = react.createContext(void 0);
+InsforgeMethodsContext.displayName = "InsforgeMethodsContext";
+var InsforgeConfigContext = react.createContext(void 0);
+InsforgeConfigContext.displayName = "InsforgeConfigContext";
+
+exports.InsforgeAuthStateContext = InsforgeAuthStateContext;
+exports.InsforgeConfigContext = InsforgeConfigContext;
+exports.InsforgeContext = InsforgeContext;
+exports.InsforgeMethodsContext = InsforgeMethodsContext;
+//# sourceMappingURL=react.cjs.map
+//# sourceMappingURL=react.cjs.map

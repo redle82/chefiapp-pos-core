@@ -43,6 +43,7 @@
 | **mobile-app** | `pnpm --filter mobile-app test` (incl. mobileActivationApi); probe em audit:fase3-conformance | CI; antes de release mobile | Recomendado | Corrigir testes ou conformidade. |
 | **customer-portal** | Removido do workspace (F5.1); não é app no repo ([C42](../roadmap/C42_CUSTOMER_PORTAL_STATE.md)) | — | — | — |
 | **Inter-app (F5.3)** | `npm run audit:pre-release` (health Core opcional + audit:fase3-conformance + audit:billing-core opcional) | Antes de release; evidência golden path; ver [F53](../roadmap/F53_GOLDEN_PATH_EVIDENCE.md) | Recomendado | Corrigir conformidade ou Core/billing; script: `scripts/pre-release-gate.sh` |
+| **Sofia operacional (Docker/Core)** | Checklist Sofia operacional; ver [SOFIA_GASTROBAR_ROTINA_CHECKLIST_OPERACIONAL.md](./SOFIA_GASTROBAR_ROTINA_CHECKLIST_OPERACIONAL.md) | Semanal (recomendado); pré-release; após mudanças Core/portal/AppStaff; antes de demo | Recomendado | Executar checklist; registar no doc Fase 3 §6; em falha: corrigir ou documentar exceção (ver rotina). |
 | **Sentry / erros** | Dashboard Sentry; alertas (taxa de erro, novos erros) | Contínuo; pós-rollout T+1h–T+48h | Não (monitorização) | Investigar; rollback se > 5% erro (ver ROLLOUT_QUICK_REFERENCE). |
 | **Vercel (frontend)** | `vercel ls --prod`; promote previous deployment para rollback | Deploy e rollback | Não (operacional) | Rollback: Promote to Production no dashboard ou `vercel rollback`. |
 
@@ -59,6 +60,7 @@
 - [ ] **Deploy:** Build e deploy (ex.: Vercel) concluídos.
 - [ ] **T+0h–T+1h:** Health/smoke: Core acessível; frontend responde; browser-block verificado em `/op/tpv` (ver [ROLLOUT_QUICK_REFERENCE.md](./ROLLOUT_QUICK_REFERENCE.md)).
 - [ ] **T+1h–T+48h:** Monitorizar Sentry (taxa de erro < 1%); LCP/performance (Vercel Speed Insights); critérios em [PRODUCTION_ROLLOUT_MONITORING_PLAN.md](./PRODUCTION_ROLLOUT_MONITORING_PLAN.md).
+- [ ] **Opcional (Sofia):** Se o ambiente Docker/Core for usado para demo ou validação, executar o [checklist Sofia operacional](./SOFIA_GASTROBAR_ROTINA_CHECKLIST_OPERACIONAL.md) e registar no doc da Fase 3 §6.
 
 Detalhe completo: [PRODUCTION_ROLLOUT_MONITORING_PLAN.md](./PRODUCTION_ROLLOUT_MONITORING_PLAN.md), [ROLLOUT_QUICK_REFERENCE.md](./ROLLOUT_QUICK_REFERENCE.md).
 

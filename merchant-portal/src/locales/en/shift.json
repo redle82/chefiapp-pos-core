@@ -1,5 +1,21 @@
 {
+  "page": {
+    "title": "Shift and Register",
+    "loadingCash": "Loading register state...",
+    "registerOpen": "Register open",
+    "initialBalance": "Opening balance",
+    "sales": "Sales",
+    "expectedBalance": "Expected balance",
+    "closingBalanceLabel": "Closing balance (count)",
+    "closingNameLabel": "Closing operator",
+    "closeButton": "Close shift",
+    "registerClosed": "Register closed",
+    "openButton": "Open shift",
+    "operatorLabel": "Operator"
+  },
   "gate": {
+    "closedTitle": "Register closed:",
+    "openToSell": "To make sales, you need to open the shift.",
     "checking": "Checking shift...",
     "openTitle": "Open shift",
     "openDescription": "To start selling, open the shift with initial cash on the Dashboard.",
@@ -82,6 +98,10 @@
     "closeInTpv": "Close in POS"
   },
   "error": {
+    "loadCash": "Error loading register.",
+    "noRestaurant": "Restaurant not set.",
+    "invalidOpening": "Invalid opening balance.",
+    "invalidClosing": "Invalid closing balance.",
     "closeFailed": "Error closing shift",
     "alreadyClosed": "This register has already been closed.",
     "notFound": "Register not found.",

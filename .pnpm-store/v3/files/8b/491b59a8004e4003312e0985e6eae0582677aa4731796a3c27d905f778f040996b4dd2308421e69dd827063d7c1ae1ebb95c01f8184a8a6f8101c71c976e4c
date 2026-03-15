@@ -1,0 +1,70 @@
+import { createContext, useState, useEffect, useContext } from 'react';
+import 'react/jsx-runtime';
+import { InsforgeContext } from '@insforge/shared/react';
+
+// src/provider/InsforgeProvider.tsx
+createContext(null);
+function useInsforge() {
+  const context = useContext(InsforgeContext);
+  if (!context) {
+    return {
+      user: void 0,
+      userId: void 0,
+      isLoaded: false,
+      isSignedIn: void 0,
+      setUser: () => {
+      },
+      signIn: () => Promise.resolve({ error: "SSR mode" }),
+      signUp: () => Promise.resolve({ error: "SSR mode" }),
+      signOut: () => Promise.resolve(),
+      updateUser: () => Promise.resolve({ error: "SSR mode" }),
+      reloadAuth: () => Promise.resolve({ success: false, error: "SSR mode" }),
+      resendVerificationEmail: () => Promise.resolve(null),
+      sendResetPasswordEmail: () => Promise.resolve(null),
+      resetPassword: () => Promise.resolve(null),
+      verifyEmail: () => Promise.resolve({ error: "SSR mode" }),
+      exchangeResetPasswordToken: () => Promise.resolve({ error: { message: "SSR mode" } }),
+      loginWithOAuth: () => Promise.resolve(),
+      getPublicAuthConfig: () => Promise.resolve(null),
+      getSession: () => Promise.resolve(null),
+      baseUrl: "",
+      afterSignInUrl: "/"
+    };
+  }
+  return context;
+}
+
+// src/hooks/useAuth.ts
+function useAuth() {
+  const { signIn, signUp, signOut, isLoaded, isSignedIn } = useInsforge();
+  return { signIn, signUp, signOut, isLoaded, isSignedIn };
+}
+
+// src/hooks/useUser.ts
+function useUser() {
+  const { user, isLoaded, updateUser, setUser } = useInsforge();
+  return { user, isLoaded, updateUser, setUser };
+}
+function usePublicAuthConfig() {
+  const { getPublicAuthConfig } = useInsforge();
+  const [authConfig, setAuthConfig] = useState(null);
+  const [isLoaded, setIsLoaded] = useState(false);
+  useEffect(() => {
+    async function fetchConfig() {
+      const result = await getPublicAuthConfig();
+      if (result) {
+        setAuthConfig(result);
+      } else {
+        console.error("[usePublicAuthConfig] Failed to get public auth config");
+        setAuthConfig(null);
+      }
+      setIsLoaded(true);
+    }
+    void fetchConfig();
+  }, [getPublicAuthConfig]);
+  return { authConfig, isLoaded };
+}
+
+export { useAuth, usePublicAuthConfig, useUser };
+//# sourceMappingURL=hooks.js.map
+//# sourceMappingURL=hooks.js.map

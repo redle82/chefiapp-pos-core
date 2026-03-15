@@ -9,7 +9,8 @@
  *   - User role from ContextEngine
  */
 import { useState } from "react";
-import { NavLink, useLocation, useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
+import { NavLink, useLocation } from "react-router-dom";
 import { OSSignature } from "../../../../ui/design-system/sovereign/OSSignature";
 import styles from "./AdminSidebar.module.css";
 
@@ -18,67 +19,68 @@ import styles from "./AdminSidebar.module.css";
 /* ------------------------------------------------------------------ */
 
 interface SidebarItem {
-  label: string;
+  labelKey: string;
   to: string;
   status?: "experimental" | "locked" | "planned" | "active";
 }
 
 interface SidebarGroup {
   id: string;
-  title: string;
+  titleKey: string;
   items: SidebarItem[];
 }
 
 /* ------------------------------------------------------------------ */
-/*  Navigation structure                                               */
+/*  Navigation structure (labels via sidebar.adminNav)                 */
 /* ------------------------------------------------------------------ */
 
 const NAV_GROUPS: SidebarGroup[] = [
   {
     id: "comando",
-    title: "Comando",
+    titleKey: "adminNav.groupComando",
     items: [
-      { label: "Comando Central", to: "/admin/home" },
-      { label: "Ajustes do Núcleo", to: "/admin/config" },
+      { labelKey: "adminNav.itemComandoCentral", to: "/admin/home" },
+      { labelKey: "adminNav.itemAjustesNucleo", to: "/admin/config" },
     ],
   },
   {
     id: "operar",
-    title: "Operar",
+    titleKey: "adminNav.groupOperar",
     items: [
-      { label: "Cardápio", to: "/admin/catalog" },
-      { label: "Pedidos", to: "/admin/orders" },
-      { label: "Mesas", to: "/admin/tables" },
-      { label: "Reservas", to: "/admin/reservations", status: "planned" },
+      { labelKey: "adminNav.itemCardapio", to: "/admin/catalog" },
+      { labelKey: "adminNav.itemPedidos", to: "/admin/orders" },
+      { labelKey: "adminNav.itemMesas", to: "/admin/tables" },
+      { labelKey: "adminNav.itemReservas", to: "/admin/reservations", status: "planned" },
     ],
   },
   {
     id: "analisar",
-    title: "Analisar",
+    titleKey: "adminNav.groupAnalisar",
     items: [
-      { label: "Transações", to: "/admin/payments" },
-      { label: "Fechamentos", to: "/admin/closures" },
-      { label: "Relatórios", to: "/admin/reports" },
+      { labelKey: "adminNav.itemTransacoes", to: "/admin/payments" },
+      { labelKey: "adminNav.itemFechamentos", to: "/admin/closures" },
+      { labelKey: "adminNav.itemRelatorios", to: "/admin/reports" },
     ],
   },
   {
     id: "governar",
-    title: "Governar",
+    titleKey: "adminNav.groupGovernar",
     items: [
-      { label: "Equipa", to: "/admin/config/users" },
-      { label: "Dispositivos", to: "/admin/devices" },
-      { label: "Módulos", to: "/admin/modules" },
-      { label: "Observabilidade", to: "/admin/observability" },
+      { labelKey: "adminNav.itemEquipa", to: "/admin/config/users" },
+      { labelKey: "adminNav.itemTpv", to: "/admin/devices/tpv" },
+      { labelKey: "adminNav.itemAppStaff", to: "/admin/devices" },
+      { labelKey: "adminNav.itemModulos", to: "/admin/modules" },
+      { labelKey: "adminNav.itemObservabilidade", to: "/admin/observability" },
     ],
   },
   {
     id: "conectar",
-    title: "Conectar",
+    titleKey: "adminNav.groupConectar",
     items: [
-      { label: "Clientes", to: "/admin/customers" },
-      { label: "Promoções", to: "/admin/promotions" },
+      { labelKey: "adminNav.itemClientes", to: "/admin/customers" },
+      { labelKey: "adminNav.itemPromocoes", to: "/admin/promotions" },
       {
-        label: "Integrações",
+        labelKey: "adminNav.itemIntegracoes",
         to: "/admin/config/integrations",
         status: "experimental",
       },
@@ -104,8 +106,8 @@ function findActiveGroup(pathname: string): string | null {
 /* ------------------------------------------------------------------ */
 
 export function AdminSidebar() {
+  const { t } = useTranslation("sidebar");
   const location = useLocation();
-  const navigate = useNavigate();
 
   // Exclusive accordion: only 1 group open at a time
   const [openGroup, setOpenGroup] = useState<string | null>(() =>
@@ -114,6 +116,12 @@ export function AdminSidebar() {
 
   const toggleGroup = (id: string) => {
     setOpenGroup((prev) => (prev === id ? null : id));
+  };
+
+  const getBadgeKey = (status: string) => {
+    if (status === "experimental") return "adminNav.badgeExperimental";
+    if (status === "planned") return "adminNav.badgePlanned";
+    return "adminNav.badgeOff";
   };
 
   return (
@@ -140,7 +148,7 @@ export function AdminSidebar() {
                   data-active={hasActive ? "" : undefined}
                   data-open={isOpen ? "" : undefined}
                 >
-                  <span className={styles.groupTitle}>{group.title}</span>
+                  <span className={styles.groupTitle}>{t(group.titleKey)}</span>
                   <span className={styles.groupChevron}>›</span>
                 </button>
                 {isOpen && (
@@ -155,7 +163,7 @@ export function AdminSidebar() {
                             .join(" ")
                         }
                       >
-                        {item.label}
+                        {t(item.labelKey)}
                         {item.status && item.status !== "active" && (
                           <span
                             className={
@@ -164,11 +172,7 @@ export function AdminSidebar() {
                                 : styles.statusBadgeOther
                             }
                           >
-                            {item.status === "experimental"
-                              ? "BETA"
-                              : item.status === "planned"
-                              ? "BREVE"
-                              : "OFF"}
+                            {t(getBadgeKey(item.status))}
                           </span>
                         )}
                       </NavLink>

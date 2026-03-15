@@ -1,0 +1,139 @@
+'use strict';
+
+var zod = require('zod');
+
+// src/lib/validation.ts
+var emailSchema = zod.z.string().min(1, "Email is required").email("Invalid email address");
+function createPasswordSchema(options) {
+  const {
+    minLength = 6,
+    requireUppercase = false,
+    requireLowercase = false,
+    requireNumber = false,
+    requireSpecialChar = false
+  } = options || {};
+  let schema = zod.z.string().min(minLength, `Password must be at least ${minLength} characters`);
+  if (requireUppercase) {
+    schema = schema.regex(/[A-Z]/, "Password must contain at least one uppercase letter");
+  }
+  if (requireLowercase) {
+    schema = schema.regex(/[a-z]/, "Password must contain at least one lowercase letter");
+  }
+  if (requireNumber) {
+    schema = schema.regex(/\d/, "Password must contain at least one number");
+  }
+  if (requireSpecialChar) {
+    schema = schema.regex(
+      /[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]/,
+      "Password must contain at least one special character"
+    );
+  }
+  return schema;
+}
+var passwordSchema = createPasswordSchema();
+function validateEmail(email) {
+  const result = emailSchema.safeParse(email);
+  if (result.success) {
+    return { valid: true };
+  }
+  return { valid: false, error: result.error.message };
+}
+function validatePassword(password, options) {
+  const schema = createPasswordSchema(options);
+  const result = schema.safeParse(password);
+  if (result.success) {
+    return { valid: true };
+  }
+  return { valid: false, error: result.error.message };
+}
+function checkPasswordStrength(password) {
+  const feedback = [];
+  let score = 0;
+  if (password.length >= 8) {
+    score += 1;
+  } else {
+    feedback.push("Use at least 8 characters");
+  }
+  if (password.length >= 12) {
+    score += 1;
+  }
+  if (/[a-z]/.test(password) && /[A-Z]/.test(password)) {
+    score += 1;
+  } else {
+    feedback.push("Use both uppercase and lowercase letters");
+  }
+  if (/\d/.test(password)) {
+    score += 1;
+  } else {
+    feedback.push("Include at least one number");
+  }
+  if (/[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]/.test(password)) {
+    score += 1;
+  } else {
+    feedback.push("Include at least one special character");
+  }
+  return { score, feedback };
+}
+
+// src/lib/path-utils.ts
+function resolveAuthPath(targetPath) {
+  if (typeof window === "undefined") {
+    return targetPath;
+  }
+  const currentPath = window.location.pathname;
+  if (currentPath.startsWith("/auth/")) {
+    if (targetPath.startsWith("/auth/")) {
+      return targetPath;
+    }
+    return `/auth${targetPath}`;
+  }
+  return targetPath;
+}
+function resolveAuthUrl(targetPath, searchParams) {
+  const resolvedPath = resolveAuthPath(targetPath);
+  if (!searchParams || searchParams.toString() === "") {
+    return resolvedPath;
+  }
+  return `${resolvedPath}?${searchParams.toString()}`;
+}
+
+// src/lib/hosted-auth.ts
+function isHostedAuthEnvironment() {
+  if (typeof window === "undefined") {
+    return false;
+  }
+  const { hostname, port, protocol } = window.location;
+  if (hostname === "localhost" && port === "7130") {
+    return true;
+  }
+  if (protocol === "https:" && hostname.endsWith(".insforge.app")) {
+    return true;
+  }
+  return false;
+}
+function buildLegacyAuthUrl(redirectUrl, session) {
+  const url = new URL(redirectUrl);
+  url.searchParams.set("access_token", session.accessToken);
+  url.searchParams.set("user_id", session.userId);
+  url.searchParams.set("email", session.email);
+  if (session.name) {
+    url.searchParams.set("name", session.name);
+  }
+  if (session.csrfToken) {
+    url.searchParams.set("csrf_token", session.csrfToken);
+  }
+  return url.toString();
+}
+
+exports.buildLegacyAuthUrl = buildLegacyAuthUrl;
+exports.checkPasswordStrength = checkPasswordStrength;
+exports.createPasswordSchema = createPasswordSchema;
+exports.emailSchema = emailSchema;
+exports.isHostedAuthEnvironment = isHostedAuthEnvironment;
+exports.passwordSchema = passwordSchema;
+exports.resolveAuthPath = resolveAuthPath;
+exports.resolveAuthUrl = resolveAuthUrl;
+exports.validateEmail = validateEmail;
+exports.validatePassword = validatePassword;
+//# sourceMappingURL=lib.cjs.map
+//# sourceMappingURL=lib.cjs.map

@@ -1,3 +1,4 @@
+import "./env-bootstrap"; // Expõe VITE_* em globalThis para backendAdapter (Jest-safe)
 import "@chefiapp/core-design-system/tokens.css";
 import * as Sentry from "@sentry/react";
 import { StrictMode, useCallback, useState } from "react";

@@ -92,6 +92,11 @@ export async function readMenuCategories(
   return (data ?? []) as CoreMenuCategory[];
 }
 
+/** Linha bruta do PostgREST com join gm_product_assets */
+type RawProductRow = CoreProduct & {
+  gm_product_assets?: { image_url?: string | null } | null;
+};
+
 export async function readProducts(
   restaurantId: string,
 ): Promise<CoreProduct[]> {
@@ -101,10 +106,9 @@ export async function readProducts(
     .eq("restaurant_id", restaurantId)
     .order("name", { ascending: true });
   if (error) return [];
-  return (data ?? []).map((product) => {
-    const { gm_product_assets, ...rest } = product as {
-      gm_product_assets?: { image_url?: string | null } | null;
-    } & CoreProduct;
+  const rows: RawProductRow[] = Array.isArray(data) ? (data as RawProductRow[]) : [];
+  return rows.map((product: RawProductRow) => {
+    const { gm_product_assets, ...rest } = product;
     return {
       ...rest,
       asset_image_url: gm_product_assets?.image_url ?? null,

@@ -1,0 +1,134 @@
+import * as react_jsx_runtime from 'react/jsx-runtime';
+import { OAuthProvidersSchema } from '@insforge/shared-schemas';
+import { FormEvent } from 'react';
+import { AuthConfig } from './types.cjs';
+import '@insforge/shared';
+
+interface SignInFormProps {
+    email: string;
+    password: string;
+    onEmailChange: (email: string) => void;
+    onPasswordChange: (password: string) => void;
+    onSubmit: (e: FormEvent<HTMLFormElement>) => void;
+    error?: string;
+    loading?: boolean;
+    oauthLoading?: OAuthProvidersSchema | null;
+    onOAuthClick?: (provider: OAuthProvidersSchema) => void;
+    authConfig: AuthConfig;
+    title?: string;
+    subtitle?: string;
+    emailLabel?: string;
+    emailPlaceholder?: string;
+    passwordLabel?: string;
+    passwordPlaceholder?: string;
+    forgotPasswordText?: string;
+    forgotPasswordUrl?: string;
+    submitButtonText?: string;
+    loadingButtonText?: string;
+    signUpText?: string;
+    signUpLinkText?: string;
+    signUpUrl?: string;
+    dividerText?: string;
+    showVerificationStep?: boolean;
+    onVerifyCode?: (code: string) => Promise<void>;
+}
+/**
+ * Pre-built sign-in form component (UI only, no business logic).
+ */
+declare function SignInForm({ email, password, onEmailChange, onPasswordChange, onSubmit, error, loading, oauthLoading, onOAuthClick, authConfig, title, subtitle, emailLabel, emailPlaceholder, passwordLabel, passwordPlaceholder, forgotPasswordText, forgotPasswordUrl, submitButtonText, loadingButtonText, signUpText, signUpLinkText, signUpUrl, dividerText, showVerificationStep, onVerifyCode, }: SignInFormProps): react_jsx_runtime.JSX.Element;
+
+interface SignUpFormProps {
+    email: string;
+    password: string;
+    onEmailChange: (email: string) => void;
+    onPasswordChange: (password: string) => void;
+    onSubmit: (e: FormEvent<HTMLFormElement>) => void;
+    error?: string;
+    loading?: boolean;
+    oauthLoading?: OAuthProvidersSchema | null;
+    onOAuthClick?: (provider: OAuthProvidersSchema) => void;
+    authConfig: AuthConfig;
+    title?: string;
+    subtitle?: string;
+    emailLabel?: string;
+    emailPlaceholder?: string;
+    passwordLabel?: string;
+    passwordPlaceholder?: string;
+    submitButtonText?: string;
+    loadingButtonText?: string;
+    signInText?: string;
+    signInLinkText?: string;
+    signInUrl?: string;
+    dividerText?: string;
+    showVerificationStep?: boolean;
+    onVerifyCode?: (code: string) => Promise<void>;
+}
+/**
+ * Pre-built sign-up form component (UI only, no business logic).
+ */
+declare function SignUpForm({ email, password, onEmailChange, onPasswordChange, onSubmit, error, loading, oauthLoading, onOAuthClick, authConfig, title, subtitle, emailLabel, emailPlaceholder, passwordLabel, passwordPlaceholder, submitButtonText, loadingButtonText, signInText, signInLinkText, signInUrl, dividerText, showVerificationStep, onVerifyCode, }: SignUpFormProps): react_jsx_runtime.JSX.Element;
+
+type ResetPasswordMethod = 'code' | 'link';
+interface ForgotPasswordFormProps {
+    email: string;
+    onEmailChange: (email: string) => void;
+    onSubmit: (e: FormEvent<HTMLFormElement>) => void;
+    error?: string;
+    loading?: boolean;
+    title?: string;
+    subtitle?: string;
+    emailLabel?: string;
+    emailPlaceholder?: string;
+    submitButtonText?: string;
+    loadingButtonText?: string;
+    backToSignInText?: string;
+    backToSignInUrl?: string;
+    showVerificationStep?: boolean;
+    resetPasswordMethod?: ResetPasswordMethod;
+    onVerifyCode?: (code: string) => Promise<void>;
+    onResendEmail?: () => Promise<void>;
+}
+/**
+ * Pre-built forgot password form component (UI only, no business logic).
+ */
+declare function ForgotPasswordForm({ email, onEmailChange, onSubmit, error, loading, title, subtitle, emailLabel, emailPlaceholder, submitButtonText, loadingButtonText, backToSignInText, backToSignInUrl, showVerificationStep, resetPasswordMethod, onVerifyCode, onResendEmail, }: ForgotPasswordFormProps): react_jsx_runtime.JSX.Element;
+
+interface ResetPasswordFormProps {
+    newPassword: string;
+    confirmPassword: string;
+    onNewPasswordChange: (password: string) => void;
+    onConfirmPasswordChange: (password: string) => void;
+    onSubmit: (e: FormEvent<HTMLFormElement>) => void;
+    error?: string;
+    loading?: boolean;
+    success?: boolean;
+    authConfig: AuthConfig;
+    title?: string;
+    subtitle?: string;
+    newPasswordLabel?: string;
+    newPasswordPlaceholder?: string;
+    confirmPasswordLabel?: string;
+    confirmPasswordPlaceholder?: string;
+    submitButtonText?: string;
+    loadingButtonText?: string;
+    successTitle?: string;
+}
+/**
+ * Pre-built reset password form component (UI only, no business logic).
+ */
+declare function ResetPasswordForm({ newPassword, confirmPassword, onNewPasswordChange, onConfirmPasswordChange, onSubmit, error, loading, success, authConfig, title, subtitle, newPasswordLabel, newPasswordPlaceholder, confirmPasswordLabel, confirmPasswordPlaceholder, submitButtonText, loadingButtonText, successTitle, }: ResetPasswordFormProps): react_jsx_runtime.JSX.Element;
+
+interface VerifyEmailStatusProps {
+    status: 'verifying' | 'success' | 'error';
+    error?: string;
+    verifyingTitle?: string;
+    successTitle?: string;
+    successMessage?: string;
+    errorTitle?: string;
+}
+/**
+ * Email verification status display component (UI only, no business logic).
+ */
+declare function VerifyEmailStatus({ status, error, verifyingTitle, successTitle, successMessage, errorTitle, }: VerifyEmailStatusProps): react_jsx_runtime.JSX.Element;
+
+export { ForgotPasswordForm, type ForgotPasswordFormProps, ResetPasswordForm, type ResetPasswordFormProps, SignInForm, type SignInFormProps, SignUpForm, type SignUpFormProps, VerifyEmailStatus, type VerifyEmailStatusProps };

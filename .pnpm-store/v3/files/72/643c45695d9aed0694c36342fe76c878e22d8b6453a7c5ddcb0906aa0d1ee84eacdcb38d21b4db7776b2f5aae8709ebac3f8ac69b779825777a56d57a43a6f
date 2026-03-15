@@ -1,0 +1,254 @@
+import * as react_jsx_runtime from 'react/jsx-runtime';
+import { ReactNode, InputHTMLAttributes, CSSProperties } from 'react';
+import { AuthConfig, EmailVerificationMethod } from './types.js';
+import { OAuthProvidersSchema } from '@insforge/shared-schemas';
+import '@insforge/shared';
+
+/**
+ * Insforge branding component for authentication pages.
+ *
+ * @component
+ * @example
+ * ```tsx
+ * <AuthBranding />
+ * ```
+ */
+declare function AuthBranding(): react_jsx_runtime.JSX.Element;
+
+interface AuthContainerProps {
+    children: ReactNode;
+}
+/**
+ * Main container component for authentication forms.
+ *
+ * @component
+ * @example
+ * ```tsx
+ * <AuthContainer>
+ *   <AuthHeader title="Sign In" />
+ *   <form>...</form>
+ * </AuthContainer>
+ * ```
+ *
+ * @param {ReactNode} children - Form content
+ */
+declare function AuthContainer({ children }: AuthContainerProps): react_jsx_runtime.JSX.Element;
+
+interface AuthHeaderProps {
+    title: string;
+    subtitle?: string;
+}
+/**
+ * Header component for authentication forms displaying title and optional subtitle.
+ *
+ * @component
+ * @example
+ * ```tsx
+ * <AuthHeader
+ *   title="Welcome Back"
+ *   subtitle="Sign in to continue"
+ * />
+ * ```
+ *
+ * @param {string} title - Main heading text
+ * @param {string} [subtitle] - Optional subheading text
+ */
+declare function AuthHeader({ title, subtitle }: AuthHeaderProps): react_jsx_runtime.JSX.Element;
+
+interface AuthErrorBannerProps {
+    error: string;
+}
+/**
+ * Error message banner for authentication forms.
+ */
+declare function AuthErrorBanner({ error }: {
+    error?: string;
+}): react_jsx_runtime.JSX.Element | null;
+
+interface AuthFormFieldProps extends InputHTMLAttributes<HTMLInputElement> {
+    label: string;
+    id: string;
+}
+/**
+ * Standard form input field with label for authentication forms.
+ *
+ * @component
+ * @example
+ * ```tsx
+ * <AuthFormField
+ *   id="email"
+ *   type="email"
+ *   label="Email Address"
+ * />
+ * ```
+ *
+ * @param {string} label - Label text
+ * @param {string} id - Input element ID
+ */
+declare function AuthFormField({ label, id, ...props }: AuthFormFieldProps): react_jsx_runtime.JSX.Element;
+
+interface AuthPasswordFieldProps extends InputHTMLAttributes<HTMLInputElement> {
+    label?: string;
+    id: string;
+    showStrengthIndicator?: boolean;
+    authConfig: AuthConfig;
+    forgotPasswordLink?: {
+        href: string;
+        text?: string;
+    };
+}
+/**
+ * Password input field with visibility toggle and optional strength indicator.
+ */
+declare function AuthPasswordField({ label, id, showStrengthIndicator, authConfig, forgotPasswordLink, value, onFocus, ...props }: AuthPasswordFieldProps): react_jsx_runtime.JSX.Element;
+
+interface AuthPasswordStrengthIndicatorProps {
+    password: string;
+    config: AuthConfig;
+}
+/**
+ * Password strength indicator showing requirement checklist.
+ */
+declare function AuthPasswordStrengthIndicator({ password, config, }: AuthPasswordStrengthIndicatorProps): react_jsx_runtime.JSX.Element;
+
+interface AuthSubmitButtonProps {
+    children: ReactNode;
+    isLoading?: boolean;
+    confirmed?: boolean;
+    disabled?: boolean;
+    type?: 'button' | 'submit';
+    onClick?: () => void;
+}
+/**
+ * Primary button for authentication forms with loading and confirmed states.
+ *
+ * Supports two modes:
+ * - **Form submit** (default): type="submit" - triggers form's onSubmit handler
+ * - **Action button**: type="button" + onClick - executes custom logic without form submission
+ *
+ * @component
+ * @example
+ * ```tsx
+ * // Form submit button (default)
+ * <AuthSubmitButton isLoading={loading}>
+ *   Sign In
+ * </AuthSubmitButton>
+ *
+ * // Action button with click handler
+ * <AuthSubmitButton type="button" onClick={handleClick} isLoading={loading}>
+ *   Verify Code
+ * </AuthSubmitButton>
+ * ```
+ */
+declare function AuthSubmitButton({ children, isLoading, confirmed, disabled, type, onClick, }: AuthSubmitButtonProps): react_jsx_runtime.JSX.Element;
+
+interface AuthLinkProps {
+    text: string;
+    linkText: string;
+    href: string;
+}
+/**
+ * Call-to-action link component for navigation between auth pages.
+ *
+ * @component
+ * @example
+ * ```tsx
+ * <AuthLink
+ *   text="Don't have an account?"
+ *   linkText="Sign up"
+ *   href="/sign-up"
+ * />
+ * ```
+ *
+ * @param {string} text - Regular text before the link
+ * @param {string} linkText - Clickable link text
+ * @param {string} href - Link URL
+ */
+declare function AuthLink({ text, linkText, href }: AuthLinkProps): react_jsx_runtime.JSX.Element;
+
+interface AuthDividerProps {
+    text?: string;
+}
+/**
+ * Visual divider with optional centered text for auth forms.
+ */
+declare function AuthDivider({ text }: AuthDividerProps): react_jsx_runtime.JSX.Element;
+
+interface AuthOAuthButtonProps {
+    provider: OAuthProvidersSchema;
+    onClick: (provider: OAuthProvidersSchema) => void;
+    disabled?: boolean;
+    loading?: boolean;
+    displayMode?: 'full' | 'short' | 'icon';
+    style?: CSSProperties;
+}
+/**
+ * OAuth provider button with adaptive display modes.
+ */
+declare function AuthOAuthButton({ provider, onClick, disabled, loading, displayMode, style, }: AuthOAuthButtonProps): react_jsx_runtime.JSX.Element | null;
+
+interface AuthOAuthProvidersProps {
+    providers: OAuthProvidersSchema[];
+    onClick: (provider: OAuthProvidersSchema) => void;
+    disabled?: boolean;
+    loading?: OAuthProvidersSchema | null;
+}
+/**
+ * Smart OAuth provider grid with adaptive layout.
+ *
+ * Automatically adjusts layout based on provider count:
+ * - 1 provider: Full-width
+ * - 2 or 4 providers: Two columns
+ * - 3+ providers: Three columns
+ */
+declare function AuthOAuthProviders({ providers, onClick, disabled, loading, }: AuthOAuthProvidersProps): react_jsx_runtime.JSX.Element | null;
+
+interface AuthVerificationCodeInputProps {
+    length?: number;
+    value: string;
+    onChange: (value: string) => void;
+    disabled?: boolean;
+    onComplete?: (code: string) => void;
+}
+/**
+ * 6-digit verification code input component with auto-focus and paste support.
+ */
+declare function AuthVerificationCodeInput({ length, value, onChange, disabled, onComplete, }: AuthVerificationCodeInputProps): react_jsx_runtime.JSX.Element;
+
+interface AuthEmailVerificationStepProps {
+    email: string;
+    method: EmailVerificationMethod;
+    onVerifyCode?: (code: string) => Promise<void>;
+    emailSent?: boolean;
+}
+/**
+ * Email verification step component (pure UI, no container)
+ *
+ * Designed to be embedded within a form container.
+ * Handles the email verification flow:
+ * - Automatically sends verification email on mount
+ * - Shows countdown timer for resend functionality
+ * - Manages rate limiting for resend attempts
+ * - Supports both code and link verification methods
+ *
+ * @param method - 'code' for OTP input, 'link' for magic link (default: 'code')
+ */
+declare function AuthEmailVerificationStep({ email, method, onVerifyCode, emailSent, }: AuthEmailVerificationStepProps): react_jsx_runtime.JSX.Element;
+
+interface AuthResetPasswordVerificationStepProps {
+    email: string;
+    method: EmailVerificationMethod;
+    onVerifyCode?: (code: string) => Promise<void>;
+    onResendEmail: () => Promise<void>;
+}
+/**
+ * Reset password verification step component
+ *
+ * Handles the verification flow for password reset:
+ * - Shows appropriate UI based on method (code input or link message)
+ * - Manages countdown timer for resend functionality
+ * - Handles code verification for code method
+ */
+declare function AuthResetPasswordVerificationStep({ email, method, onVerifyCode, onResendEmail, }: AuthResetPasswordVerificationStepProps): react_jsx_runtime.JSX.Element;
+
+export { AuthBranding, AuthContainer, type AuthContainerProps, AuthDivider, type AuthDividerProps, AuthEmailVerificationStep, AuthErrorBanner, type AuthErrorBannerProps, AuthFormField, type AuthFormFieldProps, AuthHeader, type AuthHeaderProps, AuthLink, type AuthLinkProps, AuthOAuthButton, type AuthOAuthButtonProps, AuthOAuthProviders, type AuthOAuthProvidersProps, AuthPasswordField, type AuthPasswordFieldProps, AuthPasswordStrengthIndicator, type AuthPasswordStrengthIndicatorProps, AuthResetPasswordVerificationStep, AuthSubmitButton, type AuthSubmitButtonProps, AuthVerificationCodeInput, type AuthVerificationCodeInputProps };

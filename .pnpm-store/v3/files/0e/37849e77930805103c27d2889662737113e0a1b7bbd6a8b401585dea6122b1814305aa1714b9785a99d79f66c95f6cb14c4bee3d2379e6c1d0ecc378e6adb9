@@ -1,0 +1,110 @@
+import { z } from 'zod';
+
+/**
+ * Email validation schema
+ */
+declare const emailSchema: z.ZodString;
+/**
+ * Password validation schema with configurable requirements
+ */
+declare function createPasswordSchema(options?: {
+    minLength?: number;
+    requireUppercase?: boolean;
+    requireLowercase?: boolean;
+    requireNumber?: boolean;
+    requireSpecialChar?: boolean;
+}): z.ZodString;
+/**
+ * Default password schema (minimum 6 characters)
+ */
+declare const passwordSchema: z.ZodString;
+/**
+ * Validate email format
+ */
+declare function validateEmail(email: string): {
+    valid: boolean;
+    error?: string;
+};
+/**
+ * Validate password format
+ */
+declare function validatePassword(password: string, options?: Parameters<typeof createPasswordSchema>[0]): {
+    valid: boolean;
+    error?: string;
+};
+/**
+ * Validate password strength based on multiple criteria
+ */
+declare function checkPasswordStrength(password: string): {
+    score: number;
+    feedback: string[];
+};
+
+/**
+ * Path utilities for handling navigation in auth flows.
+ * Ensures proper path resolution when auth pages are served under a base path (e.g., /auth/)
+ */
+/**
+ * Resolves an auth route path relative to the current location.
+ * If the current path is under /auth/, it will preserve that prefix.
+ * Otherwise, it returns the path as-is.
+ *
+ * @param targetPath - The target auth path (e.g., '/sign-in', '/sign-up')
+ * @returns The resolved path with proper base path handling
+ *
+ * @example
+ * // Current URL: http://localhost:5174/auth/sign-in
+ * resolveAuthPath('/sign-up') // Returns '/auth/sign-up'
+ *
+ * @example
+ * // Current URL: http://localhost:5174/sign-in
+ * resolveAuthPath('/sign-up') // Returns '/sign-up'
+ */
+declare function resolveAuthPath(targetPath: string): string;
+/**
+ * Resolves an auth route URL with search params preserved.
+ * Similar to resolveAuthPath but returns a full URL string with query parameters.
+ *
+ * @param targetPath - The target auth path (e.g., '/sign-in', '/sign-up')
+ * @param searchParams - Optional URLSearchParams to append
+ * @returns The resolved URL as a string
+ *
+ * @example
+ * // Current URL: http://localhost:5174/auth/sign-in?redirect=...
+ * resolveAuthUrl('/sign-up', searchParams) // Returns '/auth/sign-up?redirect=...'
+ */
+declare function resolveAuthUrl(targetPath: string, searchParams?: URLSearchParams): string;
+
+/**
+ * Check if current environment is a hosted auth environment
+ *
+ * Returns true for:
+ * - localhost with port 7130 (hosted auth app dev)
+ * - https://*.insforge.app (hosted auth app production)
+ *
+ * @returns true if running in hosted auth environment
+ */
+declare function isHostedAuthEnvironment(): boolean;
+/**
+ * Session data for building legacy auth URL
+ */
+interface LegacyAuthSession {
+    accessToken: string;
+    userId: string;
+    email: string;
+    name?: string;
+    csrfToken?: string;
+}
+/**
+ * Build a legacy flow redirect URL with auth params in query string
+ *
+ * This is used to pass authentication credentials back to the user's app
+ * after OAuth completes in the hosted auth environment.
+ *
+ * @param redirectUrl - The URL to redirect to (user's app)
+ * @param session - The session data to include in the URL
+ * @returns The complete URL with auth params
+ */
+declare function buildLegacyAuthUrl(redirectUrl: string, session: LegacyAuthSession): string;
+
+export { type LegacyAuthSession, buildLegacyAuthUrl, checkPasswordStrength, createPasswordSchema, emailSchema, isHostedAuthEnvironment, passwordSchema, resolveAuthPath, resolveAuthUrl, validateEmail, validatePassword };

@@ -55,19 +55,18 @@ mkdirSync(FRONTEND_DEST, { recursive: true });
 cpSync(distSrc, FRONTEND_DEST, { recursive: true });
 console.log(`✓ Copied to ${FRONTEND_DEST}`);
 
-// ── Step 3: Compile Electron source (tsc) ───────────────────────────
+// ── Step 3a: Copy production node_modules (tsc + electron-builder need them) ─────
 
-step("3/4 — Compiling Electron TypeScript");
+step("3a — Copying production node_modules (for tsc and packaging)");
+
+// pnpm hoists to workspace root; copy deps into desktop-app/node_modules so tsc
+// can resolve electron-log/electron-store and electron-builder can bundle asar.
+run("node scripts/copy-deps.mjs", { cwd: ROOT });
+
+// ── Step 3b: Compile Electron source (tsc) ───────────────────────────
+
+step("3b/4 — Compiling Electron TypeScript");
 run("pnpm run build");
-
-// ── Step 3b: Copy production node_modules (pnpm hoists to root) ─────
-
-step("3b — Copying production node_modules for packaging");
-
-// electron-builder needs deps in desktop-app/node_modules/ but pnpm
-// hoists everything to the workspace root. We resolve each production
-// dep and copy its entire tree so the asar bundle is self-contained.
-run("node scripts/copy-deps.mjs", { cwd: WORKSPACE_ROOT });
 
 // ── Step 4: Package with electron-builder ───────────────────────────
 

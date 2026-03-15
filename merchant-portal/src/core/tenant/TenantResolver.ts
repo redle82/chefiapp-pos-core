@@ -439,6 +439,9 @@ export function isTenantSealedFor(
 /**
  * Set active tenant in TabIsolatedStorage (Seals Status as ACTIVE by default)
  */
+/** Nome do evento disparado quando o tenant é selado (para Runtime e outras superfícies sincronizarem). */
+export const TENANT_SEALED_EVENT = "chefiapp:tenant-sealed";
+
 export function setActiveTenant(
   tenantId: string,
   status: TenantStatus = "ACTIVE",
@@ -448,6 +451,12 @@ export function setActiveTenant(
     setTabIsolated(TENANT_STATUS_KEY, status);
     // Also sync legacy key for backwards compatibility
     setTabIsolated("chefiapp_restaurant_id", tenantId);
+    if (typeof window !== "undefined") {
+      window.localStorage.setItem("chefiapp_restaurant_id", tenantId);
+      window.dispatchEvent(
+        new CustomEvent(TENANT_SEALED_EVENT, { detail: { tenantId } }),
+      );
+    }
 
     Logger.info(`[TenantResolver] 🔒 Tenant Sealed: ${tenantId} [${status}]`);
   } catch (e) {
@@ -463,6 +472,9 @@ export function clearActiveTenant(): void {
     removeTabIsolated(ACTIVE_TENANT_KEY);
     removeTabIsolated(TENANT_STATUS_KEY);
     removeTabIsolated("chefiapp_restaurant_id");
+    if (typeof window !== "undefined") {
+      window.localStorage.removeItem("chefiapp_restaurant_id");
+    }
     Logger.info("[TenantResolver] 🔓 Tenant Unsealed");
   } catch {
     // Ignore

@@ -1,5 +1,21 @@
 {
+  "page": {
+    "title": "Turno y Caja",
+    "loadingCash": "Cargando estado de la caja...",
+    "registerOpen": "Caja abierta",
+    "initialBalance": "Saldo inicial",
+    "sales": "Ventas",
+    "expectedBalance": "Saldo esperado",
+    "closingBalanceLabel": "Saldo final (conteo)",
+    "closingNameLabel": "Cajero de cierre",
+    "closeButton": "Cerrar turno",
+    "registerClosed": "Caja cerrada",
+    "openButton": "Abrir turno",
+    "operatorLabel": "Caja"
+  },
   "gate": {
+    "closedTitle": "Caja cerrada:",
+    "openToSell": "Para realizar ventas, debe abrir el turno.",
     "checking": "Comprobando turno...",
     "openTitle": "Abrir turno",
     "openDescription": "Para empezar a vender, abra el turno con caja inicial en el Dashboard.",
@@ -82,6 +98,10 @@
     "closeInTpv": "Cerrar en TPV"
   },
   "error": {
+    "loadCash": "Error al cargar la caja.",
+    "noRestaurant": "Restaurante no definido.",
+    "invalidOpening": "Saldo inicial inválido.",
+    "invalidClosing": "Saldo final inválido.",
     "closeFailed": "Error al cerrar turno",
     "alreadyClosed": "Esta caja ya fue cerrada.",
     "notFound": "Caja no encontrada.",

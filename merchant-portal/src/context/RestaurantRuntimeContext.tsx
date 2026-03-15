@@ -50,7 +50,10 @@ import {
 } from "../core/modules/moduleCatalog";
 import { isDevStableMode } from "../core/runtime/devStableMode";
 import { getTabIsolated } from "../core/storage/TabIsolatedStorage";
-import { clearActiveTenant } from "../core/tenant/TenantResolver";
+import {
+  clearActiveTenant,
+  TENANT_SEALED_EVENT,
+} from "../core/tenant/TenantResolver";
 
 /** Estado operacional do Core: avisos só quando coreMode === 'offline-erro'. */
 export type CoreMode = "offline-intencional" | "online" | "offline-erro";
@@ -734,6 +737,14 @@ export function RestaurantRuntimeProvider({
       refresh();
     }
   }, [runtime.restaurant_id]); // Apenas re-hidratar se o restaurantId (propriedade externa) mudar
+
+  // Fluxo soberano: quando FlowGate sela o tenant por membership, sincronizar o runtime
+  useEffect(() => {
+    const handler = () => refresh();
+    if (typeof window === "undefined") return;
+    window.addEventListener(TENANT_SEALED_EVENT, handler);
+    return () => window.removeEventListener(TENANT_SEALED_EVENT, handler);
+  }, [refresh]);
 
   const value = useMemo<RestaurantRuntimeContextType>(
     () => ({

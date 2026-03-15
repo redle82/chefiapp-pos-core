@@ -98,5 +98,12 @@ export default defineConfig({
         storageState: AUTH_STATE_PATH,
       },
     },
+    /* P2 Soberano — validação automática do mesmo restaurant_id (login real, sem pilot) */
+    {
+      name: "sovereign",
+      testMatch: "**/core/sovereign-restaurant-id.spec.ts",
+      use: { browserName: "chromium" },
+      /* Sem storageState: usa cleanPage e login real com e2e-creds.json */
+    },
   ],
 });

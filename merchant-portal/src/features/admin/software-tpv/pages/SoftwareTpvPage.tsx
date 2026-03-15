@@ -17,10 +17,10 @@ import { AdminPageHeader } from "../../dashboard/components/AdminPageHeader";
 import { getTpvPreferences, setTpvPreferences } from "../tpvPreferencesStorage";
 
 const LOCALES = [
-  { value: "pt-BR", label: "Português (Brasil)" },
-  { value: "es-ES", label: "Español (España)" },
-  { value: "en-US", label: "English (US)" },
-  { value: "pt-PT", label: "Português (Portugal)" },
+  { value: "pt-BR", labelKey: "softwareTpv.localePtBR" },
+  { value: "es-ES", labelKey: "softwareTpv.localeEsES" },
+  { value: "en-US", labelKey: "softwareTpv.localeEnUS" },
+  { value: "pt-PT", labelKey: "softwareTpv.localePtPT" },
 ] as const;
 
 const TIMEZONES = [
@@ -46,12 +46,12 @@ const CURRENCIES = [
   { value: "AUD", label: "AUD ($)" },
 ] as const;
 
-const ATAJOS = [
-  "Enter: enviar pedido",
-  "Esc: cancelar / cerrar modal",
-  "Números: cantidad rápida",
-  "F1–F4: categorías rápidas (en breve)",
-];
+const SHORTCUT_KEYS = [
+  "softwareTpv.shortcut1",
+  "softwareTpv.shortcut2",
+  "softwareTpv.shortcut3",
+  "softwareTpv.shortcut4",
+] as const;
 
 const cardStyle = {
   border: "1px solid var(--surface-border)",
@@ -88,7 +88,7 @@ const buttonStyle = {
 };
 
 export function SoftwareTpvPage() {
-  const { t } = useTranslation();
+  const { t } = useTranslation("config");
   const { runtime } = useRestaurantRuntime();
   const restaurantId = runtime.restaurant_id ?? null;
 
@@ -146,7 +146,7 @@ export function SoftwareTpvPage() {
 
   const handleSaveConfig = async () => {
     if (!restaurantId || getBackendType() !== BackendType.docker) {
-      alert("Core indisponível o restaurante no seleccionado.");
+      alert(t("softwareTpv.errorCoreUnavailable"));
       return;
     }
     setConfigSaving(true);
@@ -165,7 +165,7 @@ export function SoftwareTpvPage() {
         confirmOnClose: configForm.confirmOnClose,
       });
     } catch (e: unknown) {
-      const msg = e instanceof Error ? e.message : "Error al guardar.";
+      const msg = e instanceof Error ? e.message : t("softwareTpv.errorSave");
       alert(msg);
     } finally {
       setConfigSaving(false);
@@ -181,8 +181,8 @@ export function SoftwareTpvPage() {
   return (
     <div style={{ width: "100%", maxWidth: 960, margin: 0 }}>
       <AdminPageHeader
-        title="Software TPV"
-        subtitle="Configuración general y modo rápido del punto de venta."
+        title={t("softwareTpv.title")}
+        subtitle={t("softwareTpv.subtitle")}
         actions={
           <button
             type="button"
@@ -197,7 +197,7 @@ export function SoftwareTpvPage() {
               padding: 0,
             }}
           >
-            Abrir TPV en nueva ventana →
+            {t("softwareTpv.openInNewWindow")}
           </button>
         }
       />
@@ -209,7 +209,7 @@ export function SoftwareTpvPage() {
           gap: 16,
         }}
       >
-        {/* Card Configuración */}
+        {/* Card Configuração */}
         <section style={cardStyle} aria-labelledby="tpv-config-title">
           <h3
             id="tpv-config-title"
@@ -220,7 +220,7 @@ export function SoftwareTpvPage() {
               color: "var(--text-primary)",
             }}
           >
-            Configuración
+            {t("softwareTpv.configCardTitle")}
           </h3>
           <p
             style={{
@@ -229,18 +229,18 @@ export function SoftwareTpvPage() {
               color: "var(--text-secondary)",
             }}
           >
-            Preferencias del TPV: idioma, moneda, comportamiento de cierre.
+            {t("softwareTpv.configCardDesc")}
           </p>
           {!configLoaded ? (
             <p
               style={{ margin: 0, fontSize: 13, color: "var(--text-tertiary)" }}
             >
-              Cargando…
+              {t("softwareTpv.loading")}
             </p>
           ) : (
             <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
               <div>
-                <label style={labelStyle}>Idioma *</label>
+                <label style={labelStyle}>{t("softwareTpv.languageLabel")}</label>
                 <select
                   value={configForm.locale}
                   onChange={(e) =>
@@ -250,13 +250,13 @@ export function SoftwareTpvPage() {
                 >
                   {LOCALES.map((l) => (
                     <option key={l.value} value={l.value}>
-                      {l.label}
+                      {t(l.labelKey)}
                     </option>
                   ))}
                 </select>
               </div>
               <div>
-                <label style={labelStyle}>Zona horaria *</label>
+                <label style={labelStyle}>{t("softwareTpv.timezoneLabel")}</label>
                 <select
                   value={configForm.timezone}
                   onChange={(e) =>
@@ -272,7 +272,7 @@ export function SoftwareTpvPage() {
                 </select>
               </div>
               <div>
-                <label style={labelStyle}>Moneda *</label>
+                <label style={labelStyle}>{t("softwareTpv.currencyLabel")}</label>
                 <select
                   value={configForm.currency}
                   onChange={(e) =>
@@ -306,7 +306,7 @@ export function SoftwareTpvPage() {
                       }))
                     }
                   />
-                  Pedir confirmación al cerrar turno
+                  {t("softwareTpv.confirmOnCloseLabel")}
                 </label>
               </div>
               <button
@@ -332,7 +332,7 @@ export function SoftwareTpvPage() {
               color: "var(--text-primary)",
             }}
           >
-            Modo rápido
+            {t("softwareTpv.quickModeTitle")}
           </h3>
           <p
             style={{
@@ -341,13 +341,13 @@ export function SoftwareTpvPage() {
               color: "var(--text-secondary)",
             }}
           >
-            Atajos y flujo rápido para servicio en pico (barra, terraza).
+            {t("softwareTpv.quickModeDesc")}
           </p>
           {!prefsLoaded ? (
             <p
               style={{ margin: 0, fontSize: 13, color: "var(--text-tertiary)" }}
             >
-              Cargando…
+              {t("softwareTpv.loading")}
             </p>
           ) : (
             <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
@@ -365,7 +365,7 @@ export function SoftwareTpvPage() {
                   checked={quickMode}
                   onChange={handleToggleQuickMode}
                 />
-                Activar modo rápido
+                {t("softwareTpv.activateQuickMode")}
               </label>
               <div>
                 <span
@@ -375,7 +375,7 @@ export function SoftwareTpvPage() {
                     color: "var(--text-secondary)",
                   }}
                 >
-                  Atajos disponibles:
+                  {t("softwareTpv.shortcutsTitle")}
                 </span>
                 <ul
                   style={{
@@ -385,8 +385,8 @@ export function SoftwareTpvPage() {
                     color: "var(--text-secondary)",
                   }}
                 >
-                  {ATAJOS.map((a) => (
-                    <li key={a}>{a}</li>
+                  {SHORTCUT_KEYS.map((key) => (
+                    <li key={key}>{t(key)}</li>
                   ))}
                 </ul>
               </div>

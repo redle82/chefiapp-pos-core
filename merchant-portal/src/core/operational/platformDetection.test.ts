@@ -29,6 +29,7 @@ describe("platformDetection", () => {
     });
     delete (window as Window & { __TAURI__?: unknown }).__TAURI__;
     delete (window as Window & { electronBridge?: unknown }).electronBridge;
+    delete (window as Window & { __CHEFIAPP_ELECTRON?: boolean }).__CHEFIAPP_ELECTRON;
     delete (window as Window & { ReactNativeWebView?: unknown })
       .ReactNativeWebView;
     Object.defineProperty(window, "matchMedia", {
@@ -46,6 +47,19 @@ describe("platformDetection", () => {
 
   it("isElectron returns true when electronBridge is present", () => {
     (window as Window & { electronBridge?: unknown }).electronBridge = {};
+    expect(isElectron()).toBe(true);
+  });
+
+  it("isElectron returns true when __CHEFIAPP_ELECTRON is true (injected by Electron main/preload)", () => {
+    (window as Window & { __CHEFIAPP_ELECTRON?: boolean }).__CHEFIAPP_ELECTRON = true;
+    expect(isElectron()).toBe(true);
+  });
+
+  it("isElectron returns true when userAgent contains ChefIApp-Desktop (fallback without bridge)", () => {
+    Object.defineProperty(navigator, "userAgent", {
+      configurable: true,
+      value: "Mozilla/5.0 ChefIApp-Desktop/0.1.0",
+    });
     expect(isElectron()).toBe(true);
   });
 

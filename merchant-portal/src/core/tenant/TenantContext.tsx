@@ -24,6 +24,7 @@ import {
     isTenantSealed,
     setActiveTenant,
 } from "./TenantResolver";
+import { CONFIG } from "../../config";
 // ANTI-SUPABASE §4: Tenant/members resolution ONLY via Core. No Supabase domain path.
 
 /**
@@ -163,7 +164,22 @@ export function TenantProvider({ children }: TenantProviderProps) {
         }
 
         if (!session?.user?.id) {
-          // Bypass: mock tenant só com ?debug=1 e rota TPV/KDS ou trial
+          // Modo soberano (Supabase): sem bypass; exigir login com mensagem clara
+          if (CONFIG.isSupabaseBackend) {
+            setState({
+              tenantId: null,
+              restaurant: null,
+              memberships: [],
+              isLoading: false,
+              error: "Inicie sessão para aceder ao restaurante.",
+              isMultiTenant: false,
+              organization: null,
+              orgMemberships: [],
+              planTier: null,
+            });
+            return;
+          }
+          // Bypass: mock tenant só com ?debug=1 e rota TPV/KDS ou trial (não-Supabase)
           if (isDebugMode()) {
             const path =
               typeof window !== "undefined" ? window.location.pathname : "";
@@ -244,12 +260,15 @@ export function TenantProvider({ children }: TenantProviderProps) {
         if (memberError) throw memberError;
 
         if (!members || members.length === 0) {
+          const noMembershipError = CONFIG.isSupabaseBackend
+            ? "Nenhum restaurante associado a esta conta. Execute o seed canónico ou contacte o administrador."
+            : null;
           setState({
             tenantId: null,
             restaurant: null,
             memberships: [],
             isLoading: false,
-            error: null,
+            error: noMembershipError,
             isMultiTenant: false,
             organization: null,
             orgMemberships: [],

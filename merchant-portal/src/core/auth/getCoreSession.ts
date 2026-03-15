@@ -1,8 +1,10 @@
 /**
- * Sessão Core (Docker). Única fonte para getSession/getUser.
- * Usado por core/supabase stub e por useCoreAuth. Sem Supabase.
+ * Sessão Core (Docker ou Supabase). Única fonte para getSession/getUser.
+ * Usado por core stub e por useCoreAuth.
+ * Supabase: quando CONFIG.isSupabaseBackend, sessão vem de supabaseAuth.
  */
 
+import { CONFIG } from "../../config";
 import { isDebugMode } from "../debugMode";
 import {
   BackendType,
@@ -10,6 +12,7 @@ import {
   getBackendType,
 } from "../infra/backendAdapter";
 import { getKeycloakSession, isJustLoggedOut } from "./authKeycloak";
+import { getSupabaseSession } from "./supabaseAuth";
 import type { CoreSession, CoreUser } from "./authTypes";
 
 const PILOT_USER_UUID = "00000000-0000-0000-0000-000000000002";
@@ -48,6 +51,9 @@ export async function getCoreSessionAsync(): Promise<CoreSession | null> {
   const isPilot = localStorage.getItem("chefiapp_pilot_mode") === "true";
   if (isDebugMode() && (isTrial || isPilot)) return mockSession();
 
+  if (CONFIG.isSupabaseBackend) {
+    return getSupabaseSession();
+  }
   if (getBackendType() === BackendType.docker) {
     const state = await getKeycloakSession();
     if (state.session && state.user) {

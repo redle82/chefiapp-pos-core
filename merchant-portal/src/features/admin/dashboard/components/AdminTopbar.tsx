@@ -5,12 +5,16 @@ import { getAuthActions } from "../../../../core/auth/authAdapter";
 import { LOGOUT_IN_PROGRESS_KEY } from "../../../../core/auth/authKeycloak";
 import { useAuth } from "../../../../core/auth/useAuth";
 import { useRestaurantIdentity } from "../../../../core/identity/useRestaurantIdentity";
+import { SOFIA_RESTAURANT_ID } from "../../../../core/readiness/operationalRestaurant";
 import { useTenant } from "../../../../core/tenant/TenantContext";
 import {
   resolveOperatorProfile,
 } from "../../../../pages/TPV/context/operatorIdentity";
 import { RestaurantHeader } from "../../../../ui/design-system/sovereign/RestaurantHeader";
 import styles from "./AdminTopbar.module.css";
+
+/** Mock pilot = dono do Sofia no Docker; UI deve mostrar explicitamente "Dono" (PT-BR). */
+const PILOT_USER_UUID = "00000000-0000-0000-0000-000000000002";
 
 export function AdminTopbar() {
   const { t } = useTranslation("dashboard");
@@ -47,8 +51,14 @@ export function AdminTopbar() {
     effectiveRole === "internal" ||
     effectiveRole === "internal_admin" ||
     effectiveRole === "system_admin";
-  const roleLabel =
-    effectiveRole && effectiveRole.length > 0
+  /** Sofia oficial: pilot mock é dono do restaurante 100 — mostrar "Dono" (PT-BR) na UI. */
+  const isSofiaContext =
+    tenantId === SOFIA_RESTAURANT_ID || identity?.id === SOFIA_RESTAURANT_ID;
+  const isSofiaPilotOwner =
+    !isLoggedOut && user?.id === PILOT_USER_UUID && isSofiaContext;
+  const roleLabel = isSofiaPilotOwner
+    ? t("topbar.roleOwner", { defaultValue: "Dono" })
+    : effectiveRole && effectiveRole.length > 0
       ? effectiveRole === "owner"
         ? t("topbar.roleOwner", { defaultValue: "Dono" })
         : effectiveRole === "manager"
@@ -64,7 +74,7 @@ export function AdminTopbar() {
         ? ""
         : isAnonymousSession
           ? t("topbar.roleOwner", { defaultValue: "Dono" })
-          : t("topbar.roleStaff", { defaultValue: "Equipa" });
+          : t("topbar.roleStaff", { defaultValue: "Equipe" });
   const isRoleRedundant =
     displayName.trim().toLowerCase() === roleLabel.trim().toLowerCase();
   const baseRestaurantName =

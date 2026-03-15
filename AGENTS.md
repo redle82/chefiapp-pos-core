@@ -42,7 +42,10 @@
 - Start via `pnpm -w merchant-portal run dev`.
 - Default port is `5175` unless `PORT` is set.
 - **Port 5175 already in use:** outro processo (ex. Vite) já está a usar a porta. Para libertar: `lsof -ti:5175 | xargs kill -9`. Ou usa o servidor que já está a correr.
-- **GET /admin/devices 500 e GET /@vite/client 404:** acontecem quando a app **não** está a ser servida pelo Vite (ex.: outro processo na 5175, ou `serve dist`). Solução: garantir que só corre o dev do Vite na 5175 — `cd merchant-portal && pnpm run dev` ou `pnpm --filter merchant-portal run dev`; libertar a porta com `npm run kill:5175` se necessário. O Vite faz SPA fallback (todas as rotas → index.html) e serve `/@vite/client` em dev.
+- **GET /admin/devices 500, GET /admin/devices/tpv 500 e GET /@vite/client 404:** acontecem quando a app **não** está a ser servida pelo Vite (ex.: outro processo na 5175, ou `serve dist`). Solução: garantir que só corre o dev do Vite na 5175 — `cd merchant-portal && pnpm run dev` ou `pnpm --filter merchant-portal run dev`; libertar a porta com `pnpm -w run kill:5175` (ou `lsof -ti:5175 | xargs kill -9`) se necessário. O Vite faz SPA fallback (todas as rotas → index.html) e serve `/@vite/client` em dev.
+- **GET /favicon.ico 404:** inofensivo; o `index.html` já define `<link rel="icon" href="data:image/svg+xml,...">`. Para eliminar o 404, podes colocar um ficheiro `merchant-portal/public/favicon.ico`.
+- **Vite: "Cannot find module '.../vite/dist/node/chunks/dist.js'":** erro de resolução interna do Vite 7 com pnpm. O projeto usa **Vite 6** (override na raiz). **Solução (na raiz):** `pnpm run fix:portal-dev` e depois `pnpm --filter merchant-portal run dev`. Se o erro continuar: `DEEP=1 pnpm run fix:portal-dev` (remove node_modules e reinstala). Em último caso: `pnpm store prune` e de novo `pnpm install`.
+- **Console: "TypeError: Cannot read properties of undefined (reading 'payload')" em giveFreely.tsx:** normalmente vem de **extensão do browser** (ex.: GiveFreely) ou script externo, não do merchant-portal. Podes ignorar ou desativar a extensão ao desenvolver.
 
 ## AppStaff (web = o que está em uso)
 

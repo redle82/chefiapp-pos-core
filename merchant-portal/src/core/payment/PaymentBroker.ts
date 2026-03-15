@@ -13,6 +13,15 @@ import { Logger } from "../logger";
 const gatewayPath = (legacy: string, edge: string) =>
   CONFIG.isEdgeGateway ? edge : legacy;
 
+/** Lê env sem import.meta para compilar no Jest/Node. */
+function getPaymentEnv(key: string, fallback: string): string {
+  const g = typeof globalThis !== "undefined" ? (globalThis as Record<string, unknown>) : null;
+  const v = g?.[key];
+  if (typeof v === "string" && v) return v;
+  if (typeof process !== "undefined" && process.env?.[key]) return process.env[key] ?? fallback;
+  return fallback;
+}
+
 const CORE_REQUIRED_MSG =
   "Payment requires Docker Core. Supabase domain fallback is forbidden.";
 
@@ -114,9 +123,8 @@ export class PaymentBroker {
   }): Promise<PixCheckoutResult> {
     Logger.debug("[PaymentBroker] Creating Pix checkout:", { params });
 
-    const gatewayUrl = import.meta.env.VITE_API_BASE || "http://localhost:4320";
-    const internalToken =
-      import.meta.env.VITE_INTERNAL_API_TOKEN || "chefiapp-internal-token-dev";
+    const gatewayUrl = getPaymentEnv("VITE_API_BASE", "http://localhost:4320");
+    const internalToken = getPaymentEnv("VITE_INTERNAL_API_TOKEN", "chefiapp-internal-token-dev");
 
     const path = gatewayPath(
       "api/v1/payment/pix/checkout",
@@ -154,9 +162,8 @@ export class PaymentBroker {
   static async getPixCheckoutStatus(
     checkoutId: string,
   ): Promise<PixCheckoutStatusResult> {
-    const gatewayUrl = import.meta.env.VITE_API_BASE || "http://localhost:4320";
-    const internalToken =
-      import.meta.env.VITE_INTERNAL_API_TOKEN || "chefiapp-internal-token-dev";
+    const gatewayUrl = getPaymentEnv("VITE_API_BASE", "http://localhost:4320");
+    const internalToken = getPaymentEnv("VITE_INTERNAL_API_TOKEN", "chefiapp-internal-token-dev");
 
     const base = gatewayPath(
       "api/v1/payment/sumup/checkout",
@@ -207,9 +214,8 @@ export class PaymentBroker {
   }> {
     Logger.debug("[PaymentBroker] Creating SumUp checkout:", { params });
 
-    const gatewayUrl = import.meta.env.VITE_API_BASE || "http://localhost:4320";
-    const internalToken =
-      import.meta.env.VITE_INTERNAL_API_TOKEN || "chefiapp-internal-token-dev";
+    const gatewayUrl = getPaymentEnv("VITE_API_BASE", "http://localhost:4320");
+    const internalToken = getPaymentEnv("VITE_INTERNAL_API_TOKEN", "chefiapp-internal-token-dev");
 
     const path = gatewayPath("api/v1/sumup/checkout", "sumup-create-checkout");
     const response = await fetch(`${gatewayUrl}/${path}`, {
@@ -255,9 +261,8 @@ export class PaymentBroker {
       validUntil?: string;
     };
   }> {
-    const gatewayUrl = import.meta.env.VITE_API_BASE || "http://localhost:4320";
-    const internalToken =
-      import.meta.env.VITE_INTERNAL_API_TOKEN || "chefiapp-internal-token-dev";
+    const gatewayUrl = getPaymentEnv("VITE_API_BASE", "http://localhost:4320");
+    const internalToken = getPaymentEnv("VITE_INTERNAL_API_TOKEN", "chefiapp-internal-token-dev");
 
     const base = gatewayPath("api/v1/sumup/checkout", "sumup-get-checkout");
     const response = await fetch(`${gatewayUrl}/${base}/${checkoutId}`, {

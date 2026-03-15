@@ -9,6 +9,8 @@ export interface DesktopReleaseConfig {
   isDevLike: boolean;
   hasAnyExplicitPlatformFile: boolean;
   hasPublishedRelease: boolean;
+  /** Versão da release (ex.: "1.2.0"). Definir VITE_DESKTOP_RELEASE_VERSION para mostrar na tela TPV. */
+  releaseVersion: string;
 }
 
 function trimValue(value: unknown): string {
@@ -51,6 +53,7 @@ export function getDesktopReleaseConfig(): DesktopReleaseConfig {
   const hasPublishedRelease = Boolean(
     base && isAbsoluteBase && isExternalBase && hasAnyExplicitPlatformFile,
   );
+  const releaseVersion = trimValue(import.meta.env.VITE_DESKTOP_RELEASE_VERSION);
 
   return {
     base,
@@ -60,6 +63,7 @@ export function getDesktopReleaseConfig(): DesktopReleaseConfig {
     isDevLike,
     hasAnyExplicitPlatformFile,
     hasPublishedRelease,
+    releaseVersion,
   };
 }
 

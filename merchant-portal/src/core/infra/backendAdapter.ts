@@ -4,8 +4,9 @@
  * Backend único: Docker Core (PostgREST). Sem Supabase.
  * Domínio (pedidos, menu, restaurantes, billing, etc.) usa apenas Core.
  *
- * IMPORTANT: Do not use import.meta here. This file is loaded by Jest (commonjs);
- * use process.env only so core-engine tests compile.
+ * IMPORTANT: Do not use import.meta here. This file is loaded by Jest (Node/commonjs);
+ * use only process.env and globalThis so it compiles and runs in both Vite and Node.
+ * No browser: set (globalThis as any).__VITE_CORE_URL__ from import.meta.env in the app entry if needed.
  */
 
 export enum BackendType {
@@ -13,7 +14,6 @@ export enum BackendType {
   none = "none",
 }
 
-// Allow process.env for Jest/Node environments without creating type errors in Vite
 declare const process: {
   env: Record<string, string | undefined>;
   NODE_ENV: string;
@@ -21,21 +21,27 @@ declare const process: {
 
 const DOCKER_INDICATORS = ["localhost:3001", "127.0.0.1:3001", "/rest"];
 
+/** Objeto de env injetável (ex.: testes Jest); evita import.meta neste ficheiro. */
+declare global {
+  // eslint-disable-next-line no-var
+  var __CHEFIAPP_ENV__: Record<string, string> | undefined;
+}
+
+/** Lê variável de ambiente de forma segura em Vite e Node (sem import.meta neste ficheiro). Ordem: globalThis.__CHEFIAPP_ENV__ → process.env. */
+function getEnvVar(key: string): string {
+  const envBag = typeof globalThis !== "undefined" ? (globalThis as { __CHEFIAPP_ENV__?: Record<string, string> }).__CHEFIAPP_ENV__ : undefined;
+  const fromBag = envBag?.[key];
+  if (typeof fromBag === "string" && fromBag) return fromBag;
+  if (typeof process !== "undefined" && process.env?.[key]) return process.env[key] ?? "";
+  return "";
+}
+
 /** Raw base URL from env. VITE_CORE_URL canónico; VITE_SUPABASE_URL fallback @legacy-remove */
 function getRawBaseUrl(): string {
-  let url = "";
-  if (typeof import.meta !== "undefined" && import.meta.env?.VITE_CORE_URL) {
-    url = import.meta.env.VITE_CORE_URL;
-  } else if (
-    typeof import.meta !== "undefined" &&
-    import.meta.env?.VITE_SUPABASE_URL
-  ) {
-    url = import.meta.env.VITE_SUPABASE_URL;
-  } else if (typeof process !== "undefined" && process.env?.VITE_CORE_URL) {
-    url = process.env.VITE_CORE_URL;
-  } else if (typeof process !== "undefined" && process.env?.VITE_SUPABASE_URL) {
-    url = process.env.VITE_SUPABASE_URL;
-  }
+  const url =
+    getEnvVar("VITE_CORE_URL") ||
+    getEnvVar("VITE_SUPABASE_URL") ||
+    (typeof process !== "undefined" ? (process.env?.VITE_CORE_URL ?? process.env?.VITE_SUPABASE_URL ?? "") : "");
   return (url || "").replace(/\/$/, "");
 }
 

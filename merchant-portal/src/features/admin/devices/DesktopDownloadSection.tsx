@@ -13,6 +13,7 @@
  */
 
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import {
   buildDesktopDownloadHref,
   getDesktopReleaseConfig,
@@ -89,6 +90,7 @@ function getDownloadTargets(
 
 /* ── DEV mode: local build instructions ── */
 function DevLocalBuildCTA() {
+  const { t } = useTranslation("config");
   const [expanded, setExpanded] = useState(false);
 
   return (
@@ -97,11 +99,10 @@ function DevLocalBuildCTA() {
         <span className={styles.devBuildIcon}>🔧</span>
         <div>
           <strong className={styles.devBuildTitle}>
-            Modo DEV — Gerar DMG local
+            {t("devices.downloadDevTitle")}
           </strong>
           <p className={styles.devBuildDesc}>
-            Em desenvolvimento não há release publicada. Gera o instalador
-            localmente e instala em /Applications.
+            {t("devices.downloadDevDesc")}
           </p>
         </div>
       </div>
@@ -111,7 +112,7 @@ function DevLocalBuildCTA() {
         onClick={() => setExpanded(!expanded)}
         data-testid="desktop-dev-build-toggle"
       >
-        {expanded ? "Ocultar instruções" : "Ver instruções de build local"}
+        {expanded ? t("devices.downloadHideInstructions") : t("devices.downloadShowInstructions")}
       </button>
       {expanded && (
         <div
@@ -119,24 +120,11 @@ function DevLocalBuildCTA() {
           data-testid="desktop-dev-build-steps"
         >
           <ol>
-            <li>
-              <code>
-                cd desktop-app && pnpm install && pnpm build && pnpm dist:mac
-              </code>
-            </li>
-            <li>
-              Abrir o <code>.dmg</code> gerado em <code>desktop-app/out/</code>
-            </li>
-            <li>
-              Arrastar <strong>ChefIApp Desktop.app</strong> para{" "}
-              <code>/Applications</code>
-            </li>
-            <li>
-              Abrir 1x pelo Finder (regista o handler <code>chefiapp-pos://</code>)
-            </li>
-            <li>
-              Testar: <code>open "chefiapp-pos://open?app=tpv&nonce=test"</code>
-            </li>
+            <li><code>{t("devices.downloadBuildStep1")}</code></li>
+            <li>{t("devices.downloadBuildStep2")}</li>
+            <li>{t("devices.downloadBuildStep3")}</li>
+            <li>{t("devices.downloadBuildStep4")}</li>
+            <li>{t("devices.downloadBuildStep5")}</li>
           </ol>
         </div>
       )}
@@ -144,38 +132,13 @@ function DevLocalBuildCTA() {
   );
 }
 
-/* ── PROD mode: publish release instructions ── */
+/* ── PROD sem release: estado curto (sem bloco de env vars) ── */
 function ProdPublishCTA() {
+  const { t } = useTranslation("config");
   return (
-    <div
-      className={styles.prodPublishCta}
-      data-testid="desktop-prod-publish-cta"
-    >
-      <div className={styles.devBuildHeader}>
-        <span className={styles.devBuildIcon}>📦</span>
-        <div>
-          <strong className={styles.devBuildTitle}>
-            Release não publicada
-          </strong>
-          <p className={styles.devBuildDesc}>
-            Para ativar os downloads, publica uma release com os artefactos e
-            configura as variáveis de ambiente:
-          </p>
-          <ul className={styles.prodEnvList}>
-            <li>
-              <code>VITE_DESKTOP_DOWNLOAD_BASE</code> — URL base (ex: GitHub
-              Releases)
-            </li>
-            <li>
-              <code>VITE_DESKTOP_DOWNLOAD_MAC_FILE</code> — nome do .dmg
-            </li>
-            <li>
-              <code>VITE_DESKTOP_DOWNLOAD_WINDOWS_FILE</code> — nome do .exe
-            </li>
-          </ul>
-        </div>
-      </div>
-    </div>
+    <p className={styles.downloadNote} data-testid="desktop-prod-publish-cta">
+      {t("devices.downloadPackagePreparing")}
+    </p>
   );
 }
 
@@ -188,6 +151,7 @@ export function DesktopDownloadSection({
   onVerify,
   healthStatus,
 }: DesktopDownloadSectionProps) {
+  const { t } = useTranslation("config");
   const {
     base,
     macFile,
@@ -202,18 +166,13 @@ export function DesktopDownloadSection({
   /* ── Regra 1: Se não há link, NÃO mostra botões mortos ── */
   if (!hasBaseConfigured) {
     return (
-      <div className={styles.downloadSection}>
-        <div
-          className={styles.downloadUnpublished}
-          data-testid="desktop-download-unpublished-note"
-        >
-          <span className={styles.downloadUnpublishedBadge}>
-            Desktop não publicado
-          </span>
-          <span className={styles.downloadNote}>
-            La aplicación de escritorio incluye TPV y KDS en un solo instalador.
-          </span>
-        </div>
+      <div
+        className={styles.downloadSection}
+        data-testid="desktop-download-unpublished-note"
+      >
+        <p className={styles.downloadNote} style={{ marginBottom: 12 }}>
+          {t("devices.downloadInstallerIncludesKds")}
+        </p>
         {isDevLike && devtoolsEnabled ? (
           <DevLocalBuildCTA />
         ) : (
@@ -227,20 +186,20 @@ export function DesktopDownloadSection({
   return (
     <div className={styles.downloadSection}>
       <div className={styles.downloadGrid}>
-        {targets.map((t) => (
+        {targets.map((target) => (
           <div
-            key={t.os}
+            key={target.os}
             className={`${styles.downloadCard} ${
-              t.highlighted ? styles.downloadCardHighlighted : ""
+              target.highlighted ? styles.downloadCardHighlighted : ""
             }`}
           >
-            {t.href ? (
+            {target.href ? (
               <button
                 type="button"
                 className={styles.downloadLink}
-                data-testid={`desktop-download-${t.os}`}
+                data-testid={`desktop-download-${target.os}`}
                 onClick={() => {
-                  const url = t.href ?? "";
+                  const url = target.href ?? "";
                   if (!url || !/^https?:\/\//i.test(url)) return;
                   try {
                     const targetOrigin = new URL(url).origin;
@@ -256,24 +215,23 @@ export function DesktopDownloadSection({
                   }
                 }}
               >
-                <span className={styles.downloadIcon}>{t.icon}</span>
+                <span className={styles.downloadIcon}>{target.icon}</span>
                 <div className={styles.downloadInfo}>
                   <span className={styles.downloadLabel}>
-                    Descargar para {t.label}
+                    {t("devices.downloadFor", { label: target.label })}
                   </span>
-                  <span className={styles.downloadFile}>{t.file}</span>
+                  <span className={styles.downloadFile}>{target.file}</span>
                 </div>
-                {t.highlighted && (
-                  <span className={styles.downloadBadge}>Tu sistema</span>
+                {target.highlighted && (
+                  <span className={styles.downloadBadge}>{t("devices.downloadYourSystem")}</span>
                 )}
               </button>
             ) : (
-              /* Edge case: base configured but href build failed */
               <div className={styles.downloadInfo}>
-                <span className={styles.downloadIcon}>{t.icon}</span>
+                <span className={styles.downloadIcon}>{target.icon}</span>
                 <div>
-                  <span className={styles.downloadLabel}>{t.label}</span>
-                  <span className={styles.downloadFile}>URL inválida</span>
+                  <span className={styles.downloadLabel}>{target.label}</span>
+                  <span className={styles.downloadFile}>{t("devices.downloadInvalidUrl")}</span>
                 </div>
               </div>
             )}
@@ -282,13 +240,13 @@ export function DesktopDownloadSection({
       </div>
       <div className={styles.downloadFooter}>
         <span className={styles.downloadNote}>
-          La aplicación de escritorio incluye TPV y KDS en un solo instalador.
+          {t("devices.downloadFooterNote")}
         </span>
       </div>
       {onVerify && healthStatus !== "detected" && (
         <div className={styles.postDownloadVerify}>
           <span className={styles.postDownloadVerifyLabel}>
-            ¿Instalación completada?
+            {t("devices.downloadInstallComplete")}
           </span>
           <button
             type="button"
@@ -296,7 +254,7 @@ export function DesktopDownloadSection({
             onClick={onVerify}
             data-testid="desktop-verify-install-btn"
           >
-            {healthStatus === "checking" ? "Verificando…" : "Verificar"}
+            {healthStatus === "checking" ? t("devices.downloadVerifying") : t("devices.downloadVerify")}
           </button>
         </div>
       )}

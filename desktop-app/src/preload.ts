@@ -92,3 +92,5 @@ const bridge: ElectronBridge = {
 };
 
 contextBridge.exposeInMainWorld("electronBridge", bridge);
+// Sinal inequívoco para isolamento Admin: frontend sabe que está em Electron (preload corre antes do bundle).
+contextBridge.exposeInMainWorld("__CHEFIAPP_ELECTRON", true);

@@ -11,6 +11,7 @@ import { useEffect, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { getAuthActions } from "../core/auth/authAdapter";
 import { useAuth } from "../core/auth/useAuth";
+import { CONFIG } from "../config";
 import {
   BackendType,
   getBackendConfigured,
@@ -122,6 +123,8 @@ export function AuthPage() {
       const allowed = [
         "/dashboard",
         "/app/dashboard",
+        "/admin/modules",
+        "/admin/home",
         "/op/tpv",
         "/op/kds",
         "/op/cash",
@@ -130,7 +133,7 @@ export function AuthPage() {
     } catch {
       // ignore
     }
-    return "/app/dashboard";
+    return CONFIG.isSupabaseBackend ? "/admin/modules" : "/app/dashboard";
   };
 
   useEffect(() => {
@@ -163,7 +166,16 @@ export function AuthPage() {
     }
     setLoading(true);
     try {
-      // Docker Core only: Keycloak redirect or mock; no Supabase auth.
+      if (CONFIG.isSupabaseBackend) {
+        if (mode === "signup") {
+          setError(
+            "Criar utilizador via script de seed. Ver docs/ops/SEED_OWNER_SOBERANO.md",
+          );
+          return;
+        }
+        await getAuthActions().signIn(email, password);
+        return;
+      }
       if (hasCore) {
         if (mode === "signup") {
           try {
@@ -253,7 +265,60 @@ export function AuthPage() {
           <p style={styles.subtitle}>TPV que pensa antes do humano</p>
         </div>
 
-        {hasCore ? (
+        {CONFIG.isSupabaseBackend ? (
+          <>
+            <div style={styles.tabs}>
+              <button
+                type="button"
+                style={{
+                  ...styles.tab,
+                  ...(mode === "login" ? styles.tabActive : styles.tabInactive),
+                }}
+                onClick={() => setMode("login")}
+              >
+                Entrar
+              </button>
+            </div>
+            <form onSubmit={handleSubmit}>
+              {error && <p style={styles.error}>{error}</p>}
+              <label style={styles.label} htmlFor="sovereign-auth-email">Email</label>
+              <input
+                id="sovereign-auth-email"
+                data-testid="sovereign-auth-email"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="seu@email.com"
+                required
+                style={styles.input}
+                autoComplete="email"
+              />
+              <label style={styles.label} htmlFor="sovereign-auth-password">Palavra-passe</label>
+              <input
+                id="sovereign-auth-password"
+                data-testid="sovereign-auth-password"
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="••••••••"
+                required
+                style={styles.input}
+                autoComplete="current-password"
+              />
+              <button
+                type="submit"
+                disabled={loading}
+                data-testid="sovereign-auth-submit"
+                style={{ ...styles.button, ...styles.buttonPrimary }}
+              >
+                {loading ? "A processar..." : "Entrar"}
+              </button>
+            </form>
+            <p style={{ fontSize: 13, color: "#a3a3a3", marginTop: 16 }}>
+              Utilizador criado pelo seed? Use o mesmo email e palavra-passe.
+            </p>
+          </>
+        ) : hasCore ? (
           <div style={styles.trialGuideBox}>
             <p style={{ margin: "0 0 12px 0" }}>
               Em modo local não há registo na web. Para criar conta e comprar o

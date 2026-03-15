@@ -1,0 +1,15 @@
+import { createContext } from 'react';
+
+// src/react/contexts.tsx
+var InsforgeContext = createContext(void 0);
+InsforgeContext.displayName = "InsforgeContext";
+var InsforgeAuthStateContext = createContext(void 0);
+InsforgeAuthStateContext.displayName = "InsforgeAuthStateContext";
+var InsforgeMethodsContext = createContext(void 0);
+InsforgeMethodsContext.displayName = "InsforgeMethodsContext";
+var InsforgeConfigContext = createContext(void 0);
+InsforgeConfigContext.displayName = "InsforgeConfigContext";
+
+export { InsforgeAuthStateContext, InsforgeConfigContext, InsforgeContext, InsforgeMethodsContext };
+//# sourceMappingURL=react.js.map
+//# sourceMappingURL=react.js.map

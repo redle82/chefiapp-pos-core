@@ -3,14 +3,15 @@
  * Desfragmentação: extraídas de App.tsx para fronteira explícita.
  * Exporta Fragment para usar como filho direto de <Routes> (React Router v6 exige Route ou Fragment).
  * Uso: <Routes>{MarketingRoutesFragment}<Route path="/*" element={...} /></Routes>
+ *
+ * LoginPage e AuthPage em lazy para evitar 500 no carregamento inicial do bundle (chunk separado).
  */
 
-import { Fragment } from "react";
+import { Fragment, lazy, Suspense } from "react";
 import { Navigate, Route } from "react-router-dom";
 import { PWAOpenToTPVRedirect } from "../core/operational/PWAOpenToTPVRedirect";
 import { MentorPage } from "../features/mentorship";
 import { AboutPage } from "../pages/About/AboutPage";
-import { AuthPage } from "../pages/AuthPage";
 import { PhoneLoginPage } from "../pages/AuthPhone/PhoneLoginPage";
 import { VerifyCodePage } from "../pages/AuthPhone/VerifyCodePage";
 import { BillingSuccessPage } from "../pages/Billing/BillingSuccessPage";
@@ -29,11 +30,15 @@ import { OfficialLandingPage } from "../pages/LandingV2/LandingV2Page";
 import { LegalDPAPage } from "../pages/Legal/LegalDPAPage";
 import { LegalPrivacyPage } from "../pages/Legal/LegalPrivacyPage";
 import { LegalTermsPage } from "../pages/Legal/LegalTermsPage";
-import { LoginPage } from "../pages/LoginPage/LoginPage";
 import { MenuCatalogPage } from "../pages/MenuCatalog/MenuCatalogPage";
 import { MenuCatalogPageV2 } from "../pages/MenuCatalog/MenuCatalogPageV2";
 import { SecurityPage } from "../pages/Security/SecurityPage";
 import { StatusPage } from "../pages/Status/StatusPage";
+
+const LoginPage = lazy(() => import("../pages/LoginPage/LoginPage").then((m) => ({ default: m.LoginPage })));
+const AuthPage = lazy(() => import("../pages/AuthPage").then((m) => ({ default: m.AuthPage })));
+
+const AuthFallback = () => <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", background: "#0a0a0a", color: "#a3a3a3" }}>A carregar...</div>;
 
 /** Fragment com todas as rotas de marketing — usar como filho direto de <Routes>. */
 export const MarketingRoutesFragment = (
@@ -120,10 +125,10 @@ export const MarketingRoutesFragment = (
       element={<Navigate to="/auth/email" replace />}
     />
     <Route path="/auth" element={<Navigate to="/auth/phone" replace />} />
-    <Route path="/auth/login" element={<LoginPage />} />
+    <Route path="/auth/login" element={<Suspense fallback={<AuthFallback />}><LoginPage /></Suspense>} />
     <Route path="/auth/phone" element={<PhoneLoginPage />} />
     <Route path="/auth/verify" element={<VerifyCodePage />} />
-    <Route path="/auth/email" element={<AuthPage />} />
+    <Route path="/auth/email" element={<Suspense fallback={<AuthFallback />}><AuthPage /></Suspense>} />
     <Route path="/bootstrap" element={<BootstrapPage />} />
     {/* NAVIGATION_CONTRACT: /setup/restaurant-minimal only in app tree → redirect to /app/activation */}
     {/* Core Operations */}

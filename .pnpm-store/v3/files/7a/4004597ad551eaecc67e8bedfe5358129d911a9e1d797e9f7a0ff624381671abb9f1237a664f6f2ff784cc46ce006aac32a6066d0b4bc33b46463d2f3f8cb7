@@ -1,0 +1,43 @@
+import * as react from 'react';
+import { InsforgeContextValue, InsforgeAuthState, InsforgeAuthMethods, InsforgeAuthConfig } from './index.js';
+import '@insforge/shared-schemas';
+
+/**
+ * InsforgeContext - The single source of truth for authentication state
+ *
+ * This Context is defined in @insforge/shared to prevent duplication across
+ * multiple tsup entry points. All packages (@insforge/react, @insforge/nextjs, etc.)
+ * import this Context definition, ensuring there's only ONE Context instance.
+ *
+ * Pattern learned from @clerk/shared
+ *
+ * @deprecated Internal use only. Use useInsforge() hook instead.
+ */
+declare const InsforgeContext: react.Context<InsforgeContextValue | undefined>;
+/**
+ * InsforgeAuthStateContext - Reactive auth state that changes on sign in/out
+ *
+ * This context holds the reactive state: user, userId, isLoaded, isSignedIn.
+ * It updates when auth state changes.
+ */
+declare const InsforgeAuthStateContext: react.Context<InsforgeAuthState | undefined>;
+/**
+ * InsforgeMethodsContext - Stable method references
+ *
+ * This context holds method references that NEVER change once initialized.
+ * Methods like signIn, signOut, verifyEmail etc. are stored here.
+ * This prevents useEffect re-runs when state changes.
+ *
+ * Pattern learned from @clerk/shared - they store the Clerk instance
+ * in a separate context to keep method references stable.
+ */
+declare const InsforgeMethodsContext: react.Context<InsforgeAuthMethods | undefined>;
+/**
+ * InsforgeConfigContext - Static configuration values
+ *
+ * This context holds configuration values like baseUrl, afterSignInUrl.
+ * These rarely change after initialization.
+ */
+declare const InsforgeConfigContext: react.Context<InsforgeAuthConfig | undefined>;
+
+export { InsforgeAuthStateContext, InsforgeConfigContext, InsforgeContext, InsforgeMethodsContext };

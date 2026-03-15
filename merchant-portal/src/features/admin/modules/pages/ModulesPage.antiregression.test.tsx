@@ -205,7 +205,7 @@ describe("ModulesPage anti-regression", () => {
     expect(source).toContain("useDeviceInstall");
     expect(source).not.toContain("openOperationalInNewWindow");
     expect(source).not.toContain("wouldGuardAllow");
-    expect(source).toContain("modules.actionInstallDevice");
+    expect(source).toContain("modules.actionGoToOfficialTpv");
   });
 
   it("manifest files exist for web/PWA assets", () => {

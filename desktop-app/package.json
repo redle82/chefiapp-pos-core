@@ -8,7 +8,10 @@
   "main": "dist-electron/main.js",
   "scripts": {
     "build": "tsc -p tsconfig.json",
-    "build:electron": "tsc -p tsconfig.json"
+    "build:electron": "tsc -p tsconfig.json",
+    "prepare-icons": "node scripts/build-icons.mjs",
+    "dist:mac": "npm run prepare-icons && npx electron-builder --mac",
+    "dist:win": "npx electron-builder --win"
   },
   "dependencies": {
     "electron-log": "^5.2.4",
@@ -17,6 +20,7 @@
   },
   "devDependencies": {
     "electron": "^37.3.1",
-    "@types/electron": "^1.6.12"
+    "@types/electron": "^1.6.12",
+    "electron-builder": "^25.1.8"
   }
 }

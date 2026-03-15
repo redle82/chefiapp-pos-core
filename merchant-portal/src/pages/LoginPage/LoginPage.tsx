@@ -7,11 +7,12 @@
  * Alternativas: email/phone (links secundários).
  */
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { MadeWithLoveFooter } from "../../components/MadeWithLoveFooter";
 import { getAuthActions } from "../../core/auth/authAdapter";
 import { useAuth } from "../../core/auth/useAuth";
+import { CONFIG } from "../../config";
 import {
   BackendType,
   getBackendConfigured,
@@ -26,6 +27,10 @@ export function LoginPage() {
   const navigate = useNavigate();
   const hasBackend = getBackendConfigured();
   const isDocker = getBackendType() === BackendType.docker;
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   // Redirect if already authenticated
   useEffect(() => {
@@ -38,6 +43,20 @@ export function LoginPage() {
   const handleGoogleLogin = () => {
     if (hasBackend && isDocker) {
       getAuthActions().signIn();
+    }
+  };
+
+  const handleEmailLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError(null);
+    if (!email || !password) return;
+    setLoading(true);
+    try {
+      await getAuthActions().signIn(email, password);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Erro ao entrar.");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -79,8 +98,60 @@ export function LoginPage() {
           <p className={styles.subtitle}>{OSCopy.auth.loginSubtitle}</p>
         </div>
 
-        {/* Main CTA — Google */}
-        {hasBackend && isDocker ? (
+        {/* Main CTA — Supabase email/password or Keycloak Google */}
+        {CONFIG.isSupabaseBackend ? (
+          <form onSubmit={handleEmailLogin} className={styles.actions}>
+            {error && (
+              <p style={{ fontSize: 13, color: "#f87171", marginBottom: 12 }}>
+                {error}
+              </p>
+            )}
+            <input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="Email"
+              required
+              className={styles.googleBtn}
+              style={{
+                padding: "12px 16px",
+                marginBottom: 12,
+                background: "#262626",
+                border: "1px solid #404040",
+                borderRadius: 8,
+                color: "#fafafa",
+                fontSize: 15,
+              }}
+            />
+            <input
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="Palavra-passe"
+              required
+              className={styles.googleBtn}
+              style={{
+                padding: "12px 16px",
+                marginBottom: 12,
+                background: "#262626",
+                border: "1px solid #404040",
+                borderRadius: 8,
+                color: "#fafafa",
+                fontSize: 15,
+              }}
+            />
+            <button
+              type="submit"
+              disabled={loading}
+              className={styles.googleBtn}
+            >
+              {loading ? "A entrar..." : "Entrar"}
+            </button>
+            <p className={styles.privacyNote}>
+              Use o email e palavra-passe do utilizador criado pelo seed.
+            </p>
+          </form>
+        ) : hasBackend && isDocker ? (
           <div className={styles.actions}>
             <button
               type="button"

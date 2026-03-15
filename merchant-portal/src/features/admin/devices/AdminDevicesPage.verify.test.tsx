@@ -50,21 +50,20 @@ vi.mock("./PrinterAssignmentWizard", () => ({
 }));
 
 describe("AdminDevicesPage - desktop separation", () => {
-  it("keeps install/diagnostics out of /admin/devices and links to /admin/desktop", async () => {
+  it("keeps install/diagnostics out of /admin/devices and links to TPV page", async () => {
     render(
       <MemoryRouter>
         <AdminDevicesPage />
       </MemoryRouter>,
     );
 
-    expect(await screen.findByText("Dispositivos")).toBeTruthy();
+    expect(await screen.findByText("devices.appstaffTitle")).toBeTruthy();
     expect(screen.queryByText("downloadTitle")).toBeNull();
     expect(screen.queryByText("Verificar TPV")).toBeNull();
     expect(screen.queryByText("Verificar KDS")).toBeNull();
 
-    const learnMoreLink = screen.getByRole("link", {
-      name: /comingSoon.learnMore/i,
-    });
-    expect(learnMoreLink.getAttribute("href")).toBe("/admin/config/general");
+    // Hub: link discreto TPV leva para tela oficial
+    const tpvLink = screen.getByRole("link", { name: /devices.tpvLinkLabel/i });
+    expect(tpvLink.getAttribute("href")).toBe("/admin/devices/tpv");
   });
 });

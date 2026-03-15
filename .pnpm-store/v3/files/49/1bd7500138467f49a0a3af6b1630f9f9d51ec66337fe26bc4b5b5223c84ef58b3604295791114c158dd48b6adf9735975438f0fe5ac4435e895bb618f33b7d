@@ -1,0 +1,718 @@
+# @insforge/react
+
+**Framework-agnostic authentication solution for React applications.** Production-ready components with full business logic included.
+
+> **✨ CSS-in-JS**: All components now use Emotion CSS-in-JS for zero FOUC in SSR environments. No CSS imports needed!
+
+## Why @insforge/react?
+
+✅ **Framework Agnostic** - Works with any React setup (Vite, CRA, or no bundler)  
+✅ **Zero Router Dependencies** - Built-in navigation abstraction works with any routing solution  
+✅ **Route Protection** - Built-in `RouteGuard` for vanilla React apps  
+✅ **Production Ready** - Complete auth flows with business logic included  
+✅ **Full TypeScript** - Complete type safety out of the box
+
+---
+
+## Quick Start
+
+Get authentication working in your React app in 5 minutes.
+
+### 1. Install
+
+```bash
+npm install @insforge/react
+# or
+yarn add @insforge/react
+# or
+pnpm add @insforge/react
+```
+
+#### Environment Variables
+
+```bash
+# .env
+VITE_INSFORGE_BASE_URL=https://your-project.insforge.app/
+```
+
+### 2. Setup Provider & Route Guard
+
+Wrap your app with `InsforgeProvider`:
+
+```tsx
+// src/main.tsx (Vite) or src/index.tsx (CRA)
+import { StrictMode } from 'react';
+import { createRoot } from 'react-dom/client';
+import { InsforgeProvider } from '@insforge/react';
+import App from './App';
+
+createRoot(document.getElementById('root')!).render(
+  <StrictMode>
+    <InsforgeProvider baseUrl={import.meta.env.VITE_INSFORGE_BASE_URL}>
+      <App />
+    </InsforgeProvider>
+  </StrictMode>
+);
+```
+
+### 3. Use Components & Hooks
+
+Now you can use authentication components and hooks anywhere in your app:
+
+```tsx
+// src/App.tsx
+import { SignInButton, SignUpButton, SignedIn, SignedOut, UserButton } from '@insforge/react';
+
+export default function App() {
+  return (
+    <div>
+      <SignedOut>
+        <SignInButton />
+        <SignUpButton />
+      </SignedOut>
+
+      <SignedIn>
+        <nav>
+          <UserButton />
+        </nav>
+        <h1>Welcome to your dashboard!</h1>
+      </SignedIn>
+    </div>
+  );
+}
+```
+
+**That's it!** 🎉 Your app is now protected with authentication.
+
+---
+
+## Usage Patterns
+
+### Option 1: Pre-built Components (Fastest)
+
+Use complete auth flows with built-in UI and logic:
+
+```tsx
+import { SignIn, SignUp, ForgotPassword, ResetPassword } from '@insforge/react';
+
+// In your app
+<SignIn />  // Complete sign-in flow
+<SignUp />  // Complete sign-up flow with email verification
+<ForgotPassword />  // Password reset request + verification
+<ResetPassword />  // Reset password with token (from URL params)
+```
+
+### Option 2: Form Components (UI Only)
+
+Use UI components and add your own logic:
+
+```tsx
+import { SignInForm, useAuth } from '@insforge/react';
+import { useState } from 'react';
+
+function CustomSignIn() {
+  const { signIn } = useAuth();
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    const result = await signIn(email, password);
+    if ('error' in result) {
+      setError(result.error);
+    }
+    setLoading(false);
+  };
+
+  return (
+    <SignInForm
+      email={email}
+      password={password}
+      onEmailChange={setEmail}
+      onPasswordChange={setPassword}
+      onSubmit={handleSubmit}
+      error={error}
+      loading={loading}
+    />
+  );
+}
+```
+
+### Option 3: Hooks Only (Headless)
+
+Build completely custom UI using authentication hooks:
+
+```tsx
+import { useAuth } from '@insforge/react';
+
+function CustomAuthForm() {
+  const { signIn, signUp, isLoaded } = useAuth();
+
+  const handleLogin = async (email: string, password: string) => {
+    const result = await signIn(email, password);
+    if ('error' in result) {
+      console.error(result.error);
+    } else {
+      console.log('Signed in!');
+    }
+  };
+
+  return <form>...your custom UI...</form>;
+}
+```
+
+---
+
+## Core Features
+
+### Components
+
+**Pre-built with Business Logic:**
+
+- `<SignIn />` - Complete sign-in with email/password & OAuth
+- `<SignUp />` - Registration with password validation & email verification
+- `<ForgotPassword />` - Request password reset with email validation
+- `<ResetPassword />` - Reset password with token validation
+- `<VerifyEmail />` - Verify email with automatic token handling
+- `<UserButton />` - User dropdown with sign-out
+- `<RouteGuard />` - **NEW:** App-level route protection for vanilla React
+- `<Protect />` - Component-level protection wrapper
+- `<SignedIn>` / `<SignedOut>` - Conditional rendering
+
+**Form Components (Pure UI):**
+
+- `<SignInForm />` - Sign-in UI without logic
+- `<SignUpForm />` - Sign-up UI without logic
+- `<ForgotPasswordForm />` - Password reset request UI
+- `<ResetPasswordForm />` - Password reset with token UI
+- `<VerifyEmailStatus />` - Email verification status UI
+
+**Atomic Components (14 total):**
+
+- `<AuthContainer />`, `<AuthHeader />`, `<AuthFormField />`, `<AuthPasswordField />`, `<AuthEmailVerificationStep />`, etc.
+
+### Hooks
+
+```tsx
+// Authentication state and methods
+const {
+  signIn,
+  signUp,
+  signOut,
+  isSignedIn,
+  isLoaded,
+  baseUrl, // From provider
+  afterSignInUrl, // From provider
+} = useAuth();
+
+// Or use useInsforge (same as useAuth)
+const context = useInsforge();
+
+// User information
+const { user, updateUser, isLoaded } = useUser();
+
+// Public auth configuration (OAuth providers, password requirements, etc.)
+const { oauthProviders, authConfig, isLoaded } = usePublicAuthConfig();
+```
+
+---
+
+## Customization
+
+### Text Customization
+
+All components support full text customization:
+
+```tsx
+<SignIn
+  title="Welcome Back!"
+  subtitle="We're happy to see you again"
+  emailLabel="Your Email Address"
+  emailPlaceholder="you@company.com"
+  passwordLabel="Your Password"
+  submitButtonText="Login Now"
+  loadingButtonText="Signing you in..."
+  signUpText="New to our platform?"
+  signUpLinkText="Create an account"
+  dividerText="or continue with"
+/>
+
+<ForgotPassword
+  title="Reset Your Password"
+  subtitle="Enter your email to receive a reset code"
+  emailLabel="Email Address"
+  submitButtonText="Send Reset Code"
+  backToSignInText="Remember your password?"
+  successTitle="Check Your Email"
+  successMessage="We've sent a reset code to your inbox"
+/>
+```
+
+---
+
+## Advanced Usage
+
+### Conditional Rendering
+
+Control what users see based on auth state:
+
+```tsx
+import { SignedIn, SignedOut, Protect } from '@insforge/react';
+
+function App() {
+  return (
+    <>
+      <SignedOut>
+        <SignIn />
+      </SignedOut>
+
+      <SignedIn>
+        <Dashboard />
+      </SignedIn>
+
+      {/* Or use Protect for specific sections */}
+      <Protect redirectTo="/sign-in">
+        <ProtectedContent />
+      </Protect>
+    </>
+  );
+}
+```
+
+### Build from Atomic Components
+
+```tsx
+import {
+  AuthContainer,
+  AuthHeader,
+  AuthFormField,
+  AuthPasswordField,
+  AuthSubmitButton,
+  AuthErrorBanner,
+  AuthDivider,
+  AuthOAuthProviders,
+  AuthLink,
+} from '@insforge/react';
+
+function CompletelyCustomAuth() {
+  return (
+    <AuthContainer>
+      <AuthHeader title="Welcome to MyApp" subtitle="Sign in to continue" />
+
+      <AuthErrorBanner error={error} />
+
+      <form onSubmit={handleSubmit}>
+        <AuthFormField
+          id="email"
+          type="email"
+          label="Email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+        />
+
+        <AuthPasswordField
+          id="password"
+          label="Password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          authConfig={config}
+          showStrengthIndicator
+        />
+
+        <AuthSubmitButton isLoading={loading}>Sign In</AuthSubmitButton>
+      </form>
+
+      <AuthDivider text="or" />
+
+      <AuthOAuthProviders
+        providers={['google', 'github', 'discord']}
+        onClick={handleOAuth}
+        loading={oauthLoading}
+      />
+
+      <AuthLink text="Don't have an account?" linkText="Sign up" href="/sign-up" />
+    </AuthContainer>
+  );
+}
+```
+
+### Content Protection
+
+Protect specific content or sections:
+
+```tsx
+import { Protect } from '@insforge/react';
+
+function Dashboard() {
+  return (
+    <div>
+      <h1>Dashboard</h1>
+
+      {/* Simple protection - shows nothing if not signed in */}
+      <Protect>
+        <UserContent />
+      </Protect>
+
+      {/* With redirect */}
+      <Protect redirectTo="/sign-in">
+        <UserContent />
+      </Protect>
+
+      {/* Custom condition - e.g., role-based */}
+      <Protect condition={(user) => user.email.endsWith('@admin.com')} redirectTo="/unauthorized">
+        <AdminPanel />
+      </Protect>
+    </div>
+  );
+}
+```
+
+> **Note:** `<Protect>` is for component-level conditional rendering. For app-level route protection, use `<RouteGuard>`
+
+---
+
+## Route Protection (Detailed)
+
+### RouteGuard for Vanilla React
+
+`RouteGuard` provides app-level authentication protection without requiring any routing library.
+
+#### Option 1: External Built-in Auth (Simplest)
+
+Redirects to your deployed Insforge Auth pages:
+
+```tsx
+import { InsforgeProvider, RouteGuard } from '@insforge/react';
+
+createRoot(document.getElementById('root')!).render(
+  <InsforgeProvider baseUrl={import.meta.env.VITE_INSFORGE_BASE_URL} afterSignInUrl="/dashboard">
+    <RouteGuard
+      builtInAuth
+      publicRoutes={['/', '/about', '/pricing']}
+      loadingFallback={<div>Loading...</div>}
+    >
+      <App />
+    </RouteGuard>
+  </InsforgeProvider>
+);
+```
+
+**Behavior:**
+
+- User visits `/sign-in` → Redirects to `baseUrl/auth/sign-in`
+- User visits `/sign-up` → Redirects to `baseUrl/auth/sign-up`
+- User visits `/dashboard` (protected) → Redirects to `baseUrl/auth/sign-in`
+- User visits `/` (public) → ✅ Renders normally
+
+#### Option 2: Custom Auth Pages
+
+Use @insforge/react components in your own app:
+
+```tsx
+import { InsforgeProvider, RouteGuard, SignIn, SignUp } from '@insforge/react';
+
+// Simple hash-based routing
+function App() {
+  const path = window.location.hash.slice(1) || '/';
+
+  return (
+    <>
+      {path === '/login' && <SignIn />}
+      {path === '/register' && <SignUp />}
+      {path === '/dashboard' && <Dashboard />}
+      {path === '/' && <HomePage />}
+    </>
+  );
+}
+
+createRoot(document.getElementById('root')!).render(
+  <InsforgeProvider baseUrl={import.meta.env.VITE_INSFORGE_BASE_URL}>
+    <RouteGuard
+      builtInAuth={false}
+      publicRoutes={['/login', '/register', '/forgot-password', '/']}
+      paths={{ signIn: '/login', signUp: '/register' }}
+      loadingFallback={<div>Loading...</div>}
+    >
+      <App />
+    </RouteGuard>
+  </InsforgeProvider>
+);
+```
+
+**Behavior:**
+
+- User visits `/login` → ✅ Renders `<SignIn />` (in publicRoutes)
+- User visits `/dashboard` (protected) → Redirects to `/login?redirect=/dashboard`
+- After login → Redirects to `/dashboard`
+
+#### RouteGuard Props Reference
+
+| Prop                   | Type        | Required | Default                       | Description                                                |
+| ---------------------- | ----------- | -------- | ----------------------------- | ---------------------------------------------------------- |
+| `builtInAuth`          | `boolean`   | No       | `true`                        | Use external auth pages (`true`) or custom pages (`false`) |
+| `publicRoutes`         | `string[]`  | No       | `[]`                          | Routes accessible without authentication                   |
+| `paths`                | `object`    | No       | `{ signIn: '/sign-in', ... }` | Custom auth page paths (when `builtInAuth=false`)          |
+| `paths.signIn`         | `string`    | No       | `'/sign-in'`                  | Custom sign-in page path                                   |
+| `paths.signUp`         | `string`    | No       | `'/sign-up'`                  | Custom sign-up page path                                   |
+| `paths.forgotPassword` | `string`    | No       | `'/forgot-password'`          | Custom forgot password page path                           |
+| `loadingFallback`      | `ReactNode` | **Yes**  | -                             | Loading UI displayed while checking authentication         |
+
+**Public Routes with Wildcards:**
+
+```tsx
+<RouteGuard
+  publicRoutes={[
+    '/', // Home page
+    '/about', // About page
+    '/blog/*', // All blog routes
+    '/docs/*', // All documentation routes
+  ]}
+>
+  <App />
+</RouteGuard>
+```
+
+> **Note:** When `builtInAuth=true`, auth paths (`/sign-in`, `/sign-up`, `/forgot-password`) are automatically redirected. Don't include them in `publicRoutes`.
+
+### React Router Integration
+
+For React Router apps, use the dedicated adapter:
+
+```bash
+npm install @insforge/react-router
+```
+
+```tsx
+import { InsforgeProvider } from '@insforge/react-router';
+import { getInsforgeRoutes } from '@insforge/react-router/router';
+import { createBrowserRouter, RouterProvider } from 'react-router-dom';
+
+const router = createBrowserRouter([
+  { path: '/', element: <Home /> },
+  { path: '/dashboard', element: <Dashboard /> },
+  ...getInsforgeRoutes({
+    baseUrl: import.meta.env.VITE_INSFORGE_BASE_URL,
+    builtInAuth: true,
+  }),
+]);
+
+function App() {
+  return (
+    <InsforgeProvider baseUrl={import.meta.env.VITE_INSFORGE_BASE_URL}>
+      <RouterProvider router={router} />
+    </InsforgeProvider>
+  );
+}
+```
+
+**Features:**
+
+- Pre-configured routes for authentication flows
+- React Router's `Link` and `useSearchParams` integration
+- Optimized navigation with client-side routing
+
+**Docs:** [@insforge/react-router](https://github.com/InsForge/InsForge/tree/main/packages/react-router)
+
+### Next.js Integration
+
+For Next.js App Router with SSR:
+
+```bash
+npm install @insforge/nextjs
+```
+
+```tsx
+// app/layout.tsx
+import { InsforgeProvider } from '@insforge/nextjs';
+
+export default function RootLayout({ children }) {
+  return (
+    <html>
+      <body>
+        <InsforgeProvider baseUrl={process.env.NEXT_PUBLIC_INSFORGE_BASE_URL}>
+          {children}
+        </InsforgeProvider>
+      </body>
+    </html>
+  );
+}
+```
+
+**Features:**
+
+- Server-side rendering (SSR) support
+- Middleware-based route protection
+- Next.js `Link` and `useSearchParams` integration
+- Cookie-based session management
+- Automatic token refresh
+
+**Docs:** [@insforge/nextjs](https://github.com/InsForge/InsForge/tree/main/packages/nextjs)
+
+---
+
+## OAuth Providers
+
+Built-in support for 10+ OAuth providers:
+
+- Google
+- GitHub
+- Discord
+- Apple
+- Microsoft
+- Facebook
+- LinkedIn
+- Instagram
+- TikTok
+- Spotify
+- X (Twitter)
+
+Providers are auto-detected from your backend configuration.
+
+---
+
+## Available Atomic Components
+
+Low-level building blocks for complete customization:
+
+- `<AuthBranding />` - Insforge branding footer
+- `<AuthContainer />` - Main container wrapper
+- `<AuthHeader />` - Title and subtitle display
+- `<AuthErrorBanner />` - Error message display
+- `<AuthFormField />` - Standard input field
+- `<AuthPasswordField />` - Password input with features
+- `<AuthPasswordStrengthIndicator />` - Password checklist
+- `<AuthSubmitButton />` - Submit button with states
+- `<AuthLink />` - Call-to-action link
+- `<AuthDivider />` - Visual separator
+- `<AuthOAuthButton />` - Single OAuth provider button
+- `<AuthOAuthProviders />` - Smart OAuth grid
+- `<AuthVerificationCodeInput />` - 6-digit OTP input
+- `<AuthEmailVerificationStep />` - Email verification step with countdown and resend
+
+---
+
+## API Reference
+
+### InsforgeProvider
+
+The root provider component that manages authentication state.
+
+**Props:**
+
+| Prop             | Type                                   | Required | Default | Description                                         |
+| ---------------- | -------------------------------------- | -------- | ------- | --------------------------------------------------- |
+| `baseUrl`        | `string`                               | **Yes**  | -       | Your Insforge backend URL                           |
+| `afterSignInUrl` | `string`                               | No       | `'/'`   | Redirect URL after successful sign-in               |
+| `onAuthChange`   | `(user: InsforgeUser \| null) => void` | No       | -       | Callback when auth state changes                    |
+| `onSignIn`       | `(authToken: string) => Promise<void>` | No       | -       | Custom handler after sign-in (e.g., cookie sync)    |
+| `onSignOut`      | `() => Promise<void>`                  | No       | -       | Custom handler after sign-out (e.g., clear cookies) |
+
+**Example:**
+
+```tsx
+<InsforgeProvider
+  baseUrl={import.meta.env.VITE_INSFORGE_BASE_URL}
+  afterSignInUrl="/dashboard"
+  onAuthChange={(user) => {
+    console.log('Auth changed:', user);
+  }}
+>
+  {children}
+</InsforgeProvider>
+```
+
+### RouteGuard
+
+App-level route protection for vanilla React apps (no router library needed).
+
+See [Route Protection (Detailed)](#route-protection-detailed) for full documentation.
+
+**Quick Props:**
+
+- `builtInAuth` (default: `true`) - Use external auth or custom pages
+- `publicRoutes` - Array of paths accessible without auth
+- `paths` - Custom auth page paths (when `builtInAuth=false`)
+- `loadingFallback` (required) - Loading UI
+
+### useAuth() / useInsforge()
+
+Primary hook for authentication. Both are aliases for the same hook.
+
+**Returns:**
+
+```tsx
+{
+  // Auth state
+  user: InsforgeUser | null;
+  isLoaded: boolean;
+  isSignedIn: boolean;
+
+  // Auth methods
+  signIn: (email: string, password: string) => Promise<...>;
+  signUp: (email: string, password: string) => Promise<...>;
+  signOut: () => Promise<void>;
+  updateUser: (data: Partial<InsforgeUser>) => Promise<...>;
+  reloadAuth: () => Promise<...>;
+
+  // Email verification
+  resendVerificationEmail: (email: string) => Promise<...>;
+  verifyEmail: (otp: string, email?: string) => Promise<...>;
+
+  // Password reset
+  sendResetPasswordEmail: (email: string) => Promise<...>;
+  resetPassword: (token: string, newPassword: string) => Promise<...>;
+  exchangeResetPasswordToken: (email: string, code: string) => Promise<...>;
+
+  // OAuth
+  loginWithOAuth: (provider: OAuthProvider, redirectTo: string) => Promise<void>;
+
+  // Config (from provider)
+  baseUrl: string;
+  afterSignInUrl: string;
+
+  // Public config
+  getPublicAuthConfig: () => Promise<...>;
+}
+```
+
+### useUser()
+
+Simplified hook for user data only.
+
+**Returns:**
+
+```tsx
+{
+  user: InsforgeUser | null;
+  isLoaded: boolean;
+}
+```
+
+### usePublicAuthConfig()
+
+Hook for fetching public auth configuration (OAuth providers, password requirements, etc.).
+
+**Returns:**
+
+```tsx
+{
+  oauthProviders: OAuthProviderConfig[];
+  authConfig: AuthConfig;
+  isLoaded: boolean;
+}
+```
+
+---
+
+## Support
+
+- **Documentation**: https://docs.insforge.dev
+- **GitHub Issues**: https://github.com/InsForge/InsForge/issues
+- **Discord Community**: https://discord.com/invite/DvBtaEc9Jz
+
+## License
+
+MIT © Insforge

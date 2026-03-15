@@ -119,6 +119,7 @@ export function ProductCard({
     return (
       <div
         id={`product-${product.id}`}
+        data-testid={`sovereign-waiter-product-${product.name.replace(/\s+/g, "-")}`}
         style={{
           background: "#18181b",
           borderRadius: 12,
@@ -259,6 +260,8 @@ export function ProductCard({
               />
             )}
             <button
+              type="button"
+              data-testid="sovereign-waiter-add-confirm"
               onClick={handleAddToTable}
               style={{
                 width: "100%",

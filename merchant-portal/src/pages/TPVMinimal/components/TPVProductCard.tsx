@@ -75,6 +75,7 @@ export function TPVProductCard({
 
   return (
     <div
+      data-testid="sovereign-tpv-product-card"
       style={{
         backgroundColor: "#1e1e1e",
         borderRadius: 16,

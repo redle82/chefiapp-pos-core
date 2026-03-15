@@ -1,0 +1,62 @@
+# @insforge/shared
+
+Shared utilities, types, and React contexts for Insforge packages.
+
+## Purpose
+
+This package centralizes React Context definitions to prevent duplication issues when using `tsup` with multiple entry points. By defining contexts here, all Insforge packages (`@insforge/react`, `@insforge/nextjs`, etc.) import from the same source, ensuring a single Context instance.
+
+## Architecture Pattern
+
+Inspired by `@clerk/shared`, this package solves the Context duplication problem:
+
+### The Problem
+
+When using `bundle: true` with multiple entry points:
+
+```typescript
+// tsup.config.ts
+entry: {
+  index: 'src/index.ts',
+  hooks: 'src/hooks/index.ts',
+  components: 'src/components/index.ts'
+}
+```
+
+Each entry point bundles its own copy of Context → Provider uses Context instance A, but components use Context instance B → `useContext` returns `undefined`.
+
+### The Solution
+
+1. **Centralized Context**: Define all Contexts in `@insforge/shared`
+2. **External React**: Mark `react` as external in tsup config
+3. **Shared Import**: All packages import Context from `@insforge/shared`
+
+```typescript
+// packages/shared/tsup.config.ts
+export default defineConfig({
+  external: ['react', 'react-dom'], // Critical!
+  bundle: true,
+});
+```
+
+## Exports
+
+### Main Entry (`@insforge/shared`)
+
+```typescript
+import type { InsforgeUser, InsforgeContextValue, OAuthProvider } from '@insforge/shared';
+```
+
+### React Entry (`@insforge/shared/react`)
+
+```typescript
+import { InsforgeContext } from '@insforge/shared/react';
+```
+
+## Usage
+
+This package is intended for internal use within the Insforge monorepo. Application developers should not need to import from it directly.
+
+## License
+
+MIT

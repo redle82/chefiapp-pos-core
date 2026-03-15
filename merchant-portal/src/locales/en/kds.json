@@ -1,4 +1,23 @@
 {
+  "pageTitle": "KDS — Active orders",
+  "bootstrapRequired": "Complete bootstrap and have Core online to see orders.",
+  "bootstrapRealMode": "KDS available in real operation. Complete bootstrap and have Core online to see orders.",
+  "goToBootstrap": "Go to Bootstrap",
+  "goToBootstrapAlt": "Go to Bootstrap",
+  "errorCoreUnreachable": "Could not reach Core. Check that Docker Core is running and click Retry.",
+  "errorLoadOrders": "Error loading orders. Try again.",
+  "errorMarkItemReady": "Error marking item as ready. Try again.",
+  "loadingOrders": "Loading orders...",
+  "errorTitle": "Loading issue",
+  "emptyOrdersTitle": "No active orders",
+  "emptyOrdersDescription": "Orders will appear here when created in the POS or app. Paid (closed) orders do not appear — create an order in the POS and click Refresh before paying to see it in the kitchen.",
+  "refreshLabel": "Refresh",
+  "checkingDevice": "Checking device...",
+  "checkingOperationalState": "Checking operational state...",
+  "tabAll": "All",
+  "tabKitchen": "Kitchen",
+  "tabBar": "Bar",
+  "restaurantFallback": "Restaurant",
   "badge": {
     "new": "NEW",
     "late": "LATE"

@@ -105,6 +105,7 @@ export function TPVHeader({
           }}
         />
         <span
+          data-testid="sovereign-restaurant-name"
           style={{
             color: "#fafafa",
             fontWeight: 700,

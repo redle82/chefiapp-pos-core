@@ -4,7 +4,7 @@
  * Wraps the entire app tree. All consumers use useAuth() which reads from this
  * context instead of each running their own Keycloak session check.
  *
- * Backend: Docker Core (Keycloak + mock trial/pilot). Zero Supabase.
+ * Backend: Docker Core (Keycloak + mock) or Supabase (fluxo soberano P0: email/password).
  *
  * SECURITY: Mock/trial mode is BLOCKED in production builds.
  * Only available when import.meta.env.DEV === true (Vite dev server).
@@ -39,6 +39,10 @@ import {
   isLogoutDone,
 } from "./authKeycloak";
 import { isMockAuthEnabled } from "./mockAuthGate";
+import {
+  getSupabaseSession,
+  onSupabaseAuthStateChange,
+} from "./supabaseAuth";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -120,15 +124,12 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
         clearJustLoggedOut();
         // Fall through to Keycloak path — no mock, no re-auth
       } else {
-        // AUTO-PILOT: When DEBUG_DIRECT_FLOW + Docker dev → auto-activate pilot mode
-        // Do not re-seed after logout (isLogoutDone) until user logs in again.
-        const skipAutoPilot =
-          localStorage.getItem("chefiapp_skip_auto_pilot") === "true" ||
-          isLogoutDone();
+        // AUTO-PILOT: When DEBUG_DIRECT_FLOW + Docker (cenário Sofia) → garantir pilot_mode e restaurant_id
+        // para que isPilot seja true e o mock ative. Ignorar skipAutoPilot para o seed: sem isto,
+        // chefiapp_skip_auto_pilot ou isLogoutDone() impedem o menu de sessão de mostrar o dono.
         if (
           CONFIG.DEBUG_DIRECT_FLOW &&
-          getBackendType() === BackendType.docker &&
-          !skipAutoPilot
+          getBackendType() === BackendType.docker
         ) {
           if (!localStorage.getItem("chefiapp_pilot_mode")) {
             localStorage.setItem("chefiapp_pilot_mode", "true");
@@ -161,7 +162,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
           localStorage.setItem("chefiapp_restaurant_id", TRIAL_RESTAURANT_ID);
         }
 
-        if (isTrialUrl || isTrialStored || (isDebugMode() && isPilot)) {
+        // Pilot (Sofia): ativa mock com isPilot + (debug na URL ou DEBUG_DIRECT_FLOW já ativo)
+        const pilotOk = isPilot && (isDebugMode() || CONFIG.DEBUG_DIRECT_FLOW);
+        if (isTrialUrl || isTrialStored || pilotOk) {
           Logger.warn(
             "[AuthProvider] Mock auth activated (DEV only). This is BLOCKED in production builds.",
           );
@@ -174,6 +177,30 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
           return;
         }
       }
+    }
+
+    // Supabase: email/password session (fluxo soberano P0)
+    if (CONFIG.isSupabaseBackend) {
+      try {
+        const core = await getSupabaseSession();
+        if (!mountedRef.current) return;
+        if (core) {
+          clearLogoutDone();
+          setSession(core);
+          setUser(core.user);
+        } else {
+          setSession(null);
+          setUser(null);
+        }
+      } catch (err) {
+        if (mountedRef.current) {
+          setSession(null);
+          setUser(null);
+          setError(err instanceof Error ? err : new Error("Auth check failed"));
+        }
+      }
+      if (mountedRef.current) setLoading(false);
+      return;
     }
 
     // Docker: Keycloak session
@@ -232,6 +259,16 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
     window.addEventListener("focus", onFocus);
     return () => window.removeEventListener("focus", onFocus);
   }, [checkSession]);
+
+  // Supabase: keep state in sync with auth changes (e.g. after signIn)
+  useEffect(() => {
+    if (!CONFIG.isSupabaseBackend) return;
+    const unsubscribe = onSupabaseAuthStateChange((next) => {
+      setSession(next);
+      setUser(next?.user ?? null);
+    });
+    return unsubscribe;
+  }, []);
 
   const value: AuthContextType = {
     session,

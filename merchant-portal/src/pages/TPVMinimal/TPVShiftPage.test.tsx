@@ -6,6 +6,21 @@ const getOpenCashRegister = vi.fn();
 const openCashRegister = vi.fn();
 const closeCashRegister = vi.fn();
 
+vi.mock("react-i18next", () => ({
+  useTranslation: () => ({
+    t: (key: string, opts?: { defaultValue?: string }) => {
+      const texts: Record<string, string> = {
+        "page.registerOpen": "Caixa aberto",
+        "page.expectedBalance": "Saldo esperado",
+        "page.closeButton": "Fechar turno",
+        "page.initialBalance": "Saldo inicial",
+        "page.openButton": "Abrir turno",
+      };
+      return texts[key] || opts?.defaultValue || key;
+    },
+  }),
+}));
+
 vi.mock("./hooks/useTPVRestaurantId", () => ({
   useTPVRestaurantId: () => "rest-1",
 }));

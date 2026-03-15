@@ -7,6 +7,7 @@ import { Fragment, lazy } from "react";
 import { Navigate, Outlet, Route } from "react-router-dom";
 import { ManagementAdvisor } from "../components/onboarding/ManagementAdvisor";
 import { BrowserBlockGuard } from "../components/operational/BrowserBlockGuard";
+import { ElectronAdminGuard } from "../components/operational/ElectronAdminGuard";
 import { OperationalFullscreenWrapper } from "../components/operational/OperationalFullscreenWrapper";
 import { RequireOperational } from "../components/operational/RequireOperational";
 import { ShiftGate } from "../components/operational/ShiftGate";
@@ -1252,20 +1253,22 @@ export const OperationalRoutesFragment = (
           </ManagementAdvisor>
         }
       />
+      {/* ElectronAdminGuard: em desktop (Electron) /admin/* não renderiza — só setup e TPV/KDS. */}
+      <Route path="/admin" element={<ElectronAdminGuard />}>
+        <Route
+          path="home"
+          element={
+            <ManagementAdvisor>
+              <DashboardHomePage />
+            </ManagementAdvisor>
+          }
+        />
+        <Route
+          path="clients"
+          element={<Navigate to="/admin/customers" replace />}
+        />
       <Route
-        path="/admin/home"
-        element={
-          <ManagementAdvisor>
-            <DashboardHomePage />
-          </ManagementAdvisor>
-        }
-      />
-      <Route
-        path="/admin/clients"
-        element={<Navigate to="/admin/customers" replace />}
-      />
-      <Route
-        path="/admin/customers"
+        path="customers"
         element={
           <ManagementAdvisor>
             <DashboardLayout>
@@ -1275,7 +1278,7 @@ export const OperationalRoutesFragment = (
         }
       />
       <Route
-        path="/admin/customers/:id"
+        path="customers/:id"
         element={
           <ManagementAdvisor>
             <DashboardLayout>
@@ -1285,7 +1288,7 @@ export const OperationalRoutesFragment = (
         }
       />
       <Route
-        path="/admin/closures"
+        path="closures"
         element={
           <ManagementAdvisor>
             <DashboardLayout>
@@ -1295,7 +1298,7 @@ export const OperationalRoutesFragment = (
         }
       />
       <Route
-        path="/admin/reservations"
+        path="reservations"
         element={
           <ManagementAdvisor>
             <DashboardLayout>
@@ -1305,19 +1308,19 @@ export const OperationalRoutesFragment = (
         }
       />
       <Route
-        path="/admin/payments/list"
+        path="payments/list"
         element={<Navigate to="/admin/payments/transactions" replace />}
       />
       <Route
-        path="/admin/payments/refunds"
+        path="payments/refunds"
         element={<Navigate to="/admin/payments/transactions" replace />}
       />
       <Route
-        path="/admin/payments/pending"
+        path="payments/pending"
         element={<Navigate to="/admin/payments/transactions" replace />}
       />
       <Route
-        path="/admin/payments"
+        path="payments"
         element={
           <ManagementAdvisor>
             <DashboardLayout>
@@ -1331,7 +1334,7 @@ export const OperationalRoutesFragment = (
         <Route path="payouts" element={<PayoutsPage />} />
       </Route>
       <Route
-        path="/admin/promotions"
+        path="promotions"
         element={
           <ManagementAdvisor>
             <DashboardLayout>
@@ -1342,7 +1345,7 @@ export const OperationalRoutesFragment = (
       />
       {/* ── Catalog domain (nested under /admin/catalog/*) ── */}
       <Route
-        path="/admin/catalog/list"
+        path="catalog/list"
         element={
           <ManagementAdvisor>
             <DashboardLayout>
@@ -1352,7 +1355,7 @@ export const OperationalRoutesFragment = (
         }
       />
       <Route
-        path="/admin/catalog/assignments"
+        path="catalog/assignments"
         element={
           <ManagementAdvisor>
             <DashboardLayout>
@@ -1362,7 +1365,7 @@ export const OperationalRoutesFragment = (
         }
       />
       <Route
-        path="/admin/catalog/products"
+        path="catalog/products"
         element={
           <ManagementAdvisor>
             <DashboardLayout>
@@ -1372,11 +1375,11 @@ export const OperationalRoutesFragment = (
         }
       />
       <Route
-        path="/admin/catalog/modules"
+        path="catalog/modules"
         element={<Navigate to="/admin/modules" replace />}
       />
       <Route
-        path="/admin/catalog/modifiers"
+        path="catalog/modifiers"
         element={
           <ManagementAdvisor>
             <DashboardLayout>
@@ -1386,7 +1389,7 @@ export const OperationalRoutesFragment = (
         }
       />
       <Route
-        path="/admin/catalog/combos"
+        path="catalog/combos"
         element={
           <ManagementAdvisor>
             <DashboardLayout>
@@ -1396,7 +1399,7 @@ export const OperationalRoutesFragment = (
         }
       />
       <Route
-        path="/admin/catalog/translations"
+        path="catalog/translations"
         element={
           <ManagementAdvisor>
             <DashboardLayout>
@@ -1407,24 +1410,24 @@ export const OperationalRoutesFragment = (
       />
       {/* Default: /admin/catalog → /admin/catalog/products */}
       <Route
-        path="/admin/catalog"
+        path="catalog"
         element={<Navigate to="/admin/catalog/products" replace />}
       />
       {/* ── Backward-compat redirects (old flat routes) ── */}
       <Route
-        path="/admin/catalogs"
+        path="catalogs"
         element={<Navigate to="/admin/catalog/list" replace />}
       />
       <Route
-        path="/admin/catalog-assignments"
+        path="catalog-assignments"
         element={<Navigate to="/admin/catalog/assignments" replace />}
       />
       <Route
-        path="/admin/products"
+        path="products"
         element={<Navigate to="/admin/catalog/products" replace />}
       />
       <Route
-        path="/admin/modules"
+        path="modules"
         element={
           <ManagementAdvisor>
             <DashboardLayout>
@@ -1434,19 +1437,19 @@ export const OperationalRoutesFragment = (
         }
       />
       <Route
-        path="/admin/modifiers"
+        path="modifiers"
         element={<Navigate to="/admin/catalog/modifiers" replace />}
       />
       <Route
-        path="/admin/combos"
+        path="combos"
         element={<Navigate to="/admin/catalog/combos" replace />}
       />
       <Route
-        path="/admin/translations"
+        path="translations"
         element={<Navigate to="/admin/catalog/translations" replace />}
       />
       <Route
-        path="/admin/reports/overview"
+        path="reports/overview"
         element={
           <ManagementAdvisor>
             <DashboardLayout>
@@ -1456,7 +1459,7 @@ export const OperationalRoutesFragment = (
         }
       />
       <Route
-        path="/admin/reports/sales"
+        path="reports/sales"
         element={
           <ManagementAdvisor>
             <DashboardLayout>
@@ -1466,7 +1469,7 @@ export const OperationalRoutesFragment = (
         }
       />
       <Route
-        path="/admin/reports/multiunit"
+        path="reports/multiunit"
         element={
           <ManagementAdvisor>
             <DashboardLayout>
@@ -1476,11 +1479,11 @@ export const OperationalRoutesFragment = (
         }
       />
       <Route
-        path="/admin/reports/staff"
+        path="reports/staff"
         element={<Navigate to="/admin/reports/overview" replace />}
       />
       <Route
-        path="/admin/reports/operations"
+        path="reports/operations"
         element={
           <ManagementAdvisor>
             <DashboardLayout>
@@ -1490,7 +1493,7 @@ export const OperationalRoutesFragment = (
         }
       />
       <Route
-        path="/admin/reports/human-performance"
+        path="reports/human-performance"
         element={
           <ManagementAdvisor>
             <DashboardLayout>
@@ -1500,11 +1503,11 @@ export const OperationalRoutesFragment = (
         }
       />
       <Route
-        path="/admin/reports"
+        path="reports"
         element={<Navigate to="/admin/reports/overview" replace />}
       />
       <Route
-        path="/admin/observability"
+        path="observability"
         element={
           <ManagementAdvisor>
             <DashboardLayout>
@@ -1514,7 +1517,7 @@ export const OperationalRoutesFragment = (
         }
       />
       <Route
-        path="/admin/devices/tpv"
+        path="devices/tpv"
         element={
           <ManagementAdvisor>
             <DashboardLayout>
@@ -1524,7 +1527,7 @@ export const OperationalRoutesFragment = (
         }
       />
       <Route
-        path="/admin/devices"
+        path="devices"
         element={
           <ManagementAdvisor>
             <DashboardLayout>
@@ -1534,32 +1537,32 @@ export const OperationalRoutesFragment = (
         }
       />
       <Route
-        path="/admin/settings"
+        path="settings"
         element={<Navigate to="/admin/config" replace />}
       />
       {/* Admin aliases canónicos → config */}
       <Route
-        path="/admin/tables"
+        path="tables"
         element={<Navigate to="/admin/config/locations" replace />}
       />
       <Route
-        path="/admin/printers"
+        path="printers"
         element={<Navigate to="/admin/config/printers" replace />}
       />
       <Route
-        path="/admin/users"
+        path="users"
         element={<Navigate to="/admin/config/users" replace />}
       />
       <Route
-        path="/admin/integrations"
+        path="integrations"
         element={<Navigate to="/admin/config/integrations" replace />}
       />
       <Route
-        path="/admin/legal"
+        path="legal"
         element={<Navigate to="/admin/config/legal-entities" replace />}
       />
       <Route
-        path="/admin/config"
+        path="config"
         element={
           <ManagementAdvisor>
             <OnboardingProvider>
@@ -1693,11 +1696,12 @@ export const OperationalRoutesFragment = (
           element={<Navigate to="/admin/config/delivery/schedule" replace />}
         />
       </Route>
-      {/* Exact /admin → reports; deve vir depois de todas as rotas /admin/* para não capturar subcaminhos. */}
-      <Route
-        path="/admin"
-        element={<Navigate to="/admin/reports/overview" replace />}
-      />
+        {/* Exact /admin → reports (index do wrapper). */}
+        <Route
+          index
+          element={<Navigate to="/admin/reports/overview" replace />}
+        />
+      </Route>
       {/* Legacy /config eliminado: web de configuração canónica é /admin/config. */}
       <Route path="/config" element={<Navigate to="/admin/config" replace />} />
       <Route

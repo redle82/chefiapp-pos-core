@@ -30,6 +30,7 @@
 
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { Link, Navigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { getTabIsolated } from "../../core/storage/TabIsolatedStorage";
 import { DevicePairingView } from "../../features/auth/connectByCode/DevicePairingView";
 // FASE 3.5: Migrado para OrderReader (usa dockerCoreClient)
@@ -142,6 +143,7 @@ function filterOrdersByStation<T extends { items: CoreOrderItem[] }>(
 }
 
 export function KDSMinimal() {
+  const { t } = useTranslation("kds");
   const { identity } = useRestaurantIdentity();
   const readiness = useOperationalReadiness("KDS");
   const { runtime } = useRestaurantRuntime();
@@ -169,8 +171,8 @@ export function KDSMinimal() {
   useEffect(() => {
     document.title = identity.name
       ? `${identity.name} — KDS`
-      : "KDS — Pedidos ativos";
-  }, [identity.name]);
+      : t("pageTitle");
+  }, [identity.name, t]);
 
   // Hooks sempre no topo (regra do React): nunca após early return.
   const [orders, setOrders] = useState<
@@ -282,8 +284,8 @@ export function KDSMinimal() {
       globalUI.setScreenEmpty(true);
       // Mostrar erro sempre (incl. rede) para o utilizador saber que falhou e poder repetir
       const userMsg = isNetworkError(err)
-        ? "Não foi possível ligar ao Core. Verifique se o Docker Core está a correr e clique em Repetir."
-        : toUserMessage(err, "Erro ao carregar pedidos. Tente novamente.");
+        ? t("errorCoreUnreachable")
+        : toUserMessage(err, t("errorLoadOrders"));
       globalUI.setScreenError(userMsg);
     } finally {
       if (!isBackground) {
@@ -371,7 +373,7 @@ export function KDSMinimal() {
     } catch (err) {
       console.error("Erro ao marcar item como pronto:", err);
       globalUI.setScreenError(
-        toUserMessage(err, "Erro ao marcar item como pronto. Tente novamente."),
+        toUserMessage(err, t("errorMarkItemReady")),
       );
     } finally {
       setMarkingItem(null);
@@ -393,7 +395,7 @@ export function KDSMinimal() {
       loadOrders(true);
     } catch (err) {
       globalUI.setScreenError(
-        toUserMessage(err, "Erro ao atualizar pedido. Tente novamente."),
+        toUserMessage(err, t("errorUpdateOrder")),
       );
     } finally {
       setUpdating(null);
@@ -403,7 +405,7 @@ export function KDSMinimal() {
   if (readiness.loading) {
     return (
       <GlobalLoadingView
-        message="Verificando estado operacional..."
+        message={t("checkingOperationalState")}
         layout="operational"
         variant="fullscreen"
       />
@@ -428,7 +430,7 @@ export function KDSMinimal() {
   if (deviceGate.loading) {
     return (
       <GlobalLoadingView
-        message="A verificar dispositivo..."
+        message={t("checkingDevice")}
         layout="operational"
         variant="fullscreen"
       />
@@ -491,9 +493,9 @@ export function KDSMinimal() {
           gap: 16,
         }}
       >
-        <h1 style={{ margin: 0, color: VPC.text }}>KDS — Pedidos ativos</h1>
+        <h1 style={{ margin: 0, color: VPC.text }}>{t("pageTitle")}</h1>
         <p style={{ color: VPC.textMuted, textAlign: "center", maxWidth: 400 }}>
-          Complete o bootstrap e tenha o Core online para ver pedidos.
+          {t("bootstrapRequired")}
         </p>
         <Link
           to="/bootstrap"
@@ -503,7 +505,7 @@ export function KDSMinimal() {
             fontWeight: 600,
           }}
         >
-          Ir ao Bootstrap
+          {t("goToBootstrap")}
         </Link>
       </div>
     );
@@ -529,10 +531,9 @@ export function KDSMinimal() {
           gap: 16,
         }}
       >
-        <h1 style={{ margin: 0, color: VPC.text }}>KDS — Pedidos ativos</h1>
+        <h1 style={{ margin: 0, color: VPC.text }}>{t("pageTitle")}</h1>
         <p style={{ color: VPC.textMuted, textAlign: "center", maxWidth: 400 }}>
-          KDS disponível em operação real. Complete o bootstrap e tenha o Core
-          online para ver pedidos.
+          {t("bootstrapRealMode")}
         </p>
         <Link
           to="/bootstrap"
@@ -542,7 +543,7 @@ export function KDSMinimal() {
             fontWeight: 600,
           }}
         >
-          Ir para Bootstrap
+          {t("goToBootstrapAlt")}
         </Link>
       </div>
     );
@@ -551,7 +552,7 @@ export function KDSMinimal() {
   if (globalUI.isLoadingCritical) {
     return (
       <div style={{ minHeight: "100vh", padding: "100px 20px" }}>
-        <TPVStateDisplay type="generic" title="A carregar pedidos..." />
+        <TPVStateDisplay type="generic" title={t("loadingOrders")} />
       </div>
     );
   }
@@ -561,7 +562,7 @@ export function KDSMinimal() {
       <div style={{ minHeight: "100vh", padding: "100px 20px" }}>
         <TPVStateDisplay
           type="error"
-          title="Problema ao carregar"
+          title={t("errorTitle")}
           description={globalUI.errorMessage}
           onRetry={() => loadOrders(false)}
         />
@@ -574,10 +575,10 @@ export function KDSMinimal() {
       <div style={{ minHeight: "100vh", padding: "100px 20px" }}>
         <TPVStateDisplay
           type="empty_orders"
-          title="Nenhum pedido ativo"
-          description="Os pedidos aparecerão aqui quando forem criados no TPV ou no app. Pedidos já pagos (fechados) não aparecem — crie um pedido no TPV e clique em Actualizar antes de pagar para ver na cozinha."
+          title={t("emptyOrdersTitle")}
+          description={t("emptyOrdersDescription")}
           onRetry={() => loadOrders(false)}
-          actionLabel="Actualizar"
+          actionLabel={t("refreshLabel")}
         />
       </div>
     );
@@ -620,7 +621,7 @@ export function KDSMinimal() {
           <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
             <RestaurantLogo
               logoUrl={identity.logoUrl}
-              name={identity.name || "Restaurante"}
+              name={identity.name || t("restaurantFallback")}
               size={44}
             />
             <h1
@@ -633,7 +634,7 @@ export function KDSMinimal() {
             >
               {identity.name
                 ? `${identity.name} — KDS`
-                : "KDS — Pedidos ativos"}
+                : t("pageTitle")}
             </h1>
           </div>
           {/* B4: sem ruído técnico (Docker/Supabase/realtime); mostrar apenas um estado de ligação simples */}
@@ -680,10 +681,11 @@ export function KDSMinimal() {
               color: activeTab === "ALL" ? VPC.accent : VPC.textMuted,
             }}
           >
-            Todas
+            {t("tabAll")}
           </button>
           <button
             type="button"
+            data-testid="kds-tab-cozinha"
             onClick={() => {
               setActiveTab("KITCHEN");
               setStationFilter("KITCHEN");
@@ -703,10 +705,11 @@ export function KDSMinimal() {
               color: activeTab === "KITCHEN" ? VPC.accent : VPC.textMuted,
             }}
           >
-            🍳 Cozinha
+            🍳 {t("tabKitchen")}
           </button>
           <button
             type="button"
+            data-testid="kds-tab-bar"
             onClick={() => {
               setActiveTab("BAR");
               setStationFilter("BAR");
@@ -726,7 +729,7 @@ export function KDSMinimal() {
               color: activeTab === "BAR" ? VPC.accent : VPC.textMuted,
             }}
           >
-            🍺 Bar
+            🍺 {t("tabBar")}
           </button>
         </div>
       </div>
@@ -747,6 +750,7 @@ export function KDSMinimal() {
 
       {activeOnly.length === 0 && filteredOrders.length > 0 && (
         <p
+          data-testid="kds-all-ready-message"
           style={{
             color: VPC.textMuted,
             marginBottom: VPC.space,
@@ -777,6 +781,7 @@ export function KDSMinimal() {
           return (
             <div
               key={order.id}
+              data-testid="kds-order-card"
               style={{
                 border: `1px solid ${VPC.border}`,
                 marginBottom: VPC.space,
@@ -849,6 +854,7 @@ export function KDSMinimal() {
                 <div style={{ marginTop: VPC.space }}>
                   <button
                     type="button"
+                    data-testid="kds-start-preparation"
                     onClick={() => handleStartPreparation(order.id)}
                     disabled={updating === order.id}
                     style={{
@@ -1077,6 +1083,8 @@ export function KDSMinimal() {
                                 {!isItemReady && (
                                   <div style={{ marginTop: "8px" }}>
                                     <button
+                                      type="button"
+                                      data-testid="kds-item-ready"
                                       onClick={() =>
                                         handleMarkItemReady(
                                           item.id,
@@ -1287,6 +1295,8 @@ export function KDSMinimal() {
                                 {!isItemReady && (
                                   <div style={{ marginTop: "8px" }}>
                                     <button
+                                      type="button"
+                                      data-testid="kds-item-ready"
                                       onClick={() =>
                                         handleMarkItemReady(
                                           item.id,

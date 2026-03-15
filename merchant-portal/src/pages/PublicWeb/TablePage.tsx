@@ -1,8 +1,9 @@
 /**
- * TABLE PAGE — Página da Mesa via QR
+ * TABLE PAGE — Página da Mesa via QR (entrada canónica QR Mesa)
  *
  * Acessível via /public/:slug/mesa/:number.
- * Mostra menu, carrinho, cria pedido com origem QR_MESA.
+ * Cria pedido com origin QR_MESA e sync_metadata.table_id + table_number
+ * (OrderWriter → create_order_atomic; KDS exibe badge "QR MESA").
  *
  * Visual: VPC (Visual Patch Comercial) — escuro, botões grandes,
  * um único CTA verde "Enviar pedido". Sem UI de config.
@@ -488,6 +489,7 @@ export function TablePage() {
             </div>
             <button
               type="button"
+              data-testid="sovereign-qr-submit-order"
               onClick={handleCreateOrder}
               disabled={creatingOrder}
               style={{
@@ -630,6 +632,7 @@ export function TablePage() {
                             </span>
                             <button
                               type="button"
+                              data-testid={`sovereign-qr-add-product-${product.name.replace(/\s+/g, "-")}`}
                               onClick={() => addToCart(product)}
                               style={{
                                 minHeight: VPC.btnMinHeight,
@@ -743,6 +746,7 @@ export function TablePage() {
                           </span>
                           <button
                             type="button"
+                            data-testid={`sovereign-qr-add-product-${product.name.replace(/\s+/g, "-")}`}
                             onClick={() => addToCart(product)}
                             style={{
                               minHeight: VPC.btnMinHeight,

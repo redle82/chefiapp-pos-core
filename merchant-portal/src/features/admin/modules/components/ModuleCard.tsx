@@ -56,10 +56,15 @@ export function ModuleCard({
 }: ModuleCardProps) {
   const { t } = useTranslation("sidebar");
   const badge = BADGE_STYLES[module.status];
+  const isTpvCard = module.id === "tpv";
   const primaryLabel =
     primaryLabelOverride ??
-    t(PRIMARY_LABEL_KEYS[module.primaryAction] ?? module.primaryAction);
+    (isTpvCard && (module.status === "active" || module.status === "needs_setup")
+      ? t("modules.actionGoToOfficialTpv")
+      : t(PRIMARY_LABEL_KEYS[module.primaryAction] ?? module.primaryAction));
+  const description = isTpvCard ? t("modules.tpvCardDescription") : module.description;
   const showSecondary =
+    !isTpvCard &&
     module.secondaryAction &&
     (module.status === "active" || module.status === "needs_setup");
 
@@ -134,6 +139,7 @@ export function ModuleCard({
       style={cardStyle}
       aria-labelledby={`module-${module.id}-name`}
       data-module-id={module.id}
+      data-chefiapp-tpv-single-cta={isTpvCard ? "true" : undefined}
     >
       <div style={headerStyle}>
         <div style={iconNameStyle}>
@@ -168,7 +174,7 @@ export function ModuleCard({
           </span>
         )}
       </div>
-      <p style={descStyle}>{module.description}</p>
+      <p style={descStyle}>{description}</p>
       {module.dependencies && module.dependencies.length > 0 && (
         <p style={depsStyle}>
           {t("modules.requires", { deps: module.dependencies.join(", ") })}

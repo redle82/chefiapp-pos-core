@@ -6,13 +6,113 @@
  * Ref: docs/contracts/OPERATIONAL_DEVICE_ONLY_CONTRACT.md
  */
 
-export function isElectron(): boolean {
-  // Consideramos "desktop app" apenas quando o preload expõe electronBridge
-  // via contextBridge. Isso distingue o ChefIApp Desktop empacotado de um
-  // Electron genérico a correr o Vite/Chrome (onde só o userAgent contém
-  // "Electron", mas não existe bridge nem shell oficial).
+/** UserAgent que o main do Electron define (main.ts setUserAgent). Fallback se preload não injetar bridge. */
+const CHEFIAPP_DESKTOP_UA = "ChefIApp-Desktop";
+
+/** Só emitir [CHEFIAPP_DEBUG] quando flag explícita (env ou query). Evita ruído no browser normal. */
+function isChefiappDebugEnabled(): boolean {
   if (typeof window === "undefined") return false;
-  return !!window.electronBridge;
+  const env = (import.meta.env.VITE_CHEFIAPP_DEBUG ?? "").toString().trim();
+  if (/^(1|true|yes|on)$/i.test(env)) return true;
+  try {
+    const q = new URLSearchParams(window.location.search);
+    if (q.get("chefiapp_debug") === "1") return true;
+  } catch {
+    // ignore
+  }
+  return false;
+}
+
+/** Marcador de build: prova no runtime que o frontend tem guard instrumentado. Se undefined = build antigo. */
+if (typeof window !== "undefined") {
+  (window as Window & { __CHEFIAPP_FRONTEND_BUILD?: { guardInstrumented: boolean; guardVersion: number; loadedAt: string } })
+    .__CHEFIAPP_FRONTEND_BUILD = {
+    guardInstrumented: true,
+    guardVersion: 2,
+    loadedAt: new Date().toISOString(),
+  };
+}
+
+/**
+ * Instrumentação temporária: diagnóstico completo no runtime para provar por que o guard bloqueia ou não.
+ * Expõe window.__CHEFIAPP_DEBUG_DESKTOP() para inspeção na consola.
+ */
+export function logDesktopDetectionIfAdmin(): void {
+  if (typeof window === "undefined") return;
+  const pathname = window.location?.pathname ?? "";
+  const hash = window.location?.hash ?? "";
+  const href = window.location?.href ?? "";
+  const protocol = window.location?.protocol ?? "";
+  const isAdminRoute =
+    pathname.startsWith("/admin") || hash.includes("/admin");
+  const ua = typeof navigator !== "undefined" ? navigator.userAgent : "";
+  const hasBridge = !!(window as Window & { electronBridge?: unknown }).electronBridge;
+  const uaHasDesktop = ua.includes(CHEFIAPP_DESKTOP_UA);
+  const looksLikeElectron = ua.includes("Electron");
+  const isFileProtocol = protocol === "file:";
+  const isElectronResult = hasBridge || uaHasDesktop;
+  const isDesktopResult = isElectronResult || isTauri();
+  const blockAdmin =
+    isDesktopResult ||
+    (isAdminRoute && looksLikeElectron) ||
+    (isAdminRoute && isFileProtocol);
+
+  (window as Window & { __CHEFIAPP_DEBUG_DESKTOP?: () => Record<string, unknown> }).__CHEFIAPP_DEBUG_DESKTOP =
+    () => ({
+      userAgent: ua,
+      hasElectronBridge: hasBridge,
+      userAgentIncludesChefIAppDesktop: uaHasDesktop,
+      userAgentIncludesElectron: looksLikeElectron,
+      isElectron: isElectron(),
+      isDesktopApp: isDesktopApp(),
+      pathname,
+      hash,
+      href,
+      protocol,
+      isFileProtocol,
+      isAdminRoute,
+      guardBlocksAdmin: blockAdmin,
+    });
+
+  // Só logar em rotas admin e quando a flag de debug está activa (evita ruído no browser).
+  if (!isAdminRoute || !isChefiappDebugEnabled()) return;
+
+  const payload = {
+    pathname,
+    hash: hash.slice(0, 120),
+    href: href.slice(0, 150),
+    protocol,
+    isFileProtocol,
+    navigator_userAgent: ua.slice(0, 100) + (ua.length > 100 ? "…" : ""),
+    hasElectronBridge: hasBridge,
+    userAgentIncludesChefIAppDesktop: uaHasDesktop,
+    userAgentIncludesElectron: looksLikeElectron,
+    isElectron: isElectronResult,
+    isDesktopApp: isDesktopResult,
+    guardBlocksAdmin: blockAdmin,
+  };
+  console.warn("[CHEFIAPP_DEBUG] ElectronAdminGuard — diagnóstico runtime", payload);
+
+  if (!blockAdmin) {
+    console.warn(
+      "[CHEFIAPP_DEBUG] LEAK: guard NÃO bloqueou — Admin vai renderizar. Causa provável: isDesktopApp=false e userAgent sem 'Electron'. Confirme na consola: __CHEFIAPP_DEBUG_DESKTOP()",
+      payload,
+    );
+  }
+}
+
+export function isElectron(): boolean {
+  if (typeof window === "undefined") return false;
+  // 0) Main do Electron injeta isto em did-finish-load — prova inequívoca (não falsificável pelo frontend).
+  const w = window as Window & { __CHEFIAPP_ELECTRON?: boolean };
+  if (w.__CHEFIAPP_ELECTRON === true) return true;
+  // 1) Preload expõe electronBridge via contextBridge (fonte canónica).
+  if (window.electronBridge) return true;
+  // 2) Fallback: main do Electron define userAgent "ChefIApp-Desktop".
+  if (typeof navigator !== "undefined" && navigator.userAgent.includes(CHEFIAPP_DESKTOP_UA)) {
+    return true;
+  }
+  return false;
 }
 
 export function isTauri(): boolean {

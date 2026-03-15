@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useCurrency } from "../../core/currency/useCurrency";
 import { useShift } from "../../core/shift/ShiftContext";
 import {
@@ -11,6 +12,7 @@ const DEFAULT_OPERATOR = "Caixa TPV";
 const DEFAULT_REGISTER_NAME = "Caixa Principal";
 
 export function TPVShiftPage() {
+  const { t } = useTranslation("shift");
   const restaurantId = useTPVRestaurantId();
   const shift = useShift();
   const { formatAmount } = useCurrency();
@@ -44,7 +46,7 @@ export function TPVShiftPage() {
       }
     } catch (err) {
       const msg =
-        err instanceof Error ? err.message : "Erro ao carregar caixa.";
+        err instanceof Error ? err.message : t("error.loadCash");
       setError(msg);
       setRegister(null);
     } finally {
@@ -55,7 +57,7 @@ export function TPVShiftPage() {
   useEffect(() => {
     if (!restaurantId) {
       setLoading(false);
-      setError("Restaurante nao definido.");
+      setError(t("error.noRestaurant"));
       return;
     }
     loadRegister();
@@ -64,7 +66,7 @@ export function TPVShiftPage() {
   const handleOpen = async () => {
     const value = Number.parseFloat(openingCash.replace(",", "."));
     if (Number.isNaN(value) || value < 0) {
-      setError("Saldo inicial invalido.");
+      setError(t("error.invalidOpening"));
       return;
     }
     setActing(true);
@@ -79,7 +81,7 @@ export function TPVShiftPage() {
       await shift.refreshShiftStatus();
       await loadRegister();
     } catch (err) {
-      const msg = err instanceof Error ? err.message : "Erro ao abrir turno.";
+      const msg = err instanceof Error ? err.message : t("error.openGeneric");
       setError(msg);
     } finally {
       setActing(false);
@@ -90,7 +92,7 @@ export function TPVShiftPage() {
     if (!register) return;
     const value = Number.parseFloat(closingCash.replace(",", "."));
     if (Number.isNaN(value) || value < 0) {
-      setError("Saldo final invalido.");
+      setError(t("error.invalidClosing"));
       return;
     }
     setActing(true);
@@ -106,7 +108,7 @@ export function TPVShiftPage() {
       setRegister(null);
       setClosingCash("");
     } catch (err) {
-      const msg = err instanceof Error ? err.message : "Erro ao fechar turno.";
+      const msg = err instanceof Error ? err.message : t("error.closeFailed");
       setError(msg);
     } finally {
       setActing(false);
@@ -123,13 +125,13 @@ export function TPVShiftPage() {
             fontSize: 24,
           }}
         >
-          Turno e Caixa
+          {t("page.title")}
         </h1>
       </div>
 
       {loading && (
         <div style={{ color: "var(--text-secondary)", padding: 16 }}>
-          A carregar estado do caixa...
+          {t("page.loadingCash")}
         </div>
       )}
 
@@ -162,13 +164,13 @@ export function TPVShiftPage() {
         >
           <div style={{ display: "flex", justifyContent: "space-between" }}>
             <div>
-              <div style={{ fontSize: 12, color: "#9ca3af" }}>Caixa aberto</div>
+              <div style={{ fontSize: 12, color: "#9ca3af" }}>{t("page.registerOpen")}</div>
               <div style={{ fontSize: 18, fontWeight: 700, color: "#fafafa" }}>
                 {register.name}
               </div>
             </div>
             <div style={{ fontSize: 12, color: "#9ca3af" }}>
-              Caixa: {register.openedBy || DEFAULT_OPERATOR}
+              {t("page.operatorLabel")}: {register.openedBy || DEFAULT_OPERATOR}
             </div>
           </div>
 
@@ -181,21 +183,21 @@ export function TPVShiftPage() {
           >
             <div>
               <div style={{ fontSize: 12, color: "#9ca3af" }}>
-                Saldo inicial
+                {t("page.initialBalance")}
               </div>
               <div style={{ fontSize: 16, fontWeight: 700 }}>
                 {formatAmount(register.openingBalanceCents)}
               </div>
             </div>
             <div>
-              <div style={{ fontSize: 12, color: "#9ca3af" }}>Vendas</div>
+              <div style={{ fontSize: 12, color: "#9ca3af" }}>{t("page.sales")}</div>
               <div style={{ fontSize: 16, fontWeight: 700 }}>
                 {formatAmount(register.totalSalesCents)}
               </div>
             </div>
             <div>
               <div style={{ fontSize: 12, color: "#9ca3af" }}>
-                Saldo esperado
+                {t("page.expectedBalance")}
               </div>
               <div style={{ fontSize: 16, fontWeight: 700 }}>
                 {formatAmount(expectedBalanceCents)}
@@ -214,7 +216,7 @@ export function TPVShiftPage() {
               }}
             >
               <span style={{ fontSize: 12, color: "#9ca3af" }}>
-                Saldo final (contagem)
+                {t("page.closingBalanceLabel")}
               </span>
               <input
                 type="text"
@@ -240,7 +242,7 @@ export function TPVShiftPage() {
               }}
             >
             <span style={{ fontSize: 12, color: "#9ca3af" }}>
-                Caixa de fecho
+                {t("page.closingNameLabel")}
               </span>
               <input
                 type="text"
@@ -271,7 +273,7 @@ export function TPVShiftPage() {
               cursor: acting ? "not-allowed" : "pointer",
             }}
           >
-            Fechar turno
+            {t("page.closeButton")}
           </button>
         </div>
       )}
@@ -289,15 +291,15 @@ export function TPVShiftPage() {
           }}
         >
           <div>
-            <div style={{ fontSize: 12, color: "#9ca3af" }}>Caixa fechado</div>
+            <div style={{ fontSize: 12, color: "#9ca3af" }}>{t("page.registerClosed")}</div>
             <div style={{ fontSize: 18, fontWeight: 700, color: "#fafafa" }}>
-              Abrir turno
+              {t("page.openButton")}
             </div>
           </div>
 
           <label style={{ display: "flex", flexDirection: "column", gap: 6 }}>
             <span style={{ fontSize: 12, color: "#9ca3af" }}>
-              Saldo inicial
+              {t("page.initialBalance")}
             </span>
             <input
               type="text"
@@ -316,7 +318,7 @@ export function TPVShiftPage() {
           </label>
 
           <label style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-            <span style={{ fontSize: 12, color: "#9ca3af" }}>Caixa</span>
+            <span style={{ fontSize: 12, color: "#9ca3af" }}>{t("page.operatorLabel")}</span>
             <input
               type="text"
               value={operatorName}
@@ -346,7 +348,7 @@ export function TPVShiftPage() {
               cursor: acting ? "not-allowed" : "pointer",
             }}
           >
-            Abrir turno
+            {t("page.openButton")}
           </button>
         </div>
       )}

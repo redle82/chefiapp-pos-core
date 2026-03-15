@@ -1,0 +1,91 @@
+import { UserSchema, CreateSessionResponse, AuthOptions, CreateUserResponse, ResetPasswordResponse, VerifyEmailResponse, OAuthProvidersSchema, GetPublicAuthConfigResponse } from '@insforge/shared-schemas';
+
+/**
+ * Insforge User type
+ */
+interface InsforgeUser {
+    id: UserSchema['id'];
+    email: UserSchema['email'];
+    profile: UserSchema['profile'];
+}
+/**
+ * OAuth Provider type - re-export from shared-schemas
+ */
+type OAuthProvider = OAuthProvidersSchema;
+/**
+ * Auth state - the reactive part that changes when user signs in/out
+ */
+interface InsforgeAuthState {
+    user: InsforgeUser | null | undefined;
+    userId: string | null | undefined;
+    isLoaded: boolean;
+    isSignedIn: boolean | undefined;
+}
+/**
+ * Auth methods interface - stable method references from Manager
+ * These method references should NEVER change once created
+ */
+interface InsforgeAuthMethods {
+    setUser: (user: InsforgeUser | null) => void;
+    signIn: (email: string, password: string) => Promise<CreateSessionResponse | {
+        error: string;
+        statusCode?: number;
+        errorCode?: string;
+    }>;
+    signUp: (email: string, password: string, options?: AuthOptions) => Promise<CreateUserResponse | {
+        error: string;
+        statusCode?: number;
+        errorCode?: string;
+    }>;
+    signOut: () => Promise<void>;
+    updateUser: (data: InsforgeUser['profile']) => Promise<{
+        error: string;
+    } | null>;
+    reloadAuth: () => Promise<{
+        success: boolean;
+        error?: string;
+    }>;
+    resendVerificationEmail: (email: string, options?: AuthOptions) => Promise<{
+        success: boolean;
+        message: string;
+    } | null>;
+    sendResetPasswordEmail: (email: string) => Promise<{
+        success: boolean;
+        message: string;
+    } | null>;
+    resetPassword: (token: string, newPassword: string) => Promise<ResetPasswordResponse | null>;
+    verifyEmail: (otp: string, email?: string) => Promise<VerifyEmailResponse | {
+        error: string;
+        statusCode?: number;
+        errorCode?: string;
+    }>;
+    exchangeResetPasswordToken: (email: string, code: string) => Promise<{
+        token: string;
+        expiresAt?: string;
+    } | {
+        error: {
+            message: string;
+        };
+    }>;
+    loginWithOAuth: (provider: OAuthProvider, redirectTo: string) => Promise<void>;
+    getPublicAuthConfig: () => Promise<GetPublicAuthConfigResponse | null>;
+    getSession: () => Promise<{
+        accessToken: string;
+        user: InsforgeUser;
+    } | null>;
+}
+/**
+ * Auth config - configuration values
+ */
+interface InsforgeAuthConfig {
+    baseUrl: string;
+    afterSignInUrl: string;
+}
+/**
+ * Context value interface for InsforgeContext
+ * Combines state, methods, and config - maintains backward compatibility
+ */
+interface InsforgeContextValue extends InsforgeAuthState, InsforgeAuthMethods, InsforgeAuthConfig {
+}
+
+export type { InsforgeAuthConfig, InsforgeAuthMethods, InsforgeAuthState, InsforgeContextValue, InsforgeUser, OAuthProvider };

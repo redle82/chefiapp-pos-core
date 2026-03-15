@@ -64,13 +64,13 @@ const DESKTOP_BRIDGE_PORT = Number(
 
 /**
  * Path to the bundled frontend in production builds.
+ * Packaged app: extraResources copies resources/frontend → Contents/Resources/frontend,
+ * so we use process.resourcesPath + "frontend/index.html".
+ * Unpacked/dev: app.getAppPath() is the app dir, with resources/frontend from the build.
  */
-const FRONTEND_INDEX_PATH = path.join(
-  app.getAppPath(),
-  "resources",
-  "frontend",
-  "index.html",
-);
+const FRONTEND_INDEX_PATH = app.isPackaged
+  ? path.join(process.resourcesPath, "frontend", "index.html")
+  : path.join(app.getAppPath(), "resources", "frontend", "index.html");
 const HAS_BUNDLED_FRONTEND = !IS_DEV && existsSync(FRONTEND_INDEX_PATH);
 
 /**
@@ -315,7 +315,9 @@ function normalizeKdsPanelPreset(value: string | null): KdsPanelPreset | null {
 }
 
 function isAdminPath(pathname: string): boolean {
-  return pathname === "/admin" || pathname.startsWith("/admin/");
+  if (!pathname) return false;
+  const p = pathname.trim();
+  return p === "/admin" || p.startsWith("/admin/");
 }
 
 function isAllowedOperationalPath(
@@ -334,8 +336,16 @@ function isAllowedOperationalPath(
 function extractPathnameFromUrl(url: string): string {
   if (USE_DEV_SERVER) {
     if (!url.startsWith(DEV_SERVER_URL)) return "";
-    const pathname = url.slice(DEV_SERVER_URL.length);
-    return pathname.startsWith("/") ? pathname : `/${pathname}`;
+    let pathname = url.slice(DEV_SERVER_URL.length);
+    pathname = pathname.startsWith("/") ? pathname : `/${pathname}`;
+    // Em dev, SPA pode usar pathname ou hash; se tiver #/admin, usar a parte após #
+    const hashIdx = pathname.indexOf("#");
+    if (hashIdx >= 0) {
+      const afterHash = pathname.slice(hashIdx + 1);
+      if (afterHash.startsWith("/")) pathname = afterHash;
+      else if (afterHash) pathname = `/${afterHash}`;
+    }
+    return pathname;
   }
 
   if (!url.startsWith("file:")) return "";
@@ -1389,9 +1399,20 @@ function createWindow(
   );
 
   win.webContents.on("did-finish-load", () => {
-    log.info("[boot] did-finish-load", {
-      finalUrl: win.webContents.getURL(),
-    });
+    const finalUrl = win.webContents.getURL();
+    log.info("[boot] did-finish-load", { finalUrl });
+    // Injetar sinal inequívoco para o frontend: estamos em Electron (isolamento Admin).
+    win.webContents
+      .executeJavaScript("window.__CHEFIAPP_ELECTRON = true;")
+      .catch(() => {});
+    // Nunca deixar a janela em /admin: se acabámos de carregar numa rota admin, forçar de volta.
+    const path = extractPathnameFromUrl(finalUrl);
+    if (path && isAdminPath(path)) {
+      log.warn("[boot] admin URL after load — forcing back to operational route", {
+        path,
+      });
+      forceAllowedRouteIfNeeded("did-finish-load-admin-check");
+    }
   });
 
   return win;
@@ -1468,11 +1489,13 @@ async function loadApp(): Promise<void> {
       `Loading paired terminal: ${terminal.terminalType} (${terminal.terminalId})`,
     );
 
+    const loadedUrl = USE_DEV_SERVER ? resolveUrl(route) : `file:// (hash: ${route})`;
     if (USE_DEV_SERVER) {
       await mainWindow.loadURL(resolveUrl(route));
     } else {
       await mainWindow.loadFile(resolveUrl("/"), { hash: route });
     }
+    log.info("[boot] frontend loaded", { url: loadedUrl, useDevServer: USE_DEV_SERVER });
     // Restaurar layout de painéis KDS previamente abertos neste terminal.
     const layout = readKdsPanelsLayout();
     for (const entry of layout) {
@@ -1485,11 +1508,13 @@ async function loadApp(): Promise<void> {
       hasMismatch,
     });
 
+    const loadedUrl = USE_DEV_SERVER ? resolveUrl(route) : `file:// (hash: ${route})`;
     if (USE_DEV_SERVER) {
       await mainWindow.loadURL(resolveUrl(route));
     } else {
       await mainWindow.loadFile(resolveUrl("/"), { hash: route });
     }
+    log.info("[boot] frontend loaded (setup)", { url: loadedUrl, useDevServer: USE_DEV_SERVER });
   }
 }
 

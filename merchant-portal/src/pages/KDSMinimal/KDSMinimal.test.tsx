@@ -9,8 +9,15 @@ import { KDSMinimal } from "./KDSMinimal";
 
 vi.mock("react-i18next", () => ({
   useTranslation: () => ({
-    t: (key: string, opts?: { defaultValue?: string }) =>
-      opts?.defaultValue ?? key,
+    t: (key: string, opts?: { defaultValue?: string }) => {
+      const translations: Record<string, string> = {
+        tabAll: "Todas",
+        tabKitchen: "Cozinha",
+        tabBar: "Bar",
+        pageTitle: "Restaurante Teste — KDS"
+      };
+      return translations[key] || opts?.defaultValue || key;
+    },
   }),
 }));
 

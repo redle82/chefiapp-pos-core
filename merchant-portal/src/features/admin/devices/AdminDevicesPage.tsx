@@ -1,23 +1,21 @@
 /**
- * AdminDevicesPage — Device provisioning + active devices list.
+ * AdminDevicesPage — Tela de AppStaff (provisão e lista).
  *
- * 3 blocks:
- *   1. Install QR — generate a one-time token, show platform-specific QR codes (iOS/Android)
- *   2. Active Devices — live table of gm_terminals
- *   3. Downloads — links to TPV/KDS desktop apps (future)
+ * Única responsabilidade: provisão de dispositivos AppStaff (QR) e lista dos já registados.
+ * TPV/KDS não são geridos aqui; encaminhamento para /admin/devices/tpv.
  *
  * Rota: /admin/devices
- * Contrato: CORE_INSTALLATION_AND_PROVISIONING_CONTRACT
+ * Redirect: ?module=tpv | ?type=TPV | ?module=kds | ?type=KDS → /admin/devices/tpv
  */
 
 import { useFormatLocale } from "@/core/i18n/useFormatLocale";
 import { useCallback, useEffect, useState } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useTranslation } from "react-i18next";
+import { Link, Navigate, useSearchParams } from "react-router-dom";
 import { useRestaurantRuntime } from "../../../context/RestaurantRuntimeContext";
 import { Logger } from "../../../core/logger";
 import { AdminPageHeader } from "../dashboard/components/AdminPageHeader";
 import styles from "./AdminDevicesPage.module.css";
-import { DesktopPairingSection } from "./DesktopPairingSection";
 import { InstallQRPanel } from "./InstallQRPanel";
 import {
   createInstallToken,
@@ -25,17 +23,16 @@ import {
   revokeTerminal,
   type InstallToken,
   type Terminal,
-  type TerminalType,
 } from "./api/devicesApi";
 
 /* ------------------------------------------------------------------ */
 /*  Helpers                                                            */
 /* ------------------------------------------------------------------ */
 
-function timeSince(iso: string | null): string {
+function timeSinceRaw(iso: string | null): string {
   if (!iso) return "—";
   const ms = Date.now() - new Date(iso).getTime();
-  if (ms < 60_000) return "agora";
+  if (ms < 60_000) return "__now__";
   if (ms < 3_600_000) return `${Math.floor(ms / 60_000)}m`;
   if (ms < 86_400_000) return `${Math.floor(ms / 3_600_000)}h`;
   return `${Math.floor(ms / 86_400_000)}d`;
@@ -86,36 +83,42 @@ function getBaseUrl(): string {
 /* ------------------------------------------------------------------ */
 
 export function AdminDevicesPage() {
+  const { t } = useTranslation("config");
   const locale = useFormatLocale();
   const { runtime } = useRestaurantRuntime();
   const restaurantId = runtime?.restaurant_id ?? null;
   const [searchParams] = useSearchParams();
 
-  const typeParam = (searchParams.get("type") || "").toUpperCase();
+  const isDevRuntime =
+    typeof import.meta.env !== "undefined" &&
+    (import.meta.env.DEV === true ||
+      /^(development|dev|local)$/i.test(String(import.meta.env.MODE ?? "")));
+
+  const allowBrowserRuntimeDev =
+    isDevRuntime &&
+    (String(import.meta.env.VITE_ALLOW_BROWSER_RUNTIME_DEV ?? "").toLowerCase() ===
+      "true" ||
+      String(
+        import.meta.env.VITE_ALLOW_BROWSER_APPSTAFF_DEV ?? "",
+      ).toLowerCase() === "true");
+
   const moduleParam = (searchParams.get("module") || "").toLowerCase();
+  const typeParam = (searchParams.get("type") || "").toUpperCase();
 
-  const inferredTypeFromModule: TerminalType | null =
-    moduleParam === "tpv"
-      ? "TPV"
-      : moduleParam === "kds"
-      ? "KDS"
-      : moduleParam === "appstaff"
-      ? "APPSTAFF"
-      : null;
-
-  const initialTokenType: TerminalType =
-    (["APPSTAFF", "TPV", "KDS"] as TerminalType[]).includes(
-      typeParam as TerminalType,
-    )
-      ? (typeParam as TerminalType)
-      : inferredTypeFromModule ?? "APPSTAFF";
+  // TPV e KDS: única tela operacional é /admin/devices/tpv (KDS nasce do TPV).
+  if (
+    moduleParam === "tpv" ||
+    typeParam === "TPV" ||
+    moduleParam === "kds" ||
+    typeParam === "KDS"
+  ) {
+    return <Navigate to="/admin/devices/tpv" replace />;
+  }
 
   const [terminals, setTerminals] = useState<Terminal[]>([]);
   const [loading, setLoading] = useState(true);
 
   const [activeToken, setActiveToken] = useState<InstallToken | null>(null);
-  const [tokenType, setTokenType] =
-    useState<TerminalType>(initialTokenType);
   const [tokenName, setTokenName] = useState("");
   const [generating, setGenerating] = useState(false);
   const [tokenError, setTokenError] = useState<string | null>(null);
@@ -171,73 +174,106 @@ export function AdminDevicesPage() {
     try {
       const tok = await createInstallToken(
         restaurantId,
-        tokenType,
+        "APPSTAFF",
         tokenName.trim() || undefined,
       );
       setActiveToken(tok);
     } catch (err: unknown) {
-      setTokenError(err instanceof Error ? err.message : "Erro ao gerar token");
+      setTokenError(
+        err instanceof Error ? err.message : t("devices.errorGenerateToken"),
+      );
     } finally {
       setGenerating(false);
     }
-  }, [restaurantId, tokenType, tokenName]);
+  }, [restaurantId, tokenName, t]);
 
   // Revoke terminal
-  const handleRevoke = useCallback(async (id: string) => {
-    if (!confirm("Revogar este dispositivo?")) return;
-    try {
-      await revokeTerminal(id);
-      setTerminals((prev) =>
-        prev.map((t) =>
-          t.id === id ? { ...t, status: "revoked" as const } : t,
-        ),
-      );
-    } catch (err) {
-      Logger.error("Failed to revoke:", err);
-    }
-  }, []);
+  const handleRevoke = useCallback(
+    async (id: string) => {
+      if (!confirm(t("devices.confirmRevoke"))) return;
+      try {
+        await revokeTerminal(id);
+        setTerminals((prev) =>
+          prev.map((term) =>
+            term.id === id ? { ...term, status: "revoked" as const } : term,
+          ),
+        );
+      } catch (err) {
+        Logger.error("Failed to revoke:", err);
+      }
+    },
+    [t],
+  );
 
-  const filteredTerminals =
-    (["APPSTAFF", "TPV", "KDS"] as TerminalType[]).includes(
-      initialTokenType,
-    ) && initialTokenType !== "APPSTAFF"
-      ? terminals.filter((t) => t.type === initialTokenType)
-      : terminals;
+  const appstaffTerminals = terminals.filter((t) => t.type === "APPSTAFF");
+
+  const tableHeaders = [
+    t("devices.tableStatus"),
+    t("devices.tableName"),
+    t("devices.tableRegistered"),
+    t("devices.tableLastSignal"),
+    "",
+  ];
 
   return (
-    <div className={styles.wrapper}>
+    <div className={styles.wrapper} data-runtime-page="AdminDevicesPage" data-appstaff-only="true">
       <AdminPageHeader
-        title="Dispositivos"
-        subtitle="Provisionar dispositivos do restaurante e acompanhar terminais activos."
+        title={t("devices.appstaffTitle")}
+        subtitle={t("devices.appstaffSubtitle")}
       />
+      {allowBrowserRuntimeDev && (
+        <div
+          className={styles.card}
+          style={{
+            marginBottom: 16,
+            borderStyle: "dashed",
+            borderColor: "#4b5563",
+          }}
+          data-runtime-dev-helper="appstaff-browser-shortcut"
+        >
+          <p className={styles.sectionDesc} style={{ marginBottom: 8 }}>
+            SOMENTE PARA TESTE · SOMENTE EM MODO DEV. Isto não substitui o fluxo
+            oficial (desktop / app instalada). Abre em nova aba.
+          </p>
+          <a
+            href="/app/staff/home"
+            target="_blank"
+            rel="noreferrer noopener"
+            style={{
+              padding: "8px 12px",
+              borderRadius: 6,
+              border: "1px solid #3b82f6",
+              color: "#3b82f6",
+              fontSize: 14,
+              textDecoration: "none",
+              fontWeight: 600,
+            }}
+          >
+            Abrir AppStaff no navegador (teste DEV)
+          </a>
+        </div>
+      )}
+      <p className={styles.flowContext} style={{ marginBottom: 16 }}>
+        {t("devices.flowContext")}{" "}
+        <Link to="/admin/devices/tpv" className={styles.tpvLinkDiscrete}>
+          {t("devices.tpvLinkLabel")}
+        </Link>{" "}
+        {t("devices.flowContextSuffix")}
+      </p>
 
-      {/* ── Block 1: Provisionamento rápido ── */}
+      {/* ── Provisão AppStaff ── */}
       <section className={styles.card}>
-        <h2 className={styles.sectionTitle}>Adicionar dispositivo</h2>
+        <h2 className={styles.sectionTitle}>{t("devices.addAppstaffTitle")}</h2>
         <p className={styles.sectionDesc}>
-          Gere um QR de instalação para vincular rapidamente um novo dispositivo
-          (AppStaff móvel, TPV ou KDS) a este restaurante.
+          {t("devices.addAppstaffDesc")}
         </p>
 
         <div className={styles.formRow}>
-          <label className={styles.fieldLabel}>
-            Tipo
-            <select
-              value={tokenType}
-              onChange={(e) => setTokenType(e.target.value as TerminalType)}
-              className={styles.selectInput}
-            >
-              <option value="APPSTAFF">AppStaff (Mobile)</option>
-              <option value="TPV">TPV</option>
-              <option value="KDS">KDS</option>
-            </select>
-          </label>
-
           <label className={styles.fieldLabelFlex}>
-            Nome (opcional)
+            {t("devices.nameOptional")}
             <input
               type="text"
-              placeholder="ex: TPV_BALCAO_01"
+              placeholder={t("devices.namePlaceholderAppstaff")}
               value={tokenName}
               onChange={(e) => setTokenName(e.target.value)}
               className={styles.textInput}
@@ -250,7 +286,7 @@ export function AdminDevicesPage() {
             disabled={!restaurantId || generating}
             className={styles.btnGenerate}
           >
-            {generating ? "A gerar…" : "Gerar QR"}
+            {generating ? t("devices.generating") : t("devices.generateQr")}
           </button>
         </div>
 
@@ -258,171 +294,85 @@ export function AdminDevicesPage() {
         {activeToken && secondsLeft > 0 && (
           <InstallQRPanel
             token={activeToken.token}
-            deviceType={activeToken.device_type}
+            deviceType="APPSTAFF"
             secondsLeft={secondsLeft}
             baseUrl={getBaseUrl()}
           />
         )}
       </section>
 
-      {/* ── Block 2: Active Devices ── */}
+      {/* ── Lista AppStaff (só o que esta tela provisiona) ── */}
       <section className={styles.card}>
-        <h2 className={styles.sectionTitle}>Dispositivos registados</h2>
+        <h2 className={styles.sectionTitle}>{t("devices.registeredTitle")}</h2>
         <p className={styles.sectionDesc}>
-          Terminais registados neste restaurante. O ponto colorido indica a
-          última actividade.
+          {t("devices.registeredDesc")}
         </p>
 
         {loading ? (
-          <div className={styles.loadingState}>A carregar…</div>
-        ) : filteredTerminals.length === 0 ? (
+          <div className={styles.loadingState}>{t("devices.loading")}</div>
+        ) : appstaffTerminals.length === 0 ? (
           <div className={styles.emptyState}>
-            Nenhum dispositivo registado. Use o QR acima para vincular o
-            primeiro dispositivo TPV, AppStaff ou KDS.
+            {t("devices.emptyAppstaff")}
           </div>
         ) : (
           <div className={styles.tableScroll}>
             <table className={styles.table}>
               <thead>
                 <tr className={styles.tableHeadRow}>
-                  {[
-                    "Estado",
-                    "Nome",
-                    "Tipo",
-                    "Registado",
-                    "Último sinal",
-                    "",
-                  ].map((h) => (
-                    <th key={h} className={styles.th}>
+                  {tableHeaders.map((h) => (
+                    <th key={h || "empty"} className={styles.th}>
                       {h}
                     </th>
                   ))}
                 </tr>
               </thead>
               <tbody>
-                {filteredTerminals.map((t) => (
-                  <tr
-                    key={t.id}
-                    className={
-                      t.status === "revoked" ? styles.trRevoked : styles.tr
-                    }
-                  >
-                    <td className={styles.td}>
-                      <span
-                        className={`${styles.statusDot} ${statusDotClass(t)}`}
-                      />
-                      {t.status === "revoked"
-                        ? "Revogado"
-                        : timeSince(t.last_heartbeat_at) === "agora"
-                        ? "Online"
-                        : "Offline"}
-                    </td>
-                    <td className={styles.tdName}>{t.name}</td>
-                    <td className={styles.tdSecondary}>{t.type}</td>
-                    <td className={styles.tdSecondary}>
-                      {new Date(t.registered_at).toLocaleDateString(locale)}
-                    </td>
-                    <td className={styles.tdSecondary}>
-                      {timeSince(t.last_heartbeat_at)}
-                    </td>
-                    <td className={styles.tdRight}>
-                      {t.status !== "revoked" && (
-                        <button
-                          type="button"
-                          onClick={() => handleRevoke(t.id)}
-                          className={styles.btnRevoke}
-                        >
-                          Revogar
-                        </button>
-                      )}
-                    </td>
-                  </tr>
-                ))}
+                {appstaffTerminals.map((term) => {
+                  const ts = timeSinceRaw(term.last_heartbeat_at);
+                  const statusText =
+                    term.status === "revoked"
+                      ? t("devices.revoked")
+                      : ts === "__now__"
+                        ? t("devices.online")
+                        : t("devices.offline");
+                  return (
+                    <tr
+                      key={term.id}
+                      className={
+                        term.status === "revoked" ? styles.trRevoked : styles.tr
+                      }
+                    >
+                      <td className={styles.td}>
+                        <span
+                          className={`${styles.statusDot} ${statusDotClass(term)}`}
+                        />
+                        {statusText}
+                      </td>
+                      <td className={styles.tdName}>{term.name}</td>
+                      <td className={styles.tdSecondary}>
+                        {new Date(term.registered_at).toLocaleDateString(locale)}
+                      </td>
+                      <td className={styles.tdSecondary}>
+                        {ts === "__now__" ? t("devices.now") : ts}
+                      </td>
+                      <td className={styles.tdRight}>
+                        {term.status !== "revoked" && (
+                          <button
+                            type="button"
+                            onClick={() => handleRevoke(term.id)}
+                            className={styles.btnRevoke}
+                          >
+                            {t("devices.revoke")}
+                          </button>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>
         )}
-      </section>
-
-      {/* ── Block 3: Desktop Pairing ── */}
-      <DesktopPairingSection onCodeGenerated={loadTerminals} />
-
-      {/* ── Block 4: Downloads ── */}
-      <section className={styles.card}>
-        <h2 className={styles.sectionTitle}>Descarregar software</h2>
-        <p className={styles.sectionDesc}>
-          Os módulos operacionais (TPV, KDS, AppStaff) só funcionam como
-          aplicação instalada — não são acessíveis pelo navegador. Descarregue a
-          aplicação adequada e vincule com o QR acima.
-        </p>
-        <div className={styles.dlGrid}>
-          {[
-            {
-              label: "ChefIApp TPV",
-              platform: "macOS (Electron)",
-              icon: "🖥",
-              ready: false,
-            },
-            {
-              label: "ChefIApp TPV",
-              platform: "Windows (Electron)",
-              icon: "🖥",
-              ready: false,
-            },
-            {
-              label: "ChefIApp KDS",
-              platform: "macOS (Electron)",
-              icon: "📺",
-              ready: false,
-            },
-            {
-              label: "ChefIApp KDS",
-              platform: "Windows (Electron)",
-              icon: "📺",
-              ready: false,
-            },
-            {
-              label: "ChefIApp Staff",
-              platform: "iOS (App Store)",
-              icon: "📱",
-              ready: false,
-            },
-            {
-              label: "ChefIApp Staff",
-              platform: "Android (Google Play)",
-              icon: "📱",
-              ready: false,
-            },
-          ].map((dl) => (
-            <div
-              key={`${dl.label}-${dl.platform}`}
-              className={`${styles.dlCard} ${
-                dl.ready ? "" : styles.dlCardDisabled
-              }`}
-            >
-              <span className={styles.dlIcon}>{dl.icon}</span>
-              <span className={styles.dlLabel}>{dl.label}</span>
-              <span className={styles.dlPlatform}>{dl.platform}</span>
-              <span
-                className={dl.ready ? styles.dlStatusReady : styles.dlStatus}
-              >
-                {dl.ready ? "Descarregar" : "Em breve"}
-              </span>
-            </div>
-          ))}
-        </div>
-
-        <div className={styles.distributionNote}>
-          <span className={styles.distributionIcon}>🛡️</span>
-          <div>
-            <strong>Política de distribuição</strong>
-            <p className={styles.distributionText}>
-              O painel de administração (este ecrã) é a única parte do ChefIApp
-              acessível pelo navegador. Os módulos operacionais — TPV, KDS e
-              AppStaff — requerem a aplicação dedicada (desktop ou móvel).
-            </p>
-          </div>
-        </div>
       </section>
     </div>
   );

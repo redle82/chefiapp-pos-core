@@ -1,4 +1,14 @@
+/**
+ * AdminTPVTerminalsPage — Única tela oficial e operacional do TPV.
+ *
+ * Fluxo: 1) Baixar TPV · 2) Primeiro arranque · 3) Vincular terminal · 4) TPVs criados.
+ * KDS incluído no mesmo pacote (ecossistema TPV).
+ *
+ * Rota: /admin/devices/tpv
+ */
+
 import { useCallback, useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useFormatLocale } from "@/core/i18n/useFormatLocale";
 import { useRestaurantRuntime } from "../../../context/RestaurantRuntimeContext";
 import { Logger } from "../../../core/logger";
@@ -9,11 +19,27 @@ import {
   type InstallToken,
   type Terminal,
 } from "./api/devicesApi";
+import { getDesktopReleaseConfig } from "../../../core/desktop/desktopReleaseConfig";
 import { DesktopDownloadSection } from "./DesktopDownloadSection";
 import styles from "./AdminDevicesPage.module.css";
 
 const DESKTOP_APP_SCHEME = "chefiapp-pos://setup";
 const DEV_DESKTOP_CMD = "pnpm run dev:desktop";
+
+const isDevRuntime =
+  typeof import.meta.env !== "undefined" &&
+  (import.meta.env.DEV === true ||
+    /^(development|dev|local)$/i.test(String(import.meta.env.MODE ?? "")));
+
+const allowBrowserRuntimeDev =
+  isDevRuntime &&
+  (String(import.meta.env.VITE_ALLOW_BROWSER_RUNTIME_DEV ?? "").toLowerCase() ===
+    "true" ||
+    String(import.meta.env.VITE_ALLOW_BROWSER_TPV_DEV ?? "").toLowerCase() ===
+      "true" ||
+    String(
+      import.meta.env.VITE_ALLOW_BROWSER_APPSTAFF_DEV ?? "",
+    ).toLowerCase() === "true");
 
 const isDev =
   typeof import.meta.env !== "undefined" &&
@@ -22,16 +48,26 @@ const isDev =
 
 type TPVTerminal = Terminal & { type: "TPV" };
 
-function timeSince(iso: string | null): string {
+function timeSinceRaw(iso: string | null): string {
   if (!iso) return "—";
   const ms = Date.now() - new Date(iso).getTime();
-  if (ms < 60_000) return "agora";
+  if (ms < 60_000) return "__now__";
   if (ms < 3_600_000) return `${Math.floor(ms / 60_000)}m`;
   if (ms < 86_400_000) return `${Math.floor(ms / 3_600_000)}h`;
   return `${Math.floor(ms / 86_400_000)}d`;
 }
 
+function statusDotClass(terminal: TPVTerminal): string {
+  const ms = terminal.last_heartbeat_at
+    ? Date.now() - new Date(terminal.last_heartbeat_at).getTime()
+    : Infinity;
+  if (ms < 120_000) return styles.statusGreen;
+  if (ms < 600_000) return styles.statusYellow;
+  return styles.statusRed;
+}
+
 export function AdminTPVTerminalsPage() {
+  const { t } = useTranslation("config");
   const locale = useFormatLocale();
   const { runtime } = useRestaurantRuntime();
   const restaurantId = runtime?.restaurant_id ?? null;
@@ -74,9 +110,7 @@ export function AdminTPVTerminalsPage() {
     if (!restaurantId) return;
     try {
       const all = await fetchTerminals(restaurantId);
-      setTerminals(
-        all.filter((t) => t.type === "TPV") as TPVTerminal[],
-      );
+      setTerminals(all.filter((t) => t.type === "TPV") as TPVTerminal[]);
     } catch (err) {
       Logger.error("[AdminTPVTerminalsPage] Failed to fetch terminals:", err);
     } finally {
@@ -101,124 +135,197 @@ export function AdminTPVTerminalsPage() {
       setPairingToken(tok);
     } catch (err: unknown) {
       setError(
-        err instanceof Error ? err.message : "Erro ao gerar código de emparelhamento",
+        err instanceof Error ? err.message : t("devices.errorPairing"),
       );
     } finally {
       setGenerating(false);
     }
-  }, [restaurantId, pairingName]);
+  }, [restaurantId, pairingName, t]);
+
+  const releaseConfig = getDesktopReleaseConfig();
+
+  const getStatusLabel = (term: TPVTerminal) => {
+    const ms = term.last_heartbeat_at
+      ? Date.now() - new Date(term.last_heartbeat_at).getTime()
+      : Infinity;
+    if (ms < 120_000) return t("devices.online");
+    if (ms < 600_000) return t("devices.tpvStatusInactive");
+    return t("devices.offline");
+  };
+
+  const tpvTableHeaders = [
+    t("devices.tableStatus"),
+    t("devices.tableName"),
+    t("devices.tableRegistered"),
+    t("devices.tableLastActivity"),
+    t("devices.tablePlatform"),
+    t("devices.tableActions"),
+  ];
 
   return (
-    <div className={styles.wrapper}>
+    <div
+      className={styles.wrapper}
+      data-chefiapp-tpv-mother="true"
+      data-runtime-page="AdminTPVTerminalsPage"
+    >
       <AdminPageHeader
-        title="TPVs do restaurante"
-        subtitle="Criar, vincular e acompanhar terminais TPV deste restaurante."
+        title={t("devices.tpvPageTitle")}
+        subtitle={t("devices.tpvPageSubtitle")}
       />
-
-      <section className={styles.card}>
-        <h2 className={styles.sectionTitle}>Instalar o TPV no seu computador</h2>
-        <p className={styles.sectionDesc}>
-          Descarregue o instalador (Mac ou Windows) abaixo e instale como qualquer outra aplicação.
-          Depois de instalar: abra o app, gere um código nesta página, cole no app e clique em «Vincular dispositivo».
+      {allowBrowserRuntimeDev && (
+        <div
+          className={styles.card}
+          style={{
+            marginBottom: 16,
+            borderStyle: "dashed",
+            borderColor: "#4b5563",
+          }}
+          data-runtime-dev-helper="tpv-browser-shortcuts"
+        >
+          <p className={styles.sectionDesc} style={{ marginBottom: 8 }}>
+            SOMENTE PARA TESTE · SOMENTE EM MODO DEV. Isto não substitui o fluxo
+            oficial (desktop / app instalada). Abre em nova aba.
+          </p>
+          <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+            <a
+              href="/op/tpv"
+              target="_blank"
+              rel="noreferrer noopener"
+              style={{
+                padding: "8px 12px",
+                borderRadius: 6,
+                border: "1px solid #22c55e",
+                color: "#22c55e",
+                fontSize: 14,
+                textDecoration: "none",
+                fontWeight: 600,
+              }}
+            >
+              Abrir TPV/KDS no navegador (teste DEV)
+            </a>
+            <a
+              href="/app/staff/home"
+              target="_blank"
+              rel="noreferrer noopener"
+              style={{
+                padding: "8px 12px",
+                borderRadius: 6,
+                border: "1px solid #3b82f6",
+                color: "#3b82f6",
+                fontSize: 14,
+                textDecoration: "none",
+                fontWeight: 600,
+              }}
+            >
+              Abrir AppStaff no navegador (teste DEV)
+            </a>
+          </div>
+        </div>
+      )}
+      {/* ── 1. Baixar TPV ── */}
+      <section className={styles.card} data-block="baixar-tpv">
+        <h2 className={styles.sectionTitle}>{t("devices.tpvSection1Title")}</h2>
+        <p className={styles.sectionDesc} style={{ marginBottom: releaseConfig.releaseVersion ? 4 : 12 }}>
+          {t("devices.tpvSection1Lead")}
         </p>
-        <p className={styles.sectionDesc}>
-          Se ainda não houver link de descarga, o administrador do sistema pode disponibilizar o ficheiro (.dmg no Mac, .exe no Windows) ou publicar uma release.
-        </p>
+        {releaseConfig.releaseVersion && (
+          <p className={styles.sectionDesc} style={{ fontSize: 12, opacity: 0.9, marginBottom: 12 }}>
+            {t("devices.tpvSection1Version", { version: releaseConfig.releaseVersion })}
+          </p>
+        )}
         <DesktopDownloadSection />
       </section>
 
-      <section className={styles.card}>
-        <h2 className={styles.sectionTitle}>Vincular um TPV a este restaurante</h2>
-        <p className={styles.sectionDesc}>
-          Gere um código e use-o no app TPV de desktop para vincular este
-          equipamento a este restaurante.
+      {/* ── 2. Instalar e primeiro arranque ── */}
+      <section className={styles.card} data-block="primeiro-arranque">
+        <h2 className={styles.sectionTitle}>{t("devices.tpvSection2Title")}</h2>
+        <ul className={styles.sectionDesc} style={{ margin: 0, paddingLeft: 20 }}>
+          <li>{t("devices.tpvSection2Line1")}</li>
+          <li>{t("devices.tpvSection2Line2")}</li>
+          <li>{t("devices.tpvSection2Line3")}</li>
+        </ul>
+      </section>
+
+      {/* ── 3. Vincular terminal ── */}
+      <section className={styles.card} data-block="vincular-terminal">
+        <h2 className={styles.sectionTitle}>{t("devices.tpvSection3Title")}</h2>
+        <p className={styles.sectionDesc} style={{ marginBottom: 8 }}>
+          {t("devices.tpvSection3Intro")}
+        </p>
+        <p className={styles.sectionDesc} style={{ marginBottom: 16 }}>
+          {t("devices.tpvSection3Instruction")}
         </p>
 
         <div className={styles.formRow}>
           <label className={styles.fieldLabelFlex}>
-            Nome do terminal (opcional)
+            {t("devices.terminalNameLabel")}
             <input
               type="text"
-              placeholder="ex: TPV_CAIXA_01"
+              placeholder={t("devices.terminalNamePlaceholder")}
               value={pairingName}
               onChange={(e) => setPairingName(e.target.value)}
               className={styles.textInput}
             />
           </label>
-
           <button
             type="button"
             onClick={handleGenerate}
             disabled={!restaurantId || generating}
             className={styles.btnGenerate}
           >
-            {generating ? "A gerar…" : "Gerar código"}
+            {generating ? t("devices.generating") : t("devices.generateCode")}
           </button>
         </div>
 
         {error && <div className={styles.tokenError}>{error}</div>}
         {pairingToken && (
           <div className={styles.desktopPairingPreview}>
-            <div className={styles.desktopPairingCode}>
-              {pairingToken.token}
-            </div>
+            <div className={styles.desktopPairingCode}>{pairingToken.token}</div>
             <div className={styles.desktopPairingActions}>
               <button
                 type="button"
                 onClick={handleCopyCode}
                 className={styles.btnCopyCode}
               >
-                {copied ? "Copiado" : "Copiar código"}
+                {copied ? t("devices.copied") : t("devices.copyCode")}
               </button>
               <button
                 type="button"
                 onClick={handleOpenDesktopApp}
                 className={styles.btnOpenDesktopApp}
-                title="Abre o app TPV se já estiver instalado no computador"
+                title={t("devices.openAppTpvTitle")}
               >
-                {isDev && devCmdCopied
-                  ? "Comando copiado"
-                  : "Abrir app TPV"}
+                {isDev && devCmdCopied ? t("devices.commandCopied") : t("devices.openAppTpv")}
               </button>
             </div>
-            <p className={styles.sectionDesc}>
-              Cole o código no app TPV e clique em «Vincular dispositivo». Se o app já estiver instalado, pode usar «Abrir app TPV» para o abrir.
-            </p>
-            <p className={styles.sectionDesc} style={{ marginTop: 4, fontSize: 12, opacity: 0.9 }}>
-              {isDev ? (
-                <>
-                  Se nada abrir, o esquema <code className={styles.inlineCode}>chefiapp-pos://</code> não está registado (só fica após instalar o .dmg). Execute no terminal: <strong>{DEV_DESKTOP_CMD}</strong> — ao clicar em «Abrir app TPV» o comando é copiado.
-                </>
-              ) : (
-                <>
-                  Se nada abrir, instale o app TPV (secção acima) para registar o link no sistema.
-                </>
-              )}
-            </p>
+            {isDev && (
+              <p className={styles.sectionDesc} style={{ marginTop: 8, fontSize: 11, opacity: 0.75, marginBottom: 0 }}>
+                {t("devices.devHint")} <strong>{DEV_DESKTOP_CMD}</strong>
+              </p>
+            )}
           </div>
         )}
       </section>
 
-      <section className={styles.card}>
-        <h2 className={styles.sectionTitle}>TPVs registados</h2>
+      {/* ── 4. TPVs criados ── */}
+      <section className={styles.card} data-block="tpvs-criados">
+        <h2 className={styles.sectionTitle}>{t("devices.tpvSection4Title")}</h2>
         <p className={styles.sectionDesc}>
-          Terminais TPV registados neste restaurante. O estado é derivado da
-          última atividade reportada.
+          {t("devices.tpvSection4Desc")}
         </p>
 
         {loading ? (
-          <div className={styles.loadingState}>A carregar…</div>
+          <div className={styles.loadingState}>{t("devices.loading")}</div>
         ) : terminals.length === 0 ? (
           <div className={styles.emptyState}>
-            Ainda não existem TPVs registados. Gere um código acima e use-o no
-            app TPV para criar o primeiro terminal.
+            {t("devices.emptyTpv")}
           </div>
         ) : (
           <div className={styles.tableScroll}>
             <table className={styles.table}>
               <thead>
                 <tr className={styles.tableHeadRow}>
-                  {["Nome", "Registado", "Último sinal"].map((h) => (
+                  {tpvTableHeaders.map((h) => (
                     <th key={h} className={styles.th}>
                       {h}
                     </th>
@@ -226,17 +333,30 @@ export function AdminTPVTerminalsPage() {
                 </tr>
               </thead>
               <tbody>
-                {terminals.map((t) => (
-                  <tr key={t.id} className={styles.tr}>
-                    <td className={styles.tdName}>{t.name}</td>
-                    <td className={styles.tdSecondary}>
-                      {new Date(t.registered_at).toLocaleDateString(locale)}
-                    </td>
-                    <td className={styles.tdSecondary}>
-                      {timeSince(t.last_heartbeat_at)}
-                    </td>
-                  </tr>
-                ))}
+                {terminals.map((term) => {
+                  const ts = timeSinceRaw(term.last_heartbeat_at);
+                  return (
+                    <tr key={term.id} className={styles.tr}>
+                      <td className={styles.td}>
+                        <span className={`${styles.statusDot} ${statusDotClass(term)}`} />
+                        {getStatusLabel(term)}
+                      </td>
+                      <td className={styles.tdName}>{term.name}</td>
+                      <td className={styles.tdSecondary}>
+                        {new Date(term.registered_at).toLocaleDateString(locale)}
+                      </td>
+                      <td className={styles.tdSecondary}>
+                        {ts === "__now__" ? t("devices.now") : ts}
+                      </td>
+                      <td className={styles.tdSecondary}>
+                        {(term.metadata?.platform as string) || (term.metadata?.version as string) || "—"}
+                      </td>
+                      <td className={styles.tdSecondary}>
+                        —
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>
@@ -245,4 +365,3 @@ export function AdminTPVTerminalsPage() {
     </div>
   );
 }
-

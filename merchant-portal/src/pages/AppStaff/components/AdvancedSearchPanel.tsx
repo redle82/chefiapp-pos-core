@@ -89,7 +89,16 @@ export const AdvancedSearchPanel: React.FC<AdvancedSearchPanelProps> = ({
               aria-label="Campo de filtro"
               value={filter.field}
               onChange={(e) =>
-                updateFilter(index, { field: e.target.value as any })
+                updateFilter(index, {
+                  field: e.target.value as
+                    | "title"
+                    | "description"
+                    | "id"
+                    | "reason"
+                    | "priority"
+                    | "status"
+                    | "type",
+                })
               }
               className={styles.filterSelect}
             >
@@ -105,7 +114,13 @@ export const AdvancedSearchPanel: React.FC<AdvancedSearchPanelProps> = ({
               aria-label="Operador de filtro"
               value={filter.operator}
               onChange={(e) =>
-                updateFilter(index, { operator: e.target.value as any })
+                updateFilter(index, {
+                  operator: e.target.value as
+                    | "contains"
+                    | "equals"
+                    | "startsWith"
+                    | "endsWith",
+                })
               }
               className={styles.filterSelect}
             >

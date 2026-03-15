@@ -13,12 +13,72 @@
  * @see docs/contracts/OPERATIONAL_DEVICE_ONLY_CONTRACT.md
  */
 
-import { Outlet } from "react-router-dom";
-import { isDesktopApp } from "../../core/operational/platformDetection";
+import { Outlet, useLocation } from "react-router-dom";
+import {
+  isDesktopApp,
+  logDesktopDetectionIfAdmin,
+} from "../../core/operational/platformDetection";
+
+function isChefiappDebugEnabled(): boolean {
+  if (typeof window === "undefined") return false;
+  const env = (import.meta.env.VITE_CHEFIAPP_DEBUG ?? "").toString().trim();
+  if (/^(1|true|yes|on)$/i.test(env)) return true;
+  try {
+    const q = new URLSearchParams(window.location.search);
+    if (q.get("chefiapp_debug") === "1") return true;
+  } catch {
+    // ignore
+  }
+  return false;
+}
 
 export function ElectronAdminGuard() {
-  // In browser context, admin routes render normally.
-  if (!isDesktopApp()) {
+  const location = useLocation();
+  const routerPathname = location.pathname ?? "";
+  const routerHash = location.hash ?? "";
+
+  const isDesktop = isDesktopApp();
+  const pathname = typeof window !== "undefined" ? window.location?.pathname ?? "" : "";
+  const hash = typeof window !== "undefined" ? window.location?.hash ?? "" : "";
+  const protocol = typeof window !== "undefined" ? window.location?.protocol ?? "" : "";
+  const isAdminPath =
+    routerPathname.startsWith("/admin") ||
+    routerPathname.includes("/admin") ||
+    pathname.startsWith("/admin") ||
+    hash.includes("/admin");
+  const ua = typeof navigator !== "undefined" ? navigator.userAgent : "";
+  const looksLikeElectron = ua.includes("Electron");
+  const isFileProtocol = protocol === "file:";
+  const electronInjected = typeof window !== "undefined" && (window as Window & { __CHEFIAPP_ELECTRON?: boolean }).__CHEFIAPP_ELECTRON === true;
+  const blockAdmin =
+    isDesktop ||
+    electronInjected ||
+    (isAdminPath && looksLikeElectron) ||
+    (isAdminPath && isFileProtocol);
+
+  // Diagnóstico só quando flag explícita (VITE_CHEFIAPP_DEBUG ou ?chefiapp_debug=1).
+  logDesktopDetectionIfAdmin();
+  if (typeof window !== "undefined" && isChefiappDebugEnabled()) {
+    const payload = {
+      guardMounted: true,
+      routerPathname,
+      routerHash,
+      windowPathname: pathname,
+      windowHash: hash.slice(0, 80),
+      isAdminPath,
+      hasElectronBridge: !!(window as Window & { electronBridge?: unknown }).electronBridge,
+      userAgentIncludesElectron: looksLikeElectron,
+      protocol,
+      isFileProtocol,
+      isDesktop,
+      blockAdmin,
+    };
+    console.warn("[CHEFIAPP_DEBUG] ElectronAdminGuard montado", payload);
+    (window as Window & { __CHEFIAPP_DEBUG_GUARD_LAST?: unknown }).__CHEFIAPP_DEBUG_GUARD_LAST =
+      payload;
+  }
+
+  if (!blockAdmin) {
     return <Outlet />;
   }
 

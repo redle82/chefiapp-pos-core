@@ -1,11 +1,9 @@
 /**
- * ModulesPage — Hub Módulos (ativar/abrir/instalar módulos).
+ * ModulesPage — Catálogo de módulos (sem operação de TPV/KDS).
  *
- * Mantém a separação entre:
- *  - AppStaff: abre sempre em janela operacional dedicada.
- *  - TPV/KDS: encaminham instalação de dispositivos para /admin/devices.
- *
- * Ref: plano página_mis_productos_módulos.
+ * - TPV: um único CTA → /admin/devices/tpv.
+ * - AppStaff: CTA → /admin/devices (tela de AppStaff).
+ * - KDS: encaminha para /admin/devices/tpv (KDS nasce do TPV).
  */
 
 import { useTranslation } from "react-i18next";
@@ -63,15 +61,15 @@ export function ModulesPage() {
       return;
     }
 
-    // AppStaff: CTA passa a gerir dispositivos de equipa via página genérica.
+    // AppStaff: CTA leva para a tela de AppStaff.
     if (id === "appstaff") {
       navigate("/admin/devices");
       return;
     }
 
-    // KDS (se existir como módulo): encaminhar para Dispositivos com contexto.
+    // KDS nasce do TPV: encaminhar para a tela oficial do TPV.
     if (id === "kds") {
-      navigate("/admin/devices?module=kds");
+      navigate("/admin/devices/tpv");
       return;
     }
 
@@ -90,54 +88,47 @@ export function ModulesPage() {
       return;
     }
     if (id === "kds") {
-      navigate("/admin/devices?module=kds");
+      navigate("/admin/devices/tpv");
       return;
     }
-    // Outros módulos: futuro (desativar, etc.)
   };
 
   const essenciais = modules.filter((m) => m.block === "essenciais");
   const canais = modules.filter((m) => m.block === "canais");
 
   // Enriquecimento de módulos para comportamento da UI:
+  // - TPV: uma única entrada para a tela-mãe; sem botão secundário (evita "Manage" vs "Install").
   // - AppStaff: nunca tem ação secundária.
-  // - TPV/KDS sem dispositivo local: estado activeNoDevice → sem ação secundária.
+  // - KDS sem dispositivo local: sem ação secundária.
   const enrichedModules = (list: typeof modules) =>
     list.map((mod) => {
+      if (mod.id === "tpv") {
+        return { ...mod, secondaryAction: undefined };
+      }
       if (mod.id === "appstaff") {
-        return {
-          ...mod,
-          secondaryAction: undefined,
-        };
+        return { ...mod, secondaryAction: undefined };
       }
       if (
-        (mod.id === "tpv" || mod.id === "kds") &&
+        mod.id === "kds" &&
         mod.status === "active" &&
         !hasDeviceForModule(mod.id)
       ) {
-        return {
-          ...mod,
-          secondaryAction: undefined,
-        };
+        return { ...mod, secondaryAction: undefined };
       }
       return mod;
     });
 
+  // TPV: label único "Ir para tela oficial do TPV" (operações só em /admin/devices/tpv).
   const getPrimaryLabelOverride = (id: string, status: string) => {
-    if ((id === "tpv" || id === "kds") && status === "active") {
-      if (!hasDeviceForModule(id)) {
-        return t("modules.actionInstallDevice");
-      }
+    if (id === "tpv" && (status === "active" || status === "needs_setup")) {
+      return t("modules.actionGoToOfficialTpv");
     }
-
     if (id === "qr-ordering") {
       return t("modules.actionGoToCatalog");
     }
-
     if (id === "delivery-integrator") {
       return t("modules.actionGoToIntegrations");
     }
-
     return undefined;
   };
 
@@ -156,7 +147,7 @@ export function ModulesPage() {
   };
 
   return (
-    <div style={{ width: "100%", maxWidth: 960, margin: 0 }}>
+    <div style={{ width: "100%", maxWidth: 960, margin: 0 }} data-runtime-page="ModulesPage">
       <AdminPageHeader
         title={t("modules.pageTitle")}
         subtitle={t("modules.pageSubtitle")}
@@ -166,20 +157,14 @@ export function ModulesPage() {
         <h2 style={blockTitleStyle}>{t("modules.blockEssentials")}</h2>
         <div style={gridStyle}>
           {enrichedModules(essenciais).map((mod) => (
-            <ModuleCard
-              key={mod.id}
-              module={mod}
-              onPrimaryAction={handlePrimaryAction}
-              onSecondaryAction={handleSecondaryAction}
-              primaryLabelOverride={getPrimaryLabelOverride(mod.id, mod.status)}
-              secondaryLabel={
-                (mod.id === "tpv" || mod.id === "kds") &&
-                mod.status === "active" &&
-                hasDeviceForModule(mod.id)
-                  ? t("modules.actionInstallDevice")
-                  : undefined
-              }
-            />
+            <div key={mod.id} style={{ position: "relative" }}>
+              <ModuleCard
+                module={mod}
+                onPrimaryAction={handlePrimaryAction}
+                onSecondaryAction={handleSecondaryAction}
+                primaryLabelOverride={getPrimaryLabelOverride(mod.id, mod.status)}
+              />
+            </div>
           ))}
         </div>
       </section>

@@ -1,0 +1,16 @@
+import { ReactNode } from 'react';
+import { GetPublicAuthConfigResponse, VerificationMethodSchema } from '@insforge/shared-schemas';
+export { InsforgeUser, OAuthProvider } from '@insforge/shared';
+
+type AuthConfig = GetPublicAuthConfigResponse;
+type EmailVerificationMethod = VerificationMethodSchema;
+/**
+ * Configuration for an OAuth provider
+ */
+interface OAuthProviderConfig {
+    name: string;
+    svg: ReactNode;
+    className: string;
+}
+
+export type { AuthConfig, EmailVerificationMethod, OAuthProviderConfig };

@@ -16,7 +16,7 @@ export function resolveOrderOrigin(
   if (!raw) return "OTHER";
   if (raw.includes("delivery")) return "DELIVERY";
   if (raw === "web" || raw.includes("web_public")) return "WEB";
-  if (raw === "app" || raw.includes("mobile")) return "APP";
+  if (raw === "app" || raw.includes("mobile") || raw.includes("appstaff")) return "APP";
   if (raw.includes("qr")) return "QR";
   return "OTHER";
 }

@@ -29,17 +29,16 @@
   - Listar todos os terminais registados (`gm_terminals`) com tipo, estado e última atividade.
   - Comunicar claramente que TPV, KDS e AppStaff funcionam como **apps instaladas**.
 
-### 2. Gestão de TPVs do restaurante
+### 2. Gestão de TPVs do restaurante (fonte única)
 
-- Rota: `/admin/devices/tpv`.
+- Rota: `/admin/devices/tpv` — **tela-mãe / única superfície operacional** do TPV.
 - Origem principal de navegação:
-  - Módulo **Software TPV** no Hub de Módulos com CTA **“Gerir dispositivos”** que aponta para `/admin/devices/tpv`.
-- Responsabilidades:
-  - Mostrar lista de TPVs registados (tipo = `TPV` em `gm_terminals`).
-  - Permitir criar um novo terminal TPV:
-    - Gerar código curto de emparelhamento (`create_device_pairing_code`).
-    - Exibir instruções: abrir o app TPV no desktop e introduzir o código.
-  - Não abrir o TPV no browser; apenas preparar o terminal.
+  - Hub **Módulos** (`/admin/modules`): card **Software TPV** com um único CTA **“Ir para TPV”** → `/admin/devices/tpv` (catálogo de módulos, não fluxo de instalação).
+  - Menu lateral **Governar → TPV** → `/admin/devices/tpv`.
+  - Página **Dispositivos** (`/admin/devices`): card **TPV** com resumo + CTA **“Ir para TPV”** (hub geral; não duplica download, pareamento nem listagem).
+- Responsabilidades em `/admin/devices/tpv` (tudo numa única página):
+  - Estado da release, download do instalador, instrução de instalação, abrir app TPV, gerar código, vincular terminal, listar TPVs registados.
+  - Não abrir o TPV no browser; a vinculação ocorre no app desktop; a listagem reflete o resultado.
 
 ### 3. KDS ligado ao TPV
 
@@ -78,7 +77,18 @@
 
 ## Navegação canónica
 
-- **Módulos → Software TPV → Gerir dispositivos** → `/admin/devices/tpv`.
+- **Módulos** (`/admin/modules`): catálogo/hub; card **Software TPV** com um único botão **“Ir para TPV”** → `/admin/devices/tpv`.
+- **Menu lateral → Governar → TPV** → `/admin/devices/tpv`.
+- **Dispositivos** (`/admin/devices`): hub geral; card **TPV** com resumo + **“Ir para TPV”** → `/admin/devices/tpv`.
 - **Módulos → AppStaff → Gerir dispositivos** → `/admin/devices`.
-- **Menu lateral → Governar → Dispositivos** → `/admin/devices`.
+- **Redirect:** `/admin/devices?module=tpv` ou `?type=TPV` → `/admin/devices/tpv`.
+
+## Checklist de validação visual (fragmentação TPV)
+
+Para confirmar que a operação TPV está consolidada numa única tela:
+
+1. **`/admin/modules`** — Card “Software TPV” tem **um único botão** “Ir para TPV”; não aparece “Manage devices” nem “Install device”; ao clicar vai para `/admin/devices/tpv`.
+2. **`/admin/devices`** — Secção TPV é um **resumo** (“Toda a operação TPV… está numa única tela”) com um único link “Ir para TPV”; não há bloco de download, nem geração de código, nem lista de TPVs (isso fica só em `/admin/devices/tpv`).
+3. **`/admin/devices/tpv`** — Título “TPV — Tela oficial”; subtítulo indica “Única superfície de operação TPV”; fluxo numerado visível (1–5); contém: estado da release, download, instruções, “Gerar código”, “Abrir app TPV”, lista de TPVs registados.
+4. **Sem contradição** — Nenhuma das três telas sugere que instalação ou pareamento TPV se faz noutra página; o fluxo óbvio é: descarregar → instalar → abrir app → vincular → ver terminal listado, tudo referenciado a esta página.
 

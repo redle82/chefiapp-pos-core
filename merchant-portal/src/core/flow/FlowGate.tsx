@@ -23,6 +23,7 @@ import {
 } from "../readiness/operationalRestaurant";
 import { isTrial } from "../runtime";
 import { isDebugEnabled, isDevStableMode } from "../runtime/devStableMode";
+import { isDesktopApp } from "../operational/platformDetection";
 import { getTabIsolated, setTabIsolated } from "../storage/TabIsolatedStorage";
 import {
   clearActiveTenant,
@@ -384,6 +385,11 @@ export function FlowGate({ children }: { children: ReactNode }) {
           return;
         }
 
+        // Fluxo soberano: gravar tenant ativo para que Runtime/Admin/TPV/KDS/AppStaff usem o mesmo restaurant_id
+        if (restaurantId) {
+          setActiveTenant(restaurantId);
+        }
+
         if (restaurantId) {
           try {
             const restaurant = await getRestaurantStatus(restaurantId);
@@ -457,6 +463,10 @@ export function FlowGate({ children }: { children: ReactNode }) {
           }
         } catch {
           // ignore
+        }
+        // Desktop app: never restore lastRoute to /admin (isolamento — admin só no browser).
+        if (isDesktopApp() && lastRoute != null && lastRoute.startsWith("/admin")) {
+          lastRoute = null;
         }
         const state: UserState = {
           isAuthenticated: !!session,

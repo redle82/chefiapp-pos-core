@@ -1,32 +1,52 @@
 /**
- * ReservasPage — Disponibilidad, Garantía, Turnos, Mensajes.
+ * ReservasPage — Disponibilidade, Garantia, Turnos, Mensagens.
  * Estrutura com secções; conteúdo mínimo por secção (Fase 2).
  */
 
 import { useLocation, useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { AdminPageHeader } from "../../dashboard/components/AdminPageHeader";
 
 const BASE = "/admin/config";
 
 const SECTIONS = [
-  { path: "/reservas/disponibilidad", label: "Disponibilidad", id: "disponibilidad" },
-  { path: "/reservas/garantia", label: "Garantía y Cancelación", id: "garantia" },
-  { path: "/reservas/turnos", label: "Turnos", id: "turnos" },
-  { path: "/reservas/mensajes", label: "Mensajes y recordatorios", id: "mensajes" },
-  { path: "/reservas", label: "Resumen", id: "resumen" },
+  { path: "/reservas/disponibilidad", labelKey: "reservas.tabDisponibilidad", id: "disponibilidad" },
+  { path: "/reservas/garantia", labelKey: "reservas.tabGarantia", id: "garantia" },
+  { path: "/reservas/turnos", labelKey: "reservas.tabTurnos", id: "turnos" },
+  { path: "/reservas/mensajes", labelKey: "reservas.tabMensajes", id: "mensajes" },
+  { path: "/reservas", labelKey: "reservas.tabResumen", id: "resumen" },
 ] as const;
 
+const SECTION_TITLE_KEYS: Record<string, string> = {
+  resumen: "reservas.sectionResumenTitle",
+  disponibilidad: "reservas.sectionDisponibilidadTitle",
+  garantia: "reservas.sectionGarantiaTitle",
+  turnos: "reservas.sectionTurnosTitle",
+  mensajes: "reservas.sectionMensajesTitle",
+};
+
+const SECTION_DESC_KEYS: Record<string, string> = {
+  resumen: "reservas.sectionResumenDesc",
+  disponibilidad: "reservas.sectionDisponibilidadDesc",
+  garantia: "reservas.sectionGarantiaDesc",
+  turnos: "reservas.sectionTurnosDesc",
+  mensajes: "reservas.sectionMensajesDesc",
+};
+
 export function ReservasPage() {
+  const { t } = useTranslation("config");
   const location = useLocation();
   const navigate = useNavigate();
   const path = location.pathname.replace(/^\/admin\/config/, "") || "/reservas";
   const current = SECTIONS.find((s) => path === s.path || path.startsWith(s.path + "/")) ?? SECTIONS[SECTIONS.length - 1];
+  const titleKey = SECTION_TITLE_KEYS[current.id] ?? "reservas.sectionResumenTitle";
+  const descKey = SECTION_DESC_KEYS[current.id] ?? "reservas.sectionResumenDesc";
 
   return (
     <div style={{ width: "100%", maxWidth: 960, margin: 0 }}>
       <AdminPageHeader
-        title="Reservas"
-        subtitle="Disponibilidad, garantía, turnos, mensajes y recordatorios."
+        title={t("reservas.title")}
+        subtitle={t("reservas.subtitle")}
       />
 
       <div
@@ -54,7 +74,7 @@ export function ReservasPage() {
               fontSize: 13,
             }}
           >
-            {s.label}
+            {t(s.labelKey)}
           </button>
         ))}
       </div>
@@ -67,56 +87,12 @@ export function ReservasPage() {
           backgroundColor: "var(--card-bg-on-dark)",
         }}
       >
-        {current.id === "resumen" && (
-          <>
-            <h3 style={{ margin: "0 0 12px 0", fontSize: 16, fontWeight: 700, color: "var(--text-primary)" }}>
-              Resumen de reservas
-            </h3>
-            <p style={{ margin: 0, fontSize: 13, color: "var(--text-secondary)" }}>
-              Configuración central de reservas. Usa las pestañas para Disponibilidad, Garantía, Turnos y Mensajes.
-            </p>
-          </>
-        )}
-        {current.id === "disponibilidad" && (
-          <>
-            <h3 style={{ margin: "0 0 12px 0", fontSize: 16, fontWeight: 700, color: "var(--text-primary)" }}>
-              Disponibilidad
-            </h3>
-            <p style={{ margin: 0, fontSize: 13, color: "var(--text-secondary)" }}>
-              Horarios y capacidad por día y ubicación. En fase 2: calendario y límites.
-            </p>
-          </>
-        )}
-        {current.id === "garantia" && (
-          <>
-            <h3 style={{ margin: "0 0 12px 0", fontSize: 16, fontWeight: 700, color: "var(--text-primary)" }}>
-              Garantía y Cancelación
-            </h3>
-            <p style={{ margin: 0, fontSize: 13, color: "var(--text-secondary)" }}>
-              Depósitos, cargos por no presentarse, políticas de cancelación. En fase 2.
-            </p>
-          </>
-        )}
-        {current.id === "turnos" && (
-          <>
-            <h3 style={{ margin: "0 0 12px 0", fontSize: 16, fontWeight: 700, color: "var(--text-primary)" }}>
-              Turnos
-            </h3>
-            <p style={{ margin: 0, fontSize: 13, color: "var(--text-secondary)" }}>
-              Duración de turnos y bloques de tiempo. En fase 2.
-            </p>
-          </>
-        )}
-        {current.id === "mensajes" && (
-          <>
-            <h3 style={{ margin: "0 0 12px 0", fontSize: 16, fontWeight: 700, color: "var(--text-primary)" }}>
-              Mensajes y recordatorios
-            </h3>
-            <p style={{ margin: 0, fontSize: 13, color: "var(--text-secondary)" }}>
-              Plantillas de correo y SMS para confirmación y recordatorios. En fase 2.
-            </p>
-          </>
-        )}
+        <h3 style={{ margin: "0 0 12px 0", fontSize: 16, fontWeight: 700, color: "var(--text-primary)" }}>
+          {t(titleKey)}
+        </h3>
+        <p style={{ margin: 0, fontSize: 13, color: "var(--text-secondary)" }}>
+          {t(descKey)}
+        </p>
       </div>
     </div>
   );

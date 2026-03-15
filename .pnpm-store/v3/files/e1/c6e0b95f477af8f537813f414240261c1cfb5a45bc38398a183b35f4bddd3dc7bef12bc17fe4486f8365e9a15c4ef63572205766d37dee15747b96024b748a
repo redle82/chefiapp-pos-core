@@ -1,0 +1,838 @@
+/**
+ * InsForge React Component Library Styles
+ * Traditional CSS with scoped class names (no Tailwind)
+ */
+
+/* ============================================
+   FONTS
+   ============================================ */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@200..800&display=swap');
+
+/* ============================================
+   CSS VARIABLES
+   ============================================ */
+:root {
+  /* Colors */
+  --if-color-primary: #000000;
+  --if-color-primary-hover: #1f1f1f;
+  --if-color-text: #000000;
+  --if-color-text-secondary: #828282;
+  --if-color-text-muted: #a3a3a3;
+  --if-color-border: #d4d4d4;
+  --if-color-border-focus: #000000;
+  --if-color-bg-white: #ffffff;
+  --if-color-bg-light: #fafafa;
+  --if-color-bg-hover: #f9fafb;
+  --if-color-error: #dc2626;
+  --if-color-error-bg: #fee2e2;
+  --if-color-success: #16a34a;
+
+  /* Spacing */
+  --if-space-1: 0.25rem; /* 4px */
+  --if-space-2: 0.5rem; /* 8px */
+  --if-space-3: 0.75rem; /* 12px */
+  --if-space-4: 1rem; /* 16px */
+  --if-space-6: 1.5rem; /* 24px */
+  --if-space-8: 2rem; /* 32px */
+
+  /* Border Radius */
+  --if-radius-xs: 0.125rem; /* 2px */
+  --if-radius-sm: 0.25rem; /* 4px */
+  --if-radius-md: 0.375rem; /* 6px */
+  --if-radius-lg: 0.5rem; /* 8px */
+  --if-radius-xl: 0.75rem; /* 12px */
+
+  /* Typography */
+  --if-font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+  --if-font-family-manrope:
+    'Manrope', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+  --if-font-size-xs: 0.75rem; /* 12px */
+  --if-font-size-sm: 0.875rem; /* 14px */
+  --if-font-size-base: 1rem; /* 16px */
+  --if-font-size-lg: 1.125rem; /* 18px */
+  --if-font-size-xl: 1.25rem; /* 20px */
+  --if-font-size-2xl: 1.5rem; /* 24px */
+
+  /* Shadows */
+  --if-shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --if-shadow-md: 0 1px 2px 0 rgba(0, 0, 0, 0.1);
+  --if-shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+
+  /* Transitions */
+  --if-transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
+  --if-transition-base: 200ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ============================================
+   AUTH CONTAINER
+   ============================================ */
+.if-authContainer {
+  width: 100%;
+  max-width: 400px;
+  border-radius: var(--if-radius-xl);
+  overflow: hidden;
+  box-shadow: var(--if-shadow-lg);
+}
+
+.if-authCard {
+  background-color: var(--if-color-bg-white);
+  padding: var(--if-space-6);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: stretch;
+  gap: var(--if-space-6);
+}
+
+/* ============================================
+   AUTH HEADER
+   ============================================ */
+.if-authHeader {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: flex-start;
+  gap: var(--if-space-2);
+}
+
+.if-authHeader-title {
+  font-size: var(--if-font-size-2xl);
+  font-weight: 600;
+  color: var(--if-color-text);
+  line-height: 2rem;
+  margin: 0;
+  font-family: var(--if-font-family);
+}
+
+.if-authHeader-subtitle {
+  font-size: var(--if-font-size-sm);
+  font-weight: 400;
+  color: var(--if-color-text-secondary);
+  line-height: 1.5rem;
+  margin: 0;
+  font-family: var(--if-font-family);
+}
+
+/* ============================================
+   FORM FIELD
+   ============================================ */
+.if-formField {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: stretch;
+  gap: var(--if-space-1);
+}
+
+.if-formField-label {
+  font-size: var(--if-font-size-sm);
+  font-weight: 400;
+  color: var(--if-color-text);
+  line-height: 1.5rem;
+  font-family: var(--if-font-family);
+}
+
+.if-formField-input {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: var(--if-space-2);
+  align-self: stretch;
+  padding: var(--if-space-2) var(--if-space-3);
+  border-radius: var(--if-radius-sm);
+  border: 1px solid var(--if-color-border);
+  background-color: var(--if-color-bg-white);
+  font-size: var(--if-font-size-sm);
+  font-weight: 400;
+  line-height: 1.25rem;
+  color: var(--if-color-text);
+  font-family: var(--if-font-family);
+  transition: border-color var(--if-transition-base);
+}
+
+.if-formField-input::placeholder {
+  color: var(--if-color-text-muted);
+  font-size: var(--if-font-size-sm);
+  font-weight: 400;
+}
+
+.if-formField-input:focus {
+  outline: none;
+  border-color: var(--if-color-border-focus);
+}
+
+/* ============================================
+   PASSWORD FIELD
+   ============================================ */
+.if-passwordField {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: stretch;
+  gap: var(--if-space-1);
+}
+
+.if-passwordField-labelRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.if-passwordField-label {
+  font-size: var(--if-font-size-sm);
+  font-weight: 400;
+  color: var(--if-color-text);
+  line-height: 1.5rem;
+  font-family: var(--if-font-family);
+}
+
+.if-passwordField-forgotLink {
+  font-size: var(--if-font-size-sm);
+  font-weight: 400;
+  color: var(--if-color-text-secondary);
+  text-decoration: none;
+  transition: color var(--if-transition-fast);
+  font-family: var(--if-font-family);
+}
+
+.if-passwordField-inputWrapper {
+  position: relative;
+  width: 100%;
+}
+
+.if-passwordField-input {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  align-self: stretch;
+  padding: var(--if-space-2) var(--if-space-3);
+  padding-right: 2.5rem; /* Space for toggle button */
+  border-radius: var(--if-radius-sm);
+  border: 1px solid var(--if-color-border);
+  background-color: var(--if-color-bg-white);
+  font-size: var(--if-font-size-sm);
+  font-weight: 400;
+  line-height: 1.25rem;
+  color: var(--if-color-text);
+  font-family: var(--if-font-family);
+  transition: border-color var(--if-transition-base);
+}
+
+.if-passwordField-input::placeholder {
+  color: var(--if-color-text-muted);
+}
+
+.if-passwordField-input:focus {
+  outline: none;
+  border-color: var(--if-color-border-focus);
+}
+
+.if-passwordField-toggleButton {
+  position: absolute;
+  right: var(--if-space-1);
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: var(--if-space-1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--if-color-text-secondary);
+  transition: color var(--if-transition-fast);
+}
+
+/* ============================================
+   SUBMIT BUTTON
+   ============================================ */
+.if-submitButton {
+  border-radius: var(--if-radius-sm);
+  background-color: var(--if-color-primary);
+  height: 2.5rem;
+  width: 100%;
+  display: flex;
+  margin-top: var(--if-space-4);
+  padding: var(--if-space-2) var(--if-space-4);
+  justify-content: center;
+  align-items: center;
+  gap: 0.625rem;
+  align-self: stretch;
+  color: var(--if-color-bg-white);
+  font-weight: 600;
+  font-family: var(--if-font-family-manrope);
+  font-size: var(--if-font-size-base);
+  line-height: normal;
+  border: none;
+  cursor: pointer;
+  transition: background-color var(--if-transition-base);
+}
+
+.if-submitButton:hover:not(:disabled) {
+  background-color: var(--if-color-primary-hover);
+}
+
+.if-submitButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.if-submitButton-icon {
+  width: 1.25rem;
+  height: 1.25rem;
+}
+
+/* Spinner animation */
+@keyframes if-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.if-submitButton-spinner {
+  animation: if-spin 1s linear infinite;
+}
+
+/* ============================================
+   OAUTH BUTTON
+   ============================================ */
+.if-oauthButton {
+  display: flex;
+  width: 100%;
+  height: 2.25rem;
+  padding: var(--if-space-2) var(--if-space-3);
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
+  gap: var(--if-space-3);
+  border-radius: var(--if-radius-md);
+  border: 1px solid #e4e4e7;
+  background-color: var(--if-color-bg-white);
+  box-shadow: var(--if-shadow-md);
+  color: #09090b;
+  text-align: center;
+  font-size: var(--if-font-size-sm);
+  font-weight: 500;
+  line-height: 1.25rem;
+  cursor: pointer;
+  transition: all var(--if-transition-base);
+  font-family: var(--if-font-family);
+}
+
+.if-oauthButton:hover:not(:disabled) {
+  background-color: var(--if-color-bg-hover);
+  border-color: #9ca3af;
+}
+
+.if-oauthButton:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.if-oauthButton-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 1.125rem;
+  height: 1.125rem;
+}
+
+.if-oauthButton-full {
+  justify-content: center;
+}
+
+.if-oauthButton-short {
+  justify-content: center;
+  padding: var(--if-space-2);
+  gap: var(--if-space-2);
+}
+
+.if-oauthButton-icon-only {
+  justify-content: center;
+  gap: 0;
+}
+
+/* ============================================
+   OAUTH PROVIDERS CONTAINER
+   ============================================ */
+.if-oauthProviders {
+  display: flex;
+  flex-direction: column;
+  gap: var(--if-space-3);
+  width: 100%;
+}
+
+/* ============================================
+   AUTH LINK
+   ============================================ */
+.if-authLink {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: var(--if-space-1);
+  font-size: var(--if-font-size-sm);
+  color: var(--if-color-text-secondary);
+  font-family: var(--if-font-family);
+}
+
+.if-authLink-text {
+  font-weight: 400;
+}
+
+.if-authLink-link {
+  font-weight: 600;
+  color: var(--if-color-text);
+  text-decoration: none;
+  transition: opacity var(--if-transition-fast);
+}
+
+/* ============================================
+   AUTH DIVIDER
+   ============================================ */
+.if-authDivider {
+  display: flex;
+  align-items: center;
+  text-align: center;
+  width: 100%;
+  gap: var(--if-space-3);
+}
+
+.if-authDivider-line {
+  flex: 1;
+  border-top: 1px solid var(--if-color-border);
+}
+
+.if-authDivider-text {
+  font-size: var(--if-font-size-sm);
+  color: var(--if-color-text-secondary);
+  font-weight: 400;
+  font-family: var(--if-font-family-manrope);
+}
+
+/* ============================================
+   ERROR BANNER
+   ============================================ */
+.if-errorBanner {
+  padding: var(--if-space-3);
+  background-color: var(--if-color-error-bg);
+  border-radius: var(--if-radius-md);
+  border: 1px solid var(--if-color-error);
+}
+
+.if-errorBanner-content {
+  display: flex;
+  align-items: center;
+  gap: var(--if-space-2);
+}
+
+.if-errorBanner-icon {
+  width: 1.5rem;
+  height: 1.5rem;
+  flex-shrink: 0;
+  color: var(--if-color-error);
+}
+
+.if-errorBanner-text {
+  font-size: var(--if-font-size-sm);
+  color: var(--if-color-error);
+  font-weight: 400;
+  font-family: var(--if-font-family);
+  margin: 0;
+}
+
+/* ============================================
+   AUTH BRANDING
+   ============================================ */
+.if-authBranding {
+  background-color: var(--if-color-bg-light);
+  padding: var(--if-space-4) var(--if-space-2);
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
+  gap: var(--if-space-1);
+}
+
+.if-authBranding-text {
+  font-size: var(--if-font-size-xs);
+  font-weight: 500;
+  color: var(--if-color-text);
+  font-family: var(--if-font-family-manrope);
+  margin: 0;
+}
+
+/* ============================================
+   VERIFICATION CODE INPUT
+   ============================================ */
+.if-verificationCode-inputContainer {
+  display: flex;
+  gap: var(--if-space-3);
+  justify-content: center;
+}
+
+.if-verificationCode-input {
+  width: 3rem;
+  height: 3rem;
+  text-align: center;
+  font-size: var(--if-font-size-base);
+  font-weight: 600;
+  border: 1px solid var(--if-color-border);
+  border-radius: var(--if-radius-sm);
+  background-color: var(--if-color-bg-white);
+  color: var(--if-color-text);
+  transition: border-color var(--if-transition-base);
+  font-family: var(--if-font-family-manrope);
+}
+
+.if-verificationCode-input:focus {
+  outline: none;
+  border-color: var(--if-color-border-focus);
+}
+
+/* ============================================
+   VERIFICATION STEP
+   ============================================ */
+.if-verificationStep {
+  display: flex;
+  flex-direction: column;
+  gap: var(--if-space-6);
+  align-items: stretch;
+}
+
+.if-verificationStep-descriptionContainer {
+  width: 100%;
+  background-color: #f5f5f5;
+  border-radius: var(--if-radius-lg);
+  padding: var(--if-space-3) var(--if-space-3) var(--if-space-6) var(--if-space-3);
+  display: flex;
+  flex-direction: column;
+  gap: var(--if-space-3);
+}
+
+.if-verificationStep-descriptionTitle {
+  color: var(--black, #000);
+  font-family: var(--if-font-family);
+  font-size: var(--if-font-size-base);
+  font-style: normal;
+  font-weight: 600;
+  line-height: 24px;
+}
+
+.if-verificationStep-description,
+.if-verificationStep-codeDescription {
+  font-size: var(--if-font-size-sm);
+  color: #525252;
+  text-align: left;
+  font-family: var(--if-font-family);
+  margin: 0;
+}
+
+.if-verificationLink-email,
+.if-verificationCode-email {
+  font-weight: 500;
+  color: var(--if-color-text);
+}
+
+.if-verificationStep-codeContainer {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 40px;
+}
+
+.if-verificationStep-codeInputWrapper {
+  display: flex;
+  flex-direction: column;
+  gap: var(--if-space-6);
+}
+
+.if-verificationStep-verifyingText {
+  font-size: var(--if-font-size-sm);
+  color: var(--if-color-text-secondary);
+  text-align: center;
+  font-family: var(--if-font-family);
+}
+
+.if-verificationStep-resendContainer {
+  width: 100%;
+  font-size: var(--if-font-size-sm);
+  text-align: center;
+  color: var(--if-color-text-secondary);
+  font-family: var(--if-font-family);
+}
+
+.if-verificationStep-resendButton {
+  color: var(--if-color-text);
+  font-weight: 500;
+  transition: all var(--if-transition-base);
+  background: none;
+  border: none;
+  padding: 0;
+  font-family: var(--if-font-family);
+  font-size: var(--if-font-size-sm);
+}
+
+.if-verificationStep-resendButton:not(:disabled) {
+  cursor: pointer;
+}
+
+.if-verificationStep-resendButton:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+/* ============================================
+   PASSWORD STRENGTH INDICATOR
+   ============================================ */
+.if-passwordStrength {
+  margin-top: var(--if-space-2);
+}
+
+.if-passwordStrength-fill {
+  height: 100%;
+  transition:
+    width var(--if-transition-base),
+    background-color var(--if-transition-base);
+}
+
+.if-passwordStrength-text {
+  font-size: var(--if-font-size-xs);
+  color: var(--if-color-text-secondary);
+  font-family: var(--if-font-family);
+}
+
+.if-passwordStrength-requirements {
+  display: flex;
+  flex-direction: column;
+  gap: var(--if-space-2);
+  font-size: var(--if-font-size-sm);
+  color: #525252;
+  font-family: var(--if-font-family);
+}
+
+.if-passwordStrength-requirement {
+  display: flex;
+  align-items: center;
+  gap: var(--if-space-2);
+}
+
+/* ============================================
+   FORM CONTAINER
+   ============================================ */
+.if-form {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: center;
+  gap: var(--if-space-6);
+}
+
+/* ============================================
+   USER BUTTON
+   ============================================ */
+.if-userButton-container {
+  position: relative;
+  display: inline-block;
+}
+
+.if-userButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--if-space-2);
+  padding: var(--if-space-2);
+  border-radius: 9999px;
+  background-color: transparent;
+  border: none;
+  cursor: pointer;
+  transition: all var(--if-transition-base);
+}
+
+.if-userButton:hover {
+  opacity: 0.8;
+}
+
+.if-userButton-detailed {
+  background-color: var(--if-color-bg-white);
+  border: 1px solid var(--if-color-border);
+  border-radius: var(--if-radius-sm);
+  padding: var(--if-space-2);
+}
+
+.if-userButton-detailed:hover {
+  background-color: var(--if-color-bg-light);
+  opacity: 1;
+}
+
+.if-userButton-avatar {
+  width: 2rem;
+  height: 2rem;
+  border-radius: 9999px;
+  background-color: var(--if-color-primary);
+  color: var(--if-color-bg-white);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  font-size: var(--if-font-size-sm);
+  font-family: var(--if-font-family);
+  overflow: hidden;
+}
+
+.if-userButton-avatarImage {
+  border-radius: 9999px;
+  object-fit: cover;
+  width: 100%;
+  height: 100%;
+}
+
+.if-userButton-avatarInitials {
+  color: var(--if-color-bg-white);
+  font-weight: 600;
+  font-size: var(--if-font-size-sm);
+}
+
+.if-userButton-info {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.125rem;
+}
+
+.if-userButton-name {
+  font-size: var(--if-font-size-sm);
+  font-weight: 600;
+  color: var(--if-color-text);
+  line-height: 1.25rem;
+  text-align: left;
+  font-family: var(--if-font-family);
+}
+
+.if-userButton-email {
+  font-size: var(--if-font-size-xs);
+  color: var(--if-color-text-secondary);
+  line-height: 1rem;
+  text-align: left;
+  font-family: var(--if-font-family);
+}
+
+.if-userButton-menu {
+  position: absolute;
+  margin-top: var(--if-space-2);
+  background-color: var(--if-color-bg-white);
+  border: 1px solid var(--if-color-border);
+  border-radius: var(--if-radius-md);
+  box-shadow: var(--if-shadow-lg);
+  padding: var(--if-space-2);
+  min-width: 200px;
+  z-index: 50;
+}
+
+.if-userButton-menuItem {
+  display: flex;
+  align-items: center;
+  gap: var(--if-space-2);
+  padding: var(--if-space-2);
+  border-radius: var(--if-radius-sm);
+  cursor: pointer;
+  transition: background-color var(--if-transition-fast);
+  font-size: var(--if-font-size-sm);
+  color: var(--if-color-text);
+  font-family: var(--if-font-family);
+  background: none;
+  border: none;
+  width: 100%;
+  text-align: left;
+}
+
+.if-userButton-menuItem:hover {
+  background-color: var(--if-color-bg-light);
+}
+
+.if-userButton-menuItem-signout {
+  color: var(--if-color-error);
+}
+
+.if-userButton-menuItem-icon {
+  width: 1.25rem;
+  height: 1.25rem;
+}
+
+/* ============================================
+   EMAIL VERIFICATION STATUS
+   ============================================ */
+.if-verifyStatus-container {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--if-space-6);
+}
+
+.if-verifyStatus-container-stretch {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: center;
+  gap: var(--if-space-6);
+}
+
+.if-verifyStatus-spinner {
+  border-radius: 9999px;
+  height: 3rem;
+  width: 3rem;
+  border-bottom: 2px solid var(--if-color-primary);
+}
+
+.if-verifyStatus-successContent {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--if-space-4);
+}
+
+.if-verifyStatus-successIcon {
+  width: 4rem;
+  height: 4rem;
+  border-radius: 9999px;
+  background-color: #d1fae5;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.if-verifyStatus-successIconSvg {
+  width: 2rem;
+  height: 2rem;
+  color: #059669;
+}
+
+.if-verifyStatus-textCenter {
+  text-align: center;
+}
+
+/* ============================================
+   UTILITY CLASSES
+   ============================================ */
+.if-hidden {
+  display: none;
+}
+
+.if-visuallyHidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}

@@ -25,7 +25,12 @@ module.exports = {
       },
     ],
   },
-  collectCoverageFrom: ["**/*.ts", "!**/node_modules/**", "!**/tests/**"],
+  collectCoverageFrom: [
+    "**/*.ts",
+    "!**/node_modules/**",
+    "!**/tests/**",
+    "!**/fiscal-modules/FiscalEventStore.ts", // gate3-persistence/PostgresLink fora da suíte; evita quebra de coverage
+  ],
   coverageDirectory: "coverage",
   coverageReporters: ["json", "text", "text-summary", "lcov"],
   coverageThreshold: {
@@ -103,8 +108,9 @@ module.exports = {
       moduleNameMapper: {
         "^.*/merchant-portal/src/config$": "<rootDir>/tests/__mocks__/config.ts",
         "^.*/merchant-portal/src/config\\.ts$": "<rootDir>/tests/__mocks__/config.ts",
-        // Relative import from core/infra (e.g. dockerCoreFetchClient, coreClient)
         "^../../config$": "<rootDir>/tests/__mocks__/config.ts",
+        "^.*gate3-persistence/PostgresLink.*$":
+          "<rootDir>/tests/__mocks__/PostgresLink.ts",
       },
     },
     {

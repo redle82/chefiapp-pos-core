@@ -1,0 +1,97 @@
+# Sofia Gastrobar — Fonte canónica das tarefas (Fase 2 passo 5)
+
+**Objetivo:** Definir a fonte oficial das tarefas do restaurante 100 no Docker/Core e como o AppStaff e o Admin as usam.
+
+**Referências:** [SOFIA_GASTROBAR_FASE2_AMBIENTE_VIVO.md](./SOFIA_GASTROBAR_FASE2_AMBIENTE_VIVO.md), [SOFIA_GASTROBAR_RESTAURANTE_OFICIAL_VALIDACAO.md](./SOFIA_GASTROBAR_RESTAURANTE_OFICIAL_VALIDACAO.md) §9.
+
+---
+
+## 1. Estado atual: gm_tasks vs app_tasks
+
+### gm_tasks (Core)
+
+| Aspecto | Detalhe |
+|--------|---------|
+| **Onde existe** | Tabela no Docker Core (`docker-core/schema`); migrações consolidadas em `03-migrations-consolidated.sql`. |
+| **Quem lê** | `TaskReader` (readOpenTasks, readOpenTasksByRestaurant, readTaskById, readTasksForAnalytics) → `dockerCoreClient.from("gm_tasks")`. Usado por: TaskSystemMinimal, KDSMinimal (loadTasks), TPVTasksPage, dashboardService (Admin), TaskFiltering, EventMonitor, EventTaskGenerator. |
+| **Quem escreve** | RPCs `create_task`, `start_task`, `complete_task`, `reject_task`, `assign_task`; inserção direta em TPVTasksPage e EventTaskGenerator; seed Sofia (`20260207_seed_sofia_gastrobar.sql`) insere tarefas OPEN para restaurante 100. |
+| **Schema** | restaurant_id, task_type, station, priority, message, status (OPEN → ACKNOWLEDGED → RESOLVED | DISMISSED), order_id, order_item_id, context, assigned_to, created_at, acknowledged_at, resolved_at, updated_at, auto_generated, source_event. |
+| **task_type (Core)** | ATRASO_ITEM, ACUMULO_BAR, ENTREGA_PENDENTE, ITEM_CRITICO, PEDIDO_ESQUECIDO, ESTOQUE_CRITICO, RUPTURA_PREVISTA, EQUIPAMENTO_CHECK, **PEDIDO_NOVO**, **MODO_INTERNO**. |
+
+### app_tasks (legado)
+
+| Aspecto | Detalhe |
+|--------|---------|
+| **Onde existe** | Não existe no schema do Docker Core. Definida em `legacy_supabase/migrations` e `temp_schema_parts`; pensada para Supabase. |
+| **Estado no portal** | **Não se usa.** StaffContext e ReflexEngine foram migrados para gm_tasks (createTaskRpc, readOpenTasks, resolveTask); não há chamadas ativas a app_tasks no Core. |
+| **Quem lê** | Nenhum leitor no portal lê `app_tasks` do Core (a tabela não existe). |
+
+**Conclusão:** No Docker/Core, a única tabela de tarefas existente e utilizável é **gm_tasks**. app_tasks é legado Supabase; o AppStaff usa exclusivamente gm_tasks (RPCs + TaskReader).
+
+---
+
+## 2. Fonte canónica escolhida
+
+**Para o Sofia Gastrobar (restaurante 100) no Docker/Core, a fonte canónica das tarefas é `gm_tasks`.**
+
+Justificação:
+
+1. **Única tabela de tarefas no Core:** Só `gm_tasks` existe no schema do Docker Core; `app_tasks` não está definida nem migrada.
+2. **Já integrada a leitura:** TaskReader, TaskSystemMinimal, KDSMinimal, TPVTasksPage e Admin (dashboardService) já leem `gm_tasks` por `restaurant_id`.
+3. **RPCs e fluxo de estado:** create_task, start_task, complete_task, reject_task estão no Core e cobrem criação e transições (OPEN → ACKNOWLEDGED → RESOLVED | DISMISSED).
+4. **Seed Sofia:** O seed do Sofia já insere tarefas em `gm_tasks` para o restaurante 100 (MODO_INTERNO, ATRASO_ITEM, etc.).
+5. **Relatórios e analytics:** TaskAnalytics e leituras por restaurante usam `gm_tasks`; relatórios do Admin que dependem de tarefas devem usar esta tabela.
+
+---
+
+## 3. O que já funciona hoje
+
+| O quê | Onde | Como |
+|------|------|------|
+| **Listar tarefas abertas** | TaskSystemMinimal (`/op/tasks` ou rota equivalente), KDSMinimal, TPVTasksPage | TaskReader.readOpenTasks(restaurantId) → gm_tasks; filtro por station/status. |
+| **Criar tarefa no Core** | TPVTasksPage, EventTaskGenerator, EventMonitor | Inserção direta em gm_tasks ou RPC create_task. |
+| **Transições** | TaskSystemMinimal, TaskWriter | start_task, complete_task, reject_task (RPCs). |
+| **Seed Sofia** | Migração 20260207 | Várias linhas em gm_tasks para restaurante 100 (MODO_INTERNO, ATRASO_ITEM). |
+| **Admin** | dashboardService | Leitura de gm_tasks para métricas/overview. |
+
+---
+
+## 4. O que estava em falta (implementado)
+
+| Lacuna | Estado | Implementação |
+|--------|--------|----------------|
+| **AppStaff: criar tarefa manual** | **Resolvido** | StaffContext.createTask chama `TaskWriter.createTaskRpc` quando existe `coreRestaurantId`; task_type = `MODO_INTERNO`, message = título (+ descrição se houver), priority/station mapeados; tarefa adicionada ao estado com o id devolvido pelo Core. |
+| **AppStaff: carregar tarefas do Core** | **Resolvido** | StaffContext: useEffect com `TaskReader.readOpenTasks(coreRestaurantId)` ao montar e polling a cada 15s; tarefas mapeadas de CoreTask para Task e guardadas em estado. |
+| **AppStaff: concluir tarefa** | **Resolvido** | completeTask: para ids que são UUID (Core), chama `TaskWriter.resolveTask(taskId)`; atualização optimista; em falha reverte estado. Removida escrita em app_tasks. |
+| **ReflexEngine** | **Resolvido** | Reflexo “Limpar Mesa X” passa a chamar `createTaskRpc` (task_type MODO_INTERNO, message “Limpar Mesa X…”, station SERVICE, autoGenerated: true) em vez de inserir em app_tasks. |
+
+O ciclo operacional das tarefas do Sofia no AppStaff está fechado: criar, listar e concluir usam **gm_tasks** (Core).
+
+---
+
+## 5. Tarefas operacionais: mise en place, limpeza, estoque, catálogo, menu
+
+| Tipo operacional | Em gm_tasks | Quem pode criar | Onde aparece | Onde concluir | Onde reportar |
+|------------------|-------------|------------------|--------------|---------------|----------------|
+| **Mise en place / abertura** | task_type `MODO_INTERNO`; message ex.: "Checklist pré-service", "Verificar equipamentos, estoque inicial, limpeza". Templates em `gm_task_templates` (daily_open, restock_*). | Sistema (generate_scheduled_tasks) ou manual via create_task. | KDSMinimal (loadTasks), TaskSystemMinimal, AppStaff (quando listar gm_tasks). | TaskSystemMinimal, AppStaff (resolveTask/complete_task). | Admin (dashboardService / relatórios que leem gm_tasks). |
+| **Limpeza** | `MODO_INTERNO`; message ex.: "Limpar zona do bar", "Limpar Mesa X". Seed Sofia: "Limpar zona do bar". ReflexEngine hoje: "Limpar Mesa X" (idealmente criar via create_task). | Manual (create_task), ReflexEngine (quando ligado a gm_tasks), seed. | Idem. | Idem. | Idem. |
+| **Estoque** | `ESTOQUE_CRITICO`, `RUPTURA_PREVISTA` ou `MODO_INTERNO` com message "Verificar stocks da cozinha". RPC generate_tasks_from_orders / generate_tasks pode criar ESTOQUE_CRITICO. | Sistema (RPC) ou manual (create_task). | Idem. | Idem. | Idem. |
+| **Catálogo** | `MODO_INTERNO`; message ex.: "Rever catálogo do dia", "Atualizar preços". | Manual (create_task). | Idem. | Idem. | Idem. |
+| **Criação do menu** | `MODO_INTERNO`; message ex.: "Criação do menu / novos pratos". | Manual (create_task). | Idem. | Idem. | Idem. |
+
+**Resumo:** Todas podem ser criadas como tarefas em **gm_tasks** com task_type **MODO_INTERNO** (ou ESTOQUE_CRITICO quando for caso de stock). Hoje já é possível criá-las via RPC `create_task` (por exemplo a partir do TPV ou de um script). O que falta é o AppStaff usar esse mesmo RPC e listar gm_tasks em vez de depender de app_tasks.
+
+---
+
+## 6. Estado final (ciclo operacional fechado)
+
+- **Fonte canónica:** gm_tasks (Core).
+- **AppStaff:** Cria tarefas via `createTaskRpc` (CreateTaskModal/QuickTaskModal → StaffContext.createTask). Lista tarefas via `TaskReader.readOpenTasks(coreRestaurantId)` no mount e polling 15s. Conclui via `resolveTask(taskId)` para ids UUID do Core. ReflexEngine cria “Limpar Mesa” em gm_tasks via createTaskRpc.
+- **Admin:** Continua a usar TaskReader/dashboardService para gm_tasks com restaurant_id 100.
+- **Smoke sugerido:** Criar tarefa no AppStaff (ex.: “Mise en place”) → ver a tarefa no Admin ou em gm_tasks → concluir no AppStaff → confirmar que deixa de aparecer na lista de abertas (RESOLVED no Core).
+
+---
+
+## 7. Próximo passo único
+
+**Passo 6 — Relatórios:** Verificar que os relatórios do “ambiente vivo” usam restaurant_id do runtime (100) e fontes Core; corrigir ou documentar exceções.

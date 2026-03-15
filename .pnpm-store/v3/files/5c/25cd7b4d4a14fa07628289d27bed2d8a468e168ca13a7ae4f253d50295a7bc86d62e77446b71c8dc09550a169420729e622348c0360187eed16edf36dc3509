@@ -1,0 +1,137 @@
+import { CreateSessionResponse, CreateUserResponse, GetPublicAuthConfigResponse } from '@insforge/shared-schemas';
+import { InsforgeUser } from '@insforge/shared';
+
+/**
+ * Hook to access authentication methods
+ *
+ * @returns Object containing:
+ *   - `signIn`: Function to sign in with email and password
+ *   - `signUp`: Function to sign up with email and password
+ *   - `signOut`: Function to sign out the current user
+ *   - `isLoaded`: Boolean indicating if auth state has been loaded
+ *   - `isSignedIn`: Boolean indicating if user is currently signed in
+ *
+ * @example
+ * ```tsx
+ * function LoginForm() {
+ *   const { signIn, signUp, signOut, isLoaded, isSignedIn } = useAuth();
+ *
+ *   async function handleLogin(email: string, password: string) {
+ *     try {
+ *       await signIn(email, password);
+ *       // User is now signed in
+ *     } catch (error) {
+ *       console.error('Sign in failed:', error);
+ *     }
+ *   }
+ *
+ *   if (!isLoaded) return <div>Loading...</div>;
+ *
+ *   return (
+ *     <form onSubmit={(e) => { e.preventDefault(); handleLogin(email, password); }}>
+ *       {/* form fields *\/}
+ *     </form>
+ *   );
+ * }
+ * ```
+ */
+declare function useAuth(): {
+    signIn: (email: string, password: string) => Promise<CreateSessionResponse | {
+        error: string;
+        statusCode?: number;
+        errorCode?: string;
+    }>;
+    signUp: (email: string, password: string) => Promise<CreateUserResponse | {
+        error: string;
+        statusCode?: number;
+        errorCode?: string;
+    }>;
+    signOut: () => Promise<void>;
+    isLoaded: boolean;
+    isSignedIn: boolean | undefined;
+};
+
+interface useUserReturn {
+    user: InsforgeUser | null | undefined;
+    isLoaded: boolean;
+    updateUser: (data: InsforgeUser['profile']) => Promise<{
+        error: string;
+    } | null>;
+    setUser: (user: InsforgeUser | null) => void;
+}
+/**
+ * Hook to access current user data
+ *
+ * @returns Object containing:
+ *   - `user`: Current user object (InsforgeUser | null)
+ *   - `isLoaded`: Boolean indicating if auth state has been loaded
+ *   - `updateUser`: Function to update user profile data (returns { error: string } | null)
+ *   - `setUser`: Internal function to manually set user state
+ *
+ * @example
+ * ```tsx
+ * function UserProfile() {
+ *   const { user, isLoaded, updateUser } = useUser();
+ *
+ *   if (!isLoaded) return <div>Loading...</div>;
+ *   if (!user) return <div>Not signed in</div>;
+ *
+ *   async function handleUpdate(name: string) {
+ *     const result = await updateUser({ name });
+ *     if (result?.error) {
+ *       console.error(result.error);
+ *     } else {
+ *       console.log('User updated successfully');
+ *     }
+ *   }
+ *
+ *   return (
+ *     <div>
+ *       <p>Email: {user.email}</p>
+ *       {user.name && <p>Name: {user.name}</p>}
+ *       {user.avatarUrl && <img src={user.avatarUrl} alt="Avatar" />}
+ *     </div>
+ *   );
+ * }
+ * ```
+ */
+declare function useUser(): useUserReturn;
+
+/**
+ * Hook to get all public authentication configuration (OAuth + Email) from Insforge backend
+ *
+ * **IMPORTANT: This hook should ONLY be used in SignIn and SignUp components.**
+ *
+ * This hook lazily fetches all public authentication configuration from the backend
+ * only when the component mounts. Using it in other components will cause unnecessary
+ * API calls on every page load.
+ *
+ * @returns Object containing OAuth providers, email auth config, and loading state
+ * - `authConfig`: Email authentication configuration object with password rules
+ * - `isLoaded`: Boolean indicating if the config has been fetched
+ *
+ * @example
+ * ```tsx
+ * // ✅ Correct usage - only in SignIn/SignUp components
+ * function SignUp() {
+ *   const { authConfig, isLoaded } = usePublicAuthConfig();
+ *
+ *   if (!isLoaded) return <div>Loading...</div>;
+ *
+ *   return (
+ *     <div>
+ *       <p>OAuth providers: {authConfig?.oauthProviders.length}</p>
+ *       <p>Password min length: {authConfig?.passwordMinLength}</p>
+ *     </div>
+ *   );
+ * }
+ * ```
+ *
+ * @requires Must be used within InsforgeProvider
+ */
+declare function usePublicAuthConfig(): {
+    authConfig: GetPublicAuthConfigResponse | null;
+    isLoaded: boolean;
+};
+
+export { useAuth, usePublicAuthConfig, useUser };

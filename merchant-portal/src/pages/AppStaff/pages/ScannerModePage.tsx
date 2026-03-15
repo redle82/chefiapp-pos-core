@@ -147,7 +147,9 @@ export function ScannerModePage() {
 
     console.log("[Scanner] Creating BarcodeDetector instance...");
     try {
-      const detector = new (window as any).BarcodeDetector({
+      const detector = new (
+        window as unknown as { BarcodeDetector: any }
+      ).BarcodeDetector({
         formats: ["ean_13", "ean_8", "code_128", "qr_code", "upc_a", "upc_e"],
       });
       console.log("[Scanner] BarcodeDetector created successfully");

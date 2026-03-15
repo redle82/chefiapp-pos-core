@@ -1,0 +1,50 @@
+{
+  "name": "@insforge/shared",
+  "version": "1.1.5",
+  "description": "Shared utilities and React contexts for Insforge packages",
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    },
+    "./react": {
+      "types": "./dist/react.d.ts",
+      "import": "./dist/react.js",
+      "require": "./dist/react.cjs"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "type-check": "tsc --noEmit",
+    "clean": "rimraf dist"
+  },
+  "keywords": [
+    "insforge",
+    "shared",
+    "react",
+    "context"
+  ],
+  "author": "Insforge",
+  "license": "MIT",
+  "peerDependencies": {
+    "react": ">=18.0.0 <20.0.0"
+  },
+  "dependencies": {
+    "@insforge/shared-schemas": "^1.1.43"
+  },
+  "devDependencies": {
+    "@types/react": "^19.2.2",
+    "tsup": "^8.5.0",
+    "typescript": "^5.9.3"
+  }
+}

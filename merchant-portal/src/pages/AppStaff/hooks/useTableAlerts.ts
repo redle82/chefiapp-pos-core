@@ -46,8 +46,8 @@ export function useTableAlerts() {
         id: table.id,
         number: table.number,
         status: table.status,
-        lastOrderAt: null as any,
-        occupiedAt: null as any,
+        lastOrderAt: null as string | null,
+        occupiedAt: null as string | null,
       })),
     [appStaffTables],
   );
@@ -131,7 +131,7 @@ export function useTableAlerts() {
           const orderTime = new Date(order.created_at).getTime();
           const oldestTime = oldest ? new Date(oldest.created_at).getTime() : 0;
           return orderTime < oldestTime ? order : oldest;
-        }, null as any);
+        }, null as typeof tableOrders[0] | null);
 
         if (oldestOrder) {
           const orderAgeMs = now - new Date(oldestOrder.created_at).getTime();

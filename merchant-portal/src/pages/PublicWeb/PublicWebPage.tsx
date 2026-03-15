@@ -443,6 +443,7 @@ export function PublicWebPage() {
           </span>
           <button
             type="button"
+            data-testid="sovereign-web-cart-toggle"
             onClick={() => setCartOpen(true)}
             style={{
               position: "relative",
@@ -997,6 +998,7 @@ export function PublicWebPage() {
                 )}
                 <button
                   type="button"
+                  data-testid={`sovereign-web-add-product-${product.name.replace(/\s+/g, "-")}`}
                   onClick={() => addToCart(product)}
                   disabled={product.available === false}
                   style={{
@@ -1425,6 +1427,7 @@ export function PublicWebPage() {
                 </div>
                 <button
                   type="button"
+                  data-testid="sovereign-web-submit-order"
                   onClick={handleCreateOrder}
                   disabled={creatingOrder}
                   style={{

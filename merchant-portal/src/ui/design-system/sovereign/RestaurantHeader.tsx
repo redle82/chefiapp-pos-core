@@ -45,6 +45,7 @@ export const RestaurantHeader: React.FC<RestaurantHeaderProps> = ({
         style={{ flexShrink: 0 }}
       />
       <span
+        data-testid="sovereign-restaurant-name"
         style={{
           fontSize,
           fontWeight,

@@ -9,6 +9,8 @@ import { useCallback, useMemo, useState } from "react";
 import { DataModeBanner } from "../../components/DataModeBanner";
 import { useRestaurantRuntime } from "../../context/RestaurantRuntimeContext";
 import { currencyService } from "../../core/currency/CurrencyService";
+import { getFormatLocale } from "../../core/i18n/regionLocaleConfig";
+import { useFormatLocale } from "../../core/i18n/useFormatLocale";
 import {
   useShiftHistory,
   type ShiftHistoryItem,

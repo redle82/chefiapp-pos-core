@@ -325,9 +325,10 @@ export function TablePanel({ tableId: propTableId, onBack }: TablePanelProps) {
       } = await db.auth.getUser();
       const userId = user?.id || null;
 
-      // Detectar contexto e role
+      // Detectar contexto e role (incl. /app/waiter = Comandeiro/Garçom)
       const isAppStaff =
         window.location.pathname.includes("/app/staff") ||
+        window.location.pathname.includes("/app/waiter") ||
         window.location.pathname.includes("/garcom");
       let userRole: string = "waiter"; // Default
       let orderOrigin: string = "CAIXA";
@@ -608,6 +609,7 @@ export function TablePanel({ tableId: propTableId, onBack }: TablePanelProps) {
         <div style={{ position: "relative" }}>
           <input
             type="text"
+            data-testid="sovereign-waiter-search"
             placeholder={t("tablePanel.searchPlaceholder")}
             value={searchQuery}
             onChange={(e) => {
@@ -848,6 +850,8 @@ export function TablePanel({ tableId: propTableId, onBack }: TablePanelProps) {
           <div style={{ display: "flex", gap: 8 }}>
             {/* Primary: Enviar Pedido */}
             <button
+              type="button"
+              data-testid="sovereign-waiter-send-order"
               onClick={handleSendOrder}
               disabled={sending}
               style={{

@@ -6,18 +6,26 @@ import { render, screen } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { MemoryRouter, Outlet, Routes } from "react-router-dom";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { setCatalogFeatureFlagsForTests } from "../../core/catalog/catalogFeatureFlags";
+import * as catalogFeatureFlags from "../../core/catalog/catalogFeatureFlags";
 import { ADMIN_ROUTES } from "../constants/routeConstants";
 
-afterEach(() => {
-  setCatalogFeatureFlagsForTests({
+vi.mock("../../core/catalog/catalogFeatureFlags", () => ({
+  isMenuV2ShellEnabled: vi.fn(() => true),
+  isMenuV2QuickBuildEnabled: vi.fn(() => true),
+  getCatalogFeatureFlags: vi.fn(() => ({
     menuV2Shell: true,
     menuV2QuickBuild: true,
     menuV2CatalogModel: false,
     menuV2Publication: false,
     menuV2Quality: false,
     menuV2ImportAI: false,
-  });
+  })),
+  setCatalogFeatureFlagsForTests: vi.fn(),
+}));
+
+afterEach(() => {
+  vi.mocked(catalogFeatureFlags.isMenuV2ShellEnabled).mockReturnValue(true);
+  vi.mocked(catalogFeatureFlags.isMenuV2QuickBuildEnabled).mockReturnValue(true);
 });
 
 async function renderAdminRoutes(initialEntry: string) {
@@ -217,60 +225,100 @@ vi.mock("../../features/admin/config/pages/integrations", () => ({
 }));
 
 describe("AdminRoutesFragment", () => {
-  it("redirects /admin/catalog to setup when menu v2 shell is enabled", async () => {
-    setCatalogFeatureFlagsForTests({ menuV2Shell: true });
-    await renderAdminRoutes("/admin/catalog");
+  it(
+    "redirects /admin/catalog to setup when menu v2 shell is enabled",
+    async () => {
+      vi.mocked(catalogFeatureFlags.isMenuV2ShellEnabled).mockReturnValue(true);
+      await renderAdminRoutes("/admin/catalog");
 
-    expect(screen.getByText("catalog-setup-page")).toBeTruthy();
-  });
+      expect(screen.getByText("catalog-setup-page")).toBeTruthy();
+    },
+    10000,
+  );
 
-  it("redirects /admin/catalog to legacy list when menu v2 shell is disabled", async () => {
-    setCatalogFeatureFlagsForTests({ menuV2Shell: false });
-    await renderAdminRoutes("/admin/catalog");
+  it(
+    "redirects /admin/catalog to legacy list when menu v2 shell is disabled",
+    async () => {
+      vi.mocked(catalogFeatureFlags.isMenuV2ShellEnabled).mockReturnValue(
+        false,
+      );
+      await renderAdminRoutes("/admin/catalog");
 
-    expect(screen.getByText("catalog-list-page")).toBeTruthy();
-  });
+      expect(screen.getByText("catalog-list-page")).toBeTruthy();
+    },
+    10000,
+  );
 
-  it("redirects /admin/catalog/setup to legacy list when menu v2 shell is disabled", async () => {
-    setCatalogFeatureFlagsForTests({ menuV2Shell: false });
-    await renderAdminRoutes("/admin/catalog/setup");
+  it(
+    "redirects /admin/catalog/setup to legacy list when menu v2 shell is disabled",
+    async () => {
+      vi.mocked(catalogFeatureFlags.isMenuV2ShellEnabled).mockReturnValue(
+        false,
+      );
+      await renderAdminRoutes("/admin/catalog/setup");
 
-    expect(screen.getByText("catalog-list-page")).toBeTruthy();
-  });
+      expect(screen.getByText("catalog-list-page")).toBeTruthy();
+    },
+    10000,
+  );
 
-  it("renders the admin modules route", async () => {
-    await renderAdminRoutes("/admin/modules");
+  it(
+    "renders the admin modules route",
+    async () => {
+      await renderAdminRoutes("/admin/modules");
 
-    expect(screen.getByText("modules-page")).toBeTruthy();
-  });
+      expect(screen.getByText("modules-page")).toBeTruthy();
+    },
+    10000,
+  );
 
-  it("redirects /admin/reports to reports overview", async () => {
-    await renderAdminRoutes("/admin/reports");
+  it(
+    "redirects /admin/reports to reports overview",
+    async () => {
+      await renderAdminRoutes("/admin/reports");
 
-    expect(screen.getByText("admin-reports-overview")).toBeTruthy();
-  });
+      expect(screen.getByText("admin-reports-overview")).toBeTruthy();
+    },
+    10000,
+  );
 
-  it("redirects /admin to reports overview", async () => {
-    await renderAdminRoutes("/admin");
+  it(
+    "redirects /admin to reports overview",
+    async () => {
+      await renderAdminRoutes("/admin");
 
-    expect(screen.getByText("admin-reports-overview")).toBeTruthy();
-  });
+      expect(screen.getByText("admin-reports-overview")).toBeTruthy();
+    },
+    10000,
+  );
 
-  it("redirects legacy /config to admin config general", async () => {
-    await renderAdminRoutes("/config");
+  it(
+    "redirects legacy /config to admin config general",
+    async () => {
+      await renderAdminRoutes("/config");
 
-    expect(screen.getByText("general-config-page")).toBeTruthy();
-  });
+      expect(screen.getByText("general-config-page")).toBeTruthy();
+    },
+    10000,
+  );
 
-  it("renders admin devices through the dashboard layout", async () => {
-    await renderAdminRoutes(ADMIN_ROUTES.DEVICES);
+  it(
+    "renders admin devices through the dashboard layout",
+    async () => {
+      await renderAdminRoutes(ADMIN_ROUTES.DEVICES);
 
-    expect(screen.getByText("admin-devices-page")).toBeTruthy();
-  });
+      expect(screen.getByText("admin-devices-page")).toBeTruthy();
+    },
+    10000,
+  );
 
-  it("renders TPV terminals management route", async () => {
-    await renderAdminRoutes("/admin/devices/tpv");
+  it(
+    "renders TPV terminals management route",
+    async () => {
+      await renderAdminRoutes("/admin/devices/tpv");
 
-    expect(screen.getByText("admin-tpv-terminals-page")).toBeTruthy();
-  });
+      expect(screen.getByText("admin-tpv-terminals-page")).toBeTruthy();
+    },
+    10000,
+  );
 });

@@ -1,3 +1,4 @@
+// @vitest-environment jsdom
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { DbWriteGate } from "../governance/DbWriteGate";
 import { createOrderAtomic } from "../infra/CoreOrdersApi";
@@ -303,6 +304,7 @@ describe("SyncEngine Stress Test", () => {
   });
 
   it("degraded: processQueue still processes pending items when connectivity is degraded", async () => {
+    // Spy forces "degraded" so processQueue() does not early-return (only "offline" returns); ensures createOrderAtomic is called
     const { ConnectivityService } = await import("./ConnectivityService");
     const getConnectivity = vi
       .spyOn(ConnectivityService, "getConnectivity")

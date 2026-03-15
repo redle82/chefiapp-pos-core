@@ -117,6 +117,7 @@
 | Documento                                                          | Descrição                                                                                                                                             |
 | ------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
 | [APPSTAFF_APPSHELL_MAP.md](./APPSTAFF_APPSHELL_MAP.md)             | Mapa completo do AppShell: estrutura (TopBar, área central, navegação contextual), áreas comuns, áreas por papel, destino da Master View; sem código. |
+| [APPSTAFF_ORDER_ORIGINS_CONVENTION.md](./APPSTAFF_ORDER_ORIGINS_CONVENTION.md) | Convenção de origens de pedido do Comandeiro: APPSTAFF → SALÃO, APPSTAFF_MANAGER → GERENTE, APPSTAFF_OWNER → DONO; dono/gerente podem fazer pedidos. |
 | [APPSTAFF_ROUTE_MAP.md](./APPSTAFF_ROUTE_MAP.md)                   | Rotas e componentes implementados sob `/app/staff`; mapeamento rota → componente.                                                                     |
 | [APPSTAFF_UI_SURGERY_SUMMARY.md](./APPSTAFF_UI_SURGERY_SUMMARY.md) | Resumo da refatoração layout: uma tela = uma responsabilidade; Visão Operacional, Turno, Equipe, Tarefas, Exceções, TPV/KDS em tela cheia.            |
 

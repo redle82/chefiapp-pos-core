@@ -7,6 +7,13 @@ import { MemoryRouter } from "react-router-dom";
 import { describe, expect, it, vi } from "vitest";
 import { SoftwareTpvPage } from "./SoftwareTpvPage";
 
+vi.mock("react-i18next", () => ({
+  useTranslation: () => ({
+    t: (key: string) => key,
+    i18n: { language: "pt-BR" },
+  }),
+}));
+
 vi.mock("../../../../context/RestaurantRuntimeContext", () => ({
   useRestaurantRuntime: () => ({
     runtime: { restaurant_id: "rest_123" },
@@ -73,13 +80,9 @@ describe("SoftwareTpvPage layout", () => {
       </MemoryRouter>,
     );
 
-    expect(await screen.findByText("Configuración")).toBeTruthy();
-    expect(screen.getByText("Modo rápido")).toBeTruthy();
-    expect(screen.getByText("Atajos disponibles:")).toBeTruthy();
-    expect(
-      screen.getByText(
-        "Atajos y flujo rápido para servicio en pico (barra, terraza).",
-      ),
-    ).toBeTruthy();
+    expect(await screen.findByText("softwareTpv.configCardTitle")).toBeTruthy();
+    expect(screen.getByText("softwareTpv.quickModeTitle")).toBeTruthy();
+    expect(screen.getByText("softwareTpv.shortcutsTitle")).toBeTruthy();
+    expect(screen.getByText("softwareTpv.quickModeDesc")).toBeTruthy();
   });
 });

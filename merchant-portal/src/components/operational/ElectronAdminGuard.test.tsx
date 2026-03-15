@@ -14,14 +14,15 @@ import { ElectronAdminGuard } from "./ElectronAdminGuard";
 describe("ElectronAdminGuard", () => {
   beforeEach(() => {
     delete window.electronBridge;
-    // Ensure no Tauri marker
     delete (window as Window & { __TAURI__?: unknown }).__TAURI__;
+    delete (window as Window & { __CHEFIAPP_ELECTRON?: boolean }).__CHEFIAPP_ELECTRON;
   });
 
   afterEach(() => {
     cleanup();
     delete window.electronBridge;
     delete (window as Window & { __TAURI__?: unknown }).__TAURI__;
+    delete (window as Window & { __CHEFIAPP_ELECTRON?: boolean }).__CHEFIAPP_ELECTRON;
   });
 
   it("allows admin routes in browser context", () => {
@@ -64,6 +65,23 @@ describe("ElectronAdminGuard", () => {
     expect(screen.queryByText("Admin Modules")).toBeNull();
     expect(screen.getByTestId("electron-admin-guard")).toBeTruthy();
     expect(screen.getByText("Área de administração")).toBeTruthy();
+  });
+
+  it("blocks admin routes when __CHEFIAPP_ELECTRON is true (injected by main/preload)", () => {
+    (window as Window & { __CHEFIAPP_ELECTRON?: boolean }).__CHEFIAPP_ELECTRON = true;
+
+    render(
+      <MemoryRouter initialEntries={["/admin/config/website"]}>
+        <Routes>
+          <Route element={<ElectronAdminGuard />}>
+            <Route path="/admin/config/website" element={<div>Página web do restaurante</div>} />
+          </Route>
+        </Routes>
+      </MemoryRouter>,
+    );
+
+    expect(screen.queryByText("Página web do restaurante")).toBeNull();
+    expect(screen.getByTestId("electron-admin-guard")).toBeTruthy();
   });
 
   it("blocks admin routes in Tauri context", () => {

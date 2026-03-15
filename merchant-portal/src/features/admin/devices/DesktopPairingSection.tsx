@@ -9,8 +9,9 @@
  */
 
 import { useCallback, useEffect, useState } from "react";
-import { useRestaurantRuntime } from "../../../context/RestaurantRuntimeContext";
+import { useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
+import { useRestaurantRuntime } from "../../../context/RestaurantRuntimeContext";
 import styles from "./AdminDevicesPage.module.css";
 import {
   createDevicePairingCode,
@@ -18,19 +19,17 @@ import {
   type TerminalType,
 } from "./api/devicesApi";
 
-const DESKTOP_TYPES: { value: TerminalType; label: string }[] = [
-  { value: "TPV", label: "TPV (Caja)" },
-  { value: "KDS", label: "KDS (Cocina)" },
-];
-
 export interface DesktopPairingSectionProps {
   /** Called when a new code is generated so parent can auto-refresh terminal list. */
   onCodeGenerated?: () => void;
 }
 
+const DESKTOP_TYPE_IDS: TerminalType[] = ["TPV", "KDS"];
+
 export function DesktopPairingSection({
   onCodeGenerated,
 }: DesktopPairingSectionProps) {
+  const { t } = useTranslation("config");
   const { runtime } = useRestaurantRuntime();
   const restaurantId = runtime?.restaurant_id ?? null;
 
@@ -41,6 +40,9 @@ export function DesktopPairingSection({
   const [activeToken, setActiveToken] = useState<InstallToken | null>(null);
   const [secondsLeft, setSecondsLeft] = useState(0);
   const [copied, setCopied] = useState(false);
+
+  const getTypeLabel = (type: TerminalType) =>
+    type === "TPV" ? t("devices.tpvLabel") : t("devices.kdsLabel");
 
   // Countdown timer
   useEffect(() => {
@@ -70,11 +72,13 @@ export function DesktopPairingSection({
       setActiveToken(tok);
       onCodeGenerated?.();
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "Error al generar código");
+      setError(
+        err instanceof Error ? err.message : t("devices.errorGenerateCode"),
+      );
     } finally {
       setGenerating(false);
     }
-  }, [restaurantId, deviceType, deviceName, onCodeGenerated]);
+  }, [restaurantId, deviceType, deviceName, onCodeGenerated, t]);
 
   const handleCopy = useCallback(() => {
     const code = (activeToken as { pairing_code?: string })?.pairing_code;
@@ -87,45 +91,86 @@ export function DesktopPairingSection({
 
   const pairingCode = (activeToken as { pairing_code?: string })?.pairing_code;
 
+  // TPV pairing lives on the canonical page /admin/devices/tpv (single source of truth)
+  if (deviceType === "TPV") {
+    return (
+      <div className={styles.desktopPairingContainer} data-block="pairing-tpv-redirect-v2">
+        <div className={styles.desktopPairingHeader}>
+          <span className={styles.desktopPairingIcon}>🖥️</span>
+          <div>
+            <h3 className={styles.desktopPairingTitle}>
+              {t("devices.pairingTitle")}
+            </h3>
+            <p className={styles.desktopPairingSubtitle}>
+              {t("devices.pairingTpvRedirectDesc")}
+            </p>
+            <p className={styles.desktopPairingSubtitle}>
+              <Link to="/admin/devices/tpv" className={styles.tpvDedicatedLink}>
+                {t("devices.goToTpvPage")}
+              </Link>
+            </p>
+          </div>
+        </div>
+        <div className={styles.formRow}>
+          <label className={styles.fieldLabel}>
+            {t("devices.typeLabel")}
+            <select
+              value={deviceType}
+              onChange={(e) => setDeviceType(e.target.value as TerminalType)}
+              className={styles.selectInput}
+            >
+              {DESKTOP_TYPE_IDS.map((value) => (
+                <option key={value} value={value}>
+                  {getTypeLabel(value)}
+                </option>
+              ))}
+            </select>
+          </label>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className={styles.desktopPairingContainer}>
       <div className={styles.desktopPairingHeader}>
         <span className={styles.desktopPairingIcon}>🖥️</span>
         <div>
           <h3 className={styles.desktopPairingTitle}>
-            Vincular dispositivo de escritorio
+            {t("devices.pairingTitle")}
           </h3>
           <p className={styles.desktopPairingSubtitle}>
-            Genera un código y escríbelo en la aplicación de escritorio para
-            vincular este equipo como TPV o KDS.
+            {t("devices.pairingKdsDesc")}
           </p>
           <p className={styles.desktopPairingSubtitle}>
-            <Link to="/admin/config/general">comingSoon.learnMore</Link>
+            <Link to="/admin/config/general" className={styles.tpvDedicatedLink}>
+              {t("devices.learnMore")}
+            </Link>
           </p>
         </div>
       </div>
 
       <div className={styles.formRow}>
         <label className={styles.fieldLabel}>
-          Tipo
+          {t("devices.typeLabel")}
           <select
             value={deviceType}
             onChange={(e) => setDeviceType(e.target.value as TerminalType)}
             className={styles.selectInput}
           >
-            {DESKTOP_TYPES.map((t) => (
-              <option key={t.value} value={t.value}>
-                {t.label}
+            {DESKTOP_TYPE_IDS.map((value) => (
+              <option key={value} value={value}>
+                {getTypeLabel(value)}
               </option>
             ))}
           </select>
         </label>
 
         <label className={styles.fieldLabelFlex}>
-          Nombre (opcional)
+          {t("devices.nameOptional")}
           <input
             type="text"
-            placeholder="ej: TPV_BALCAO_01"
+            placeholder={t("devices.namePlaceholder")}
             value={deviceName}
             onChange={(e) => setDeviceName(e.target.value)}
             className={styles.textInput}
@@ -138,7 +183,7 @@ export function DesktopPairingSection({
           disabled={!restaurantId || generating}
           className={styles.btnGenerate}
         >
-          {generating ? "Generando…" : "Generar código"}
+          {generating ? t("devices.generating") : t("devices.generateCode")}
         </button>
       </div>
 
@@ -153,10 +198,10 @@ export function DesktopPairingSection({
                 secondsLeft < 60 ? styles.expiryCritical : styles.expiryNormal
               }
             >
-              Expira en <strong>{secondsLeft}s</strong>
+              {t("devices.expiresIn")} <strong>{secondsLeft}s</strong>
             </span>
             <span className={styles.pairingCodeType}>
-              Tipo: <strong>{activeToken?.device_type}</strong>
+              {t("devices.typeLabel")}: <strong>{activeToken?.device_type}</strong>
             </span>
           </div>
           <button
@@ -164,11 +209,10 @@ export function DesktopPairingSection({
             onClick={handleCopy}
             className={styles.pairingCodeCopyBtn}
           >
-            {copied ? "✓ Copiado" : "Copiar código"}
+            {copied ? `✓ ${t("devices.copied")}` : t("devices.copyCode")}
           </button>
           <p className={styles.pairingCodeHint}>
-            Introduce este código en la aplicación de escritorio ChefIApp al
-            iniciarla por primera vez.
+            {t("devices.pairingCodeHint")}
           </p>
         </div>
       )}

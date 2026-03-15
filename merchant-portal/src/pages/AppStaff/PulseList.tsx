@@ -94,7 +94,9 @@ export const PulseList: React.FC = () => {
           return;
         }
 
-        setRestaurantName((member.restaurants as any)?.name || "Unknown");
+        setRestaurantName(
+          (member.restaurants as { name?: string })?.name || "Unknown",
+        );
 
         // 3. Fetch History (via PulseReader)
         const history = await readEmpirePulses(member.restaurant_id, 50);

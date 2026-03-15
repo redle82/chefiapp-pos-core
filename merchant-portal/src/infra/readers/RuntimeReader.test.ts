@@ -88,6 +88,24 @@ describe("RuntimeReader – Core DB integration helpers", () => {
     expect(exists).toBe(false);
   });
 
+  it("restaurantExistsInCore devolve true em Supabase quando erro é 'does not exist' (schema)", async () => {
+    const { CONFIG } = await import("../../config");
+    const spy = vi.spyOn(CONFIG, "isSupabaseBackend", "get").mockReturnValue(true);
+
+    fromMock.mockReturnValue(
+      createChain({
+        data: null,
+        error: { message: 'column "disabled_at" does not exist' },
+      }),
+    );
+    const { restaurantExistsInCore } = await import("./RuntimeReader");
+
+    const exists = await restaurantExistsInCore("r1");
+
+    expect(exists).toBe(true);
+    spy.mockRestore();
+  });
+
   it("fetchFirstRestaurantId devolve id da primeira linha ordenada por created_at", async () => {
     fromMock.mockReturnValue(
       createListChain({
@@ -186,24 +204,22 @@ describe("RuntimeReader – Core DB integration helpers", () => {
     expect(assertValidRestaurantIdMock).toHaveBeenCalledWith("r-existing");
   });
 
-  it("getOrCreateRestaurantId limpa id inválido e tenta fetchFirstRestaurantId", async () => {
+  it("getOrCreateRestaurantId limpa id inválido e tenta members depois restaurants", async () => {
     window.localStorage.setItem("chefiapp_restaurant_id", "mock-invalid");
-    // primeira chamada: restaurantExistsInCore → null
+    // Supabase: 1º gm_restaurant_members, 2º gm_restaurants. Ambas sem dados → null (em dev seria SEED).
     fromMock
       .mockReturnValueOnce(
         createChain({ data: null, error: { message: "not found" } }),
       )
-      // segunda chamada: fetchFirstRestaurantId
       .mockReturnValueOnce(
-        createListChain({ data: [{ id: "r-first" }], error: null }),
+        createChain({ data: null, error: { message: "not found" } }),
       );
 
     const { getOrCreateRestaurantId } = await import("./RuntimeReader");
 
     const id = await getOrCreateRestaurantId();
 
-    // Quando não existe nenhum restaurante no Core, a função devolve null;
-    // este teste apenas valida que limpamos o id inválido (side-effect principal aqui).
+    // Ambas as fontes falham → null (Vitest não é dev; no browser em dev devolveria SEED_RESTAURANT_ID)
     expect(id).toBeNull();
     expect(window.localStorage.getItem("chefiapp_restaurant_id")).toBeNull();
   });

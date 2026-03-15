@@ -90,11 +90,55 @@
   opacity: 0.6;
 }
 
+/* ── TPV card CTA (hub → /admin/devices/tpv) ── */
+.tpvCardCta {
+  display: inline-block;
+  padding: 8px 20px;
+  font-size: 13px;
+  font-weight: 600;
+  border-radius: 6px;
+  background-color: var(--color-brand-gold, #c9a227);
+  color: #000;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.tpvCardCta:hover {
+  opacity: 0.9;
+}
+
+.tpvDedicatedLink {
+  color: var(--color-brand-gold, #c9a227);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.tpvDedicatedLink:hover {
+  text-decoration: underline;
+}
+
 /* ── Token error ── */
 .tokenError {
   color: var(--color-error);
   font-size: 13px;
   margin-bottom: 12px;
+}
+
+/* ── TPV page flow context line ── */
+.flowContext {
+  font-size: 12px;
+  color: var(--text-secondary);
+  margin: 0 0 20px 0;
+}
+
+/* Link discreto para TPV (só em /admin/devices) ── */
+.tpvLinkDiscrete {
+  color: var(--color-primary, #f59e0b);
+  text-decoration: none;
+  font-weight: 500;
+}
+.tpvLinkDiscrete:hover {
+  text-decoration: underline;
 }
 
 /* ── Desktop pairing (TPV page) ── */

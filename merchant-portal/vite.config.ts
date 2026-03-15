@@ -7,19 +7,23 @@ import { fileURLToPath } from "node:url";
 import { defineConfig, loadEnv } from "vite";
 import { stripSourceMappingUrl } from "./src/utils/stripSourceMappingUrl";
 
-// Detect local IP for mobile devices (QR scanning from iPhone/Android)
+// Detect local IP for mobile devices (QR scanning from iPhone/Android).
+// Wrapped in outer try/catch: some environments throw (e.g. uv_interface_addresses, EPERM).
 function getLocalIp(): string {
-  const interfaces = os.networkInterfaces();
-  for (const name of Object.keys(interfaces)) {
-    const iface = interfaces[name];
-    if (!iface) continue;
-    for (const addr of iface) {
-      // Skip internal and non-IPv4 addresses
-      if (addr.family === "IPv4" && !addr.internal) {
-        // Prefer non-loopback addresses for local network access
-        return addr.address;
+  try {
+    const interfaces = os.networkInterfaces();
+    if (!interfaces) return "localhost";
+    for (const name of Object.keys(interfaces)) {
+      const iface = interfaces[name];
+      if (!iface) continue;
+      for (const addr of iface) {
+        if (addr.family === "IPv4" && !addr.internal) {
+          return addr.address;
+        }
       }
     }
+  } catch {
+    // Sandbox, restricted env, or Node bug (e.g. uv_interface_addresses) — fallback so Vite still starts
   }
   return "localhost";
 }
@@ -38,7 +42,9 @@ const reactDomPath = fs.existsSync(localReactDom)
 export default defineConfig(async ({ mode }) => {
   const env = loadEnv(mode, __dirname, "VITE_");
   const useSentry = !!env.VITE_SENTRY_AUTH_TOKEN && mode === "production";
-  const base = "/";
+  const isElectronTarget = env.VITE_BUILD_TARGET === "electron";
+  // Electron carrega o frontend por file://; base tem de ser relativo para os assets resolverem.
+  const base = isElectronTarget ? "./" : "/";
 
   // Detect local IP for QR code generation (mobile device provisioning)
   const localIp = mode === "development" ? getLocalIp() : "localhost";
@@ -63,7 +69,6 @@ export default defineConfig(async ({ mode }) => {
   }
 
   const pwaPlugins = [];
-  const isElectronTarget = env.VITE_BUILD_TARGET === "electron";
   if (!isElectronTarget) {
     try {
       const { VitePWA } = await import("vite-plugin-pwa");
@@ -194,8 +199,15 @@ export default defineConfig(async ({ mode }) => {
       // Porta de desenvolvimento: 5175 (override com PORT se necessário).
       port: parseInt(process.env.PORT || "5175", 10),
       strictPort: !process.env.PORT,
-      // Acessível na rede local para o Expo (WebView) no telemóvel poder carregar http://<MAC_IP>:5175/app/staff/home
-      host: true,
+      // host: "localhost" evita que o Vite chame networkInterfaces() (que pode falhar em alguns ambientes).
+      // Para aceder na rede local (ex.: telemóvel), definir VITE_DEV_HOST=0.0.0.0
+      host: process.env.VITE_DEV_HOST === "0.0.0.0" ? "0.0.0.0" : "localhost",
+      // Em dev: desactivar cache no browser para evitar "segue igual" após alterações.
+      headers: {
+        "Cache-Control": "no-store, no-cache, must-revalidate",
+        Pragma: "no-cache",
+        Expires: "0",
+      },
       // HMR: WebSocket resiliente — reconecta em vez de morrer.
       hmr: {
         overlay: true,

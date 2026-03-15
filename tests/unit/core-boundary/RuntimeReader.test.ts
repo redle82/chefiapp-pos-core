@@ -111,9 +111,10 @@ describe("RuntimeReader", () => {
       expect(row?.id).toBe("r-runtime-1");
       expect((row as any)?.logo_url ?? null).toBeNull();
       expect(chain.maybeSingle).toHaveBeenCalledTimes(2);
+      // Erro "logo_url does not exist" contém "does not exist" → needRetrySchema → projeção mínima
       expect(chain.select).toHaveBeenNthCalledWith(
         2,
-        "id,name,slug,status,tenant_id,product_mode,billing_status,trial_ends_at,country,timezone,currency,locale,type,created_at,updated_at",
+        "id,name,slug,status,tenant_id,created_at,updated_at",
       );
     });
 
@@ -144,9 +145,10 @@ describe("RuntimeReader", () => {
       expect(row?.id).toBe("r-runtime-2");
       expect((row as any)?.logo_url ?? null).toBeNull();
       expect(chain.maybeSingle).toHaveBeenCalledTimes(2);
+      // Erro "logo_url does not exist" contém "does not exist" → needRetrySchema → projeção mínima
       expect(chain.select).toHaveBeenNthCalledWith(
         2,
-        "id,name,slug,status,tenant_id,type,city,address,description,country,timezone,currency,locale,created_at,updated_at",
+        "id,name,slug,status,tenant_id,created_at,updated_at",
       );
     });
   });

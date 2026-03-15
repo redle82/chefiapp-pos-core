@@ -2,10 +2,14 @@
  * TPVSidebar — Barra lateral esquerda do TPV (icon-only).
  * Design: dark theme, accent orange no item ativo, SVG icons.
  * Ref: POS reference layout com brand logo no topo + 6 nav icons + exit.
+ *
+ * Isolamento desktop: no app Electron, o item "Página Web" (→ /admin/config/website)
+ * não é mostrado, para não expor superfície Admin dentro do TPV.
  */
 
-import React from "react";
+import React, { useMemo } from "react";
 import { NavLink } from "react-router-dom";
+import { isDesktopApp } from "../../../core/operational/platformDetection";
 const APP_LOGO_URL = "/Logo%20Chefiapp%20Transparent.png";
 const APP_NAME = "ChefIApp";
 
@@ -232,6 +236,13 @@ const SIDEBAR_LINKS: { to: string; label: string; icon: IconKey }[] = [
 ];
 
 export function TPVSidebar() {
+  const links = useMemo(() => {
+    if (isDesktopApp()) {
+      return SIDEBAR_LINKS.filter((item) => item.to !== "/admin/config/website");
+    }
+    return SIDEBAR_LINKS;
+  }, []);
+
   return (
     <aside
       style={{
@@ -297,10 +308,10 @@ export function TPVSidebar() {
       </div>
 
       {/* Navigation icons */}
-      {SIDEBAR_LINKS.map(({ to, icon, label }, idx) => (
+      {links.map(({ to, icon, label }, idx) => (
         <React.Fragment key={to}>
-          {/* Separators */}
-          {(idx === 4 || idx === 7) && (
+          {/* Separators (after Tarefas; after Definições when not desktop, else after Reservas) */}
+          {(idx === 4 || idx === (isDesktopApp() ? 6 : 7)) && (
             <div
               style={{
                 width: 32,

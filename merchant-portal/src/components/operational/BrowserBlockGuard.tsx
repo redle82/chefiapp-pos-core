@@ -108,12 +108,31 @@ export function BrowserBlockGuard({
   const isTrialModeBypass =
     new URLSearchParams(location.search).get("mode") === "trial";
 
-  if (isInstalledRuntime || isTrialModeBypass) {
+  // DEV-ONLY override: permite rodar módulos operacionais no navegador quando
+  // flags explícitas estão ativas. Não afeta produção.
+  const allowBrowserRuntimeDev =
+    import.meta.env.DEV &&
+    (String(import.meta.env.VITE_ALLOW_BROWSER_RUNTIME_DEV ?? "").toLowerCase() ===
+      "true" ||
+      (requiredPlatform === "desktop" &&
+        String(
+          import.meta.env.VITE_ALLOW_BROWSER_TPV_DEV ?? "",
+        ).toLowerCase() === "true") ||
+      (requiredPlatform === "mobile" &&
+        String(
+          import.meta.env.VITE_ALLOW_BROWSER_APPSTAFF_DEV ?? "",
+        ).toLowerCase() === "true"));
+
+  if (isInstalledRuntime || isTrialModeBypass || allowBrowserRuntimeDev) {
+    const runtimeLabel: "browser" | "installed" = isInstalledRuntime
+      ? "installed"
+      : "browser";
+
     emitOperationalGuardTelemetry(
       {
         pathname: location.pathname,
         decision: "ALLOW",
-        runtime: isInstalledRuntime ? "installed" : "browser",
+        runtime: runtimeLabel,
         guard: "operational",
       },
       {

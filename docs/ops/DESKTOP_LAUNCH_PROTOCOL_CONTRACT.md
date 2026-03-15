@@ -13,13 +13,32 @@ heurísticas frágeis (blur/visibility) ou do “humor” do macOS.
 
 ### 1. Identidade do handler
 
-- O esquema `chefiapp://` é registado **apenas** pelo app empacotado
-  `ChefIApp Desktop.app` via `electron-builder.yml`:
-  - `protocols: [{ name: "ChefIApp", schemes: ["chefiapp"] }]`.
-- Em **dev**, o processo Electron não chama
-  `app.setAsDefaultProtocolClient("chefiapp")`:
-  - `src/main.ts` ignora o registo quando `IS_DEV === true`.
-  - Resultado: o handler do sistema nunca é o Electron cru de `node_modules`.
+- Os esquemas **`chefiapp-pos`** (principal) e **`chefiapp`** (legado) são registados **apenas** pelo app empacotado `ChefIApp Desktop.app` via `electron-builder.yml`: `protocols: [{ name: "ChefIApp", schemes: ["chefiapp-pos", "chefiapp"] }]`. Em runtime, `desktop-app/src/main.ts` usa `PROTOCOL_SCHEME = "chefiapp-pos"` e `LEGACY_PROTOCOL_SCHEME = "chefiapp"`.
+- Em **dev** (`IS_DEV === true`), o processo Electron **não** regista protocolos (para não "sujar" o LaunchServices). O handler do sistema só existe **após instalar o .dmg**.
+
+#### 1.1 Botão «Abrir app TPV» (Admin `/admin/devices/tpv`)
+
+- O Admin abre **`chefiapp-pos://setup`** (`AdminTPVTerminalsPage.tsx`, `DESKTOP_APP_SCHEME`). O Electron trata em `handleDeepLink(url)`: host/path `setup` → abre `/electron/setup`. **Alinhamento:** mesmo protocolo e rota; não há mismatch.
+- **Requisito para o botão funcionar:** O SO tem de ter um handler registado para `chefiapp-pos://`. Isso só acontece **depois de instalar o app empacotado** (ex.: .dmg). Em dev, mesmo com `pnpm run dev:desktop`, o protocolo não é registado; o botão falha até instalar o .dmg. Em dev: abrir o desktop manualmente e colar o código de pareamento.
+- **Como gerar o instalável e instalar:** ver [DESKTOP_INSTALAVEL_BUILD_E_DISTRIBUICAO.md](./DESKTOP_INSTALAVEL_BUILD_E_DISTRIBUICAO.md).
+
+#### 1.2 Isolamento de superfície — Admin não no desktop
+
+- O app desktop (**Electron**) deve operar **apenas** como TPV/setup/pareamento ou KDS. Rotas de **Admin** (`/admin/*`) **não** podem ser acedidas dentro do desktop.
+- **Implementação:**
+  - **ElectronAdminGuard:** Todas as rotas `/admin/*` estão envolvidas por `ElectronAdminGuard` (`OperationalRoutes.tsx`). Em `isDesktopApp() === true`, qualquer acesso a `/admin/*` mostra o ecrã «Área de administração» bloqueada (CTA «Fechar janela» e instrução para usar o portal no browser).
+  - **FlowGate:** Em desktop, `lastRoute` guardado em storage **não** é restaurado quando é um path `/admin/*`; assim, o redirect de entrada não leva o utilizador para Admin dentro do desktop.
+- **Regra:** Contexto/sessão de Admin não é reutilizado como sessão válida do TPV; após pareamento, o TPV opera com identidade de dispositivo/terminal. O desktop carrega a mesma SPA do merchant-portal mas com restrição de superfície (apenas `/electron/setup`, `/op/tpv`, `/op/kds` permitidos em prática; `/admin/*` bloqueado por guard).
+
+#### 1.3 Dev: origem do frontend e diagnóstico de vazamento Admin
+
+- Em **dev** (`IS_DEV === true`), o desktop carrega o frontend de **`CHEFIAPP_DEV_SERVER_URL`** (default **`http://localhost:5175`**). Ou seja, o que está a correr na porta 5175 é exactamente o que o desktop usa.
+- Se **Port 5175 is already in use** ao fazer `pnpm run dev` no merchant-portal, outro processo (por exemplo um Vite antigo) está a usar a porta. O desktop continua a carregar desse processo; se esse processo for um build antigo **sem** o ElectronAdminGuard instrumentado, o Admin pode ainda renderizar e não aparecem logs `[CHEFIAPP_DEBUG]`.
+- **Provar qual frontend está carregado:**
+  1. **Terminal (main process):** ao abrir o desktop, o main regista `[boot] frontend loaded` com `url` (ex.: `http://localhost:5175/op/tpv` ou `file:// (hash: ...)`).
+  2. **Consola do renderer (DevTools da janela do desktop):** executar `__CHEFIAPP_FRONTEND_BUILD`. Se for `undefined` → frontend **antigo** (sem guard instrumentado). Se tiver `{ guardInstrumented: true, guardVersion: 2, loadedAt: "..." }` → frontend **actual** com guard.
+  3. Em rotas `/admin/*` deve aparecer `[CHEFIAPP_DEBUG] ElectronAdminGuard montado` com o payload; se não aparecer, o guard não está a ser montado (build antigo ou rota fora do guard).
+- **Para testar o desktop com o frontend corrigido em dev:** (1) Libertar a porta 5175: `pnpm -w run kill:5175` (ou `lsof -ti:5175 | xargs kill -9`). (2) Iniciar o merchant-portal: `pnpm --filter merchant-portal run dev`. (3) Só depois abrir o desktop (ou recarregar a janela). Assim o desktop passa a carregar o bundle actual com guard e instrumentação.
 
 ---
 

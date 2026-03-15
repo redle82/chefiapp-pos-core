@@ -12,8 +12,6 @@ import {
   setTabIsolated,
 } from "../../../core/storage/TabIsolatedStorage";
 import { connectByCode } from "../../../features/auth/connectByCode";
-// Auth only — temporary until Core Auth (session / signOut)
-import { db } from "../../../core/db";
 import { locationsStore } from "../../../features/admin/locations/store/locationsStore";
 import type { Location } from "../../../features/admin/locations/types";
 import { useOperationalMetrics } from "../../../hooks/useOperationalMetrics";
@@ -29,6 +27,12 @@ import { getShiftPrediction } from "../../../intelligence/forecast/ShiftPredicto
 import { now as getNow } from "../../../intelligence/nervous-system/Clock";
 import type { ShiftMetrics } from "../../../intelligence/nervous-system/ShiftEngine";
 import { calculateShiftLoad } from "../../../intelligence/nervous-system/ShiftEngine";
+import { readOpenTasks } from "../../../infra/readers/TaskReader";
+import type { CoreTask } from "../../../infra/docker-core/types";
+import {
+  createTaskRpc,
+  resolveTask,
+} from "../../../infra/writers/TaskWriter";
 import { useReflexEngine } from "../core/ReflexEngine";
 import { useAppStaffOrders } from "../hooks/useAppStaffOrders";
 import type {
@@ -41,6 +45,62 @@ import type {
   StaffRole,
   Task,
 } from "./StaffCoreTypes";
+
+/** UUID v4 pattern: task IDs from Core (gm_tasks) */
+const CORE_TASK_ID_REGEX =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+function isCoreTaskId(id: string): boolean {
+  return CORE_TASK_ID_REGEX.test(id) && !id.startsWith("manual-");
+}
+
+function mapCoreTaskToTask(c: CoreTask): Task {
+  const status =
+    c.status === "RESOLVED" || c.status === "DISMISSED" ? "done" : "pending";
+  const priorityMap: Record<string, Task["priority"]> = {
+    LOW: "background",
+    MEDIA: "attention",
+    ALTA: "urgent",
+    CRITICA: "critical",
+  };
+  return {
+    id: c.id,
+    type: "foundational",
+    title: c.message ?? "Tarefa",
+    description: "",
+    status,
+    assigneeRole: "worker",
+    priority: priorityMap[c.priority ?? "MEDIA"] ?? "attention",
+    riskLevel: 10,
+    uiMode: "check",
+    context: (c.station === "BAR"
+      ? "bar"
+      : c.station === "KITCHEN"
+        ? "kitchen"
+        : "floor") as Task["context"],
+    createdAt: new Date(c.created_at).getTime(),
+    meta: { source: "manual-assignment", createdBy: undefined },
+  };
+}
+
+function mapPriorityToCore(
+  p: "background" | "attention" | "urgent" | "critical",
+): string {
+  const map: Record<string, string> = {
+    background: "LOW",
+    attention: "MEDIA",
+    urgent: "ALTA",
+    critical: "CRITICA",
+  };
+  return map[p] ?? "MEDIA";
+}
+
+function mapRoleToStation(role?: StaffRole): string | null {
+  if (!role || role === "worker") return "SERVICE";
+  if (role === "kitchen") return "KITCHEN";
+  if (role === "waiter" || role === "manager" || role === "owner" || role === "cleaning")
+    return "SERVICE";
+  return "SERVICE";
+}
 
 // Re-export types for consumers
 export type {
@@ -256,7 +316,7 @@ const StaffProviderInternal: React.FC<StaffProviderProps> = ({
     total: order.total_cents,
     createdAt: new Date(order.created_at),
     updatedAt: new Date(order.updated_at),
-    origin: order.sync_metadata?.origin as any,
+    origin: (order.sync_metadata?.origin as "ONLINE" | "POS" | "QR") || "POS",
   }));
 
   // FASE 3.3: performOrderAction local (não depende de TPV)
@@ -523,6 +583,30 @@ const StaffProviderInternal: React.FC<StaffProviderProps> = ({
   // SYSTEM REFLEX (The Subconscious)
   useReflexEngine(setTasks, notifyActivity, coreRestaurantId);
 
+  // Load tasks from Core (gm_tasks) — fonte canónica para Sofia
+  useEffect(() => {
+    if (!coreRestaurantId) return;
+    let cancelled = false;
+    readOpenTasks(coreRestaurantId)
+      .then((coreTasks) => {
+        if (cancelled) return;
+        setTasks(coreTasks.map(mapCoreTaskToTask));
+      })
+      .catch((err) => {
+        if (!cancelled) console.warn("[AppStaff] load gm_tasks failed:", err);
+      });
+    const interval = setInterval(() => {
+      readOpenTasks(coreRestaurantId).then((coreTasks) => {
+        if (cancelled) return;
+        setTasks(coreTasks.map(mapCoreTaskToTask));
+      }).catch(() => {});
+    }, 15000);
+    return () => {
+      cancelled = true;
+      clearInterval(interval);
+    };
+  }, [coreRestaurantId]);
+
   // Removido: useReflexEngine antigo que dependia de TPV
   // useReflexEngine(setTasks, notifyActivity);
 
@@ -548,11 +632,11 @@ const StaffProviderInternal: React.FC<StaffProviderProps> = ({
       if (!order || !order.items) return;
 
       // Check items for lessons
-      order.items.forEach((item: any) => {
+      order.items.forEach((item: { name_snapshot?: string; name?: string }) => {
         const lesson = findRelevantLesson(
           "menu_item",
-          item.name_snapshot || item.name,
-          activeRole as any,
+          item.name_snapshot || item.name || "",
+          activeRole,
           learnedSkills,
         );
         if (lesson) {
@@ -739,13 +823,12 @@ const StaffProviderInternal: React.FC<StaffProviderProps> = ({
         .catch((err) => {
           console.error("❌ BRIDGE: Action Failed", err);
           alert("Falha ao sincronizar com KDS. Tente novamente.");
-          // Revert optimistic update?
           setTasks((prev) =>
             prev.map((t) =>
               t.id === taskId ? { ...t, status: "pending" } : t,
             ),
           );
-          return; // Stop completion
+          return;
         });
     }
 
@@ -753,6 +836,18 @@ const StaffProviderInternal: React.FC<StaffProviderProps> = ({
     setTasks((prev) =>
       prev.map((t) => (t.id === taskId ? { ...t, status: "done" } : t)),
     );
+
+    // Core (gm_tasks): concluir tarefa via RPC
+    if (isCoreTaskId(taskId)) {
+      resolveTask(taskId).catch((err) => {
+        console.error("[AppStaff] resolveTask failed:", err);
+        setTasks((prev) =>
+          prev.map((t) =>
+            t.id === taskId ? { ...t, status: "pending" } : t,
+          ),
+        );
+      });
+    }
 
     // 📝 AUDIT: Action Log
     if (activeShiftId && task && operationalContract?.id) {
@@ -770,7 +865,7 @@ const StaffProviderInternal: React.FC<StaffProviderProps> = ({
             details: {
               title: task.title,
               priority: task.priority,
-              riskCheck: 0, // Simplification to avoid closure complexity
+              riskCheck: 0,
             },
           })
           .then(({ error }) => {
@@ -782,7 +877,7 @@ const StaffProviderInternal: React.FC<StaffProviderProps> = ({
     const completedCount = tasks.filter((t) => t.status === "done").length + 1;
 
     // 🎮 GAMIFICATION: Calculate XP for this task
-    let taskXP = 10; // Base
+    let taskXP = 10;
     switch (task?.priority) {
       case "attention":
         taskXP += 5;
@@ -810,14 +905,6 @@ const StaffProviderInternal: React.FC<StaffProviderProps> = ({
       }),
     );
     notifyActivity();
-
-    // Core DB
-    if (!taskId.startsWith("temp") && !taskId.startsWith("init")) {
-      db.from("app_tasks")
-        .update({ status: "done", completed_at: new Date().toISOString() })
-        .eq("id", taskId)
-        .then();
-    }
   };
 
   const unfocusTask = (taskId: string) => {
@@ -827,48 +914,69 @@ const StaffProviderInternal: React.FC<StaffProviderProps> = ({
   };
 
   const createTask = (args: Parameters<StaffContextType["createTask"]>[0]) => {
+    const priority = args.priority ?? "attention";
+    const message =
+      args.description?.trim() ? `${args.title}: ${args.description}` : args.title;
+
+    // Core (gm_tasks): criar tarefa via RPC — fonte canónica para Sofia
+    if (coreRestaurantId) {
+      createTaskRpc({
+        restaurantId: coreRestaurantId,
+        taskType: "MODO_INTERNO",
+        message,
+        priority: mapPriorityToCore(priority),
+        station: mapRoleToStation(args.assigneeRole ?? "worker"),
+        autoGenerated: false,
+      })
+        .then((id) => {
+          const newTask: Task = {
+            id,
+            title: args.title,
+            description: args.description ?? "",
+            status: "pending",
+            assigneeRole: args.assigneeRole ?? "worker",
+            priority,
+            type: args.type ?? "foundational",
+            riskLevel: 10,
+            uiMode: "check",
+            context: "floor",
+            assigneeId: args.assigneeId,
+            createdAt: getNow(),
+            meta: {
+              source: "manual-assignment",
+              createdBy: activeWorkerId ?? undefined,
+            },
+          };
+          setTasks((prev) => [newTask, ...prev]);
+          notifyActivity();
+        })
+        .catch((err) => {
+          console.error("[AppStaff] createTaskRpc failed:", err);
+        });
+      return;
+    }
+
+    // Modo local (sem Core): apenas estado local
     const newTask: Task = {
       id: `manual-${Date.now()}`,
       title: args.title,
-      description: args.description || "",
+      description: args.description ?? "",
       status: "pending",
-      assigneeRole: args.assigneeRole || "worker", // Default to generic worker
-      priority: args.priority || "attention",
-      type: args.type || "foundational",
+      assigneeRole: args.assigneeRole ?? "worker",
+      priority,
+      type: args.type ?? "foundational",
       riskLevel: 10,
       uiMode: "check",
-      context: "floor", // Default context
-      assigneeId: args.assigneeId || undefined,
+      context: "floor",
+      assigneeId: args.assigneeId,
       createdAt: getNow(),
       meta: {
         source: "manual-assignment",
-        createdBy: activeWorkerId || undefined,
+        createdBy: activeWorkerId ?? undefined,
       },
     };
-
     setTasks((prev) => [newTask, ...prev]);
     notifyActivity();
-
-    // Persist Manual Task
-    if (operationalContract?.id) {
-      db.from("app_tasks")
-        .insert({
-          id: newTask.id,
-          restaurant_id: operationalContract.id,
-          title: newTask.title,
-          description: newTask.description,
-          status: "pending",
-          priority: newTask.priority,
-          type: newTask.type,
-          assignee_role: newTask.assigneeRole,
-          assignee_id: newTask.assigneeId,
-          created_by: newTask.meta?.createdBy,
-          created_at: new Date(newTask.createdAt).toISOString(),
-        })
-        .then(({ error }) => {
-          if (error) console.error("Manual Task Insert Failed:", error);
-        });
-    }
   };
 
   const reportObligations = (

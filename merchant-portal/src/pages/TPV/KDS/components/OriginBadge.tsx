@@ -15,6 +15,7 @@ interface OriginBadgeProps {
     className?: string;
 }
 
+// Convenção: docs/architecture/APPSTAFF_ORDER_ORIGINS_CONVENTION.md
 const ORIGIN_CONFIG: Record<string, { label: string; color: string; icon: string }> = {
     // TPV / Caixa
     'CAIXA': { label: 'CAIXA', color: '#22C55E', icon: '💰' },
@@ -29,10 +30,12 @@ const ORIGIN_CONFIG: Record<string, { label: string; color: string; icon: string
     // QR Mesa
     'QR_MESA': { label: 'QR MESA', color: '#EC4899', icon: '📱' },
     
-    // Mobile / Garçom
+    // AppStaff / Comandeiro (dono, gerente e garçom podem fazer pedidos)
     'GARÇOM': { label: 'GARÇOM', color: '#3B82F6', icon: '📱' },
     'MOBILE': { label: 'GARÇOM', color: '#3B82F6', icon: '📱' },
-    'APPSTAFF': { label: 'APPSTAFF', color: '#8B5CF6', icon: '👤' },
+    'APPSTAFF': { label: 'SALÃO', color: '#3B82F6', icon: '📱' },
+    'APPSTAFF_MANAGER': { label: 'GERENTE', color: '#8B5CF6', icon: '👔' },
+    'APPSTAFF_OWNER': { label: 'DONO', color: '#A855F7', icon: '👤' },
     'external': { label: 'EXTERNO', color: '#8B5CF6', icon: '🔗' },
 };
 

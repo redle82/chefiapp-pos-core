@@ -1,0 +1,247 @@
+export { ConditionalProps, ForgotPassword, ForgotPasswordProps, Protect, ProtectProps, ResetPassword, ResetPasswordProps, SignIn, SignInButton, SignInButtonProps, SignInProps, SignOutButton, SignOutButtonProps, SignUp, SignUpButton, SignUpButtonProps, SignUpProps, SignedIn, SignedOut, UserButton, UserButtonProps, UserProfileModal, UserProfileModalProps, VerifyEmail, VerifyEmailProps } from './components.js';
+export { ForgotPasswordForm, ForgotPasswordFormProps, ResetPasswordForm, ResetPasswordFormProps, SignInForm, SignInFormProps, SignUpForm, SignUpFormProps, VerifyEmailStatus, VerifyEmailStatusProps } from './forms.js';
+export { AuthBranding, AuthContainer, AuthContainerProps, AuthDivider, AuthDividerProps, AuthEmailVerificationStep, AuthErrorBanner, AuthErrorBannerProps, AuthFormField, AuthFormFieldProps, AuthHeader, AuthHeaderProps, AuthLink, AuthLinkProps, AuthOAuthButton, AuthOAuthButtonProps, AuthOAuthProviders, AuthOAuthProvidersProps, AuthPasswordField, AuthPasswordFieldProps, AuthPasswordStrengthIndicator, AuthPasswordStrengthIndicatorProps, AuthResetPasswordVerificationStep, AuthSubmitButton, AuthSubmitButtonProps, AuthVerificationCodeInput, AuthVerificationCodeInputProps } from './atoms.js';
+import * as react_jsx_runtime from 'react/jsx-runtime';
+import { ReactNode } from 'react';
+import { InsforgeUser, InsforgeContextValue, OAuthProvider } from '@insforge/shared';
+export { InsforgeAuthConfig, InsforgeAuthMethods, InsforgeAuthState, InsforgeContextValue, InsforgeUser, OAuthProvider } from '@insforge/shared';
+import { InsForgeClient } from '@insforge/sdk';
+export { useAuth, usePublicAuthConfig, useUser } from './hooks.js';
+export { LegacyAuthSession, buildLegacyAuthUrl, checkPasswordStrength, createPasswordSchema, emailSchema, isHostedAuthEnvironment, passwordSchema, resolveAuthPath, resolveAuthUrl, validateEmail, validatePassword } from './lib.js';
+import { OAuthProviderConfig } from './types.js';
+export { AuthConfig, EmailVerificationMethod } from './types.js';
+export { BrowserNavigationAdapter, NavigationAdapter, NavigationProvider, NavigationProviderProps, useNavigationAdapter, useSearchParams } from './navigation.js';
+import '@insforge/shared-schemas';
+import 'zod';
+
+interface InitialAuthState {
+    user?: InsforgeUser | null;
+    userId?: string | null;
+}
+interface InsforgeProviderProps {
+    /**
+     * The base URL of the InsForge backend.
+     * @deprecated This prop is no longer used.
+     * Use the client prop instead.
+     */
+    baseUrl?: string;
+    children: ReactNode;
+    /**
+     * The InsForge SDK client instance.
+     */
+    client: InsForgeClient;
+    /**
+     * URL to redirect to after successful sign in (when token is detected in URL)
+     * @default '/'
+     */
+    afterSignInUrl?: string;
+    onAuthChange?: (user: InsforgeUser | null) => void;
+    onSignIn?: (authToken: string, user: InsforgeUser) => Promise<void>;
+    onSignOut?: () => Promise<void>;
+    onRefresh?: (authToken: string, user: InsforgeUser) => Promise<void>;
+    /**
+     * Initial auth state from server (for SSR hydration)
+     * @internal - Not intended for public use, used by Next.js package
+     */
+    initialState?: InitialAuthState;
+}
+/**
+ * Unified Insforge Provider - manages authentication state and configuration
+ *
+ * Uses singleton InsforgeManager to manage state across packages.
+ * Context only subscribes to Manager and triggers React re-renders.
+ *
+ * Architecture (pattern learned from Clerk):
+ * - InsforgeMethodsContext: Stable method references (NEVER change)
+ * - InsforgeAuthStateContext: Reactive auth state (changes on sign in/out)
+ * - InsforgeConfigContext: Static configuration values
+ * - InsforgeContext: Combined context for backward compatibility
+ *
+ * This architecture prevents useEffect re-runs when auth state changes,
+ * solving the "duplicate request" bug in components like VerifyEmail.
+ *
+ * @example
+ * ```tsx
+ * // Basic usage (React/Vite)
+ * import { InsforgeProvider } from '@insforge/react';
+ * import { createClient } from '@insforge/sdk';
+ *
+ * const client = createClient({
+ *   baseUrl: import.meta.env.VITE_INSFORGE_BASE_URL,
+ * });
+ *
+ * export default function MyApp() {
+ *   return (
+ *     <InsforgeProvider client={client}>
+ *       <App />
+ *     </InsforgeProvider>
+ *   );
+ * }
+ * ```
+ *
+ * @example
+ * ```tsx
+ * // With cookie sync (Next.js optimization)
+ * <InsforgeProvider
+ *   client={client}
+ *   afterSignInUrl="/dashboard"
+ *   onSignIn={async (authToken) => {
+ *     await signIn(authToken);
+ *   }}
+ *   onSignOut={async () => {
+ *     await signOut();
+ *   }}
+ * >
+ *   {children}
+ * </InsforgeProvider>
+ * ```
+ */
+declare function InsforgeProviderCore({ children, client, afterSignInUrl, onAuthChange, onSignIn, onSignOut, onRefresh, initialState, }: InsforgeProviderProps): react_jsx_runtime.JSX.Element;
+declare function InsforgeProvider(props: InsforgeProviderProps): react_jsx_runtime.JSX.Element;
+/**
+ * Hook to access Insforge context
+ *
+ * Works seamlessly across packages thanks to singleton Manager.
+ * Context instance is guaranteed to be consistent.
+ *
+ * @example
+ * ```tsx
+ * function MyComponent() {
+ *   const { user, isSignedIn, signOut } = useInsforge();
+ *
+ *   if (!isSignedIn) return <SignIn />;
+ *
+ *   return (
+ *     <div>
+ *       <p>Welcome {user.email}</p>
+ *       <button onClick={signOut}>Sign Out</button>
+ *     </div>
+ *   );
+ * }
+ * ```
+ */
+declare function useInsforge(): InsforgeContextValue;
+
+declare const OAUTH_PROVIDER_CONFIG: Record<OAuthProvider, OAuthProviderConfig>;
+/**
+ * Get OAuth provider configuration by provider name
+ */
+declare function getProviderConfig(provider: OAuthProvider): OAuthProviderConfig | null;
+/**
+ * Get all available OAuth provider configurations
+ */
+declare function getAllProviderConfigs(): Partial<Record<OAuthProvider, OAuthProviderConfig>>;
+
+interface StyleProviderProps {
+    children: ReactNode;
+    /** Optional nonce value for CSP (Content Security Policy) */
+    nonce?: string;
+}
+/**
+ * Provides Emotion CSS-in-JS styling context for Insforge components.
+ *
+ * This ensures styles are injected dynamically at runtime, preventing FOUC
+ * in SSR environments like Next.js.
+ *
+ * @internal
+ */
+declare function StyleProvider({ children, nonce }: StyleProviderProps): react_jsx_runtime.JSX.Element;
+
+/**
+ * Insforge Design System Theme
+ *
+ * Complete design tokens for all components
+ */
+declare const theme: {
+    readonly colors: {
+        readonly primary: "#000000";
+        readonly primaryHover: "#1f1f1f";
+        readonly text: "#000000";
+        readonly textSecondary: "#828282";
+        readonly textMuted: "#a3a3a3";
+        readonly textGray: "#525252";
+        readonly border: "#d4d4d4";
+        readonly borderGray: "#e4e4e7";
+        readonly borderHover: "#9ca3af";
+        readonly borderFocus: "#000000";
+        readonly bgWhite: "#ffffff";
+        readonly bgLight: "#fafafa";
+        readonly bgGray: "#f5f5f5";
+        readonly bgHover: "#f9fafb";
+        readonly error: "#dc2626";
+        readonly errorBg: "#fee2e2";
+        readonly success: "#16a34a";
+        readonly successBg: "#d1fae5";
+        readonly successDark: "#059669";
+        readonly black: "#000000";
+        readonly zinc900: "#09090b";
+    };
+    readonly spacing: {
+        readonly 1: "0.25rem";
+        readonly 2: "0.5rem";
+        readonly 3: "0.75rem";
+        readonly 4: "1rem";
+        readonly 6: "1.5rem";
+        readonly 8: "2rem";
+        readonly 10: "2.5rem";
+    };
+    readonly radius: {
+        readonly xs: "0.125rem";
+        readonly sm: "0.25rem";
+        readonly md: "0.375rem";
+        readonly lg: "0.5rem";
+        readonly xl: "0.75rem";
+        readonly full: "9999px";
+    };
+    readonly fontSize: {
+        readonly xs: "0.75rem";
+        readonly sm: "0.875rem";
+        readonly base: "1rem";
+        readonly lg: "1.125rem";
+        readonly xl: "1.25rem";
+        readonly '2xl': "1.5rem";
+    };
+    readonly lineHeight: {
+        readonly tight: "1rem";
+        readonly normal: "1.25rem";
+        readonly relaxed: "1.5rem";
+        readonly loose: "2rem";
+    };
+    readonly fontFamily: {
+        readonly base: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif";
+        readonly manrope: "'Manrope', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif";
+    };
+    readonly fontWeight: {
+        readonly normal: 400;
+        readonly medium: 500;
+        readonly semibold: 600;
+    };
+    readonly shadow: {
+        readonly sm: "0 1px 2px 0 rgba(0, 0, 0, 0.05)";
+        readonly md: "0 1px 2px 0 rgba(0, 0, 0, 0.1)";
+        readonly lg: "0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)";
+    };
+    readonly transition: {
+        readonly fast: "150ms cubic-bezier(0.4, 0, 0.2, 1)";
+        readonly base: "200ms cubic-bezier(0.4, 0, 0.2, 1)";
+    };
+    readonly sizes: {
+        readonly input: {
+            readonly height: "2.5rem";
+        };
+        readonly button: {
+            readonly height: "2.5rem";
+            readonly heightOAuth: "2.25rem";
+        };
+        readonly avatar: "2rem";
+        readonly icon: "1.25rem";
+        readonly iconSm: "1.125rem";
+        readonly iconLg: "1.5rem";
+        readonly verifyCode: "3rem";
+        readonly verifyIcon: "4rem";
+        readonly verifyIconInner: "2rem";
+    };
+};
+type Theme = typeof theme;
+
+export { type InitialAuthState, InsforgeProvider, InsforgeProviderCore, type InsforgeProviderProps, OAUTH_PROVIDER_CONFIG, OAuthProviderConfig, StyleProvider, type Theme, getAllProviderConfigs, getProviderConfig, theme, useInsforge };

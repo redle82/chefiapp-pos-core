@@ -40,13 +40,20 @@ const normalizeUrl = (value: string): string =>
   value.endsWith("/") ? value.slice(0, -1) : value;
 
 // Permitir boot sem Core (trial/landing na Vercel); rotas operacionais exigem env vars.
-// Supabase: quando só VITE_SUPABASE_* estão definidos, usamos como CORE (mesmo PostgREST).
+// Supabase: quando VITE_SUPABASE_URL está definido e é supabase.co, usamos como CORE (fluxo soberano P0).
+// Assim o portal usa login email/password e PostgREST do Supabase mesmo que VITE_CORE_URL exista (ex.: .env.local com Docker).
 const MODE = getEnvString("VITE_MODE") || "trial";
+const SUPABASE_URL_RAW = getEnvString("VITE_SUPABASE_URL");
+const USE_SUPABASE_AS_CORE =
+  typeof SUPABASE_URL_RAW === "string" && SUPABASE_URL_RAW.includes("supabase.co");
 const CORE_URL = normalizeUrl(
-  getEnvString("VITE_CORE_URL") || getEnvString("VITE_SUPABASE_URL") || ""
+  USE_SUPABASE_AS_CORE
+    ? SUPABASE_URL_RAW
+    : getEnvString("VITE_CORE_URL") || SUPABASE_URL_RAW || ""
 );
-const CORE_ANON_KEY =
-  getEnvString("VITE_CORE_ANON_KEY") || getEnvString("VITE_SUPABASE_ANON_KEY") || "";
+const CORE_ANON_KEY = USE_SUPABASE_AS_CORE
+  ? getEnvString("VITE_SUPABASE_ANON_KEY") || getEnvString("VITE_CORE_ANON_KEY") || ""
+  : getEnvString("VITE_CORE_ANON_KEY") || getEnvString("VITE_SUPABASE_ANON_KEY") || "";
 const API_BASE = normalizeUrl(getEnvString("VITE_API_BASE") || "");
 
 const IS_DEV = MODE !== "production";
@@ -92,6 +99,17 @@ export const CONFIG = {
   // Docker Core (PostgREST). Backend unico.
   CORE_URL,
   CORE_ANON_KEY,
+  /** True when CORE is a Supabase project (sovereign flow P0: email/password login). */
+  get isSupabaseBackend(): boolean {
+    return typeof CORE_URL === "string" && CORE_URL.includes("supabase.co");
+  },
+  /** Em dev+Supabase: true = não chama APIs (usa seed), zero 400. Default true em dev. Para forçar API: VITE_SUPABASE_SKIP_RESTAURANT_API=false */
+  get SUPABASE_SKIP_RESTAURANT_API(): boolean {
+    const v = getEnvString("VITE_SUPABASE_SKIP_RESTAURANT_API");
+    if (v === "false" || v === "0") return false;
+    if (v === "true" || v === "1") return true;
+    return IS_DEV;
+  },
 
   // Stripe (billing: checkout + portal)
   STRIPE_PUBLIC_KEY: STRIPE_PUBLIC_KEY_RAW,
@@ -213,4 +231,5 @@ console.log("[CONFIG] Loaded", {
   CORE_URL: CONFIG.CORE_URL,
   API_BASE: CONFIG.API_BASE,
   MODE: CONFIG.MODE,
+  isSupabaseBackend: CONFIG.isSupabaseBackend,
 });

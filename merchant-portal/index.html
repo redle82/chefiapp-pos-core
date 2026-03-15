@@ -1,6 +1,9 @@
 <!doctype html>
+<!-- dev: no cache - 2025-03-15 -->
 <html lang="en">
 <meta charset="UTF-8" />
+<meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate" />
+<meta http-equiv="Pragma" content="no-cache" />
 <link href="https://fonts.googleapis.com/css2?family=Alegreya:ital,wght@0,400;0,600;0,700;0,800;1,400&family=Hind:wght@600&family=Open+Sans:wght@400;600&display=swap" rel="stylesheet" />
 <link rel="icon"
 href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>👨‍🍳</text></svg>">
@@ -90,8 +93,8 @@ console.info('[SW] Preflight: unregister + clear caches (before bundle)');
 }
 })();
 </script>
-  <!-- Dev entry (build substitui por /assets/index-*.js) -->
-  <script type="module" src="/src/main_debug.tsx"></script>
+  <!-- Dev entry (build substitui por /assets/index-*.js). ?t= evita cache do browser. -->
+  <script type="module" src="/src/main_debug.tsx?t=20250315"></script>
 <link rel="manifest" href="/manifest.webmanifest"></head>
 
 <body>

@@ -17,10 +17,9 @@ export const MODULES_DEFINITIONS: ModuleDefinition[] = [
     id: "tpv",
     name: "Software TPV",
     description:
-      "Gestiona tu Sala, pedidos de Delivery y Take away en un mismo sitio.",
+      "Terminal de ponto de venda e KDS. Instalação e gestão na tela TPV do menu.",
     icon: "🖥️",
     primaryAction: "ManageDevices",
-    secondaryAction: "Desactivar",
     block: "essenciais",
     defaultStatus: "active",
   },
@@ -28,7 +27,7 @@ export const MODULES_DEFINITIONS: ModuleDefinition[] = [
     id: "appstaff",
     name: "AppStaff",
     description:
-      "App para a equipa: fichagem, tarefas, KDS, alertas e gestão de turno — tudo num só lugar.",
+      "App para a equipa: fichagem, tarefas, alertas e gestão de turno — tudo num só lugar. KDS nasce do TPV.",
     icon: "📋",
     primaryAction: "ManageDevices",
     secondaryAction: "Desactivar",

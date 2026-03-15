@@ -6,6 +6,10 @@ import { fireEvent, render, screen, within } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { DesktopDownloadSection } from "./DesktopDownloadSection";
 
+vi.mock("react-i18next", () => ({
+  useTranslation: () => ({ t: (key: string) => key }),
+}));
+
 describe("DesktopDownloadSection", () => {
   beforeEach(() => {
     // Reset env vars before each test
@@ -50,7 +54,7 @@ describe("DesktopDownloadSection", () => {
 
     const unpublished = scoped.getByTestId("desktop-download-unpublished-note");
     expect(unpublished).toBeTruthy();
-    expect(unpublished.textContent).toContain("Desktop não publicado");
+    expect(unpublished.textContent).toMatch(/downloadInstallerIncludesKds|ecossistema TPV/);
 
     expect(scoped.queryByTestId("desktop-download-macos")).toBeNull();
     expect(scoped.queryByTestId("desktop-download-windows")).toBeNull();
@@ -78,8 +82,7 @@ describe("DesktopDownloadSection", () => {
 
     const devCta = within(container).getByTestId("desktop-dev-build-cta");
     expect(devCta).toBeTruthy();
-    expect(devCta.textContent).toContain("Modo DEV");
-    expect(devCta.textContent).toContain("Gerar DMG local");
+    expect(devCta.textContent).toContain("downloadDevTitle");
   });
 
   it("Regra 2 DEVTOOLS: toggle expande instruções de build", () => {
@@ -98,11 +101,11 @@ describe("DesktopDownloadSection", () => {
 
     const steps = scoped.getByTestId("desktop-dev-build-steps");
     expect(steps).toBeTruthy();
-    expect(steps.textContent).toContain("pnpm build");
-    expect(steps.textContent).toContain("/Applications");
+    expect(steps.textContent).toContain("downloadBuildStep1");
+    expect(steps.textContent).toContain("downloadBuildStep3");
   });
 
-  it("Regra 2 PROD: mostra CTA de publicar release em modo production", () => {
+  it("Regra 2 PROD: mostra estado curto quando release não publicada", () => {
     // @ts-expect-error
     import.meta.env.MODE = "production";
 
@@ -110,8 +113,7 @@ describe("DesktopDownloadSection", () => {
 
     const prodCta = within(container).getByTestId("desktop-prod-publish-cta");
     expect(prodCta).toBeTruthy();
-    expect(prodCta.textContent).toContain("Release não publicada");
-    expect(prodCta.textContent).toContain("VITE_DESKTOP_DOWNLOAD_BASE");
+    expect(prodCta.textContent).toMatch(/downloadPackagePreparing|release|publicada/i);
   });
 
   it("PROD com DOWNLOAD_BASE: mostra botões de download reais", () => {

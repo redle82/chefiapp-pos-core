@@ -173,7 +173,7 @@ export const ADMIN_PRIMARY_NAV_GROUPS: SidebarGroup[] = [
       },
       {
         kind: "link",
-        label: "Dispositivos",
+        label: "AppStaff",
         to: "/admin/devices",
         end: true,
         icon: "📟",

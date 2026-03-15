@@ -1,0 +1,361 @@
+import * as react_jsx_runtime from 'react/jsx-runtime';
+import { VerifyEmailResponse } from '@insforge/shared-schemas';
+import * as react from 'react';
+import { ReactNode } from 'react';
+import { InsforgeUser } from '@insforge/shared';
+export { ForgotPasswordForm, ForgotPasswordFormProps, ResetPasswordForm, ResetPasswordFormProps, SignInForm, SignInFormProps, SignUpForm, SignUpFormProps, VerifyEmailStatus, VerifyEmailStatusProps } from './forms.cjs';
+export { AuthBranding, AuthContainer, AuthContainerProps, AuthDivider, AuthDividerProps, AuthEmailVerificationStep, AuthErrorBanner, AuthErrorBannerProps, AuthFormField, AuthFormFieldProps, AuthHeader, AuthHeaderProps, AuthLink, AuthLinkProps, AuthOAuthButton, AuthOAuthButtonProps, AuthOAuthProviders, AuthOAuthProvidersProps, AuthPasswordField, AuthPasswordFieldProps, AuthPasswordStrengthIndicator, AuthPasswordStrengthIndicatorProps, AuthResetPasswordVerificationStep, AuthSubmitButton, AuthSubmitButtonProps, AuthVerificationCodeInput, AuthVerificationCodeInputProps } from './atoms.cjs';
+import './types.cjs';
+
+interface SignInProps {
+    title?: string;
+    subtitle?: string;
+    emailLabel?: string;
+    emailPlaceholder?: string;
+    passwordLabel?: string;
+    passwordPlaceholder?: string;
+    forgotPasswordText?: string;
+    forgotPasswordUrl?: string;
+    submitButtonText?: string;
+    loadingButtonText?: string;
+    signUpText?: string;
+    signUpLinkText?: string;
+    signUpUrl?: string;
+    dividerText?: string;
+    onError?: (error: Error) => void;
+}
+/**
+ * Pre-built sign-in component with full authentication logic.
+ *
+ * @component
+ * @example
+ * ```tsx
+ * <SignIn
+ *   onError={(error) => console.error('Error:', error)}
+ * />
+ * ```
+ */
+declare function SignIn({ onError, ...uiProps }: SignInProps): react_jsx_runtime.JSX.Element | null;
+
+interface SignUpProps {
+    title?: string;
+    subtitle?: string;
+    emailLabel?: string;
+    emailPlaceholder?: string;
+    passwordLabel?: string;
+    passwordPlaceholder?: string;
+    submitButtonText?: string;
+    loadingButtonText?: string;
+    signInText?: string;
+    signInLinkText?: string;
+    signInUrl?: string;
+    dividerText?: string;
+    onError?: (error: Error) => void;
+    emailRedirectTo?: string;
+}
+/**
+ * Pre-built sign-up component with full authentication logic.
+ *
+ * @component
+ * @example
+ * ```tsx
+ * <SignUp
+ *   onError={(error) => console.error('Error:', error)}
+ * />
+ *
+ * ```
+ */
+declare function SignUp({ onError, emailRedirectTo, ...uiProps }: SignUpProps): react_jsx_runtime.JSX.Element | null;
+
+interface ForgotPasswordProps {
+    /** Text customization */
+    title?: string;
+    subtitle?: string;
+    emailLabel?: string;
+    emailPlaceholder?: string;
+    submitButtonText?: string;
+    loadingButtonText?: string;
+    backToSignInText?: string;
+    /** Callback when an error occurs */
+    onError?: (error: Error) => void;
+}
+/**
+ * Pre-built forgot password component with full business logic.
+ *
+ * Supports two password reset methods (auto-detected from backend config):
+ * - **Link method**: Two-step flow (email → check email message)
+ *   User receives an email with a reset link to complete the process in a new tab
+ * - **Code method**: Three-step flow (email → verify code → reset password)
+ *   User receives a verification code, enters it, then sets a new password
+ *
+ * @component
+ * @example
+ * ```tsx
+ * <ForgotPassword
+ *   onError={(error) => console.error('Error:', error)}
+ * />
+ * ```
+ */
+declare function ForgotPassword({ onError, ...uiProps }: ForgotPasswordProps): react_jsx_runtime.JSX.Element | null;
+
+interface ResetPasswordProps {
+    /** Text customization */
+    title?: string;
+    subtitle?: string;
+    newPasswordLabel?: string;
+    newPasswordPlaceholder?: string;
+    confirmPasswordLabel?: string;
+    confirmPasswordPlaceholder?: string;
+    submitButtonText?: string;
+    loadingButtonText?: string;
+    /** Callback when an error occurs */
+    onError?: (error: Error) => void;
+}
+/**
+ * Pre-built reset password page component with full business logic.
+ *
+ * Automatically reads the reset token from URL query parameter (?token=xxx).
+ * Shows an error if token is missing.
+ *
+ * @component
+ * @example
+ * ```tsx
+ * // Used at /reset-password?token=xxxxx
+ * <ResetPassword />
+ * ```
+ */
+declare function ResetPassword({ onError, ...uiProps }: ResetPasswordProps): react_jsx_runtime.JSX.Element | null;
+
+interface VerifyEmailProps {
+    /** Verification token (from URL query params) */
+    token: string;
+    /** Text customization */
+    verifyingTitle?: string;
+    successTitle?: string;
+    successMessage?: string;
+    errorTitle?: string;
+    /** Callback when verification is successful */
+    onSuccess?: (data: VerifyEmailResponse) => void;
+    /** Callback when verification fails */
+    onError?: (error: Error) => void;
+}
+/**
+ * Pre-built email verification component with full business logic.
+ *
+ * Automatically verifies the email when mounted using the provided token.
+ *
+ * @component
+ * @example
+ * ```tsx
+ * const token = new URLSearchParams(window.location.search).get('token');
+ *
+ * <VerifyEmail
+ *   token={token || ''}
+ *   onSuccess={(data) => {
+ *     console.log('Email verified!', data);
+ *     // Optionally navigate or close window
+ *   }}
+ *   onError={(error) => console.error('Verification failed:', error)}
+ * />
+ * ```
+ */
+declare function VerifyEmail({ token, onSuccess, onError, ...uiProps }: VerifyEmailProps): react_jsx_runtime.JSX.Element;
+
+interface UserButtonProps {
+    afterSignOutUrl?: string;
+    mode?: 'detailed' | 'simple';
+    /** Whether to show the Profile menu item (default: true) */
+    showProfile?: boolean;
+    /** Callback when profile update fails */
+    onProfileError?: (error: string) => void;
+}
+/**
+ * User profile button with dropdown menu and sign-out functionality.
+ *
+ * Styles are powered by Emotion CSS-in-JS to prevent FOUC in SSR environments.
+ */
+declare function UserButton({ afterSignOutUrl, mode, showProfile, onProfileError, }: UserButtonProps): react_jsx_runtime.JSX.Element | null;
+
+interface UserProfileModalProps {
+    /** Called when the modal is closed */
+    onClose: () => void;
+    /** Called when an error occurs */
+    onError?: (error: string) => void;
+}
+/**
+ * User profile modal component.
+ * Displays user profile information with edit capability for name.
+ */
+declare function UserProfileModal({ onClose, onError }: UserProfileModalProps): react.ReactPortal | null;
+
+interface ProtectProps {
+    children: ReactNode;
+    fallback?: ReactNode;
+    redirectTo?: string;
+    condition?: (user: InsforgeUser) => boolean;
+    onRedirect?: (url: string) => void;
+}
+/**
+ * Protected route component that redirects unauthenticated users.
+ *
+ * @component
+ * @example
+ * ```tsx
+ * // Basic usage
+ * <Protect redirectTo="/sign-in">
+ *   <Dashboard />
+ * </Protect>
+ *
+ * // With custom redirect handler (e.g., for Next.js router)
+ * <Protect
+ *   redirectTo="/sign-in"
+ *   onRedirect={(url) => router.push(url)}
+ * >
+ *   <AdminPanel />
+ * </Protect>
+ *
+ * // With custom condition (role-based access)
+ * <Protect
+ *   redirectTo="/unauthorized"
+ *   condition={(user) => user.role === 'admin'}
+ * >
+ *   <AdminContent />
+ * </Protect>
+ * ```
+ *
+ * @param {ReactNode} children - Content to protect
+ * @param {ReactNode} [fallback] - Fallback UI while loading
+ * @param {string} [redirectTo='/sign-in'] - Redirect URL
+ * @param {function} [condition] - Custom access condition
+ * @param {function} [onRedirect] - Custom redirect handler (default: window.location)
+ */
+declare function Protect({ children, fallback, redirectTo, condition, onRedirect, }: ProtectProps): ReactNode;
+
+interface ConditionalProps$1 {
+    children: ReactNode;
+}
+/**
+ * Conditional component that renders children only when user is signed in.
+ *
+ * Uses userId to determine rendering:
+ * - undefined = not loaded yet (SSR or before hydration) -> render null
+ * - null = loaded, user signed out -> render null
+ * - string = loaded, user signed in -> render children
+ *
+ * This prevents hydration mismatches in Next.js SSR by ensuring
+ * consistent rendering between server and client initial render.
+ *
+ * @component
+ * @example
+ * ```tsx
+ * <SignedIn>
+ *   <Dashboard />
+ * </SignedIn>
+ * ```
+ *
+ * @param {ReactNode} children - React nodes to render when user is authenticated
+ * @returns {JSX.Element | null} Renders children when signed in, null otherwise
+ */
+declare function SignedIn({ children }: ConditionalProps$1): react_jsx_runtime.JSX.Element | null;
+
+interface ConditionalProps {
+    children: ReactNode;
+}
+/**
+ * Conditional component that renders children only when user is signed out.
+ *
+ * Uses userId to determine rendering:
+ * - undefined = not loaded yet (SSR or before hydration) -> render null
+ * - null = loaded, user signed out -> render children
+ * - string = loaded, user signed in -> render null
+ *
+ * This prevents hydration mismatches in Next.js SSR by ensuring
+ * consistent rendering between server and client initial render.
+ *
+ * @component
+ * @example
+ * ```tsx
+ * <SignedOut>
+ *   <SignIn />
+ * </SignedOut>
+ * ```
+ *
+ * @param {ReactNode} children - React nodes to render when user is not authenticated
+ * @returns {JSX.Element | null} Renders children when signed out, null otherwise
+ */
+declare function SignedOut({ children }: ConditionalProps): react_jsx_runtime.JSX.Element | null;
+
+interface SignInButtonProps {
+    children?: React.ReactNode;
+    className?: string;
+}
+/**
+ * SignInButton Component
+ *
+ * A simple unstyled button that redirects to the hosted sign-in page.
+ * If children is a valid React element, it will be rendered with the redirect logic attached.
+ *
+ * @example
+ * ```tsx
+ * <SignInButton />
+ * ```
+ *
+ * @example
+ * ```tsx
+ * <SignInButton>
+ *   <button className="your-button">Login</button>
+ * </SignInButton>
+ * ```
+ */
+declare function SignInButton({ children, className }: SignInButtonProps): react_jsx_runtime.JSX.Element;
+
+interface SignUpButtonProps {
+    children?: React.ReactNode;
+    className?: string;
+}
+/**
+ * SignUpButton Component
+ *
+ * A simple unstyled button that redirects to the hosted sign-up page.
+ * If children is a valid React element, it will be rendered with the redirect logic attached.
+ *
+ * @example
+ * ```tsx
+ * <SignUpButton />
+ * ```
+ *
+ * @example
+ * ```tsx
+ * <SignUpButton>
+ *   <button className="fancy-button">Register Now</button>
+ * </SignUpButton>
+ * ```
+ */
+declare function SignUpButton({ children, className }: SignUpButtonProps): react_jsx_runtime.JSX.Element;
+
+interface SignOutButtonProps {
+    children?: React.ReactNode;
+    className?: string;
+    afterSignOutUrl?: string;
+}
+/**
+ * SignOutButton Component
+ *
+ * A simple unstyled button that signs out the current user.
+ * If children is a valid React element, it will be rendered with the sign-out logic attached.
+ *
+ * @example
+ * ```tsx
+ * <SignOutButton />
+ * ```
+ *
+ * @example
+ * ```tsx
+ * <SignOutButton afterSignOutUrl="/goodbye">
+ *   <button className="custom-button">Logout</button>
+ * </SignOutButton>
+ * ```
+ */
+declare function SignOutButton({ children, className, afterSignOutUrl }: SignOutButtonProps): react_jsx_runtime.JSX.Element;
+
+export { type ConditionalProps$1 as ConditionalProps, ForgotPassword, type ForgotPasswordProps, Protect, type ProtectProps, ResetPassword, type ResetPasswordProps, SignIn, SignInButton, type SignInButtonProps, type SignInProps, SignOutButton, type SignOutButtonProps, SignUp, SignUpButton, type SignUpButtonProps, type SignUpProps, SignedIn, SignedOut, UserButton, type UserButtonProps, UserProfileModal, type UserProfileModalProps, VerifyEmail, type VerifyEmailProps };

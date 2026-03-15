@@ -29,6 +29,8 @@ export function OriginBadge({
     .toUpperCase()
     .replace(/\s/g, '');
 
+  // Convenção: docs/architecture/APPSTAFF_ORDER_ORIGINS_CONVENTION.md
+  // APPSTAFF = salão/equipe (waiter); APPSTAFF_MANAGER = gerente; APPSTAFF_OWNER = dono
   const originMap: Record<string, { color: string; icon: string; label: string }> = {
     CAIXA: { color: '#22c55e', icon: '💰', label: 'CAIXA' },
     TPV: { color: '#22c55e', icon: '💰', label: 'CAIXA' },
@@ -44,7 +46,9 @@ export function OriginBadge({
     OWNER: { color: '#a855f7', icon: '👤', label: 'DONO' },
     COZINHA: { color: '#eab308', icon: '🍳', label: 'COZINHA' },
     KITCHEN: { color: '#eab308', icon: '🍳', label: 'COZINHA' },
-    APPSTAFF: { color: '#8b5cf6', icon: '👤', label: 'APPSTAFF' },
+    APPSTAFF: { color: '#3b82f6', icon: '📱', label: 'SALÃO' },
+    APPSTAFF_MANAGER: { color: '#8b5cf6', icon: '👔', label: 'GERENTE' },
+    APPSTAFF_OWNER: { color: '#a855f7', icon: '👤', label: 'DONO' },
     QR_MESA: { color: '#ec4899', icon: '📋', label: 'QR MESA' },
     QRMESA: { color: '#ec4899', icon: '📋', label: 'QR MESA' },
   };
