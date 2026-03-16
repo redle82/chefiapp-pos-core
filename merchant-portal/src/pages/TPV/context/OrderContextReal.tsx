@@ -324,17 +324,12 @@ export function OrderProvider({
     });
     getActiveOrders(false); // Initial load (with spinner)
 
-    // 1. SAFETY NET: Defensive Polling (30s)
-    // 🔴 RISK: Se Supabase Realtime falhar silenciosamente, este é o único fallback.
-    // Intervalo de 30s é um trade-off entre carga no servidor e latência máxima de pedidos.
-    // TODO: Considerar reduzir para 15s em horário de pico se necessário.
+    // 1. PRIMARY SYNC: Polling (5s)
+    // Realtime WebSocket requires Supabase Realtime tenant config (encrypted jwt_secret).
+    // Until that is resolved, 5s polling is the primary sync mechanism for KDS/TPV.
     pollingRef.current = setInterval(() => {
-      Logger.info("🛡️ Defensive Polling (30s interval)", {
-        context: "OrderContext",
-        tenantId: restaurantId,
-      });
       getActiveOrders(true);
-    }, 30000);
+    }, 5000);
 
     // 2. REALTIME SUBSCRIPTION
     const channel = setupRealtimeSubscription();

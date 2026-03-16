@@ -1,10 +1,12 @@
 /**
- * Docker Core client — PostgREST via fetch (ZERO @supabase/supabase-js)
+ * Docker Core client — PostgREST via fetch + Supabase Realtime for WebSocket
  *
- * Usado quando backendType === 'docker'. Garante nenhuma instância de GoTrueClient.
+ * CRUD: Pure fetch (no GoTrueClient overhead).
+ * Realtime: @supabase/supabase-js createClient (lazy, only for .channel()).
  * API compatível com o que o código usa: .from(), .select(), .eq(), .is(), .rpc(), .channel().
  */
 
+import { createClient as createSupabaseClient } from "@supabase/supabase-js";
 import { getCoreSessionAsync } from "../auth/getCoreSession";
 import { CONFIG } from "../../config";
 import { Logger } from "../logger";
@@ -494,6 +496,46 @@ const noopChannel: RealtimeChannelStub = {
   },
 };
 
+// ---------------------------------------------------------------------------
+// Lazy Supabase Realtime client (only instantiated on first .channel() call)
+// Uses @supabase/supabase-js ONLY for Realtime WebSocket — no GoTrueClient.
+// ---------------------------------------------------------------------------
+let realtimeSupabaseClient: any = null;
+
+function getRealtimeClient() {
+  if (realtimeSupabaseClient) return realtimeSupabaseClient;
+
+  // In DEV browser, use Vite proxy (same-origin) so WebSocket goes through /realtime.
+  // In production, use CORE_URL directly (nginx on port 3001).
+  const realtimeUrl =
+    typeof window !== "undefined" && IS_DEV
+      ? window.location.origin
+      : CONFIG.CORE_URL || "http://localhost:3001";
+  const anonKey = ANON_KEY;
+
+  try {
+    realtimeSupabaseClient = createSupabaseClient(realtimeUrl, anonKey, {
+      auth: {
+        autoRefreshToken: false,
+        persistSession: false,
+        detectSessionInUrl: false,
+      },
+      // Disable PostgREST — we use our fetch client for that
+      db: { schema: "public" },
+      realtime: {
+        params: { eventsPerSecond: 10 },
+      },
+    });
+    Logger.info("[Realtime] Supabase Realtime client initialized", {
+      url: realtimeUrl,
+    });
+  } catch (err) {
+    Logger.error("[Realtime] Failed to create Supabase client — falling back to noop", { err });
+    return null;
+  }
+  return realtimeSupabaseClient;
+}
+
 let clientInstance: DockerCoreClientShape | null = null;
 
 /**
@@ -613,14 +655,26 @@ export function getDockerCoreFetchClient(): DockerCoreClientShape {
         };
       }
     },
-    channel(_topic: string) {
-      return noopChannel;
+    channel(topic: string): RealtimeChannelStub {
+      const rt = getRealtimeClient();
+      if (!rt) return noopChannel;
+      // Delegate to real Supabase Realtime client
+      return rt.channel(topic) as RealtimeChannelStub;
     },
     removeChannel(channel: RealtimeChannelStub) {
-      try {
-        channel.unsubscribe();
-      } catch {
-        // no-op: channel may already be removed
+      const rt = getRealtimeClient();
+      if (rt) {
+        try {
+          rt.removeChannel(channel);
+        } catch {
+          // no-op: channel may already be removed
+        }
+      } else {
+        try {
+          channel.unsubscribe();
+        } catch {
+          // no-op
+        }
       }
     },
   };

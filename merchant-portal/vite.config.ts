@@ -249,6 +249,12 @@ export default defineConfig(async ({ mode }) => {
           target: "http://localhost:3001",
           changeOrigin: true,
         },
+        // Realtime WebSocket: nginx em 3001 proxia /realtime/v1/websocket → realtime:4000
+        "/realtime": {
+          target: "http://localhost:3001",
+          changeOrigin: true,
+          ws: true,
+        },
       },
       fs: {
         allow: [".."],
