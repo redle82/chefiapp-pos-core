@@ -34,7 +34,21 @@ export function ItemTimer({ item }: ItemTimerProps) {
 
   useEffect(() => {
     const calculateTimer = () => {
-      const created = new Date(item.created_at);
+      const createdMs = item.created_at
+        ? new Date(item.created_at).getTime()
+        : NaN;
+      if (!Number.isFinite(createdMs)) {
+        setResult({
+          elapsedSeconds: 0,
+          expectedSeconds: item.prep_time_seconds || 300,
+          delaySeconds: 0,
+          delayRatio: 0,
+          state: "normal",
+          displayText: "—",
+        });
+        return;
+      }
+      const created = new Date(createdMs);
       const now = new Date();
       const elapsedSeconds = Math.floor((now.getTime() - created.getTime()) / 1000);
 
@@ -88,7 +102,7 @@ export function ItemTimer({ item }: ItemTimerProps) {
   }, [item.created_at, item.prep_time_seconds]);
 
   if (!result) {
-    return <span style={{ fontSize: '14px', color: '#666' }}>Calculando...</span>;
+    return <span style={{ fontSize: '18px', color: '#666' }}>…</span>;
   }
 
   // Cores baseadas no estado
@@ -102,10 +116,10 @@ export function ItemTimer({ item }: ItemTimerProps) {
   return (
     <span
       style={{
-        fontSize: '14px',
+        fontSize: '18px',
         color: stateColors[result.state],
         marginLeft: '8px',
-        fontWeight: result.state === 'delay' ? 'bold' : 'normal',
+        fontWeight: result.state === 'delay' ? 'bold' : 600,
       }}
     >
       {result.displayText}

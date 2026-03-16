@@ -67,12 +67,8 @@ const METHOD_OPTIONS: MethodOption[] = [
     descKey: "payment.method.cardDesc",
     icon: "💳",
   },
-  {
-    id: "mbway",
-    labelKey: "payment.method.mbwayLabel",
-    descKey: "payment.method.mbwayDesc",
-    icon: "📱",
-  },
+  // MB Way removido: sem provider implementado. Reativar quando provider existir.
+  // { id: "mbway", labelKey: "payment.method.mbwayLabel", descKey: "payment.method.mbwayDesc", icon: "📱" },
   {
     id: "pix",
     labelKey: "payment.method.pixLabel",

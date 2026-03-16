@@ -51,7 +51,11 @@ export function calculateOrderStatus(
 
   // Encontrar o item mais crítico (maior delay ratio)
   for (const item of items) {
-    const created = new Date(item.created_at);
+    const createdMs = item.created_at
+      ? new Date(item.created_at).getTime()
+      : NaN;
+    if (!Number.isFinite(createdMs)) continue; // skip items with bad dates
+    const created = new Date(createdMs);
     const prepTimeSeconds = item.prep_time_seconds || 300; // 5 min padrão
     const expectedReadyAt = new Date(created.getTime() + prepTimeSeconds * 1000);
     

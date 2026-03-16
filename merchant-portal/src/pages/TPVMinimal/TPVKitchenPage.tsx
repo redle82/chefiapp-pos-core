@@ -70,10 +70,10 @@ const TPV_COLORS = {
 };
 
 const FILTER_BTN = (active: boolean): React.CSSProperties => ({
-  padding: "6px 12px",
+  padding: "8px 16px",
   borderRadius: 10,
   border: `1px solid ${active ? "transparent" : TPV_COLORS.border}`,
-  fontSize: 12,
+  fontSize: 15,
   fontWeight: active ? 700 : 500,
   cursor: "pointer",
   backgroundColor: active ? TPV_COLORS.accent : TPV_COLORS.panelAlt,
@@ -82,10 +82,10 @@ const FILTER_BTN = (active: boolean): React.CSSProperties => ({
 });
 
 const ORIGIN_BTN = (active: boolean): React.CSSProperties => ({
-  padding: "4px 10px",
+  padding: "6px 12px",
   borderRadius: 999,
   border: `1px solid ${active ? "transparent" : TPV_COLORS.border}`,
-  fontSize: 11,
+  fontSize: 14,
   fontWeight: 600,
   cursor: "pointer",
   backgroundColor: active ? TPV_COLORS.accentSoft : TPV_COLORS.panelAlt,
@@ -107,23 +107,23 @@ const ITEM_ROW: React.CSSProperties = {
   display: "flex",
   alignItems: "center",
   justifyContent: "space-between",
-  padding: "8px 10px",
+  padding: "10px 14px",
   borderRadius: 10,
   backgroundColor: TPV_COLORS.panelAlt,
   border: `1px solid ${TPV_COLORS.border}`,
-  fontSize: 13,
+  fontSize: 17,
 };
 
 const ACTION_BTN = (
   variant: "primary" | "ghost" | "success",
 ): React.CSSProperties => ({
-  padding: "8px 12px",
+  padding: "10px 16px",
   borderRadius: 10,
   border:
     variant === "ghost"
       ? `1px solid ${TPV_COLORS.border}`
       : "1px solid transparent",
-  fontSize: 12,
+  fontSize: 15,
   fontWeight: 700,
   cursor: "pointer",
   backgroundColor:
@@ -240,9 +240,12 @@ export function TPVKitchenPage() {
         rawOrders.map(async (order) => {
           const items = await readOrderItems(order.id);
           const status = calculateOrderStatus(order, items);
-          const ageMinutes = Math.floor(
-            (Date.now() - new Date(order.created_at).getTime()) / 60_000,
-          );
+          const createdMs = order.created_at
+            ? new Date(order.created_at).getTime()
+            : NaN;
+          const ageMinutes = Number.isFinite(createdMs)
+            ? Math.floor((Date.now() - createdMs) / 60_000)
+            : 0;
           return {
             order,
             items,
@@ -431,7 +434,7 @@ export function TPVKitchenPage() {
           <h2
             style={{
               margin: 0,
-              fontSize: 18,
+              fontSize: 22,
               fontWeight: 700,
               color: TPV_COLORS.text,
             }}
@@ -440,9 +443,9 @@ export function TPVKitchenPage() {
           </h2>
           <span
             style={{
-              padding: "2px 10px",
+              padding: "4px 12px",
               borderRadius: 999,
-              fontSize: 12,
+              fontSize: 15,
               fontWeight: 600,
               backgroundColor: TPV_COLORS.panelAlt,
               color: TPV_COLORS.textMuted,
@@ -453,10 +456,10 @@ export function TPVKitchenPage() {
           {stats.delayed > 0 && (
             <span
               style={{
-                padding: "2px 10px",
+                padding: "4px 12px",
                 borderRadius: 999,
-                fontSize: 12,
-                fontWeight: 600,
+                fontSize: 15,
+                fontWeight: 700,
                 backgroundColor: "rgba(239,68,68,0.15)",
                 color: "#ef4444",
               }}
@@ -467,10 +470,10 @@ export function TPVKitchenPage() {
           {stats.attention > 0 && (
             <span
               style={{
-                padding: "2px 10px",
+                padding: "4px 12px",
                 borderRadius: 999,
-                fontSize: 12,
-                fontWeight: 600,
+                fontSize: 15,
+                fontWeight: 700,
                 backgroundColor: "rgba(234,179,8,0.15)",
                 color: "#eab308",
               }}
@@ -617,14 +620,14 @@ export function TPVKitchenPage() {
                         gap: 8,
                       }}
                     >
-                      <span style={{ fontSize: 14, fontWeight: 700 }}>
+                      <span style={{ fontSize: 17, fontWeight: 700 }}>
                         #{getOrderLabel(order)}
                       </span>
                       <span
                         style={{
-                          fontSize: 11,
+                          fontSize: 14,
                           fontWeight: 700,
-                          padding: "2px 8px",
+                          padding: "3px 10px",
                           borderRadius: 999,
                           backgroundColor: statusInfo.bg,
                           color: statusInfo.color,
@@ -649,7 +652,7 @@ export function TPVKitchenPage() {
                         tableNumber={order.table_number}
                       />
                       <span
-                        style={{ fontSize: 12, color: TPV_COLORS.textMuted }}
+                        style={{ fontSize: 14, color: TPV_COLORS.textMuted }}
                       >
                         {items.length} item{items.length !== 1 ? "s" : ""}
                       </span>
@@ -663,10 +666,10 @@ export function TPVKitchenPage() {
                         gap: 8,
                       }}
                     >
-                      <span style={{ fontSize: 12, color: TPV_COLORS.textDim }}>
+                      <span style={{ fontSize: 15, fontWeight: 600, color: TPV_COLORS.textDim }}>
                         {ageMinutes} min
                       </span>
-                      <span style={{ fontSize: 13, fontWeight: 700 }}>
+                      <span style={{ fontSize: 16, fontWeight: 700 }}>
                         {formatCents(totalCents)}
                       </span>
                     </div>
@@ -775,10 +778,10 @@ export function TPVKitchenPage() {
                     >
                       <span
                         style={{
-                          fontSize: 12,
+                          fontSize: 16,
                           fontWeight: 700,
                           color: TPV_COLORS.textMuted,
-                          minWidth: 20,
+                          minWidth: 24,
                         }}
                       >
                         {item.quantity}x
@@ -786,7 +789,7 @@ export function TPVKitchenPage() {
                       <span
                         style={{
                           color: TPV_COLORS.text,
-                          fontSize: 14,
+                          fontSize: 18,
                           fontWeight: 600,
                           overflow: "hidden",
                           textOverflow: "ellipsis",
@@ -799,8 +802,8 @@ export function TPVKitchenPage() {
                       {item.station && (
                         <span
                           style={{
-                            fontSize: 10,
-                            padding: "2px 6px",
+                            fontSize: 13,
+                            padding: "2px 8px",
                             borderRadius: 6,
                             fontWeight: 700,
                             backgroundColor:
@@ -1001,12 +1004,14 @@ export function TPVKitchenPage() {
                     </span>
                     <span style={{ fontSize: 13, color: TPV_COLORS.textMuted }}>
                       Criado:{" "}
-                      {new Date(
-                        selectedOrder.order.created_at,
-                      ).toLocaleTimeString(locale, {
-                        hour: "2-digit",
-                        minute: "2-digit",
-                      })}
+                      {selectedOrder.order.created_at
+                        ? new Date(
+                            selectedOrder.order.created_at,
+                          ).toLocaleTimeString(locale, {
+                            hour: "2-digit",
+                            minute: "2-digit",
+                          })
+                        : "—"}
                     </span>
                   </div>
 

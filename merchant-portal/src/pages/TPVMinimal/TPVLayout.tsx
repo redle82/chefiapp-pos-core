@@ -33,6 +33,63 @@ class OperationalHeaderBoundary extends Component<
   }
 }
 
+/** Error boundary para conteúdo principal (KDS, POS, etc). Mostra fallback em vez de tela branca. */
+class ContentBoundary extends Component<
+  { children: ReactNode },
+  { hasError: boolean; error: unknown }
+> {
+  state: { hasError: boolean; error: unknown } = { hasError: false, error: null };
+  static getDerivedStateFromError(error: unknown) {
+    return { hasError: true, error };
+  }
+  componentDidCatch(error: unknown) {
+    console.error("[TPV] Content crash (showing fallback):", error);
+  }
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div
+          style={{
+            flex: 1,
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: 16,
+            color: "#fafafa",
+            padding: 32,
+          }}
+        >
+          <span style={{ fontSize: 48 }}>⚠️</span>
+          <span style={{ fontSize: 18, fontWeight: 700 }}>
+            Erro na visualização
+          </span>
+          <span style={{ fontSize: 14, color: "#8a8a8a", textAlign: "center" }}>
+            Ocorreu um erro. Tente recarregar a página.
+          </span>
+          <button
+            type="button"
+            onClick={() => this.setState({ hasError: false, error: null })}
+            style={{
+              padding: "10px 24px",
+              borderRadius: 10,
+              border: "none",
+              backgroundColor: "#f97316",
+              color: "#0a0a0a",
+              fontSize: 14,
+              fontWeight: 700,
+              cursor: "pointer",
+            }}
+          >
+            Tentar novamente
+          </button>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
+
 export function TPVLayout() {
   const location = useLocation();
   const [searchQuery, setSearchQuery] = useState("");
@@ -81,7 +138,9 @@ export function TPVLayout() {
             flexDirection: "column",
           }}
         >
-          <Outlet context={{ searchQuery, emitKitchenPressure }} />
+          <ContentBoundary>
+            <Outlet context={{ searchQuery, emitKitchenPressure }} />
+          </ContentBoundary>
         </main>
         <MadeWithLoveFooter variant="default" />
       </div>
