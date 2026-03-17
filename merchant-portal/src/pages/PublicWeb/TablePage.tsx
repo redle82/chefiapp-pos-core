@@ -11,10 +11,12 @@
 
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
+import { useRestaurantRuntime } from "../../context/RestaurantRuntimeContext";
 import { useCurrency } from "../../core/currency/useCurrency";
 import { resolveProductImageUrl } from "../../core/products/resolveProductImageUrl";
 import {
   readMenu,
+  readRestaurantById,
   readRestaurantBySlug,
   readTableByNumber,
   type CoreMenuCategory,
@@ -56,6 +58,7 @@ interface CartItem {
 export function TablePage() {
   const { slug, number } = useParams<{ slug: string; number: string }>();
   const navigate = useNavigate();
+  const { runtime } = useRestaurantRuntime();
   const { formatAmount } = useCurrency();
   const [restaurant, setRestaurant] = useState<CoreRestaurant | null>(null);
   const [table, setTable] = useState<CoreTable | null>(null);
@@ -88,7 +91,17 @@ export function TablePage() {
         setLoading(true);
         setError(null);
 
-        const restaurantData = await readRestaurantBySlug(slug);
+        let restaurantData: CoreRestaurant | null = await readRestaurantBySlug(slug);
+        if (!restaurantData) {
+          // Fallback: slug não encontrado no DB — tentar runtime (dev/trial)
+          if (runtime?.loading) {
+            setLoading(true);
+            return;
+          }
+          if (runtime?.restaurant_id) {
+            restaurantData = await readRestaurantById(runtime.restaurant_id);
+          }
+        }
         if (!restaurantData) {
           setError("Restaurante não encontrado");
           setLoading(false);
@@ -120,7 +133,7 @@ export function TablePage() {
     }
 
     loadData();
-  }, [slug, number]);
+  }, [slug, number, runtime?.restaurant_id, runtime?.loading]);
 
   const addToCart = (product: CoreProduct) => {
     setCart((prevCart) => {
@@ -184,11 +197,8 @@ export function TablePage() {
         orderItems,
         "QR_MESA",
         "cash",
-        {
-          table_id: table.id,
-          table_number: table.number,
-          origin: "QR_MESA",
-        },
+        { origin: "QR_MESA" },
+        { tableId: table.id, tableNumber: table.number },
       );
 
       navigate(`/public/${slug}/order/${result.id}`);

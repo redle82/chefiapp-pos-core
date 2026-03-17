@@ -26,12 +26,49 @@
     }
   },
   "perception": {
+    "title": "Percepção Operacional",
+    "subtitle": "Ligue uma câmera IP ao ChefIApp para monitorizar a operação em tempo real.",
+    "instruction": "Cole o link da câmera (RTSP, iCSee ou stream HTTP) e escolha a zona. O ChefIApp apresenta a imagem e, em versões futuras, deteta padrões automaticamente.",
+    "cameraLinkLabel": "Link da câmera",
+    "cameraLinkPlaceholder": "rtsp://... ou link iCSee",
+    "cameraZoneLabel": "Zona da câmera",
+    "cameraZoneDesc": "Associe esta câmera a uma zona do restaurante.",
+    "selectZone": "-- Escolher zona --",
+    "zone": {
+      "kitchen": "Cozinha",
+      "floor": "Salão",
+      "storage": "Armazém",
+      "cash": "Caixa",
+      "entrance": "Entrada",
+      "other": "Outra"
+    },
     "saveLink": "Guardar link",
     "saved": "Guardado.",
+    "icseeTooltip": "iCSee: copie o link de partilha da app iCSee e cole aqui.",
     "hideLive": "Ocultar transmissão",
     "showLive": "Ver ao vivo",
     "cameraCheck": "Confirmação — Câmera ligada?",
-    "cameraCheckDesc": "Use «Ver ao vivo» para confirmar se a câmera está acesa."
+    "cameraCheckDesc": "Use «Ver ao vivo» para confirmar se a câmera está acesa.",
+    "icseeShareTitle": "Link iCSee (partilha)",
+    "icseeShareDesc": "Se usar iCSee, copie o link de partilha da app e cole no campo acima.",
+    "openCameraNewWindow": "Abrir câmera em nova janela",
+    "icseeHint": "Dica: na app iCSee, vá a Partilhar → Copiar link.",
+    "saveAndWatch": "Guardar e assistir",
+    "streamLoading": "A carregar transmissão…",
+    "streamLive": "Transmissão ao vivo",
+    "streamError": "Erro ao carregar a transmissão. Verifique o link.",
+    "streamAlt": "Transmissão da câmera",
+    "streamHint": "Se a imagem não carregar, confirme que a câmera está ligada e o link é válido.",
+    "observationTitle": "Observação (padrões básicos)",
+    "observationDesc": "Em breve: deteção de padrões por zona.",
+    "observationComingSoon": "Em breve",
+    "generateObservation": "Gerar observação",
+    "analyzeTitle": "Analisar com LLM",
+    "analyzeDesc": "Envie uma captura para análise com inteligência artificial.",
+    "analyzing": "A analisar…",
+    "analyzeWithAI": "Analisar com IA",
+    "errorNoLink": "Coloque o link da câmera primeiro.",
+    "errorApi": "Erro na API de análise."
   },
   "locations": {
     "add": "Adicionar local",
@@ -173,6 +210,77 @@
     "androidStep1": "Abra Chrome no Android",
     "androidStep2": "Digitalize este código QR",
     "androidStep3": "Aceite a instalação da app"
+  },
+  "printer": {
+    "selectBeforeSave": "Selecione uma impressora antes de guardar.",
+    "noStationForOverride": "Nenhuma estação de trabalho definida para override. Configure uma estação.",
+    "errorSaving": "Erro ao guardar",
+    "savedSuccess": "Guardado com sucesso.",
+    "selectBeforeTest": "Selecione uma impressora antes de testar.",
+    "sendingTest": "A enviar teste…",
+    "errorCreatingTest": "Erro ao criar teste",
+    "testSentConfirmed": "Teste enviado e confirmado.",
+    "testFailed": "Teste falhou.",
+    "testSentPending": "Teste enviado (a aguardar confirmação).",
+    "requiresDesktop": "Requer aplicação desktop",
+    "requiresDesktopDesc": "A configuração de impressoras requer a app desktop ChefIApp instalada e vinculada.",
+    "goToDevices": "Ir a Dispositivos",
+    "notReady": "Não está pronto",
+    "notReadyDesc": "É necessário um restaurante ativo para configurar impressoras.",
+    "goToDashboard": "Ir ao painel",
+    "title": "Impressoras",
+    "description": "Associe impressoras às funções de impressão do restaurante.",
+    "loading": "A carregar…",
+    "warning": "Aviso",
+    "noPrintersFound": "Nenhuma impressora encontrada. Verifique se o agente desktop está em execução.",
+    "fn": {
+      "labels": "Etiquetas",
+      "kitchen": "Cozinha",
+      "receipt": "Recibo"
+    },
+    "printerLabel": "Impressora",
+    "selectPlaceholder": "-- Selecionar --",
+    "useAsGlobal": "Usar como padrão global",
+    "testing": "A testar…",
+    "printTest": "Imprimir teste",
+    "saving": "A guardar…",
+    "save": "Guardar"
+  },
+  "integrations": {
+    "title": "Integrações",
+    "subtitle": "Ligue o TPV, delivery, redes sociais e outros serviços ao seu restaurante.",
+    "comingSoon": "Em breve",
+    "available": "Disponível",
+    "section": {
+      "payments": {
+        "label": "Pagamentos",
+        "description": "Ligue métodos de pagamento ao TPV e à web."
+      },
+      "whatsapp": {
+        "label": "WhatsApp",
+        "description": "Notificações e pedidos via WhatsApp."
+      },
+      "webhooks": {
+        "label": "APIs & Webhooks",
+        "description": "Conecte sistemas externos com webhooks."
+      },
+      "delivery": {
+        "label": "Delivery",
+        "description": "Plataformas de entrega e logística."
+      },
+      "googleBusiness": {
+        "label": "Google Business",
+        "description": "Gira a presença no Google Maps e Google Business."
+      },
+      "instagram": {
+        "label": "Instagram",
+        "description": "Publique automaticamente fotos e stories do restaurante."
+      },
+      "other": {
+        "label": "Outros",
+        "description": "Outras integrações e serviços."
+      }
+    }
   },
   "softwareTpv": {
     "title": "Software TPV",

@@ -8,7 +8,10 @@
  */
 
 import { Component, type ReactNode, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Outlet, useLocation } from "react-router-dom";
+import { useAuth } from "../../core/auth/useAuth";
+import { useRestaurantIdentity } from "../../core/identity/useRestaurantIdentity";
 import { MadeWithLoveFooter } from "../../components/MadeWithLoveFooter";
 import { OperationalHeader } from "../../components/pos/OperationalHeader";
 import { TPVHeader } from "./components/TPVHeader";
@@ -91,10 +94,33 @@ class ContentBoundary extends Component<
 }
 
 export function TPVLayout() {
+  const { t } = useTranslation("tpv");
   const location = useLocation();
   const [searchQuery, setSearchQuery] = useState("");
   const { alerts, dismissAlert, dismissAll, emitKitchenPressure } =
     useTPVEventBridge();
+  const { user } = useAuth();
+  const { identity } = useRestaurantIdentity();
+
+  // KDS mode: esconde header do TPV, KPIs, notificações e footer
+  const isKitchen = location.pathname.includes("/kitchen");
+
+  // Non-POS sub-views: hide search bar + filter (irrelevant for these pages)
+  const NON_POS_SUFFIXES = [
+    "/screens", "/tables", "/settings", "/shift", "/orders",
+    "/handoff", "/production", "/tasks", "/reservations",
+    "/web-editor", "/expo", "/customer-display", "/delivery",
+  ];
+  const hideSearch = NON_POS_SUFFIXES.some((s) => location.pathname.endsWith(s));
+
+  // Owner identity: auth session > restaurant owner name > fallback
+  // Same user across Admin and TPV (single-owner scenario)
+  const ownerName =
+    (user?.user_metadata?.name as string) ||
+    user?.email?.split("@")[0] ||
+    identity.ownerName ||
+    "Dono";
+  const ownerId = user?.email ?? (user ? "—" : t("layout.owner"));
 
   return (
     <div
@@ -117,19 +143,28 @@ export function TPVLayout() {
           minWidth: 0,
         }}
       >
-        <TPVHeader
-          searchQuery={searchQuery}
-          onSearchChange={setSearchQuery}
-          onFilterClick={() => {}}
-        />
-        <OperationalHeaderBoundary>
-          <OperationalHeader />
-        </OperationalHeaderBoundary>
-        <TPVNotificationBar
-          alerts={alerts}
-          onDismiss={dismissAlert}
-          onDismissAll={dismissAll}
-        />
+        {!isKitchen && (
+          <TPVHeader
+            searchQuery={searchQuery}
+            onSearchChange={setSearchQuery}
+            hideSearch={hideSearch}
+            staffName={ownerName}
+            staffId={ownerId}
+            staffRole="owner"
+          />
+        )}
+        {!isKitchen && (
+          <OperationalHeaderBoundary>
+            <OperationalHeader />
+          </OperationalHeaderBoundary>
+        )}
+        {!isKitchen && (
+          <TPVNotificationBar
+            alerts={alerts}
+            onDismiss={dismissAlert}
+            onDismissAll={dismissAll}
+          />
+        )}
         <main
           style={{
             flex: 1,
@@ -142,7 +177,7 @@ export function TPVLayout() {
             <Outlet context={{ searchQuery, emitKitchenPressure }} />
           </ContentBoundary>
         </main>
-        <MadeWithLoveFooter variant="default" />
+        {!isKitchen && <MadeWithLoveFooter variant="default" />}
       </div>
     </div>
   );

@@ -91,5 +91,103 @@
     "title": "Pasar a operación real",
     "body": "A partir de este momento, todo aquí pasa a ser dinero real. No se puede volver atrás. Los valores y acciones cuentan como operación real.",
     "confirm": "Confirmar y pasar a operación real"
+  },
+  "tableMap": {
+    "title": "Mapa de Mesas",
+    "free": "Libres",
+    "occupied": "Ocupadas",
+    "attention": "Atención",
+    "reserved": "Reservadas",
+    "badgeServe": "Servir",
+    "badgeBill": "Cuenta",
+    "badgeClean": "Limpiar",
+    "seats": "Asientos",
+    "actions": "Acciones",
+    "openBill": "Abrir Cuenta",
+    "occupationTime": "Ocupación",
+    "stateTime": "En estado",
+    "gridMode": "Cuadrícula",
+    "canvasMode": "Planta",
+    "save": "Guardar",
+    "edit": "Editar",
+    "noZone": "Sin zona",
+    "zoneFree": "libres",
+    "partiallyPaid": "Parcial",
+    "unknown": "DESC."
+  },
+  "mapBuilder": {
+    "loading": "Cargando mapa…",
+    "zonesTitle": "Zonas del Restaurante",
+    "codeLabel": "Código",
+    "zone": {
+      "BAR": "Bar",
+      "KITCHEN": "Cocina",
+      "PASS": "Pase",
+      "SERVICE": "Servicio",
+      "CASHIER": "Caja"
+    },
+    "nameLabel": "Nombre",
+    "zoneNamePlaceholder": "Ej: Salón Principal",
+    "createZone": "+ Crear Zona",
+    "tablesTitle": "Mesas",
+    "tableNumberLabel": "Número de Mesa",
+    "zoneOptional": "Zona (opcional)",
+    "noZone": "Sin zona",
+    "createTable": "+ Crear Mesa",
+    "tableLabel": "Mesa {{number}}",
+    "confirmDeactivateZone": "¿Desactivar esta zona? Las mesas asociadas quedarán sin zona.",
+    "confirmDeactivateTable": "¿Desactivar esta mesa?"
+  },
+  "inventory": {
+    "tab": {
+      "locations": "Locales",
+      "equipment": "Equipos",
+      "ingredients": "Ingredientes",
+      "stock": "Stock",
+      "recipes": "Recetas",
+      "movements": "Movimientos",
+      "scan": "Scan"
+    },
+    "movement": {
+      "IN": "Entrada",
+      "OUT": "Salida",
+      "ADJUST": "Ajuste",
+      "TRANSFER": "Transferencia"
+    },
+    "unit": {
+      "unit": "Unidad"
+    }
+  },
+  "tables": {
+    "mapTitle": "Mapa de Mesas",
+    "mapHint": "Toca una mesa para ver acciones. Doble clic para abrir cuenta. Usa el modo Planta para arrastrar mesas.",
+    "loading": "Cargando mesas...",
+    "tableNumber": "Mesa {{n}}",
+    "state": "Estado:",
+    "actionOpenBill": "Abrir cuenta",
+    "actionReserve": "Reservar",
+    "actionBlock": "Bloquear",
+    "actionSeat": "Sentar clientes",
+    "actionCancelReservation": "Cancelar reserva",
+    "actionGoToPOS": "Ir al POS",
+    "actionFreeTable": "Liberar mesa",
+    "actionMarkServed": "Marcar servido",
+    "actionProcessPayment": "Procesar pago",
+    "actionMarkClean": "Marcar limpia",
+    "actionUnblock": "Desbloquear"
+  },
+  "tableStates": {
+    "free": "LIBRE",
+    "reserved": "RESERVADA",
+    "occupied": "OCUPADA",
+    "in_prep": "PREPARANDO",
+    "ready_to_serve": "LISTO",
+    "bill_requested": "CUENTA",
+    "cleaning": "LIMPIEZA",
+    "blocked": "BLOQUEADA",
+    "partially_paid": "PAGO PARCIAL",
+    "paid": "PAGADO",
+    "ready": "LISTO",
+    "preparing": "PREPARANDO"
   }
 }

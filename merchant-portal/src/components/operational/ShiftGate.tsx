@@ -7,6 +7,7 @@
 
 import React, { useState } from "react";
 import { useTranslation } from "react-i18next";
+import { useLocation } from "react-router-dom";
 import { CONFIG } from "../../config";
 import { useRestaurantRuntime } from "../../context/RestaurantRuntimeContext";
 import { BackendType, getBackendType } from "../../core/infra/backendAdapter";
@@ -27,12 +28,18 @@ export function ShiftGate({ children }: Props) {
   const { t } = useTranslation("shift");
   const shift = useShift();
   const { runtime } = useRestaurantRuntime();
+  const location = useLocation();
   const restaurantId = runtime?.restaurant_id ?? getTpvRestaurantId() ?? null;
 
   const [opening, setOpening] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const isDocker = getBackendType() === BackendType.docker;
+
+  // Public Void Protocol: /public/* is customer-facing — never block.
+  if (location.pathname.startsWith("/public")) {
+    return <>{children}</>;
+  }
 
   // DEBUG_DIRECT_FLOW: vertical slice sem turno; TPV e KDS diretos.
   if (CONFIG.DEBUG_DIRECT_FLOW) {
@@ -94,6 +101,7 @@ function ShiftOpenForm({
   onSuccess,
 }: ShiftOpenFormProps) {
   const { t } = useTranslation("shift");
+  const symbol = "€";
   const [caixaEur, setCaixaEur] = useState("0");
   const [openedSuccess, setOpenedSuccess] = useState(false);
 

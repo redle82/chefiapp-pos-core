@@ -89,5 +89,103 @@
     "title": "Go live",
     "body": "From this moment, everything here becomes real money. There is no going back. Values and actions count as live operation.",
     "confirm": "Confirm and go live"
+  },
+  "tableMap": {
+    "title": "Table Map",
+    "free": "Free",
+    "occupied": "Occupied",
+    "attention": "Attention",
+    "reserved": "Reserved",
+    "badgeServe": "Serve",
+    "badgeBill": "Bill",
+    "badgeClean": "Clean",
+    "seats": "Seats",
+    "actions": "Actions",
+    "openBill": "Open Bill",
+    "occupationTime": "Occupation",
+    "stateTime": "In state",
+    "gridMode": "Grid",
+    "canvasMode": "Floor plan",
+    "save": "Save",
+    "edit": "Edit",
+    "noZone": "No zone",
+    "zoneFree": "free",
+    "partiallyPaid": "Partial",
+    "unknown": "N/A"
+  },
+  "mapBuilder": {
+    "loading": "Loading map…",
+    "zonesTitle": "Restaurant Zones",
+    "codeLabel": "Code",
+    "zone": {
+      "BAR": "Bar",
+      "KITCHEN": "Kitchen",
+      "PASS": "Pass",
+      "SERVICE": "Service",
+      "CASHIER": "Cashier"
+    },
+    "nameLabel": "Name",
+    "zoneNamePlaceholder": "e.g. Main Dining Room",
+    "createZone": "+ Create Zone",
+    "tablesTitle": "Tables",
+    "tableNumberLabel": "Table Number",
+    "zoneOptional": "Zone (optional)",
+    "noZone": "No zone",
+    "createTable": "+ Create Table",
+    "tableLabel": "Table {{number}}",
+    "confirmDeactivateZone": "Deactivate this zone? Associated tables will have no zone.",
+    "confirmDeactivateTable": "Deactivate this table?"
+  },
+  "inventory": {
+    "tab": {
+      "locations": "Locations",
+      "equipment": "Equipment",
+      "ingredients": "Ingredients",
+      "stock": "Stock",
+      "recipes": "Recipes",
+      "movements": "Movements",
+      "scan": "Scan"
+    },
+    "movement": {
+      "IN": "In",
+      "OUT": "Out",
+      "ADJUST": "Adjust",
+      "TRANSFER": "Transfer"
+    },
+    "unit": {
+      "unit": "Unit"
+    }
+  },
+  "tables": {
+    "mapTitle": "Table Map",
+    "mapHint": "Tap a table to see actions. Double-click to open a bill. Use Floor Plan mode to drag tables.",
+    "loading": "Loading tables...",
+    "tableNumber": "Table {{n}}",
+    "state": "State:",
+    "actionOpenBill": "Open bill",
+    "actionReserve": "Reserve",
+    "actionBlock": "Block",
+    "actionSeat": "Seat guests",
+    "actionCancelReservation": "Cancel reservation",
+    "actionGoToPOS": "Go to POS",
+    "actionFreeTable": "Free table",
+    "actionMarkServed": "Mark served",
+    "actionProcessPayment": "Process payment",
+    "actionMarkClean": "Mark clean",
+    "actionUnblock": "Unblock"
+  },
+  "tableStates": {
+    "free": "FREE",
+    "reserved": "RESERVED",
+    "occupied": "OCCUPIED",
+    "in_prep": "PREPARING",
+    "ready_to_serve": "READY",
+    "bill_requested": "BILL",
+    "cleaning": "CLEANING",
+    "blocked": "BLOCKED",
+    "partially_paid": "PARTIAL PAID",
+    "paid": "PAID",
+    "ready": "READY",
+    "preparing": "PREPARING"
   }
 }

@@ -1,7 +1,9 @@
 import type React from "react";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useRestaurantRuntime } from "../../context/RestaurantRuntimeContext";
 import { useAuth } from "../../core/auth/useAuth";
+import { useRestaurantIdentity } from "../../core/identity/useRestaurantIdentity";
 import type { WebsiteQuickConfig } from "../../core/website/websiteConfigService";
 import {
   clearLocalDraft,
@@ -67,20 +69,17 @@ function createEmptyConfig(): WebsiteQuickConfig {
   };
 }
 
-const DAYS_LABEL: Record<string, string> = {
-  monday: "Segunda",
-  tuesday: "Terça",
-  wednesday: "Quarta",
-  thursday: "Quinta",
-  friday: "Sexta",
-  saturday: "Sábado",
-  sunday: "Domingo",
-};
-
 export function TPVWebEditorPage() {
+  const { t } = useTranslation("tpv");
   const { runtime } = useRestaurantRuntime();
   const { user } = useAuth();
+  const { identity } = useRestaurantIdentity();
   const toast = useToast();
+  const iframeRef = useRef<HTMLIFrameElement>(null);
+  const [iframeKey, setIframeKey] = useState(0);
+  const [previewMode, setPreviewMode] = useState<"preview" | "published">(
+    "preview",
+  );
 
   const restaurantId = runtime.restaurant_id;
   const [loading, setLoading] = useState(true);
@@ -88,6 +87,8 @@ export function TPVWebEditorPage() {
   const [publishing, setPublishing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [config, setConfig] = useState<WebsiteQuickConfig | null>(null);
+  const [publishedConfig, setPublishedConfig] =
+    useState<WebsiteQuickConfig | null>(null);
   const [lastPublishedAt, setLastPublishedAt] = useState<string | null>(null);
   const [offline, setOffline] = useState(false);
 
@@ -95,7 +96,7 @@ export function TPVWebEditorPage() {
     if (!restaurantId) {
       setLoading(false);
       setError(
-        "Restaurante ainda não está inicializado. Conclua o setup antes de editar a página web.",
+        t("webEditor.errorRestaurantNotInitialized"),
       );
       return;
     }
@@ -107,6 +108,9 @@ export function TPVWebEditorPage() {
         setError(null);
         const doc = await fetchWebsiteConfig(restaurantId, runtime);
         if (cancelled) return;
+        if (doc?.published) {
+          setPublishedConfig(doc.published);
+        }
         if (doc?.draft) {
           setConfig(doc.draft);
         } else if (doc?.published) {
@@ -123,7 +127,7 @@ export function TPVWebEditorPage() {
       } catch (err) {
         if (cancelled) return;
         const message =
-          err instanceof Error ? err.message : "Erro ao carregar configuração";
+          err instanceof Error ? err.message : t("webEditor.errorLoadConfig");
         setError(message);
         const draft = saveLocalDraftAndReturn(
           restaurantId,
@@ -174,22 +178,20 @@ export function TPVWebEditorPage() {
       });
       toast.show({
         type: "success",
-        title: "Rascunho guardado",
-        description:
-          "As alterações foram guardadas. Pode continuar a editar antes de publicar.",
+        title: t("webEditor.draftSavedTitle"),
+        description: t("webEditor.draftSavedDescription"),
       });
       setOffline(
         !runtime.coreReachable || runtime.coreMode === "offline-erro",
       );
     } catch (err) {
       const message =
-        err instanceof Error ? err.message : "Erro ao guardar rascunho";
+        err instanceof Error ? err.message : t("webEditor.errorSaveDraft");
       setError(message);
       toast.show({
         type: "warning",
-        title: "Rascunho guardado apenas localmente",
-        description:
-          "O Core está offline ou indisponível. As alterações ficaram armazenadas neste dispositivo.",
+        title: t("webEditor.draftSavedLocalTitle"),
+        description: t("webEditor.draftSavedLocalDescription"),
       });
       setOffline(true);
     } finally {
@@ -200,7 +202,7 @@ export function TPVWebEditorPage() {
   const handlePublish = async () => {
     if (!restaurantId || !config) return;
     const confirmed = window.confirm(
-      "Publicar alterações na Página Web? Isto atualiza imediatamente a página pública.",
+      t("webEditor.confirmPublish"),
     );
     if (!confirmed) return;
     try {
@@ -213,22 +215,25 @@ export function TPVWebEditorPage() {
         runtime,
       });
       clearLocalDraft(restaurantId);
+      setPublishedConfig(config);
       setLastPublishedAt(new Date().toISOString());
+      // Reload iframe to show freshly published content
+      setIframeKey((k) => k + 1);
       toast.show({
         type: "success",
-        title: "Página publicada",
-        description: "A Página Web foi atualizada com sucesso.",
+        title: t("webEditor.publishedTitle"),
+        description: t("webEditor.publishedDescription"),
       });
       setOffline(
         !runtime.coreReachable || runtime.coreMode === "offline-erro",
       );
     } catch (err) {
       const message =
-        err instanceof Error ? err.message : "Erro ao publicar alterações";
+        err instanceof Error ? err.message : t("webEditor.errorPublish");
       setError(message);
       toast.show({
         type: "error",
-        title: "Não foi possível publicar",
+        title: t("webEditor.publishFailedTitle"),
         description: message,
       });
     } finally {
@@ -238,29 +243,44 @@ export function TPVWebEditorPage() {
 
   const hasConfig = !!config;
 
-  const statusLabel = useMemo(() => {
-    if (!config) return "";
-    switch (config.status.mode) {
-      case "open":
-        return "Aberto";
-      case "closed":
-        return "Fechado";
-      case "paused":
-        return "Em pausa";
-      default:
-        return "";
+  const publicPageUrl = useMemo(() => {
+    const slug = identity.slug;
+    if (!slug) return null;
+    return `/public/${encodeURIComponent(slug)}`;
+  }, [identity.slug]);
+
+  const hasUnpublishedChanges = useMemo(() => {
+    if (!config) return false;
+    if (!publishedConfig) return true;
+    return JSON.stringify(config) !== JSON.stringify(publishedConfig);
+  }, [config, publishedConfig]);
+
+  const handleDiscard = () => {
+    if (!publishedConfig) return;
+    const confirmed = window.confirm(
+      t("webEditor.confirmDiscard"),
+    );
+    if (!confirmed) return;
+    setConfig(publishedConfig);
+    if (restaurantId) {
+      clearLocalDraft(restaurantId);
     }
-  }, [config]);
+    toast.show({
+      type: "info",
+      title: t("webEditor.discardedTitle"),
+      description: t("webEditor.discardedDescription"),
+    });
+  };
 
   if (loading && !hasConfig) {
-    return <GlobalLoadingView title="A carregar editor da Página Web…" />;
+    return <GlobalLoadingView title={t("webEditor.loading")} />;
   }
 
   if (!restaurantId) {
     return (
       <GlobalBlockedView
-        title="Restaurante não inicializado"
-        description="Conclua o setup do restaurante no Admin antes de editar a Página Web."
+        title={t("webEditor.restaurantNotInitialized")}
+        description={t("webEditor.restaurantNotInitializedHint")}
       />
     );
   }
@@ -268,10 +288,10 @@ export function TPVWebEditorPage() {
   if (!config) {
     return (
       <GlobalBlockedView
-        title="Editor indisponível"
+        title={t("webEditor.editorUnavailable")}
         description={
           error ??
-          "Não foi possível carregar a configuração da Página Web. Tente novamente mais tarde."
+          t("webEditor.editorUnavailableHint")
         }
       />
     );
@@ -318,7 +338,7 @@ export function TPVWebEditorPage() {
               color: "#a3a3a3",
             }}
           >
-            Editor rápido da Página Web
+            {t("webEditor.headerTitle")}
           </span>
           <span
             style={{
@@ -326,7 +346,7 @@ export function TPVWebEditorPage() {
               color: "#737373",
             }}
           >
-            Ajuste apenas texto, horários e contactos — sem HTML livre.
+            {t("webEditor.headerSubtitle")}
           </span>
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
@@ -342,7 +362,7 @@ export function TPVWebEditorPage() {
               }}
               data-testid="tpv-web-editor-offline-badge"
             >
-              Offline — a guardar localmente
+              {t("webEditor.offlineBadge")}
             </span>
           )}
           {lastPublishedAt && (
@@ -352,7 +372,7 @@ export function TPVWebEditorPage() {
                 color: "#737373",
               }}
             >
-              Última publicação:{" "}
+              {t("webEditor.lastPublished")}{" "}
               {new Date(lastPublishedAt).toLocaleString("pt-PT")}
             </span>
           )}
@@ -365,12 +385,21 @@ export function TPVWebEditorPage() {
           maxWidth: 480,
           display: "flex",
           flexDirection: "column",
-          gap: 16,
           paddingTop: 56,
-          paddingRight: 8,
-          overflow: "auto",
+          overflow: "hidden",
         }}
       >
+        {/* Scrollable editor form */}
+        <div
+          style={{
+            flex: 1,
+            display: "flex",
+            flexDirection: "column",
+            gap: 16,
+            paddingRight: 8,
+            overflow: "auto",
+          }}
+        >
         <section
           style={{
             backgroundColor: "#111827",
@@ -389,10 +418,10 @@ export function TPVWebEditorPage() {
               margin: 0,
             }}
           >
-            Hero
+            {t("webEditor.sectionHero")}
           </h2>
           <label style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-            <span style={{ fontSize: 12, color: "#e5e5e5" }}>Título</span>
+            <span style={{ fontSize: 12, color: "#e5e5e5" }}>{t("webEditor.labelTitle")}</span>
             <input
               type="text"
               value={config.hero.title}
@@ -406,7 +435,7 @@ export function TPVWebEditorPage() {
             />
           </label>
           <label style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-            <span style={{ fontSize: 12, color: "#e5e5e5" }}>Subtítulo</span>
+            <span style={{ fontSize: 12, color: "#e5e5e5" }}>{t("webEditor.labelSubtitle")}</span>
             <textarea
               value={config.hero.subtitle ?? ""}
               onChange={(e) =>
@@ -420,7 +449,7 @@ export function TPVWebEditorPage() {
           </label>
           <label style={{ display: "flex", flexDirection: "column", gap: 4 }}>
             <span style={{ fontSize: 12, color: "#e5e5e5" }}>
-              URL da imagem (opcional)
+              {t("webEditor.labelImageUrl")}
             </span>
             <input
               type="url"
@@ -445,7 +474,7 @@ export function TPVWebEditorPage() {
               style={{ display: "flex", flexDirection: "column", gap: 4 }}
             >
               <span style={{ fontSize: 12, color: "#e5e5e5" }}>
-                Texto do botão
+                {t("webEditor.labelCtaLabel")}
               </span>
               <input
                 type="text"
@@ -463,7 +492,7 @@ export function TPVWebEditorPage() {
               style={{ display: "flex", flexDirection: "column", gap: 4 }}
             >
               <span style={{ fontSize: 12, color: "#e5e5e5" }}>
-                Link do botão
+                {t("webEditor.labelCtaLink")}
               </span>
               <input
                 type="url"
@@ -498,7 +527,7 @@ export function TPVWebEditorPage() {
               margin: 0,
             }}
           >
-            Horários
+            {t("webEditor.sectionSchedule")}
           </h2>
           <div
             style={{
@@ -525,7 +554,7 @@ export function TPVWebEditorPage() {
                     letterSpacing: 0.3,
                   }}
                 >
-                  {DAYS_LABEL[entry.day] ?? entry.day}
+                  {t(`webEditor.day.${entry.day}`)}
                 </span>
                 <input
                   type="time"
@@ -567,7 +596,7 @@ export function TPVWebEditorPage() {
                       handleFieldChange("schedule", next);
                     }}
                   />
-                  Fechado
+                  {t("webEditor.closed")}
                 </label>
               </div>
             ))}
@@ -592,7 +621,7 @@ export function TPVWebEditorPage() {
               margin: 0,
             }}
           >
-            Contactos
+            {t("webEditor.sectionContacts")}
           </h2>
           <div
             style={{
@@ -604,7 +633,7 @@ export function TPVWebEditorPage() {
             <label
               style={{ display: "flex", flexDirection: "column", gap: 4 }}
             >
-              <span style={{ fontSize: 12, color: "#e5e5e5" }}>Telefone</span>
+              <span style={{ fontSize: 12, color: "#e5e5e5" }}>{t("webEditor.labelPhone")}</span>
               <input
                 type="tel"
                 value={config.contacts.phone ?? ""}
@@ -635,7 +664,7 @@ export function TPVWebEditorPage() {
             </label>
           </div>
           <label style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-            <span style={{ fontSize: 12, color: "#e5e5e5" }}>Email</span>
+            <span style={{ fontSize: 12, color: "#e5e5e5" }}>{t("webEditor.labelEmail")}</span>
             <input
               type="email"
               value={config.contacts.email ?? ""}
@@ -649,7 +678,7 @@ export function TPVWebEditorPage() {
             />
           </label>
           <label style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-            <span style={{ fontSize: 12, color: "#e5e5e5" }}>Endereço</span>
+            <span style={{ fontSize: 12, color: "#e5e5e5" }}>{t("webEditor.labelAddress")}</span>
             <textarea
               value={config.contacts.address ?? ""}
               onChange={(e) =>
@@ -681,7 +710,7 @@ export function TPVWebEditorPage() {
               margin: 0,
             }}
           >
-            Destaques
+            {t("webEditor.sectionHighlights")}
           </h2>
           <span
             style={{
@@ -689,7 +718,7 @@ export function TPVWebEditorPage() {
               color: "#9ca3af",
             }}
           >
-            Até 3 cartões rápidos. Texto curto e direto — sem HTML.
+            {t("webEditor.highlightsHint")}
           </span>
           <div
             style={{
@@ -727,7 +756,7 @@ export function TPVWebEditorPage() {
                   >
                     <span
                       style={{ fontSize: 12, color: "#e5e5e5" }}
-                    >{`Título ${idx + 1}`}</span>
+                    >{t("webEditor.highlightTitle", { n: idx + 1 })}</span>
                     <input
                       type="text"
                       value={card.title}
@@ -748,7 +777,7 @@ export function TPVWebEditorPage() {
                     }}
                   >
                     <span style={{ fontSize: 12, color: "#e5e5e5" }}>
-                      Ícone (nome)
+                      {t("webEditor.labelIcon")}
                     </span>
                     <input
                       type="text"
@@ -766,7 +795,7 @@ export function TPVWebEditorPage() {
                   style={{ display: "flex", flexDirection: "column", gap: 4 }}
                 >
                   <span style={{ fontSize: 12, color: "#e5e5e5" }}>
-                    Texto curto
+                    {t("webEditor.labelShortText")}
                   </span>
                   <textarea
                     value={card.description ?? ""}
@@ -801,7 +830,7 @@ export function TPVWebEditorPage() {
               margin: 0,
             }}
           >
-            Status rápido
+            {t("webEditor.sectionStatus")}
           </h2>
           <div
             style={{
@@ -814,10 +843,10 @@ export function TPVWebEditorPage() {
               const active = config.status.mode === mode;
               const label =
                 mode === "open"
-                  ? "Aberto"
+                  ? t("webEditor.statusOpen")
                   : mode === "closed"
-                  ? "Fechado"
-                  : "Em pausa";
+                  ? t("webEditor.statusClosed")
+                  : t("webEditor.statusPaused");
               return (
                 <button
                   key={mode}
@@ -846,7 +875,7 @@ export function TPVWebEditorPage() {
           </div>
           <label style={{ display: "flex", flexDirection: "column", gap: 4 }}>
             <span style={{ fontSize: 12, color: "#e5e5e5" }}>
-              Mensagem (ex.: &ldquo;Cozinha fecha às 23h&rdquo;)
+              {t("webEditor.statusMessageLabel")}
             </span>
             <textarea
               value={config.status.message ?? ""}
@@ -877,12 +906,19 @@ export function TPVWebEditorPage() {
           </div>
         )}
 
+        </div>
+
+        {/* Action buttons — sticky at bottom */}
         <div
           style={{
             display: "flex",
             gap: 8,
-            marginTop: 8,
-            marginBottom: 16,
+            paddingTop: 12,
+            paddingBottom: 8,
+            paddingRight: 8,
+            flexWrap: "wrap",
+            borderTop: "1px solid rgba(148,163,184,0.1)",
+            flexShrink: 0,
           }}
         >
           <button
@@ -900,27 +936,50 @@ export function TPVWebEditorPage() {
               cursor: "pointer",
             }}
           >
-            {saving ? "A guardar rascunho…" : "Guardar rascunho"}
+            {saving ? t("webEditor.savingDraft") : t("webEditor.saveDraft")}
           </button>
           <button
             type="button"
             onClick={handlePublish}
-            disabled={publishing || saving}
+            disabled={publishing || saving || !hasUnpublishedChanges}
+            title={t("webEditor.publish")}
             style={{
               padding: "8px 16px",
               borderRadius: 999,
               border: "none",
-              background:
-                "linear-gradient(135deg, #22c55e, #4ade80, #22c55e, #16a34a)",
-              color: "#020617",
+              background: hasUnpublishedChanges
+                ? "linear-gradient(135deg, #22c55e, #4ade80, #22c55e, #16a34a)"
+                : "rgba(34,197,94,0.2)",
+              color: hasUnpublishedChanges ? "#020617" : "#6ee7b7",
               fontSize: 13,
               fontWeight: 600,
-              cursor: "pointer",
-              boxShadow: "0 0 0 1px rgba(22,163,74,0.5)",
+              cursor: hasUnpublishedChanges ? "pointer" : "default",
+              boxShadow: hasUnpublishedChanges
+                ? "0 0 0 1px rgba(22,163,74,0.5)"
+                : "none",
             }}
           >
-            {publishing ? "A publicar…" : "Publicar alterações"}
+            {publishing ? t("webEditor.publishing") : t("webEditor.publish")}
           </button>
+          {hasUnpublishedChanges && publishedConfig && (
+            <button
+              type="button"
+              onClick={handleDiscard}
+              disabled={saving || publishing}
+              style={{
+                padding: "8px 14px",
+                borderRadius: 999,
+                border: "1px solid rgba(248,113,113,0.4)",
+                backgroundColor: "transparent",
+                color: "#f87171",
+                fontSize: 13,
+                fontWeight: 500,
+                cursor: "pointer",
+              }}
+            >
+              {t("webEditor.discard")}
+            </button>
+          )}
         </div>
       </div>
 
@@ -935,334 +994,120 @@ export function TPVWebEditorPage() {
           display: "flex",
           flexDirection: "column",
           gap: 16,
-          overflow: "auto",
+          overflow: "hidden",
         }}
         data-testid="tpv-web-editor-preview"
       >
+        {/* Preview header with toggle + publish state */}
         <div
           style={{
             display: "flex",
             justifyContent: "space-between",
             alignItems: "center",
-            marginBottom: 8,
+            marginBottom: 4,
+            flexShrink: 0,
           }}
         >
-          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-            <div
-              style={{
-                width: 34,
-                height: 34,
-                borderRadius: "999px",
-                border: "2px solid rgba(248,250,252,0.9)",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                fontSize: 16,
-                fontWeight: 700,
-              }}
-            >
-              C
-            </div>
-            <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+          <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
               <span
+                style={{ fontSize: 14, fontWeight: 600, color: "#fafafa" }}
+              >
+                {t("webEditor.previewTitle")}
+              </span>
+              {/* Toggle: Preview / Publicada */}
+              <div
                 style={{
-                  fontSize: 14,
-                  fontWeight: 600,
+                  display: "flex",
+                  borderRadius: 8,
+                  border: "1px solid rgba(148,163,184,0.25)",
+                  overflow: "hidden",
                 }}
               >
-                Página Web — Preview
-              </span>
-              <span
-                style={{
-                  fontSize: 11,
-                  color: "#9ca3af",
-                }}
-              >
-                Esta é uma pré-visualização local. O cliente vê a versão
-                publicada.
-              </span>
+                {(["preview", "published"] as const).map((mode) => {
+                  const active = previewMode === mode;
+                  return (
+                    <button
+                      key={mode}
+                      type="button"
+                      onClick={() => setPreviewMode(mode)}
+                      style={{
+                        padding: "3px 10px",
+                        border: "none",
+                        fontSize: 11,
+                        fontWeight: active ? 600 : 400,
+                        backgroundColor: active
+                          ? "rgba(148,163,184,0.2)"
+                          : "transparent",
+                        color: active ? "#fafafa" : "#6b7280",
+                        cursor: "pointer",
+                      }}
+                    >
+                      {mode === "preview" ? t("webEditor.previewTab") : t("webEditor.publishedTab")}
+                    </button>
+                  );
+                })}
+              </div>
             </div>
+            <span style={{ fontSize: 11, color: "#9ca3af" }}>
+              {previewMode === "preview"
+                ? hasUnpublishedChanges
+                  ? t("webEditor.previewDescUnpublished")
+                  : t("webEditor.previewDescUpToDate")
+                : t("webEditor.previewDescPublished")}
+            </span>
           </div>
           <span
             style={{
               fontSize: 11,
               padding: "4px 10px",
               borderRadius: 999,
-              border: "1px solid rgba(148,163,184,0.4)",
-              color: "#e5e5e5",
+              border: `1px solid ${hasUnpublishedChanges ? "rgba(234,179,8,0.5)" : "rgba(34,197,94,0.5)"}`,
+              backgroundColor: hasUnpublishedChanges
+                ? "rgba(234,179,8,0.1)"
+                : "rgba(34,197,94,0.1)",
+              color: hasUnpublishedChanges ? "#eab308" : "#4ade80",
+              fontWeight: 500,
+              flexShrink: 0,
             }}
           >
-            Status: {statusLabel || "—"}
+            {hasUnpublishedChanges ? t("webEditor.statusDraft") : t("webEditor.statusPublished")}
           </span>
         </div>
 
-        <section
-          style={{
-            position: "relative",
-            borderRadius: 18,
-            overflow: "hidden",
-            minHeight: 180,
-            background:
-              "linear-gradient(135deg, #f97316 0%, #ef4444 38%, #0f172a 100%)",
-            padding: 20,
-            display: "flex",
-            flexDirection: "column",
-            justifyContent: "space-between",
-          }}
-        >
-          {config.hero.imageUrl && (
-            <img
-              src={config.hero.imageUrl}
-              alt=""
-              style={{
-                position: "absolute",
-                inset: 0,
-                width: "100%",
-                height: "100%",
-                objectFit: "cover",
-                opacity: 0.25,
-                filter: "grayscale(0.1)",
-              }}
-            />
-          )}
+        {/* Live iframe preview — renders the REAL public page */}
+        {publicPageUrl ? (
+          <iframe
+            ref={iframeRef}
+            key={iframeKey}
+            src={publicPageUrl}
+            title={t("webEditor.iframeTitle")}
+            style={{
+              flex: 1,
+              width: "100%",
+              border: "none",
+              borderRadius: 12,
+              backgroundColor: "#0a0a0a",
+            }}
+          />
+        ) : (
           <div
             style={{
-              position: "relative",
-              maxWidth: 420,
+              flex: 1,
               display: "flex",
-              flexDirection: "column",
-              gap: 8,
+              alignItems: "center",
+              justifyContent: "center",
+              color: "#737373",
+              fontSize: 13,
+              textAlign: "center",
+              padding: 24,
             }}
           >
-            <h1
-              style={{
-                fontSize: 24,
-                lineHeight: 1.1,
-                margin: 0,
-              }}
-            >
-              {config.hero.title}
-            </h1>
-            {config.hero.subtitle && (
-              <p
-                style={{
-                  margin: 0,
-                  fontSize: 13,
-                  color: "#fee2e2",
-                }}
-              >
-                {config.hero.subtitle}
-              </p>
-            )}
+            {identity.loading
+              ? t("webEditor.loadingPreview")
+              : t("webEditor.previewUnavailable")}
           </div>
-          <div
-            style={{
-              position: "relative",
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "flex-end",
-              marginTop: 12,
-            }}
-          >
-            <button
-              type="button"
-              style={{
-                padding: "8px 16px",
-                borderRadius: 999,
-                border: "none",
-                backgroundColor: "#0f172a",
-                color: "#fefce8",
-                fontSize: 13,
-                fontWeight: 600,
-                boxShadow: "0 10px 25px rgba(15,23,42,0.6)",
-              }}
-            >
-              {config.hero.ctaLabel || "Ver menu"}
-            </button>
-            {config.status.message && (
-              <div
-                style={{
-                  maxWidth: 260,
-                  padding: "8px 10px",
-                  borderRadius: 10,
-                  backgroundColor: "rgba(15,23,42,0.8)",
-                  border: "1px solid rgba(254,249,195,0.4)",
-                  fontSize: 11,
-                  color: "#fefce8",
-                }}
-              >
-                {config.status.message}
-              </div>
-            )}
-          </div>
-        </section>
-
-        <section
-          style={{
-            display: "grid",
-            gridTemplateColumns: "1.3fr 1.2fr",
-            gap: 16,
-          }}
-        >
-          <div
-            style={{
-              borderRadius: 16,
-              backgroundColor: "#020617",
-              border: "1px solid rgba(31,41,55,0.85)",
-              padding: 14,
-              display: "flex",
-              flexDirection: "column",
-              gap: 6,
-            }}
-          >
-            <h3
-              style={{
-                fontSize: 13,
-                fontWeight: 600,
-                margin: 0,
-              }}
-            >
-              Horário de hoje
-            </h3>
-            <div
-              style={{
-                display: "flex",
-                flexDirection: "column",
-                gap: 4,
-                fontSize: 11,
-                color: "#e5e5e5",
-              }}
-            >
-              {config.schedule.map((entry) => (
-                <div
-                  key={entry.day}
-                  style={{
-                    display: "flex",
-                    justifyContent: "space-between",
-                    opacity: entry.closed ? 0.5 : 1,
-                  }}
-                >
-                  <span>{DAYS_LABEL[entry.day] ?? entry.day}</span>
-                  <span>
-                    {entry.closed ? "Fechado" : `${entry.open} – ${entry.close}`}
-                  </span>
-                </div>
-              ))}
-            </div>
-          </div>
-          <div
-            style={{
-              borderRadius: 16,
-              backgroundColor: "#020617",
-              border: "1px solid rgba(31,41,55,0.85)",
-              padding: 14,
-              display: "flex",
-              flexDirection: "column",
-              gap: 6,
-              fontSize: 12,
-            }}
-          >
-            <h3
-              style={{
-                fontSize: 13,
-                fontWeight: 600,
-                margin: 0,
-              }}
-            >
-              Contactos
-            </h3>
-            {config.contacts.phone && (
-              <div style={{ display: "flex", justifyContent: "space-between" }}>
-                <span style={{ color: "#9ca3af" }}>Telefone</span>
-                <span>{config.contacts.phone}</span>
-              </div>
-            )}
-            {config.contacts.whatsapp && (
-              <div style={{ display: "flex", justifyContent: "space-between" }}>
-                <span style={{ color: "#9ca3af" }}>WhatsApp</span>
-                <span>{config.contacts.whatsapp}</span>
-              </div>
-            )}
-            {config.contacts.email && (
-              <div style={{ display: "flex", justifyContent: "space-between" }}>
-                <span style={{ color: "#9ca3af" }}>Email</span>
-                <span>{config.contacts.email}</span>
-              </div>
-            )}
-            {config.contacts.address && (
-              <div
-                style={{
-                  marginTop: 6,
-                  paddingTop: 6,
-                  borderTop: "1px dashed rgba(55,65,81,0.9)",
-                  color: "#e5e5e5",
-                  fontSize: 11,
-                  whiteSpace: "pre-wrap",
-                }}
-              >
-                {config.contacts.address}
-              </div>
-            )}
-          </div>
-        </section>
-
-        <section
-          style={{
-            borderRadius: 16,
-            backgroundColor: "#020617",
-            border: "1px solid rgba(31,41,55,0.85)",
-            padding: 14,
-            display: "grid",
-            gridTemplateColumns: "repeat(3, minmax(0,1fr))",
-            gap: 10,
-          }}
-        >
-          {config.highlights.map((card) => (
-            <div
-              key={card.id}
-              style={{
-                borderRadius: 12,
-                background:
-                  "radial-gradient(circle at top left, #1f2937 0, #020617 65%)",
-                border: "1px solid rgba(55,65,81,0.9)",
-                padding: 10,
-                display: "flex",
-                flexDirection: "column",
-                gap: 6,
-                fontSize: 11,
-              }}
-            >
-              <span
-                style={{
-                  fontSize: 11,
-                  textTransform: "uppercase",
-                  letterSpacing: 0.3,
-                  color: "#9ca3af",
-                }}
-              >
-                {card.icon || "destaque"}
-              </span>
-              <span
-                style={{
-                  fontSize: 13,
-                  fontWeight: 600,
-                }}
-              >
-                {card.title}
-              </span>
-              {card.description && (
-                <p
-                  style={{
-                    margin: 0,
-                    color: "#9ca3af",
-                  }}
-                >
-                  {card.description}
-                </p>
-              )}
-            </div>
-          ))}
-        </section>
+        )}
       </div>
     </div>
   );

@@ -63,6 +63,7 @@ import {
 } from "../../infra/readers/OrderReader";
 import { readOpenTasks } from "../../infra/readers/TaskReader";
 import { markItemReady } from "../../infra/writers/OrderWriter";
+import { markTableReadyToServe } from "../../infra/writers/TableWriter";
 import { GlobalLoadingView } from "../../ui/design-system/components";
 import { toUserMessage } from "../../ui/errors";
 import { RestaurantLogo } from "../../ui/RestaurantLogo";
@@ -142,7 +143,12 @@ function filterOrdersByStation<T extends { items: CoreOrderItem[] }>(
     .filter((order) => order.items.length > 0);
 }
 
-export function KDSMinimal() {
+interface KDSMinimalProps {
+  /** When set, locks the station filter (e.g. "KITCHEN" or "BAR") and hides tabs. */
+  defaultStation?: "ALL" | "BAR" | "KITCHEN";
+}
+
+export function KDSMinimal({ defaultStation }: KDSMinimalProps = {}) {
   const { t } = useTranslation("kds");
   const { identity } = useRestaurantIdentity();
   const readiness = useOperationalReadiness("KDS");
@@ -182,10 +188,11 @@ export function KDSMinimal() {
   const [updating, setUpdating] = useState<string | null>(null);
   const [markingItem, setMarkingItem] = useState<string | null>(null);
   const [realtimeStatus, setRealtimeStatus] = useState<string>("DISCONNECTED");
+  const lockedStation = defaultStation && defaultStation !== "ALL" ? defaultStation : null;
   const [stationFilter, setStationFilter] = useState<"ALL" | "BAR" | "KITCHEN">(
-    "ALL",
+    defaultStation ?? "ALL",
   );
-  const [activeTab, setActiveTab] = useState<"ALL" | "BAR" | "KITCHEN">("ALL");
+  const [activeTab, setActiveTab] = useState<"ALL" | "BAR" | "KITCHEN">(defaultStation ?? "ALL");
   const [tasks, setTasks] = useState<CoreTask[]>([]);
   const fetchDebounceRef = useRef<NodeJS.Timeout | null>(null);
   const ordersRef = useRef<number>(0);
@@ -370,6 +377,14 @@ export function KDSMinimal() {
       await loadOrders(true);
       if (result.all_items_ready) {
         console.log("✅ Todos os itens prontos! Pedido marcado como READY.");
+        // Bridge: mesa → ready_to_serve
+        const parentOrder = orders.find((o) =>
+          o.items.some((i) => i.id === itemId),
+        );
+        const tId = (parentOrder as any)?.table_id;
+        if (tId && rid) {
+          markTableReadyToServe(tId, rid).catch(() => {});
+        }
       }
     } catch (err) {
       console.error("Erro ao marcar item como pronto:", err);
@@ -463,7 +478,7 @@ export function KDSMinimal() {
               textDecoration: "underline",
             }}
           >
-            Ou instalar KDS no portal
+            {t("installFromPortal")}
           </Link>
         </div>
       </>
@@ -647,12 +662,13 @@ export function KDSMinimal() {
             }}
           >
             {realtimeStatus === "SUBSCRIBED"
-              ? "🟢 Atualização em tempo real"
-              : "Atualização periódica"}
+              ? t("realtimeActive")
+              : t("pollingActive")}
           </div>
         </div>
 
-        {/* Tabs por Estação */}
+        {/* Tabs por Estação — hidden when locked to a specific station */}
+        {!lockedStation && (
         <div
           style={{
             display: "flex",
@@ -733,6 +749,7 @@ export function KDSMinimal() {
             🍺 {t("tabBar")}
           </button>
         </div>
+        )}
       </div>
 
       {/* TASK ENGINE: Painel de Tarefas Automáticas */}
@@ -758,7 +775,7 @@ export function KDSMinimal() {
             flexShrink: 0,
           }}
         >
-          Nenhum pedido em preparação (todos prontos ou fechados).
+          {t("allOrdersReadyOrClosed")}
         </p>
       )}
       {/* KDS_LAYOUT_UX_CONTRACT §2: área lista — flex:1 minHeight:0 overflowY:auto (único scroll; sem barra preta) */}
@@ -794,8 +811,7 @@ export function KDSMinimal() {
             >
               <div>
                 <strong style={{ color: VPC.text }}>
-                  Pedido #
-                  {order.number || order.short_id || order.id.slice(0, 8)}
+                  {t("orderNumber", { id: order.number || order.short_id || order.id.slice(0, 8) })}
                 </strong>
                 <OriginBadge
                   origin={order.sync_metadata?.origin as string | undefined}
@@ -814,25 +830,25 @@ export function KDSMinimal() {
                     }}
                   >
                     🔴{" "}
-                    {orderStatus.dominantStation === "BAR" ? "BAR" : "COZINHA"}{" "}
-                    Atrasado
+                    {orderStatus.dominantStation === "BAR" ? t("station.bar") : t("station.kitchen")}{" "}
+                    {t("statusDelay")}
                   </span>
                 )}
                 {orderStatus.state === "attention" && (
                   <span style={{ color: "#eab308", marginLeft: "8px" }}>
                     🟡{" "}
-                    {orderStatus.dominantStation === "BAR" ? "BAR" : "COZINHA"}{" "}
-                    Atenção
+                    {orderStatus.dominantStation === "BAR" ? t("station.bar") : t("station.kitchen")}{" "}
+                    {t("statusAttention")}
                   </span>
                 )}
                 {orderStatus.state === "normal" && (
                   <span style={{ color: "#22c55e", marginLeft: "8px" }}>
-                    🟢 No prazo
+                    🟢 {t("statusOnTime")}
                   </span>
                 )}
               </div>
               <div>
-                Status: {order.status ?? "—"}
+                {t("statusLabel")}: {order.status ?? "—"}
                 {(order as any)._unknownStatus && (
                   <span
                     style={{
@@ -840,13 +856,13 @@ export function KDSMinimal() {
                       color: "#eab308",
                       fontWeight: 600,
                     }}
-                    title="Status desconhecido (ORDER_STATUS_CONTRACT_v1)"
+                    title={t("unknownStatusTooltip")}
                   >
-                    ⚠️ Status desconhecido
+                    ⚠️ {t("unknownStatus")}
                   </span>
                 )}
               </div>
-              {order.table_number && <div>Mesa: {order.table_number}</div>}
+              {order.table_number && <div>{t("tableLabel")}: {order.table_number}</div>}
               {/* MENU_DERIVATIONS: KDS não exibe preço (apenas product_id + nome). */}
               {/* FASE 6: Ação única - botão para iniciar preparo */}
               {String(order.status ?? "")
@@ -872,14 +888,14 @@ export function KDSMinimal() {
                     }}
                   >
                     {updating === order.id
-                      ? "A processar..."
-                      : "Iniciar preparo"}
+                      ? t("processingAction")
+                      : t("startPreparation")}
                   </button>
                 </div>
               )}
               {/* Itens agrupados por estação — sempre mostrar Cozinha e Bar para divisão clara */}
               <div>
-                <strong>Itens:</strong>
+                <strong>{t("itemsLabel")}:</strong>
 
                 {(() => {
                   const itemsByStation = order.items.reduce((acc, item) => {
@@ -909,8 +925,7 @@ export function KDSMinimal() {
                             borderBottom: `1px solid ${VPC.border}`,
                           }}
                         >
-                          🍳 COZINHA ({kitchenItems.length} item
-                          {kitchenItems.length !== 1 ? "s" : ""})
+                          🍳 {t("station.kitchen")} ({t("itemCount", { count: kitchenItems.length })})
                         </div>
                         <ul style={{ listStyle: "none", padding: 0 }}>
                           {kitchenItems.map((item) => {
@@ -1036,7 +1051,7 @@ export function KDSMinimal() {
                                         borderRadius: "4px",
                                       }}
                                     >
-                                      🧠 TAREFA
+                                      🧠 {t("taskBadge")}
                                     </span>
                                   )}
                                   <span style={{ flex: 1, fontWeight: "500" }}>
@@ -1051,7 +1066,7 @@ export function KDSMinimal() {
                                         fontWeight: "bold",
                                       }}
                                     >
-                                      ✅ Pronto
+                                      ✅ {t("itemReady")}
                                     </span>
                                   )}
                                   {/* MENU_DERIVATIONS: KDS não exibe preço por item. */}
@@ -1067,16 +1082,8 @@ export function KDSMinimal() {
                                     }}
                                   >
                                     {timeDifference >= 0
-                                      ? `⏱️ ${timeDifferenceMinutes} min acima do esperado (${Math.floor(
-                                          actualTimeSeconds / 60,
-                                        )} min real vs ${Math.floor(
-                                          prepTimeSeconds / 60,
-                                        )} min esperado)`
-                                      : `⏱️ ${timeDifferenceMinutes} min abaixo do esperado (${Math.floor(
-                                          actualTimeSeconds / 60,
-                                        )} min real vs ${Math.floor(
-                                          prepTimeSeconds / 60,
-                                        )} min esperado)`}
+                                      ? `⏱️ ${t("timeAboveExpected", { diff: timeDifferenceMinutes, actual: Math.floor(actualTimeSeconds / 60), expected: Math.floor(prepTimeSeconds / 60) })}`
+                                      : `⏱️ ${t("timeBelowExpected", { diff: timeDifferenceMinutes, actual: Math.floor(actualTimeSeconds / 60), expected: Math.floor(prepTimeSeconds / 60) })}`}
                                   </div>
                                 )}
 
@@ -1099,7 +1106,7 @@ export function KDSMinimal() {
                                       }
                                       title={
                                         order.status === "OPEN"
-                                          ? "Inicie o preparo primeiro"
+                                          ? t("startPrepFirst")
                                           : undefined
                                       }
                                       style={{
@@ -1125,10 +1132,10 @@ export function KDSMinimal() {
                                       }}
                                     >
                                       {markingItem === item.id
-                                        ? "A marcar..."
+                                        ? t("markingItem")
                                         : order.status === "OPEN"
-                                        ? "⏳ Inicie o preparo primeiro"
-                                        : "✅ Item pronto"}
+                                        ? `⏳ ${t("startPrepFirst")}`
+                                        : `✅ ${t("markItemReady")}`}
                                     </button>
                                   </div>
                                 )}
@@ -1148,8 +1155,7 @@ export function KDSMinimal() {
                             borderBottom: `1px solid ${VPC.border}`,
                           }}
                         >
-                          🍺 BAR ({barItems.length} item
-                          {barItems.length !== 1 ? "s" : ""})
+                          🍺 {t("station.bar")} ({t("itemCount", { count: barItems.length })})
                         </div>
                         <ul style={{ listStyle: "none", padding: 0 }}>
                           {barItems.map((item) => {
@@ -1261,7 +1267,7 @@ export function KDSMinimal() {
                                         borderRadius: "4px",
                                       }}
                                     >
-                                      🧠 TAREFA
+                                      🧠 {t("taskBadge")}
                                     </span>
                                   )}
                                   <span style={{ flex: 1, fontWeight: "500" }}>
@@ -1276,7 +1282,7 @@ export function KDSMinimal() {
                                         fontWeight: "bold",
                                       }}
                                     >
-                                      ✅ Pronto
+                                      ✅ {t("itemReady")}
                                     </span>
                                   )}
                                 </div>
@@ -1289,8 +1295,8 @@ export function KDSMinimal() {
                                     }}
                                   >
                                     {timeDifference >= 0
-                                      ? `⏱️ ${timeDifferenceMinutes} min acima do esperado`
-                                      : `⏱️ ${timeDifferenceMinutes} min abaixo do esperado`}
+                                      ? `⏱️ ${t("timeAboveExpectedShort", { diff: timeDifferenceMinutes })}`
+                                      : `⏱️ ${t("timeBelowExpectedShort", { diff: timeDifferenceMinutes })}`}
                                   </div>
                                 )}
                                 {!isItemReady && (
@@ -1311,7 +1317,7 @@ export function KDSMinimal() {
                                       }
                                       title={
                                         order.status === "OPEN"
-                                          ? "Inicie o preparo primeiro"
+                                          ? t("startPrepFirst")
                                           : undefined
                                       }
                                       style={{
@@ -1337,10 +1343,10 @@ export function KDSMinimal() {
                                       }}
                                     >
                                       {markingItem === item.id
-                                        ? "A marcar..."
+                                        ? t("markingItem")
                                         : order.status === "OPEN"
-                                        ? "⏳ Inicie o preparo primeiro"
-                                        : "✅ Item pronto"}
+                                        ? `⏳ ${t("startPrepFirst")}`
+                                        : `✅ ${t("markItemReady")}`}
                                     </button>
                                   </div>
                                 )}

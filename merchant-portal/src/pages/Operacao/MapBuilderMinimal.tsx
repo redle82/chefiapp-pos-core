@@ -5,6 +5,7 @@
  */
 
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import type {
   CoreRestaurantTable,
   CoreRestaurantZone,
@@ -21,15 +22,10 @@ interface MapBuilderMinimalProps {
   restaurantId: string;
 }
 
-const ZONE_CODES = [
-  { code: "BAR", name: "Bar" },
-  { code: "KITCHEN", name: "Cozinha" },
-  { code: "PASS", name: "Pass" },
-  { code: "SERVICE", name: "Salão" },
-  { code: "CASHIER", name: "Caixa" },
-];
+const ZONE_CODE_KEYS = ["BAR", "KITCHEN", "PASS", "SERVICE", "CASHIER"] as const;
 
 export function MapBuilderMinimal({ restaurantId }: MapBuilderMinimalProps) {
+  const { t } = useTranslation("operational");
   const [zones, setZones] = useState<CoreRestaurantZone[]>([]);
   const [tables, setTables] = useState<CoreRestaurantTable[]>([]);
   const [loading, setLoading] = useState(true);
@@ -91,7 +87,7 @@ export function MapBuilderMinimal({ restaurantId }: MapBuilderMinimalProps) {
   };
 
   const handleDeleteZone = async (zoneId: string) => {
-    if (!confirm("Tem certeza que deseja desativar esta zona?")) return;
+    if (!confirm(t("mapBuilder.confirmDeactivateZone"))) return;
     try {
       await deactivateZone(zoneId);
       await loadMap();
@@ -101,7 +97,7 @@ export function MapBuilderMinimal({ restaurantId }: MapBuilderMinimalProps) {
   };
 
   const handleDeleteTable = async (tableId: string) => {
-    if (!confirm("Tem certeza que deseja desativar esta mesa?")) return;
+    if (!confirm(t("mapBuilder.confirmDeactivateTable"))) return;
     try {
       await deactivateTable(tableId);
       await loadMap();
@@ -111,7 +107,7 @@ export function MapBuilderMinimal({ restaurantId }: MapBuilderMinimalProps) {
   };
 
   if (loading) {
-    return <div>Carregando mapa...</div>;
+    return <div>{t("mapBuilder.loading")}</div>;
   }
 
   return (
@@ -121,7 +117,7 @@ export function MapBuilderMinimal({ restaurantId }: MapBuilderMinimalProps) {
         <h3
           style={{ fontSize: "18px", fontWeight: "bold", marginBottom: "16px" }}
         >
-          🗺️ Zonas do Restaurante
+          {t("mapBuilder.zonesTitle")}
         </h3>
 
         {/* Criar Nova Zona */}
@@ -150,7 +146,7 @@ export function MapBuilderMinimal({ restaurantId }: MapBuilderMinimalProps) {
                   fontWeight: "bold",
                 }}
               >
-                Código
+                {t("mapBuilder.codeLabel")}
               </label>
               <select
                 value={newZoneCode}
@@ -163,9 +159,9 @@ export function MapBuilderMinimal({ restaurantId }: MapBuilderMinimalProps) {
                   fontSize: "14px",
                 }}
               >
-                {ZONE_CODES.map((z) => (
-                  <option key={z.code} value={z.code}>
-                    {z.name}
+                {ZONE_CODE_KEYS.map((code) => (
+                  <option key={code} value={code}>
+                    {t(`mapBuilder.zone.${code}`)}
                   </option>
                 ))}
               </select>
@@ -179,13 +175,13 @@ export function MapBuilderMinimal({ restaurantId }: MapBuilderMinimalProps) {
                   fontWeight: "bold",
                 }}
               >
-                Nome
+                {t("mapBuilder.nameLabel")}
               </label>
               <input
                 type="text"
                 value={newZoneName}
                 onChange={(e) => setNewZoneName(e.target.value)}
-                placeholder="Ex: Salão Principal"
+                placeholder={t("mapBuilder.zoneNamePlaceholder")}
                 style={{
                   width: "100%",
                   padding: "8px",
@@ -208,7 +204,7 @@ export function MapBuilderMinimal({ restaurantId }: MapBuilderMinimalProps) {
                 fontWeight: "bold",
               }}
             >
-              + Criar Zona
+              {t("mapBuilder.createZone")}
             </button>
           </div>
         </div>
@@ -260,7 +256,7 @@ export function MapBuilderMinimal({ restaurantId }: MapBuilderMinimalProps) {
         <h3
           style={{ fontSize: "18px", fontWeight: "bold", marginBottom: "16px" }}
         >
-          🪑 Mesas
+          {t("mapBuilder.tablesTitle")}
         </h3>
 
         {/* Criar Nova Mesa */}
@@ -289,7 +285,7 @@ export function MapBuilderMinimal({ restaurantId }: MapBuilderMinimalProps) {
                   fontWeight: "bold",
                 }}
               >
-                Número da Mesa
+                {t("mapBuilder.tableNumberLabel")}
               </label>
               <input
                 type="number"
@@ -316,7 +312,7 @@ export function MapBuilderMinimal({ restaurantId }: MapBuilderMinimalProps) {
                   fontWeight: "bold",
                 }}
               >
-                Zona (opcional)
+                {t("mapBuilder.zoneOptional")}
               </label>
               <select
                 value={newTableZone}
@@ -329,7 +325,7 @@ export function MapBuilderMinimal({ restaurantId }: MapBuilderMinimalProps) {
                   fontSize: "14px",
                 }}
               >
-                <option value="">Sem zona</option>
+                <option value="">{t("mapBuilder.noZone")}</option>
                 {zones.map((z) => (
                   <option key={z.id} value={z.id}>
                     {z.name}
@@ -350,7 +346,7 @@ export function MapBuilderMinimal({ restaurantId }: MapBuilderMinimalProps) {
                 fontWeight: "bold",
               }}
             >
-              + Criar Mesa
+              {t("mapBuilder.createTable")}
             </button>
           </div>
         </div>
@@ -374,7 +370,7 @@ export function MapBuilderMinimal({ restaurantId }: MapBuilderMinimalProps) {
               >
                 <div>
                   <span style={{ fontWeight: "bold" }}>
-                    Mesa {table.number}
+                    {t("mapBuilder.tableLabel", { number: table.number })}
                   </span>
                   {zone && (
                     <span

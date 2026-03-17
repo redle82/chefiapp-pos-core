@@ -1,18 +1,18 @@
-/* ShiftCard Styles */
+/* ShiftCard Styles — Dark theme compatible */
 
 .shift-card {
-  background-color: var(--color-neutral-0, #ffffff);
-  border: 1px solid var(--color-neutral-200, #eeeeee);
-  border-left: 6px solid var(--color-primary, #2a9d3e);
+  background-color: var(--surface-elevated, #1a1a1a);
+  border: 1px solid var(--border-subtle, rgba(255,255,255,0.08));
+  border-left: 6px solid var(--color-primary, #22c55e);
   border-radius: var(--radius-sm, 8px);
   padding: var(--spacing-md, 16px);
   transition: all 200ms ease;
   cursor: pointer;
-  box-shadow: var(--elevation-sm, 0 2px 4px rgba(0, 0, 0, 0.08));
+  box-shadow: var(--elevation-sm, 0 2px 8px rgba(0, 0, 0, 0.2));
 }
 
 .shift-card:hover {
-  box-shadow: var(--elevation-md, 0 4px 8px rgba(0, 0, 0, 0.12));
+  box-shadow: var(--elevation-md, 0 4px 12px rgba(0, 0, 0, 0.3));
   transform: translateY(-2px);
 }
 
@@ -20,35 +20,35 @@
   transform: translateY(0);
 }
 
-/* Status variants */
+/* Status variants — dark theme */
 .shift-card--pending {
-  background-color: rgba(33, 150, 243, 0.02);
+  background-color: rgba(59, 130, 246, 0.06);
 }
 
 .shift-card--active {
-  background-color: rgba(76, 175, 80, 0.02);
+  background-color: rgba(34, 197, 94, 0.06);
 }
 
 .shift-card--completed {
-  background-color: rgba(158, 158, 158, 0.02);
+  background-color: rgba(156, 163, 175, 0.04);
 }
 
 .shift-card--absent {
-  background-color: rgba(239, 83, 80, 0.04);
+  background-color: rgba(239, 83, 80, 0.06);
 }
 
 /* Risk level variants */
 .shift-card--high {
-  border-left-color: #ef5350;
-  box-shadow: inset 0 0 0 1px rgba(239, 83, 80, 0.2);
+  border-left-color: #ef4444;
+  box-shadow: inset 0 0 0 1px rgba(239, 68, 68, 0.2);
 }
 
 .shift-card--medium {
-  border-left-color: #ff9800;
+  border-left-color: #f59e0b;
 }
 
 .shift-card--low {
-  border-left-color: #4caf50;
+  border-left-color: #22c55e;
 }
 
 /* Compact mode */
@@ -75,13 +75,13 @@
   margin: 0;
   font-size: 15px;
   font-weight: 700;
-  color: var(--color-neutral-900, #1a1a1a);
+  color: var(--text-primary, #fafafa);
 }
 
 .shift-card__role {
   font-size: 12px;
   font-weight: 600;
-  color: var(--color-neutral-500, #757575);
+  color: var(--text-secondary, #9ca3af);
 }
 
 .shift-card__badges {
@@ -97,7 +97,7 @@
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.5px;
-  color: var(--color-neutral-0, #ffffff);
+  color: #ffffff;
   padding: 4px 8px;
   border-radius: var(--radius-xs, 4px);
 }
@@ -110,11 +110,11 @@
 }
 
 .shift-card__compliance--warning {
-  color: var(--color-warning, #ff9800);
+  color: #f59e0b;
 }
 
 .shift-card__compliance--alert {
-  color: var(--color-error, #ef5350);
+  color: #ef4444;
   animation: pulse 1.5s ease-in-out infinite;
 }
 
@@ -134,7 +134,7 @@
   gap: var(--spacing-md, 16px);
   margin-bottom: var(--spacing-md, 16px);
   padding-bottom: var(--spacing-md, 16px);
-  border-bottom: 1px solid var(--color-neutral-100, #f5f5f5);
+  border-bottom: 1px solid var(--border-subtle, rgba(255,255,255,0.08));
 }
 
 .shift-card__time-item {
@@ -144,8 +144,8 @@
 }
 
 .shift-card__time-item--elapsed {
-  background-color: var(--color-primary, #2a9d3e);
-  color: var(--color-neutral-0, #ffffff);
+  background-color: rgba(34, 197, 94, 0.12);
+  color: #4ade80;
   padding: var(--spacing-sm, 8px);
   border-radius: var(--radius-xs, 4px);
 }
@@ -154,22 +154,22 @@
   font-size: 11px;
   font-weight: 600;
   text-transform: uppercase;
-  color: var(--color-neutral-500, #757575);
+  color: var(--text-secondary, #9ca3af);
   letter-spacing: 0.3px;
 }
 
 .shift-card__time-item--elapsed .shift-card__time-label {
-  color: rgba(255, 255, 255, 0.8);
+  color: rgba(74, 222, 128, 0.8);
 }
 
 .shift-card__time-value {
   font-size: 14px;
   font-weight: 700;
-  color: var(--color-neutral-900, #1a1a1a);
+  color: var(--text-primary, #fafafa);
 }
 
 .shift-card__time-item--elapsed .shift-card__time-value {
-  color: var(--color-neutral-0, #ffffff);
+  color: #4ade80;
 }
 
 /* Active Tasks */
@@ -178,8 +178,8 @@
   align-items: center;
   justify-content: space-between;
   padding: var(--spacing-sm, 8px) var(--spacing-md, 16px);
-  background-color: rgba(33, 150, 243, 0.08);
-  border-left: 3px solid var(--color-info, #2196f3);
+  background-color: rgba(59, 130, 246, 0.08);
+  border-left: 3px solid #3b82f6;
   border-radius: var(--radius-xs, 4px);
   margin-bottom: var(--spacing-md, 16px);
 }
@@ -187,15 +187,15 @@
 .shift-card__tasks-label {
   font-size: 12px;
   font-weight: 600;
-  color: var(--color-info, #2196f3);
+  color: #60a5fa;
   text-transform: uppercase;
 }
 
 .shift-card__tasks-count {
   font-size: 16px;
   font-weight: 700;
-  color: var(--color-info, #2196f3);
-  background-color: rgba(33, 150, 243, 0.2);
+  color: #60a5fa;
+  background-color: rgba(59, 130, 246, 0.2);
   padding: 2px 8px;
   border-radius: var(--radius-xs, 4px);
 }
@@ -211,16 +211,16 @@
 
 .shift-card__alert--high,
 .shift-card__alert--alert {
-  background-color: rgba(239, 83, 80, 0.1);
-  color: var(--color-error, #ef5350);
-  border-left: 3px solid var(--color-error, #ef5350);
+  background-color: rgba(239, 68, 68, 0.1);
+  color: #f87171;
+  border-left: 3px solid #ef4444;
 }
 
 .shift-card__alert--medium,
 .shift-card__alert--warning {
-  background-color: rgba(255, 152, 0, 0.1);
-  color: var(--color-warning, #ff9800);
-  border-left: 3px solid var(--color-warning, #ff9800);
+  background-color: rgba(245, 158, 11, 0.1);
+  color: #fbbf24;
+  border-left: 3px solid #f59e0b;
 }
 
 /* Actions */
@@ -241,30 +241,30 @@
 }
 
 .shift-card__action-btn--start {
-  background-color: var(--color-primary, #2a9d3e);
-  color: var(--color-neutral-0, #ffffff);
+  background-color: #22c55e;
+  color: #000;
 }
 
 .shift-card__action-btn--start:hover {
-  background-color: #228a34;
+  background-color: #16a34a;
 }
 
 .shift-card__action-btn--end {
-  background-color: var(--color-warning, #ff9800);
-  color: var(--color-neutral-0, #ffffff);
+  background-color: #f59e0b;
+  color: #000;
 }
 
 .shift-card__action-btn--end:hover {
-  background-color: #f57c00;
+  background-color: #d97706;
 }
 
 .shift-card__action-btn--close {
-  background-color: var(--color-error, #ef5350);
-  color: var(--color-neutral-0, #ffffff);
+  background-color: #ef4444;
+  color: #ffffff;
 }
 
 .shift-card__action-btn--close:hover {
-  background-color: #e53935;
+  background-color: #dc2626;
 }
 
 .shift-card__action-btn:active {

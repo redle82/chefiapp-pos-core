@@ -4,6 +4,7 @@
 
 import { createOrderAtomic } from "../../core/infra/CoreOrdersApi";
 import { dockerCoreClient } from "../docker-core/connection";
+import { occupyTableForOrder } from "./TableWriter";
 
 export interface OrderItemInput {
   product_id: string | null;
@@ -18,9 +19,17 @@ export interface CreateOrderResult {
   status: string;
 }
 
+/** Informação de mesa para associar ao pedido. */
+export interface OrderTableInfo {
+  tableId: string;
+  tableNumber: number;
+}
+
 /**
  * Cria pedido atómico no Core (RPC create_order_atomic).
  * O Core persiste sync_metadata.origin; KDS/AppStaff exibem badge "WEB" quando origin === "WEB_PUBLIC".
+ * Se tableInfo fornecido, table_id e table_number são incluídos em sync_metadata
+ * (o RPC extrai e persiste em gm_orders) e a mesa é automaticamente ocupada.
  * Contrato: PUBLIC_WEB_ORDER_FLOW_CONTRACT.md
  */
 export async function createOrder(
@@ -28,9 +37,20 @@ export async function createOrder(
   items: OrderItemInput[],
   origin: string = "CAIXA",
   paymentMethod: string = "cash",
-  syncMetadata?: Record<string, unknown>
+  syncMetadata?: Record<string, unknown>,
+  tableInfo?: OrderTableInfo | null,
 ): Promise<CreateOrderResult> {
-  const sync = { ...(syncMetadata ?? {}), origin };
+  const sync: Record<string, unknown> = {
+    ...(syncMetadata ?? {}),
+    origin,
+  };
+
+  // Inject table info into sync_metadata — RPC extracts table_id/table_number from here
+  if (tableInfo) {
+    sync.table_id = tableInfo.tableId;
+    sync.table_number = tableInfo.tableNumber;
+  }
+
   const params = {
     p_restaurant_id: restaurantId,
     p_items: items.map((i) => ({
@@ -45,6 +65,12 @@ export async function createOrder(
   const { data, error } = await createOrderAtomic(params);
   if (error) throw new Error(error.message ?? "Falha ao criar pedido");
   if (!data?.id) throw new Error("Core não devolveu id do pedido");
+
+  // Auto-occupy table (fire-and-forget, non-blocking)
+  if (tableInfo) {
+    occupyTableForOrder(tableInfo.tableId, restaurantId).catch(() => {});
+  }
+
   return {
     id: data.id,
     total_cents: data.total_cents ?? 0,

@@ -1,5 +1,11 @@
 /**
- * TPVKitchenPage — KDS/Command Center embebido no TPV HUB.
+ * TPVKitchenPage — KDS Supervisão / Command Center embebido no TPV HUB.
+ *
+ * Visão de SUPERVISÃO: vê todas as estações (ALL/KITCHEN/BAR), todos os pedidos,
+ * com filtros por origem. Acessível pelo caixa/gerente no TPV central.
+ *
+ * Visão de EXECUÇÃO (cozinha/bar dedicados) vive em /screen/kitchen e /screen/bar,
+ * que usam KDSMinimal dentro de ScreenLayout — sem sidebar/header do TPV.
  *
  * Layout em 3 colunas:
  * - Fila (esquerda): pedidos por origem + seleção
@@ -8,30 +14,35 @@
  */
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { useOutletContext } from "react-router-dom";
+import { useTranslation } from "react-i18next";
+import { useOutletContext, useSearchParams } from "react-router-dom";
 import { useRestaurantRuntime } from "../../context/RestaurantRuntimeContext";
-import { useCurrency } from "../../core/currency/useCurrency";
 import { useFormatLocale } from "../../core/i18n/useFormatLocale";
 import { updateOrderStatus as coreUpdateOrderStatus } from "../../core/infra/CoreOrdersApi";
 import type { CoreOrder, CoreOrderItem } from "../../infra/docker-core/types";
 import {
   readActiveOrders,
   readOrderItems,
+  readPreparedItems,
   type ActiveOrderRow,
+  type PreparedItem,
 } from "../../infra/readers/OrderReader";
 import { markItemReady } from "../../infra/writers/OrderWriter";
+import { markTableReadyToServe } from "../../infra/writers/TableWriter";
 import { ItemTimer } from "../KDSMinimal/ItemTimer";
 import {
   calculateOrderStatus,
   type OrderStatusResult,
 } from "../KDSMinimal/OrderStatusCalculator";
 import { OriginBadge } from "../KDSMinimal/OriginBadge";
+import { TPVCentralEmitters } from "../../core/tpv/TPVCentralEvents";
 import { useTPVRestaurantId } from "./hooks/useTPVRestaurantId";
 
 // ---------------------------------------------------------------------------
 // Types
 // ---------------------------------------------------------------------------
 
+// Extensível para EXPO e CUSTOMER_DISPLAY quando implementados
 type StationFilter = "ALL" | "KITCHEN" | "BAR";
 type OriginFilter = "ALL" | "TPV" | "WEB" | "GARCOM" | "QR_MESA" | "APP";
 
@@ -142,18 +153,18 @@ const ACTION_BTN = (
 const getOrderLabel = (order: CoreOrder) =>
   order.number ?? order.short_id ?? order.id.slice(0, 6);
 
-const getOrderStatus = (status: string) => {
+const getOrderStatus = (status: string, t: (key: string) => string) => {
   switch (status) {
     case "OPEN":
-      return { label: "Novo", color: "#eab308", bg: "rgba(234,179,8,0.15)" };
+      return { label: t("tpvKitchen.statusNew"), color: "#eab308", bg: "rgba(234,179,8,0.15)" };
     case "IN_PREP":
       return {
-        label: "Preparando",
+        label: t("tpvKitchen.statusPreparing"),
         color: "#3b82f6",
         bg: "rgba(59,130,246,0.15)",
       };
     case "READY":
-      return { label: "Pronto", color: "#22c55e", bg: "rgba(34,197,94,0.15)" };
+      return { label: t("tpvKitchen.statusReady"), color: "#22c55e", bg: "rgba(34,197,94,0.15)" };
     default:
       return {
         label: status,
@@ -200,16 +211,10 @@ const matchesOriginFilter = (order: CoreOrder, filter: OriginFilter) => {
 // ---------------------------------------------------------------------------
 
 export function TPVKitchenPage() {
+  const { t } = useTranslation("kds");
   const restaurantId = useTPVRestaurantId();
   const { runtime } = useRestaurantRuntime();
-  const { formatAmount } = useCurrency();
   const locale = useFormatLocale();
-
-  /** Null-safe cents formatter using currency-aware formatAmount. */
-  const formatCents = (value?: number | null) => {
-    if (value == null || Number.isNaN(value)) return "—";
-    return formatAmount(value);
-  };
 
   const outletContext = useOutletContext<{
     emitKitchenPressure?: (stats: {
@@ -219,13 +224,70 @@ export function TPVKitchenPage() {
     }) => void;
   }>();
 
+  // Dedicated mode: lock to a specific station when opened via ?station=KITCHEN|BAR
+  const [searchParams] = useSearchParams();
+  const stationParam = searchParams.get("station")?.toUpperCase() as StationFilter | null;
+  const isDedicated = stationParam === "KITCHEN" || stationParam === "BAR";
+
   const [orders, setOrders] = useState<OrderWithItems[]>([]);
   const [loading, setLoading] = useState(true);
-  const [stationFilter, setStationFilter] = useState<StationFilter>("ALL");
+  const [stationFilterState, setStationFilter] = useState<StationFilter>("ALL");
+  // In dedicated mode, stationParam overrides the local state unconditionally.
+  const stationFilter: StationFilter = isDedicated ? stationParam! : stationFilterState;
   const [originFilter, setOriginFilter] = useState<OriginFilter>("ALL");
   const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
   const [acting, setActing] = useState<string | null>(null);
+  /** IDs of orders that just appeared — used for flash highlight in dedicated mode. */
+  const [newOrderIds, setNewOrderIds] = useState<Set<string>>(new Set());
+  /** View mode: "queue" = active orders, "history" = prepared items */
+  const [viewMode, setViewMode] = useState<"queue" | "history">("queue");
+  const [preparedItems, setPreparedItems] = useState<PreparedItem[]>([]);
+  const [historyLoading, setHistoryLoading] = useState(false);
   const mountedRef = useRef(true);
+  const prevOrderIdsRef = useRef<Set<string>>(new Set());
+
+  // ---- New order sound (Web Audio API — no external files) ----
+  const playNewOrderSound = useCallback(() => {
+    try {
+      const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
+      // Double beep: bip-bip
+      [0, 0.15].forEach((offset) => {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.type = "sine";
+        osc.frequency.value = 880; // A5
+        gain.gain.value = 0.3;
+        osc.start(ctx.currentTime + offset);
+        osc.stop(ctx.currentTime + offset + 0.1);
+      });
+    } catch {
+      // Audio not available — silent fallback
+    }
+  }, []);
+
+  // ---- "Order ready" chime (success sound) ----
+  const playReadySound = useCallback(() => {
+    try {
+      const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
+      // Rising chime: C6 → E6 → G6
+      [0, 0.12, 0.24].forEach((offset, i) => {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.type = "sine";
+        osc.frequency.value = [1047, 1319, 1568][i]; // C6, E6, G6
+        gain.gain.value = 0.25;
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + offset + 0.2);
+        osc.start(ctx.currentTime + offset);
+        osc.stop(ctx.currentTime + offset + 0.2);
+      });
+    } catch {
+      // Audio not available — silent fallback
+    }
+  }, []);
 
   // ---- Load orders + items ----
   const loadOrders = useCallback(async () => {
@@ -278,15 +340,41 @@ export function TPVKitchenPage() {
       }
 
       if (mountedRef.current) {
-        // Only show non-expired orders in KDS
-        setOrders(enriched.filter((e) => !e.expired));
+        const active = enriched.filter((e) => !e.expired);
+        // Detect new orders: play sound + flash highlight in dedicated mode
+        const currentIds = new Set(active.map((o) => o.order.id));
+        if (prevOrderIdsRef.current.size > 0) {
+          const freshIds = [...currentIds].filter(
+            (id) => !prevOrderIdsRef.current.has(id),
+          );
+          if (freshIds.length > 0) {
+            playNewOrderSound();
+            if (isDedicated) {
+              setNewOrderIds((prev) => {
+                const next = new Set(prev);
+                for (const id of freshIds) next.add(id);
+                return next;
+              });
+              // Auto-clear highlight after 5s
+              setTimeout(() => {
+                setNewOrderIds((prev) => {
+                  const next = new Set(prev);
+                  for (const id of freshIds) next.delete(id);
+                  return next;
+                });
+              }, 5000);
+            }
+          }
+        }
+        prevOrderIdsRef.current = currentIds;
+        setOrders(active);
       }
     } catch (err) {
       console.error("[TPV Kitchen] Error loading orders:", err);
     } finally {
       if (mountedRef.current) setLoading(false);
     }
-  }, [restaurantId, runtime.loading, runtime.coreReachable]);
+  }, [restaurantId, runtime.loading, runtime.coreReachable, playNewOrderSound]);
 
   useEffect(() => {
     mountedRef.current = true;
@@ -297,6 +385,32 @@ export function TPVKitchenPage() {
       clearInterval(interval);
     };
   }, [loadOrders]);
+
+  // ---- Load prepared items when history view is active ----
+  const loadHistory = useCallback(async () => {
+    if (!restaurantId) return;
+    setHistoryLoading(true);
+    try {
+      const stationArg = isDedicated
+        ? (stationFilter as "KITCHEN" | "BAR")
+        : stationFilter !== "ALL"
+        ? (stationFilter as "KITCHEN" | "BAR")
+        : undefined;
+      const items = await readPreparedItems(restaurantId, stationArg);
+      if (mountedRef.current) setPreparedItems(items);
+    } catch (err) {
+      console.error("[KDS] Error loading history:", err);
+    } finally {
+      if (mountedRef.current) setHistoryLoading(false);
+    }
+  }, [restaurantId, isDedicated, stationFilter]);
+
+  useEffect(() => {
+    if (viewMode !== "history") return;
+    loadHistory();
+    const interval = setInterval(loadHistory, 15000); // refresh every 15s
+    return () => clearInterval(interval);
+  }, [viewMode, loadHistory]);
 
   // ---- Emit kitchen pressure events via TPVCentralEvents ----
   useEffect(() => {
@@ -335,10 +449,35 @@ export function TPVKitchenPage() {
   );
 
   const handleMarkReady = useCallback(
-    async (itemId: string) => {
+    async (itemId: string, orderId?: string) => {
       try {
         setActing(itemId);
-        await markItemReady(itemId, restaurantId);
+        const result = await markItemReady(itemId, restaurantId);
+        // Auto-transition: when all items ready, move order to READY
+        if (result.all_items_ready && orderId) {
+          await coreUpdateOrderStatus({
+            order_id: orderId,
+            new_status: "READY",
+            restaurant_id: restaurantId,
+            origin: "TPV_KDS",
+          });
+          if (isDedicated) playReadySound();
+          // Signal all surfaces: order is ready (garçom, expo, delivery, TPV central)
+          const readyOrder = orders.find((o) => o.order.id === orderId);
+          TPVCentralEmitters.alertTable({
+            tableId: readyOrder?.order.table_id ?? orderId,
+            tableNumber: readyOrder?.order.table_number ?? 0,
+            alertType: "order_ready",
+            severity: "medium",
+            message: t("tpvKitchen.orderReadyAlert", { id: readyOrder?.order.short_id ?? orderId.slice(0, 6) }),
+            timestamp: new Date(),
+          });
+          // Bridge: mesa → ready_to_serve
+          const tableId = readyOrder?.order.table_id;
+          if (tableId) {
+            markTableReadyToServe(tableId, restaurantId).catch(() => {});
+          }
+        }
         await loadOrders();
       } catch (err) {
         console.error("[TPV Kitchen] Mark ready error:", err);
@@ -346,7 +485,7 @@ export function TPVKitchenPage() {
         setActing(null);
       }
     },
-    [restaurantId, loadOrders],
+    [restaurantId, loadOrders, isDedicated, playReadySound, orders],
   );
 
   // ---- Filter orders ----
@@ -364,6 +503,16 @@ export function TPVKitchenPage() {
       }))
       .filter((o) => o.items.length > 0);
   }, [orders, originFilter, stationFilter]);
+
+  // Split into active (OPEN/IN_PREP) and ready (READY) for queue display
+  const activeOrders = useMemo(
+    () => filteredOrders.filter((o) => o.order.status !== "READY"),
+    [filteredOrders],
+  );
+  const readyOrders = useMemo(
+    () => filteredOrders.filter((o) => o.order.status === "READY"),
+    [filteredOrders],
+  );
 
   const selectedOrder = useMemo(
     () => filteredOrders.find((o) => o.order.id === selectedOrderId) ?? null,
@@ -387,8 +536,24 @@ export function TPVKitchenPage() {
     const attention = orders.filter(
       (o) => o.status.state === "attention",
     ).length;
-    return { total, delayed, attention };
+    // Count active orders per station (for supervision tabs)
+    const kitchenCount = orders.filter((o) =>
+      o.items.some((i) => (i.station ?? "KITCHEN").toUpperCase() === "KITCHEN") && o.order.status !== "READY",
+    ).length;
+    const barCount = orders.filter((o) =>
+      o.items.some((i) => (i.station ?? "KITCHEN").toUpperCase() === "BAR") && o.order.status !== "READY",
+    ).length;
+    return { total, delayed, attention, kitchenCount, barCount };
   }, [orders]);
+
+  // ---- Inject keyframe for new-order flash (once) ----
+  useEffect(() => {
+    if (document.getElementById("kds-flash-style")) return;
+    const style = document.createElement("style");
+    style.id = "kds-flash-style";
+    style.textContent = `@keyframes kds-flash { 0%,100% { opacity:1 } 50% { opacity:0.6 } }`;
+    document.head.appendChild(style);
+  }, []);
 
   // ---- Render ----
   if (loading) {
@@ -403,7 +568,7 @@ export function TPVKitchenPage() {
           fontSize: 14,
         }}
       >
-        A carregar cozinha…
+        {t("tpvKitchen.loading")}
       </div>
     );
   }
@@ -439,8 +604,24 @@ export function TPVKitchenPage() {
               color: TPV_COLORS.text,
             }}
           >
-            🍳 Cozinha · KDS
+            {isDedicated
+              ? stationFilter === "BAR" ? t("tpvKitchen.bar") : t("tpvKitchen.kitchen")
+              : t("tpvKitchen.commandKds")}
           </h2>
+          <span
+            style={{
+              padding: "3px 10px",
+              borderRadius: 6,
+              fontSize: 11,
+              fontWeight: 700,
+              letterSpacing: 0.5,
+              textTransform: "uppercase" as const,
+              backgroundColor: isDedicated ? "rgba(34,197,94,0.15)" : "rgba(59,130,246,0.15)",
+              color: isDedicated ? "#22c55e" : "#3b82f6",
+            }}
+          >
+            {isDedicated ? t("tpvKitchen.execution") : t("tpvKitchen.supervision")}
+          </span>
           <span
             style={{
               padding: "4px 12px",
@@ -451,7 +632,7 @@ export function TPVKitchenPage() {
               color: TPV_COLORS.textMuted,
             }}
           >
-            {stats.total} pedido{stats.total !== 1 ? "s" : ""}
+            {t("tpvKitchen.ordersCount", { count: stats.total })}
           </span>
           {stats.delayed > 0 && (
             <span
@@ -464,7 +645,7 @@ export function TPVKitchenPage() {
                 color: "#ef4444",
               }}
             >
-              {stats.delayed} atrasado{stats.delayed !== 1 ? "s" : ""}
+              {t("tpvKitchen.delayedCount", { count: stats.delayed })}
             </span>
           )}
           {stats.attention > 0 && (
@@ -478,25 +659,183 @@ export function TPVKitchenPage() {
                 color: "#eab308",
               }}
             >
-              {stats.attention} atenção
+              {t("tpvKitchen.attentionCount", { count: stats.attention })}
             </span>
           )}
+
+          {/* View toggle: Fila / Preparados */}
+          <div
+            style={{
+              display: "flex",
+              gap: 2,
+              backgroundColor: TPV_COLORS.panelAlt,
+              borderRadius: 10,
+              padding: 2,
+              marginLeft: 8,
+            }}
+          >
+            <button
+              type="button"
+              onClick={() => setViewMode("queue")}
+              style={{
+                padding: "6px 14px",
+                borderRadius: 8,
+                border: "none",
+                fontSize: 13,
+                fontWeight: 700,
+                cursor: "pointer",
+                backgroundColor: viewMode === "queue" ? TPV_COLORS.accent : "transparent",
+                color: viewMode === "queue" ? "#0a0a0a" : TPV_COLORS.textMuted,
+              }}
+            >
+              {t("tpvKitchen.queue")}
+            </button>
+            <button
+              type="button"
+              onClick={() => setViewMode("history")}
+              style={{
+                padding: "6px 14px",
+                borderRadius: 8,
+                border: "none",
+                fontSize: 13,
+                fontWeight: 700,
+                cursor: "pointer",
+                backgroundColor: viewMode === "history" ? "#22c55e" : "transparent",
+                color: viewMode === "history" ? "#0a0a0a" : TPV_COLORS.textMuted,
+              }}
+            >
+              {t("tpvKitchen.prepared")}
+            </button>
+          </div>
         </div>
 
-        <div style={{ display: "flex", gap: 6 }}>
-          {(["ALL", "KITCHEN", "BAR"] as const).map((f) => (
-            <button
-              key={f}
-              onClick={() => setStationFilter(f)}
-              style={FILTER_BTN(stationFilter === f)}
-            >
-              {f === "ALL" ? "Todas" : f === "KITCHEN" ? "Cozinha" : "Bar"}
-            </button>
-          ))}
-        </div>
+        {!isDedicated && (
+          <div style={{ display: "flex", gap: 6 }}>
+            {(["ALL", "KITCHEN", "BAR"] as const).map((f) => (
+              <button
+                key={f}
+                onClick={() => setStationFilter(f)}
+                style={FILTER_BTN(stationFilter === f)}
+              >
+                {f === "ALL"
+                  ? t("tpvKitchen.filterAll")
+                  : f === "KITCHEN"
+                  ? `${t("tpvKitchen.kitchen")}${stats.kitchenCount > 0 ? ` (${stats.kitchenCount})` : ""}`
+                  : `${t("tpvKitchen.bar")}${stats.barCount > 0 ? ` (${stats.barCount})` : ""}`}
+              </button>
+            ))}
+          </div>
+        )}
       </div>
 
-      {/* Main columns */}
+      {/* History view — prepared items */}
+      {viewMode === "history" && (
+        <div style={{ flex: 1, overflow: "auto", ...PANEL }}>
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              marginBottom: 12,
+            }}
+          >
+            <h3 style={{ margin: 0, fontSize: 15, color: TPV_COLORS.text }}>
+              {t("tpvKitchen.preparedToday")}
+            </h3>
+            <span style={{ fontSize: 12, color: TPV_COLORS.textMuted }}>
+              {t("tpvKitchen.itemsCount", { count: preparedItems.length })}
+            </span>
+          </div>
+
+          {historyLoading ? (
+            <div style={{ padding: 32, textAlign: "center", color: TPV_COLORS.textDim, fontSize: 13 }}>
+              {t("tpvKitchen.loadingHistory")}
+            </div>
+          ) : preparedItems.length === 0 ? (
+            <div style={{ padding: 40, textAlign: "center", color: TPV_COLORS.textDim }}>
+              <span style={{ fontSize: 28, display: "block", marginBottom: 8 }}>📋</span>
+              <span style={{ fontSize: 13 }}>{t("tpvKitchen.noPreparedToday")}</span>
+            </div>
+          ) : (
+            <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+              {preparedItems.map((item) => (
+                <div
+                  key={item.id}
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    padding: "10px 14px",
+                    borderRadius: 10,
+                    backgroundColor: TPV_COLORS.panelAlt,
+                    border: `1px solid ${TPV_COLORS.border}`,
+                    gap: 10,
+                  }}
+                >
+                  <div style={{ display: "flex", alignItems: "center", gap: 10, flex: 1, minWidth: 0 }}>
+                    <span style={{ fontSize: 16, fontWeight: 700, color: TPV_COLORS.textMuted, minWidth: 28 }}>
+                      {item.quantity}x
+                    </span>
+                    <span
+                      style={{
+                        fontSize: 16,
+                        fontWeight: 600,
+                        color: TPV_COLORS.text,
+                        overflow: "hidden",
+                        textOverflow: "ellipsis",
+                        whiteSpace: "nowrap",
+                      }}
+                    >
+                      {item.name_snapshot ?? "—"}
+                    </span>
+                    {!isDedicated && item.station && (
+                      <span
+                        style={{
+                          fontSize: 11,
+                          padding: "2px 8px",
+                          borderRadius: 6,
+                          fontWeight: 700,
+                          backgroundColor:
+                            item.station === "BAR"
+                              ? "rgba(168,85,247,0.15)"
+                              : "rgba(59,130,246,0.15)",
+                          color: item.station === "BAR" ? "#a855f7" : "#3b82f6",
+                        }}
+                      >
+                        {item.station}
+                      </span>
+                    )}
+                  </div>
+
+                  <div style={{ display: "flex", alignItems: "center", gap: 10, flexShrink: 0 }}>
+                    {item.order_short_id && (
+                      <span style={{ fontSize: 12, color: TPV_COLORS.textMuted }}>
+                        #{item.order_short_id}
+                      </span>
+                    )}
+                    {item.order_table_number != null && (
+                      <span style={{ fontSize: 12, color: TPV_COLORS.textMuted }}>
+                        {t("tpvKitchen.table", { number: item.order_table_number })}
+                      </span>
+                    )}
+                    {item.ready_at && (
+                      <span style={{ fontSize: 12, fontWeight: 600, color: "#22c55e" }}>
+                        {new Date(item.ready_at).toLocaleTimeString(locale, {
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        })}
+                      </span>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Main columns — active queue */}
+      {viewMode === "queue" && (
       <div
         style={{
           display: "grid",
@@ -517,7 +856,7 @@ export function TPVKitchenPage() {
             }}
           >
             <h3 style={{ margin: 0, fontSize: 15, color: TPV_COLORS.text }}>
-              Fila
+              {t("tpvKitchen.queue")}
             </h3>
             <span
               style={{
@@ -525,19 +864,19 @@ export function TPVKitchenPage() {
                 color: TPV_COLORS.textMuted,
               }}
             >
-              {filteredOrders.length} pedidos
+              {t("tpvKitchen.ordersCount", { count: filteredOrders.length })}
             </span>
           </div>
 
           <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
             {(
               [
-                { key: "ALL", label: "Todos" },
-                { key: "TPV", label: "TPV" },
-                { key: "WEB", label: "Web" },
-                { key: "GARCOM", label: "Garcom" },
-                { key: "QR_MESA", label: "QR" },
-                { key: "APP", label: "App" },
+                { key: "ALL", label: t("tpvKitchen.originAll") },
+                { key: "TPV", label: t("tpvKitchen.originTpv") },
+                { key: "WEB", label: t("tpvKitchen.originWeb") },
+                { key: "GARCOM", label: t("tpvKitchen.originWaiter") },
+                { key: "QR_MESA", label: t("tpvKitchen.originQr") },
+                { key: "APP", label: t("tpvKitchen.originApp") },
               ] as const
             ).map((filter) => (
               <button
@@ -573,32 +912,32 @@ export function TPVKitchenPage() {
                 }}
               >
                 <span style={{ fontSize: 28 }}>✅</span>
-                <span style={{ fontSize: 13 }}>Sem pedidos ativos</span>
+                <span style={{ fontSize: 13 }}>{t("tpvKitchen.noActiveOrders")}</span>
               </div>
             ) : (
-              filteredOrders.map(({ order, items, status, ageMinutes }) => {
-                const statusInfo = getOrderStatus(order.status);
+              <>
+              {activeOrders.map(({ order, items, status, ageMinutes }) => {
+                const statusInfo = getOrderStatus(order.status, t);
                 const isSelected = order.id === selectedOrderId;
-                const totalCents =
-                  order.total_cents ??
-                  items.reduce(
-                    (sum, item) => sum + (item.subtotal_cents ?? 0),
-                    0,
-                  );
-
+                const isNew = newOrderIds.has(order.id);
                 return (
-                  <button
+                  <div
                     key={order.id}
+                    role="button"
+                    tabIndex={0}
                     data-testid={`order-row-${order.id}`}
                     onClick={() => setSelectedOrderId(order.id)}
+                    onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") setSelectedOrderId(order.id); }}
                     style={{
                       textAlign: "left",
                       padding: 12,
                       borderRadius: 12,
                       border: `1px solid ${
-                        isSelected ? TPV_COLORS.accent : TPV_COLORS.border
+                        isNew ? "#22c55e" : isSelected ? TPV_COLORS.accent : TPV_COLORS.border
                       }`,
-                      backgroundColor: isSelected
+                      backgroundColor: isNew
+                        ? "rgba(34,197,94,0.18)"
+                        : isSelected
                         ? "rgba(249,115,22,0.12)"
                         : TPV_COLORS.panelAlt,
                       color: TPV_COLORS.text,
@@ -606,9 +945,12 @@ export function TPVKitchenPage() {
                       flexDirection: "column",
                       gap: 8,
                       cursor: "pointer",
-                      boxShadow: isSelected
+                      boxShadow: isNew
+                        ? "0 0 12px rgba(34,197,94,0.4)"
+                        : isSelected
                         ? "0 0 0 1px rgba(249,115,22,0.35)"
                         : "none",
+                      animation: isNew ? "kds-flash 1s ease-in-out 3" : "none",
                       opacity: ageMinutes >= KDS_WARNING_AGE_MINUTES ? 0.7 : 1,
                     }}
                   >
@@ -654,7 +996,7 @@ export function TPVKitchenPage() {
                       <span
                         style={{ fontSize: 14, color: TPV_COLORS.textMuted }}
                       >
-                        {items.length} item{items.length !== 1 ? "s" : ""}
+                        {t("tpvKitchen.itemsCount", { count: items.length })}
                       </span>
                     </div>
 
@@ -666,16 +1008,103 @@ export function TPVKitchenPage() {
                         gap: 8,
                       }}
                     >
-                      <span style={{ fontSize: 15, fontWeight: 600, color: TPV_COLORS.textDim }}>
-                        {ageMinutes} min
+                      <span
+                        style={{
+                          fontSize: 15,
+                          fontWeight: 600,
+                          color:
+                            ageMinutes >= 30
+                              ? "#ef4444"
+                              : ageMinutes >= 15
+                              ? "#eab308"
+                              : TPV_COLORS.textDim,
+                        }}
+                      >
+                        {ageMinutes >= 60
+                          ? `${Math.floor(ageMinutes / 60)}h${String(ageMinutes % 60).padStart(2, "0")}`
+                          : `${ageMinutes} min`}
                       </span>
-                      <span style={{ fontSize: 16, fontWeight: 700 }}>
-                        {formatCents(totalCents)}
-                      </span>
+                      {isDedicated && order.status === "OPEN" && (
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleStartPrep(order.id);
+                          }}
+                          disabled={acting === order.id}
+                          style={{
+                            padding: "6px 14px",
+                            borderRadius: 8,
+                            border: "none",
+                            fontSize: 13,
+                            fontWeight: 700,
+                            cursor: acting === order.id ? "not-allowed" : "pointer",
+                            backgroundColor: TPV_COLORS.accent,
+                            color: "#0a0a0a",
+                          }}
+                        >
+                          {acting === order.id ? "…" : t("tpvKitchen.start")}
+                        </button>
+                      )}
                     </div>
-                  </button>
+                  </div>
                 );
-              })
+              })}
+
+              {/* Ready orders section */}
+              {readyOrders.length > 0 && (
+                <>
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 8,
+                      padding: "8px 0 4px",
+                    }}
+                  >
+                    <div style={{ flex: 1, height: 1, backgroundColor: "rgba(34,197,94,0.3)" }} />
+                    <span style={{ fontSize: 11, fontWeight: 700, color: "#22c55e", textTransform: "uppercase" as const, letterSpacing: 0.5 }}>
+                      {t("tpvKitchen.readyCount", { count: readyOrders.length })}
+                    </span>
+                    <div style={{ flex: 1, height: 1, backgroundColor: "rgba(34,197,94,0.3)" }} />
+                  </div>
+                  {readyOrders.map(({ order, items, ageMinutes }) => {
+                    const isSelected = order.id === selectedOrderId;
+                    return (
+                      <div
+                        key={order.id}
+                        role="button"
+                        tabIndex={0}
+                        data-testid={`order-row-${order.id}`}
+                        onClick={() => setSelectedOrderId(order.id)}
+                        onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") setSelectedOrderId(order.id); }}
+                        style={{
+                          textAlign: "left",
+                          padding: 10,
+                          borderRadius: 12,
+                          border: `1px solid ${isSelected ? "#22c55e" : "rgba(34,197,94,0.2)"}`,
+                          backgroundColor: isSelected ? "rgba(34,197,94,0.15)" : "rgba(34,197,94,0.06)",
+                          color: TPV_COLORS.text,
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "space-between",
+                          gap: 8,
+                          cursor: "pointer",
+                          opacity: 0.85,
+                        }}
+                      >
+                        <span style={{ fontSize: 15, fontWeight: 700 }}>
+                          #{getOrderLabel(order)}
+                        </span>
+                        <span style={{ fontSize: 13, fontWeight: 700, color: "#22c55e" }}>
+                          {t("tpvKitchen.statusReady")}
+                        </span>
+                      </div>
+                    );
+                  })}
+                </>
+              )}
+              </>
             )}
           </div>
         </section>
@@ -691,7 +1120,7 @@ export function TPVKitchenPage() {
             }}
           >
             <h3 style={{ margin: 0, fontSize: 15, color: TPV_COLORS.text }}>
-              Detalhes
+              {t("tpvKitchen.details")}
             </h3>
             {selectedOrder ? (
               <span
@@ -700,7 +1129,7 @@ export function TPVKitchenPage() {
                   color: TPV_COLORS.textMuted,
                 }}
               >
-                Pedido #{getOrderLabel(selectedOrder.order)}
+                {t("tpvKitchen.orderLabel", { id: getOrderLabel(selectedOrder.order) })}
               </span>
             ) : null}
           </div>
@@ -718,7 +1147,7 @@ export function TPVKitchenPage() {
               }}
             >
               <span style={{ fontSize: 28 }}>📭</span>
-              <span style={{ fontSize: 13 }}>Selecione um pedido</span>
+              <span style={{ fontSize: 13 }}>{t("tpvKitchen.selectOrder")}</span>
             </div>
           ) : (
             <>
@@ -735,10 +1164,10 @@ export function TPVKitchenPage() {
                   style={{ display: "flex", flexDirection: "column", gap: 4 }}
                 >
                   <span style={{ fontSize: 16, fontWeight: 700 }}>
-                    Pedido #{getOrderLabel(selectedOrder.order)}
+                    {t("tpvKitchen.orderLabel", { id: getOrderLabel(selectedOrder.order) })}
                   </span>
                   <span style={{ fontSize: 12, color: TPV_COLORS.textMuted }}>
-                    Mesa {selectedOrder.order.table_number ?? "—"}
+                    {t("tpvKitchen.table", { number: selectedOrder.order.table_number ?? "—" })}
                   </span>
                 </div>
                 <span
@@ -747,12 +1176,12 @@ export function TPVKitchenPage() {
                     fontWeight: 700,
                     padding: "4px 10px",
                     borderRadius: 999,
-                    backgroundColor: getOrderStatus(selectedOrder.order.status)
+                    backgroundColor: getOrderStatus(selectedOrder.order.status, t)
                       .bg,
-                    color: getOrderStatus(selectedOrder.order.status).color,
+                    color: getOrderStatus(selectedOrder.order.status, t).color,
                   }}
                 >
-                  {getOrderStatus(selectedOrder.order.status).label}
+                  {getOrderStatus(selectedOrder.order.status, t).label}
                 </span>
               </div>
 
@@ -799,7 +1228,7 @@ export function TPVKitchenPage() {
                         {item.name_snapshot ??
                           (item.product_id ? item.product_id.slice(0, 8) : "—")}
                       </span>
-                      {item.station && (
+                      {!isDedicated && item.station && (
                         <span
                           style={{
                             fontSize: 13,
@@ -826,12 +1255,12 @@ export function TPVKitchenPage() {
                       }}
                     >
                       <ItemTimer item={item} />
-                      {!item.ready_at && (
+                      {isDedicated && !item.ready_at && (
                         <button
-                          onClick={() => handleMarkReady(item.id)}
+                          onClick={() => handleMarkReady(item.id, selectedOrder.order.id)}
                           disabled={acting === item.id}
                           style={ACTION_BTN("success")}
-                          title="Marcar como pronto"
+                          title={t("tpvKitchen.markReady")}
                         >
                           {acting === item.id ? "…" : "✓"}
                         </button>
@@ -841,81 +1270,53 @@ export function TPVKitchenPage() {
                 ))}
               </div>
 
-              <div
-                style={{
-                  marginTop: 12,
-                  paddingTop: 12,
-                  borderTop: `1px solid ${TPV_COLORS.border}`,
-                  display: "grid",
-                  gap: 6,
-                }}
-              >
-                <div
-                  style={{ display: "flex", justifyContent: "space-between" }}
-                >
-                  <span style={{ color: TPV_COLORS.textMuted }}>Subtotal</span>
-                  <span style={{ fontWeight: 600 }}>
-                    {formatCents(selectedOrder.order.subtotal_cents)}
-                  </span>
-                </div>
-                <div
-                  style={{ display: "flex", justifyContent: "space-between" }}
-                >
-                  <span style={{ color: TPV_COLORS.textMuted }}>Taxas</span>
-                  <span style={{ fontWeight: 600 }}>
-                    {formatCents(selectedOrder.order.tax_cents)}
-                  </span>
-                </div>
-                <div
-                  style={{ display: "flex", justifyContent: "space-between" }}
-                >
-                  <span style={{ color: TPV_COLORS.textMuted }}>Desconto</span>
-                  <span style={{ fontWeight: 600 }}>
-                    {formatCents(selectedOrder.order.discount_cents)}
-                  </span>
-                </div>
+              {/* KDS Actions — only in dedicated (execution) mode */}
+              {isDedicated && (
                 <div
                   style={{
+                    marginTop: 12,
+                    paddingTop: 12,
+                    borderTop: `1px solid ${TPV_COLORS.border}`,
                     display: "flex",
-                    justifyContent: "space-between",
-                    fontSize: 15,
-                    fontWeight: 700,
+                    gap: 8,
+                    flexWrap: "wrap",
                   }}
                 >
-                  <span>Total</span>
-                  <span>{formatCents(selectedOrder.order.total_cents)}</span>
-                </div>
-              </div>
-
-              <div
-                style={{
-                  marginTop: 12,
-                  display: "flex",
-                  gap: 8,
-                  flexWrap: "wrap",
-                }}
-              >
-                {selectedOrder.order.status === "OPEN" && (
+                  {selectedOrder.order.status === "OPEN" && (
+                    <button
+                      onClick={() => handleStartPrep(selectedOrder.order.id)}
+                      disabled={acting === selectedOrder.order.id}
+                      style={ACTION_BTN("primary")}
+                    >
+                      {acting === selectedOrder.order.id
+                        ? t("tpvKitchen.starting")
+                        : t("tpvKitchen.startPrep")}
+                    </button>
+                  )}
                   <button
-                    onClick={() => handleStartPrep(selectedOrder.order.id)}
-                    disabled={acting === selectedOrder.order.id}
-                    style={ACTION_BTN("primary")}
+                    type="button"
+                    onClick={() => {
+                      const pending = selectedOrder.items.filter((i) => !i.ready_at);
+                      if (pending.length === 0) return;
+                      Promise.all(pending.map((i) => handleMarkReady(i.id, selectedOrder.order.id)));
+                    }}
+                    disabled={
+                      acting != null ||
+                      selectedOrder.items.every((i) => i.ready_at)
+                    }
+                    style={ACTION_BTN("success")}
                   >
-                    {acting === selectedOrder.order.id
-                      ? "A iniciar…"
-                      : "Iniciar preparo"}
+                    {t("tpvKitchen.allReady")}
                   </button>
-                )}
-                <button type="button" style={ACTION_BTN("ghost")}>
-                  Cobrar
-                </button>
-                <button type="button" style={ACTION_BTN("ghost")}>
-                  Comandar
-                </button>
-                <button type="button" style={ACTION_BTN("ghost")}>
-                  Imprimir
-                </button>
-              </div>
+                  <button
+                    type="button"
+                    style={ACTION_BTN("ghost")}
+                    title={t("tpvKitchen.returnToQueueTitle")}
+                  >
+                    {t("tpvKitchen.returnToQueue")}
+                  </button>
+                </div>
+              )}
             </>
           )}
         </section>
@@ -931,7 +1332,7 @@ export function TPVKitchenPage() {
             }}
           >
             <h3 style={{ margin: 0, fontSize: 15, color: TPV_COLORS.text }}>
-              Info
+              {t("tpvKitchen.info")}
             </h3>
             {selectedOrder ? (
               <span style={{ fontSize: 12, color: TPV_COLORS.textMuted }}>
@@ -953,23 +1354,12 @@ export function TPVKitchenPage() {
               }}
             >
               <span style={{ fontSize: 28 }}>🧭</span>
-              <span style={{ fontSize: 13 }}>Aguardando seleção</span>
+              <span style={{ fontSize: 13 }}>{t("tpvKitchen.awaitingSelection")}</span>
             </div>
           ) : (
             (() => {
               const metadata = asRecord(selectedOrder.order.metadata) ?? {};
-              const customer = asRecord(metadata.customer) ?? {};
               const delivery = asRecord(metadata.delivery) ?? {};
-
-              const customerName =
-                readString(customer.name) ?? readString(metadata.customer_name);
-              const customerPhone =
-                readString(customer.phone) ??
-                readString(metadata.customer_phone);
-              const customerEmail =
-                readString(customer.email) ??
-                readString(metadata.customer_email);
-
               const deliveryAddress =
                 readString(delivery.address) ??
                 readString(metadata.delivery_address);
@@ -978,6 +1368,7 @@ export function TPVKitchenPage() {
                 <div
                   style={{ display: "flex", flexDirection: "column", gap: 16 }}
                 >
+                  {/* Contexto operacional — só o que a cozinha precisa */}
                   <div
                     style={{
                       display: "flex",
@@ -990,20 +1381,20 @@ export function TPVKitchenPage() {
                     }}
                   >
                     <span style={{ fontSize: 12, color: TPV_COLORS.textMuted }}>
-                      Pedido
+                      {t("tpvKitchen.order")}
                     </span>
                     <span style={{ fontSize: 14, fontWeight: 600 }}>
-                      Origem: {getOriginKey(selectedOrder.order)}
+                      <OriginBadge
+                        origin={selectedOrder.order.origin}
+                        createdByRole={selectedOrder.order.source}
+                        tableNumber={selectedOrder.order.table_number}
+                      />
+                    </span>
+                    <span style={{ fontSize: 14, fontWeight: 600, color: TPV_COLORS.text }}>
+                      {t("tpvKitchen.table", { number: selectedOrder.order.table_number ?? "—" })}
                     </span>
                     <span style={{ fontSize: 13, color: TPV_COLORS.textMuted }}>
-                      Mesa {selectedOrder.order.table_number ?? "—"}
-                    </span>
-                    <span style={{ fontSize: 13, color: TPV_COLORS.textMuted }}>
-                      Status pagamento:{" "}
-                      {selectedOrder.order.payment_status ?? "—"}
-                    </span>
-                    <span style={{ fontSize: 13, color: TPV_COLORS.textMuted }}>
-                      Criado:{" "}
+                      {t("tpvKitchen.entryTime")}{" "}
                       {selectedOrder.order.created_at
                         ? new Date(
                             selectedOrder.order.created_at,
@@ -1013,38 +1404,51 @@ export function TPVKitchenPage() {
                           })
                         : "—"}
                     </span>
-                  </div>
-
-                  <div
-                    style={{
-                      display: "flex",
-                      flexDirection: "column",
-                      gap: 6,
-                      padding: 12,
-                      borderRadius: 12,
-                      backgroundColor: TPV_COLORS.panelAlt,
-                      border: `1px solid ${TPV_COLORS.border}`,
-                    }}
-                  >
-                    <span style={{ fontSize: 12, color: TPV_COLORS.textMuted }}>
-                      Cliente
-                    </span>
-                    <span style={{ fontSize: 14, fontWeight: 600 }}>
-                      {customerName ?? "—"}
-                    </span>
-                    <span style={{ fontSize: 13, color: TPV_COLORS.textMuted }}>
-                      {customerPhone ?? "—"}
-                    </span>
-                    <span style={{ fontSize: 13, color: TPV_COLORS.textMuted }}>
-                      {customerEmail ?? "—"}
+                    <span style={{ fontSize: 14, fontWeight: 600, color: TPV_COLORS.text }}>
+                      {t("tpvKitchen.itemsCount", { count: selectedOrder.items.length })}
                     </span>
                     {deliveryAddress && (
-                      <span style={{ fontSize: 12, color: TPV_COLORS.textDim }}>
-                        {deliveryAddress}
+                      <span style={{ fontSize: 13, color: TPV_COLORS.textMuted }}>
+                        📍 {deliveryAddress}
                       </span>
                     )}
                   </div>
 
+                  {/* Notas — visíveis para a cozinha (alergias, modificações) */}
+                  <div
+                    style={{
+                      display: "flex",
+                      flexDirection: "column",
+                      gap: 6,
+                      padding: 12,
+                      borderRadius: 12,
+                      backgroundColor: selectedOrder.order.notes
+                        ? "rgba(234,179,8,0.1)"
+                        : TPV_COLORS.panelAlt,
+                      border: `1px solid ${
+                        selectedOrder.order.notes
+                          ? "rgba(234,179,8,0.3)"
+                          : TPV_COLORS.border
+                      }`,
+                    }}
+                  >
+                    <span style={{ fontSize: 12, color: TPV_COLORS.textMuted }}>
+                      {t("tpvKitchen.notes")}
+                    </span>
+                    <span
+                      style={{
+                        fontSize: 14,
+                        fontWeight: selectedOrder.order.notes ? 600 : 400,
+                        color: selectedOrder.order.notes
+                          ? "#eab308"
+                          : TPV_COLORS.textDim,
+                      }}
+                    >
+                      {selectedOrder.order.notes ?? t("tpvKitchen.noNotes")}
+                    </span>
+                  </div>
+
+                  {/* Progresso dos itens — por estação em supervisão, total em dedicado */}
                   <div
                     style={{
                       display: "flex",
@@ -1057,11 +1461,52 @@ export function TPVKitchenPage() {
                     }}
                   >
                     <span style={{ fontSize: 12, color: TPV_COLORS.textMuted }}>
-                      Notas
+                      {t("tpvKitchen.progress")}
                     </span>
-                    <span style={{ fontSize: 13, color: TPV_COLORS.text }}>
-                      {selectedOrder.order.notes ?? "Sem notas"}
-                    </span>
+                    {(() => {
+                      const allItems = selectedOrder.items;
+                      const ready = allItems.filter((i) => i.ready_at).length;
+                      const total = allItems.length;
+                      const pct = total > 0 ? Math.round((ready / total) * 100) : 0;
+
+                      // In supervision mode, show breakdown by station
+                      const stations = !isDedicated
+                        ? [...new Set(allItems.map((i) => (i.station ?? "KITCHEN").toUpperCase()))]
+                        : null;
+
+                      return (
+                        <>
+                          <span style={{ fontSize: 16, fontWeight: 700, color: TPV_COLORS.text }}>
+                            {t("tpvKitchen.readyOf", { ready, total })}
+                          </span>
+                          <div style={{ height: 6, borderRadius: 3, backgroundColor: "rgba(255,255,255,0.1)", overflow: "hidden" }}>
+                            <div style={{ height: "100%", width: `${pct}%`, borderRadius: 3, backgroundColor: pct === 100 ? "#22c55e" : TPV_COLORS.accent, transition: "width 0.3s ease" }} />
+                          </div>
+                          {stations && stations.length > 1 && (
+                            <div style={{ display: "flex", flexDirection: "column", gap: 4, marginTop: 6 }}>
+                              {stations.map((st) => {
+                                const stItems = allItems.filter((i) => (i.station ?? "KITCHEN").toUpperCase() === st);
+                                const stReady = stItems.filter((i) => i.ready_at).length;
+                                const stPct = stItems.length > 0 ? Math.round((stReady / stItems.length) * 100) : 0;
+                                return (
+                                  <div key={st} style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                                    <span style={{ fontSize: 11, fontWeight: 700, color: st === "BAR" ? "#a855f7" : "#3b82f6", minWidth: 52 }}>
+                                      {st === "BAR" ? t("tpvKitchen.bar") : t("tpvKitchen.kitchen")}
+                                    </span>
+                                    <div style={{ flex: 1, height: 4, borderRadius: 2, backgroundColor: "rgba(255,255,255,0.08)", overflow: "hidden" }}>
+                                      <div style={{ height: "100%", width: `${stPct}%`, borderRadius: 2, backgroundColor: stPct === 100 ? "#22c55e" : st === "BAR" ? "#a855f7" : "#3b82f6", transition: "width 0.3s ease" }} />
+                                    </div>
+                                    <span style={{ fontSize: 11, color: TPV_COLORS.textMuted, minWidth: 28 }}>
+                                      {stReady}/{stItems.length}
+                                    </span>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          )}
+                        </>
+                      );
+                    })()}
                   </div>
                 </div>
               );
@@ -1069,6 +1514,7 @@ export function TPVKitchenPage() {
           )}
         </section>
       </div>
+      )}
     </div>
   );
 }

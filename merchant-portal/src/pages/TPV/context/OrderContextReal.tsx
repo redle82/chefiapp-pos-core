@@ -52,6 +52,7 @@ import {
   setTabIsolated,
 } from "../../../core/storage/TabIsolatedStorage";
 import { eventTaskGenerator } from "../../../core/tasks/EventTaskGenerator";
+import { occupyTableForOrder, markTableCleaning } from "../../../infra/writers/TableWriter";
 import { useOfflineOrder } from "./OfflineOrderContext";
 import { OrderContext, type OrderCreateInput } from "./OrderContextToken"; // FASE 3.4: Token isolado
 // DOCKER CORE: All writes go through PostgREST RPCs (see ARCHITECTURE_DECISION.md)
@@ -651,6 +652,11 @@ export function OrderProvider({
       .catch((err) =>
         console.warn("[OrderContextReal] Tarefa por pedido não criada:", err),
       );
+
+    // Auto-occupy table (fire-and-forget, non-blocking)
+    if (orderInput.tableId && restaurantId) {
+      occupyTableForOrder(orderInput.tableId, restaurantId).catch(() => {});
+    }
 
     // HARD RULE 4: Persistir pedido ativo (Tab-Isolated)
     setTabIsolated("chefiapp_active_order_id", localOrder.id);
@@ -1337,6 +1343,16 @@ export function OrderProvider({
               context: "OrderContext",
               orderId,
             });
+          }
+
+          // Bridge: mesa → cleaning após pagamento (fire-and-forget)
+          try {
+            const paidOrderForTable = await OrderEngine.getOrderById(orderId);
+            if (paidOrderForTable?.tableId) {
+              markTableCleaning(paidOrderForTable.tableId, restaurantId).catch(() => {});
+            }
+          } catch {
+            // Non-blocking — table state is best-effort
           }
 
           // Limpar pedido ativo após pagamento

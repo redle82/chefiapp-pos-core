@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { isElectron } from "../../../core/operational/platformDetection";
 import {
   getPrintJobStatus,
@@ -14,11 +15,7 @@ import {
 import { GlobalBlockedView } from "../../../ui/design-system/components/GlobalBlockedView";
 import styles from "./AdminDevicesPage.module.css";
 
-const PRINT_FUNCTIONS: Array<{ key: PrintFunction; label: string }> = [
-  { key: "labels", label: "Etiquetas" },
-  { key: "kitchen", label: "Cozinha" },
-  { key: "receipt", label: "Recibo" },
-];
+const PRINT_FUNCTION_KEYS: PrintFunction[] = ["labels", "kitchen", "receipt"];
 
 type FunctionConfig = {
   target: string;
@@ -55,6 +52,7 @@ export function PrinterAssignmentWizard({
 }: {
   restaurantId: string | null;
 }) {
+  const { t } = useTranslation("config");
   const [loading, setLoading] = useState(true);
   const [coreError, setCoreError] = useState<string | null>(null);
   const [printers, setPrinters] = useState<
@@ -153,18 +151,18 @@ export function PrinterAssignmentWizard({
         },
       };
 
-      for (const fn of PRINT_FUNCTIONS) {
+      for (const fn of PRINT_FUNCTION_KEYS) {
         const best = (assignmentsResult.data ?? []).find(
-          (item) => item.print_function === fn.key,
+          (item) => item.print_function === fn,
         );
         if (best) {
-          nextConfigs[fn.key].target = best.target;
-          nextConfigs[fn.key].scope = best.station_id ? "station" : "global";
+          nextConfigs[fn].target = best.target;
+          nextConfigs[fn].scope = best.station_id ? "station" : "global";
         } else {
           const defaultPrinter = availablePrinters.find(
             (p) => p.isDefault,
           )?.name;
-          if (defaultPrinter) nextConfigs[fn.key].target = defaultPrinter;
+          if (defaultPrinter) nextConfigs[fn].target = defaultPrinter;
         }
       }
 
@@ -198,14 +196,14 @@ export function PrinterAssignmentWizard({
     if (!restaurantId) return;
     const cfg = configs[printFunction];
     if (!cfg.target) {
-      setFeedback(printFunction, "Selecione uma impressora antes de guardar.");
+      setFeedback(printFunction, t("printer.selectBeforeSave"));
       return;
     }
 
     if (cfg.scope === "station" && !stationId) {
       setFeedback(
         printFunction,
-        "Sem estação pareada para salvar override local.",
+        t("printer.noStationForOverride"),
       );
       return;
     }
@@ -232,8 +230,8 @@ export function PrinterAssignmentWizard({
         ...prev[printFunction],
         saving: false,
         feedback: result.error
-          ? `Erro ao guardar: ${result.error.message}`
-          : "Guardado com sucesso.",
+          ? `${t("printer.errorSaving")}: ${result.error.message}`
+          : t("printer.savedSuccess"),
       },
     }));
   };
@@ -242,7 +240,7 @@ export function PrinterAssignmentWizard({
     if (!restaurantId) return;
     const cfg = configs[printFunction];
     if (!cfg.target) {
-      setFeedback(printFunction, "Selecione uma impressora antes de testar.");
+      setFeedback(printFunction, t("printer.selectBeforeTest"));
       return;
     }
 
@@ -251,7 +249,7 @@ export function PrinterAssignmentWizard({
       [printFunction]: {
         ...prev[printFunction],
         testing: true,
-        feedback: "A enviar teste...",
+        feedback: t("printer.sendingTest"),
       },
     }));
 
@@ -267,7 +265,7 @@ export function PrinterAssignmentWizard({
         [printFunction]: {
           ...prev[printFunction],
           testing: false,
-          feedback: `Erro ao criar teste: ${
+          feedback: `${t("printer.errorCreatingTest")}: ${
             requested.error?.message ?? "request_print failed"
           }`,
         },
@@ -294,10 +292,10 @@ export function PrinterAssignmentWizard({
         testing: false,
         feedback:
           status === "sent"
-            ? "Teste enviado e confirmado (sent)."
+            ? t("printer.testSentConfirmed")
             : status === "failed"
-            ? "Teste falhou (failed). Verifique target/driver."
-            : "Teste enviado. A confirmação pode demorar alguns segundos.",
+            ? t("printer.testFailed")
+            : t("printer.testSentPending"),
       },
     }));
   };
@@ -305,9 +303,9 @@ export function PrinterAssignmentWizard({
   if (!isDesktopRuntime) {
     return (
       <GlobalBlockedView
-        title="Configuração de impressoras requer o app desktop"
-        description="Abra esta área no ChefIApp Desktop para listar impressoras do spooler e mapear funções de impressão."
-        action={{ label: "Ir para Dispositivos", to: "/admin/devices" }}
+        title={t("printer.requiresDesktop")}
+        description={t("printer.requiresDesktopDesc")}
+        action={{ label: t("printer.goToDevices"), to: "/admin/devices" }}
         style={{ minHeight: 420, borderRadius: 12 }}
       />
     );
@@ -316,9 +314,9 @@ export function PrinterAssignmentWizard({
   if (!restaurantId) {
     return (
       <GlobalBlockedView
-        title="Impressão não está pronta"
-        description="Não foi possível identificar o restaurante atual para salvar assignments de impressão."
-        action={{ label: "Ir para Dashboard", to: "/dashboard" }}
+        title={t("printer.notReady")}
+        description={t("printer.notReadyDesc")}
+        action={{ label: t("printer.goToDashboard"), to: "/dashboard" }}
         style={{ minHeight: 420, borderRadius: 12 }}
       />
     );
@@ -326,34 +324,32 @@ export function PrinterAssignmentWizard({
 
   return (
     <section className={styles.card}>
-      <h2 className={styles.sectionTitle}>Impressoras por função</h2>
+      <h2 className={styles.sectionTitle}>{t("printer.title")}</h2>
       <p className={styles.sectionDesc}>
-        Defina qual impressora atende cada função operacional. O utilizador
-        final não escolhe IP/porta, só a função.
+        {t("printer.description")}
       </p>
 
       {loading ? (
-        <div className={styles.loadingState}>A carregar impressoras...</div>
+        <div className={styles.loadingState}>{t("printer.loading")}</div>
       ) : (
         <>
           {coreError && (
-            <div className={styles.tokenError}>Aviso: {coreError}</div>
+            <div className={styles.tokenError}>{t("printer.warning")}: {coreError}</div>
           )}
           {printers.length === 0 ? (
             <div className={styles.emptyState}>
-              Nenhuma impressora do spooler encontrada. Instale/ative a
-              impressora no sistema e recarregue esta página.
+              {t("printer.noPrintersFound")}
             </div>
           ) : (
             <div className={styles.wizardGrid}>
-              {PRINT_FUNCTIONS.map((fn) => {
-                const cfg = configs[fn.key];
+              {PRINT_FUNCTION_KEYS.map((fnKey) => {
+                const cfg = configs[fnKey];
                 return (
-                  <div key={fn.key} className={styles.wizardCard}>
-                    <h3 className={styles.wizardTitle}>{fn.label}</h3>
+                  <div key={fnKey} className={styles.wizardCard}>
+                    <h3 className={styles.wizardTitle}>{t(`printer.fn.${fnKey}`)}</h3>
 
                     <label className={styles.fieldLabel}>
-                      Impressora
+                      {t("printer.printerLabel")}
                       <select
                         className={styles.selectInput}
                         value={cfg.target}
@@ -361,15 +357,15 @@ export function PrinterAssignmentWizard({
                           const value = e.target.value;
                           setConfigs((prev) => ({
                             ...prev,
-                            [fn.key]: {
-                              ...prev[fn.key],
+                            [fnKey]: {
+                              ...prev[fnKey],
                               target: value,
                               feedback: null,
                             },
                           }));
                         }}
                       >
-                        <option value="">Selecione...</option>
+                        <option value="">{t("printer.selectPlaceholder")}</option>
                         {printers.map((printer) => (
                           <option key={printer.name} value={printer.name}>
                             {printer.name}
@@ -387,15 +383,15 @@ export function PrinterAssignmentWizard({
                           const checked = e.target.checked;
                           setConfigs((prev) => ({
                             ...prev,
-                            [fn.key]: {
-                              ...prev[fn.key],
+                            [fnKey]: {
+                              ...prev[fnKey],
                               scope: checked ? "global" : "station",
                               feedback: null,
                             },
                           }));
                         }}
                       />
-                      Usar como padrão global
+                      {t("printer.useAsGlobal")}
                     </label>
 
                     <div className={styles.wizardActions}>
@@ -404,20 +400,20 @@ export function PrinterAssignmentWizard({
                         className={styles.btnGenerate}
                         disabled={cfg.testing || cfg.saving || !cfg.target}
                         onClick={() => {
-                          void testPrint(fn.key);
+                          void testPrint(fnKey);
                         }}
                       >
-                        {cfg.testing ? "A testar..." : "Imprimir teste"}
+                        {cfg.testing ? t("printer.testing") : t("printer.printTest")}
                       </button>
                       <button
                         type="button"
                         className={styles.btnGenerate}
                         disabled={cfg.testing || cfg.saving || !cfg.target}
                         onClick={() => {
-                          void saveAssignment(fn.key);
+                          void saveAssignment(fnKey);
                         }}
                       >
-                        {cfg.saving ? "A guardar..." : "Guardar"}
+                        {cfg.saving ? t("printer.saving") : t("printer.save")}
                       </button>
                     </div>
 

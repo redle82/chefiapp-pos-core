@@ -4,6 +4,8 @@
  * Ref: POS reference layout.
  */
 
+import { useTranslation } from "react-i18next";
+import { useRestaurantRuntime } from "../../../context/RestaurantRuntimeContext";
 import { useRestaurantIdentity } from "../../../core/identity/useRestaurantIdentity";
 import { RestaurantLogo } from "../../../ui/RestaurantLogo";
 
@@ -52,24 +54,54 @@ function FilterIcon() {
   );
 }
 
+/** Role → badge color mapping */
+const ROLE_BADGE: Record<string, { bg: string; color: string }> = {
+  owner: { bg: "rgba(249,115,22,0.15)", color: "#f97316" },
+  manager: { bg: "rgba(139,92,246,0.15)", color: "#a78bfa" },
+  cashier: { bg: "rgba(34,197,94,0.15)", color: "#4ade80" },
+  waiter: { bg: "rgba(59,130,246,0.15)", color: "#60a5fa" },
+  staff: { bg: "rgba(156,163,175,0.12)", color: "#9ca3af" },
+};
+
 interface TPVHeaderProps {
   searchQuery?: string;
   onSearchChange?: (value: string) => void;
   onFilterClick?: () => void;
   staffName?: string;
   staffId?: string;
+  staffRole?: string;
   staffAvatarUrl?: string | null;
+  /** Hide search bar + filter (non-POS pages like screens, tables, settings). */
+  hideSearch?: boolean;
 }
 
 export function TPVHeader({
   searchQuery = "",
   onSearchChange,
   onFilterClick,
-  staffName = "Garçom",
+  staffName = "Dono",
   staffId = "—",
+  staffRole = "owner",
   staffAvatarUrl = null,
+  hideSearch = false,
 }: TPVHeaderProps) {
+  const { t } = useTranslation(["tpv", "operational"]);
   const { identity } = useRestaurantIdentity();
+  const { runtime } = useRestaurantRuntime();
+
+  const modeBadge =
+    runtime.productMode === "trial"
+      ? { label: "TRIAL", bg: "rgba(234,179,8,0.15)", color: "#eab308" }
+      : runtime.productMode === "pilot"
+        ? { label: "PILOT", bg: "rgba(59,130,246,0.15)", color: "#3b82f6" }
+        : null;
+
+  const coreStatus =
+    runtime.coreMode === "online"
+      ? { dot: "#4ade80", tooltip: "Core online" }
+      : runtime.coreMode === "offline-intencional"
+        ? { dot: "#eab308", tooltip: "Core offline (intencional)" }
+        : { dot: "#f87171", tooltip: "Core indisponível" };
 
   return (
     <header
@@ -119,9 +151,109 @@ export function TPVHeader({
         >
           {identity.name || "Restaurante"}
         </span>
+        {modeBadge && (
+          <span
+            data-testid="tpv-mode-badge"
+            style={{
+              fontSize: 9,
+              fontWeight: 600,
+              padding: "2px 6px",
+              borderRadius: 4,
+              backgroundColor: modeBadge.bg,
+              color: modeBadge.color,
+              letterSpacing: 0.8,
+              flexShrink: 0,
+            }}
+          >
+            {modeBadge.label}
+          </span>
+        )}
+        <span
+          data-testid="tpv-core-status"
+          title={coreStatus.tooltip}
+          style={{
+            width: 8,
+            height: 8,
+            borderRadius: 999,
+            backgroundColor: coreStatus.dot,
+            flexShrink: 0,
+          }}
+        />
       </div>
 
-      {/* Separator */}
+      {/* Search bar (center, flexible) — only on POS/catalog pages */}
+      {!hideSearch && (
+        <div
+          style={{
+            flex: 1,
+            maxWidth: 520,
+            position: "relative",
+            display: "flex",
+            alignItems: "center",
+            marginLeft: "auto",
+            marginRight: "auto",
+          }}
+        >
+          <span
+            style={{
+              position: "absolute",
+              left: 14,
+              display: "flex",
+              alignItems: "center",
+              pointerEvents: "none",
+            }}
+          >
+            <SearchIcon />
+          </span>
+          <input
+            type="search"
+            placeholder={t("header.searchPlaceholder")}
+            value={searchQuery}
+            onChange={(e) => onSearchChange?.(e.target.value)}
+            style={{
+              width: "100%",
+              height: 42,
+              paddingLeft: 42,
+              paddingRight: 16,
+              borderRadius: 21,
+              border: "1px solid rgba(255,255,255,0.1)",
+              backgroundColor: "#141414",
+              color: "#fafafa",
+              fontSize: 14,
+              outline: "none",
+            }}
+          />
+          {searchQuery && (
+            <button
+              type="button"
+              onClick={() => onSearchChange?.("")}
+              title={t("header.clearSearch")}
+              style={{
+                position: "absolute",
+                right: 10,
+                width: 24,
+                height: 24,
+                borderRadius: 12,
+                border: "none",
+                backgroundColor: "rgba(255,255,255,0.1)",
+                color: "#a3a3a3",
+                cursor: "pointer",
+                fontSize: 12,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              ×
+            </button>
+          )}
+        </div>
+      )}
+
+      {/* Spacer when search is hidden */}
+      {hideSearch && <div style={{ flex: 1 }} />}
+
+      {/* Separator (before staff, right side) */}
       <div
         style={{
           width: 1,
@@ -131,19 +263,52 @@ export function TPVHeader({
         }}
       />
 
-      {/* Staff identity: avatar + name + ID */}
+      {/* Staff identity: role badge + name + ID — right-aligned */}
       <div
         style={{
           display: "flex",
           alignItems: "center",
           gap: 12,
-          minWidth: 160,
+          flexShrink: 0,
         }}
       >
+        <div style={{ display: "flex", flexDirection: "column", textAlign: "right", gap: 2 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 6, justifyContent: "flex-end" }}>
+            <span
+              style={{
+                color: "#fafafa",
+                fontWeight: 600,
+                fontSize: 14,
+                lineHeight: 1.3,
+              }}
+            >
+              {staffName}
+            </span>
+            {staffRole && (
+              <span
+                data-testid="tpv-role-badge"
+                style={{
+                  fontSize: 9,
+                  fontWeight: 700,
+                  padding: "2px 6px",
+                  borderRadius: 4,
+                  backgroundColor: (ROLE_BADGE[staffRole] ?? ROLE_BADGE.staff).bg,
+                  color: (ROLE_BADGE[staffRole] ?? ROLE_BADGE.staff).color,
+                  letterSpacing: 0.6,
+                  textTransform: "uppercase",
+                  flexShrink: 0,
+                }}
+              >
+                {t(`operational:roles.${staffRole}`, staffRole)}
+              </span>
+            )}
+          </div>
+          <span style={{ color: "#737373", fontSize: 12 }}>{staffId}</span>
+        </div>
         <div
           style={{
-            width: 40,
-            height: 40,
+            width: 36,
+            height: 36,
             borderRadius: "50%",
             backgroundColor: "#2a2a2a",
             border: "2px solid rgba(255,255,255,0.1)",
@@ -161,118 +326,12 @@ export function TPVHeader({
               style={{ width: "100%", height: "100%", objectFit: "cover" }}
             />
           ) : (
-            <span style={{ color: "#fafafa", fontSize: 16, fontWeight: 600 }}>
+            <span style={{ color: "#fafafa", fontSize: 14, fontWeight: 600 }}>
               {staffName.slice(0, 1).toUpperCase()}
             </span>
           )}
         </div>
-        <div style={{ display: "flex", flexDirection: "column" }}>
-          <span
-            style={{
-              color: "#fafafa",
-              fontWeight: 600,
-              fontSize: 14,
-              lineHeight: 1.3,
-            }}
-          >
-            {staffName}
-          </span>
-          <span style={{ color: "#737373", fontSize: 12 }}>{staffId}</span>
-        </div>
       </div>
-
-      {/* Search bar (center, flexible) */}
-      <div
-        style={{
-          flex: 1,
-          maxWidth: 520,
-          position: "relative",
-          display: "flex",
-          alignItems: "center",
-          marginLeft: "auto",
-          marginRight: "auto",
-        }}
-      >
-        <span
-          style={{
-            position: "absolute",
-            left: 14,
-            display: "flex",
-            alignItems: "center",
-            pointerEvents: "none",
-          }}
-        >
-          <SearchIcon />
-        </span>
-        <input
-          type="search"
-          placeholder="Pesquisar produto por nome, categoria ou SKU"
-          value={searchQuery}
-          onChange={(e) => onSearchChange?.(e.target.value)}
-          style={{
-            width: "100%",
-            height: 42,
-            paddingLeft: 42,
-            paddingRight: 16,
-            borderRadius: 21,
-            border: "1px solid rgba(255,255,255,0.1)",
-            backgroundColor: "#141414",
-            color: "#fafafa",
-            fontSize: 14,
-            outline: "none",
-          }}
-        />
-        {searchQuery && (
-          <button
-            type="button"
-            onClick={() => onSearchChange?.("")}
-            title="Limpar"
-            style={{
-              position: "absolute",
-              right: 10,
-              width: 24,
-              height: 24,
-              borderRadius: 12,
-              border: "none",
-              backgroundColor: "rgba(255,255,255,0.1)",
-              color: "#a3a3a3",
-              cursor: "pointer",
-              fontSize: 12,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-            }}
-          >
-            ×
-          </button>
-        )}
-      </div>
-
-      {/* Orange Filter button */}
-      <button
-        type="button"
-        onClick={onFilterClick}
-        style={{
-          height: 42,
-          paddingLeft: 18,
-          paddingRight: 18,
-          borderRadius: 21,
-          border: "none",
-          backgroundColor: ACCENT,
-          color: "#fff",
-          fontWeight: 600,
-          fontSize: 14,
-          cursor: "pointer",
-          display: "flex",
-          alignItems: "center",
-          gap: 8,
-          flexShrink: 0,
-          transition: "opacity 0.15s ease",
-        }}
-      >
-        <FilterIcon />
-        Filter
-      </button>
     </header>
   );
 }

@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 import {
   listTPVHandoffs,
@@ -8,13 +9,12 @@ import {
 } from "../../core/tpv/TPVHandoffApi";
 import { useTPVRestaurantId } from "./hooks/useTPVRestaurantId";
 
-const STATUS_OPTIONS: Array<{ key: TPVHandoffStatus | "all"; label: string }> =
-  [
-    { key: "all", label: "Todos" },
-    { key: "pending", label: "Pronta para fechar" },
-    { key: "awaiting_payment", label: "Aguardando pagamento" },
-    { key: "closed", label: "Fechada" },
-  ];
+const STATUS_OPTION_KEYS: Array<TPVHandoffStatus | "all"> = [
+  "all",
+  "pending",
+  "awaiting_payment",
+  "closed",
+];
 
 function formatMoney(cents?: number | null) {
   if (cents == null) return "—";
@@ -31,6 +31,7 @@ function timeAgo(iso: string) {
 }
 
 export function TPVHandoffPage() {
+  const { t } = useTranslation("tpv");
   const restaurantId = useTPVRestaurantId();
   const navigate = useNavigate();
   const [statusFilter, setStatusFilter] = useState<TPVHandoffStatus | "all">(
@@ -94,7 +95,7 @@ export function TPVHandoffPage() {
       <div style={{ display: "flex", justifyContent: "space-between", gap: 8 }}>
         <div>
           <h1 style={{ margin: 0, fontSize: 22, color: "var(--text-primary)" }}>
-            Finalizações (Handoff)
+            {t("handoff.title")}
           </h1>
           <p
             style={{
@@ -103,35 +104,35 @@ export function TPVHandoffPage() {
               fontSize: 13,
             }}
           >
-            Pedidos enviados pelo garçom para fechar/pagar no TPV central.
+            {t("handoff.description")}
           </p>
         </div>
       </div>
 
       <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-        {STATUS_OPTIONS.map((opt) => (
+        {STATUS_OPTION_KEYS.map((key) => (
           <button
-            key={opt.key}
+            key={key}
             type="button"
-            onClick={() => setStatusFilter(opt.key)}
+            onClick={() => setStatusFilter(key)}
             style={{
               border: "none",
               borderRadius: 8,
               padding: "6px 10px",
               cursor: "pointer",
               background:
-                statusFilter === opt.key
+                statusFilter === key
                   ? "var(--color-primary, #c9a227)"
                   : "var(--surface-elevated, #262626)",
               color:
-                statusFilter === opt.key
+                statusFilter === key
                   ? "#000"
                   : "var(--text-secondary, #a3a3a3)",
               fontWeight: 600,
               fontSize: 12,
             }}
           >
-            {opt.label}
+            {t(`handoff.tab.${key}`)}
           </button>
         ))}
       </div>
@@ -144,20 +145,19 @@ export function TPVHandoffPage() {
             padding: "12px 0",
           }}
         >
-          Handoff ainda não disponível — migração de base de dados pendente.
+          {t("handoff.rpcMissing")}
           <br />
           <span style={{ fontSize: 11, color: "#525252" }}>
-            Execute a migração <code>20260302_tpv_handoffs_inbox.sql</code> no
-            Core para ativar.
+            {t("handoff.rpcMissingHint")}
           </span>
         </div>
       ) : loading ? (
         <div style={{ color: "var(--text-secondary, #a3a3a3)", fontSize: 13 }}>
-          A carregar handoffs...
+          {t("handoff.loading")}
         </div>
       ) : grouped.length === 0 ? (
         <div style={{ color: "var(--text-secondary, #a3a3a3)", fontSize: 13 }}>
-          Sem handoffs nesta fila.
+          {t("handoff.emptyQueue")}
         </div>
       ) : (
         <div style={{ display: "grid", gap: 10 }}>
@@ -181,7 +181,7 @@ export function TPVHandoffPage() {
                 }}
               >
                 <div style={{ fontWeight: 700, color: "var(--text-primary)" }}>
-                  Mesa {item.table_number ?? "—"}
+                  {t("handoff.table", { n: item.table_number ?? "—" })}
                 </div>
                 <div
                   style={{
@@ -202,7 +202,7 @@ export function TPVHandoffPage() {
                 }}
               >
                 <span style={{ color: "var(--text-secondary, #a3a3a3)" }}>
-                  {item.waiter_name ?? "Garçom"}
+                  {item.waiter_name ?? t("handoff.waiterFallback")}
                 </span>
                 <strong style={{ color: "var(--text-primary)" }}>
                   {formatMoney(item.total_estimated_cents)}
@@ -215,7 +215,7 @@ export function TPVHandoffPage() {
                   onClick={() => navigate("/op/tpv/tables")}
                   style={actionBtnStyle}
                 >
-                  Abrir mesa
+                  {t("handoff.openTable")}
                 </button>
                 <button
                   type="button"
@@ -226,7 +226,7 @@ export function TPVHandoffPage() {
                   }}
                   style={actionPrimaryStyle}
                 >
-                  Finalizar & pagar
+                  {t("handoff.finalizePay")}
                 </button>
                 <button
                   type="button"
@@ -236,7 +236,7 @@ export function TPVHandoffPage() {
                   }}
                   style={actionBtnStyle}
                 >
-                  Marcar fechada
+                  {t("handoff.markClosed")}
                 </button>
                 <button
                   type="button"
@@ -246,7 +246,7 @@ export function TPVHandoffPage() {
                   }}
                   style={actionBtnStyle}
                 >
-                  Imprimir conta
+                  {t("handoff.printBill")}
                 </button>
               </div>
             </div>

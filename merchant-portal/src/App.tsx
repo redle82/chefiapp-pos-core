@@ -250,8 +250,9 @@ function AppContentWithBilling() {
   }, [location.pathname]);
 
   const isBillingManagement = location.pathname.startsWith("/app/billing");
+  const isPublicPage = location.pathname.startsWith("/public");
 
-  if (isTrialExpired && !isBillingManagement) {
+  if (isTrialExpired && !isBillingManagement && !isPublicPage) {
     return (
       <GlobalBlockedView
         title="Período de trial terminado"
@@ -261,7 +262,7 @@ function AppContentWithBilling() {
     );
   }
 
-  if (isBillingBlocked && !isBillingManagement) {
+  if (isBillingBlocked && !isBillingManagement && !isPublicPage) {
     return <BillingBlockedView />;
   }
 

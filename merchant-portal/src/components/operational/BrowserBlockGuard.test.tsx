@@ -81,11 +81,11 @@ describe("BrowserBlockGuard", () => {
     });
     expect(openDesktopApp).toBeTruthy();
 
-    const downloadInstaller = screen.getByRole("link", {
-      name: "Baixar instalador",
+    const manageLink = screen.getByRole("link", {
+      name: "Gerir terminais TPV",
     });
-    expect(downloadInstaller).toBeTruthy();
-    const href = downloadInstaller.getAttribute("href") ?? "";
+    expect(manageLink).toBeTruthy();
+    const href = manageLink.getAttribute("href") ?? "";
     expect(href.length > 0).toBe(true);
     expect(
       href.includes("/admin/devices") || href.includes("/downloads/"),

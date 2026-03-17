@@ -9,6 +9,7 @@
  */
 
 import { useTranslation } from "react-i18next";
+import { useAuth } from "../../core/auth/useAuth";
 import { useCurrency } from "../../core/currency/useCurrency";
 import { useHardwareStatus } from "../../core/operational/hooks/useHardwareStatus";
 import { useOperationalKpis } from "../../core/operational/hooks/useOperationalKpis";
@@ -28,6 +29,7 @@ export function OperationalHeader() {
   const kpis = useOperationalKpis();
   const { hasAnyPrinterOffline } = useHardwareStatus();
   const ctx = useOperationalContext();
+  const { user } = useAuth();
 
   const kitchenColor = KITCHEN_STATUS_COLORS[kpis.kitchenStatus] ?? "#a3a3a3";
   const kitchenLabelMap: Record<string, string> = {
@@ -37,12 +39,19 @@ export function OperationalHeader() {
   };
   const kitchenLabel = kitchenLabelMap[kpis.kitchenStatus] ?? "—";
 
+  // Derive role: explicit context > single-owner default
+  // In single-owner scenario (P0), the person operating IS the owner — always show "DONO"
+  const effectiveRole = ctx.role ?? "owner";
   const roleLabel =
-    ctx.role === "owner"
+    effectiveRole === "owner"
       ? t("operational:roles.owner")
-      : ctx.role === "manager"
+      : effectiveRole === "manager"
       ? t("operational:roles.manager")
-      : t("operational:roles.operator");
+      : effectiveRole === "cashier"
+      ? t("operational:roles.cashier")
+      : effectiveRole === "waiter"
+      ? t("operational:roles.waiter")
+      : t("operational:roles.owner");
 
   return (
     <div

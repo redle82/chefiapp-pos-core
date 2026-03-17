@@ -11,7 +11,12 @@
     "closeButton": "Fechar turno",
     "registerClosed": "Caixa fechado",
     "openButton": "Abrir turno",
-    "operatorLabel": "Caixa"
+    "operatorLabel": "Caixa",
+    "defaultOperator": "Caixa TPV",
+    "defaultRegisterName": "Caixa Principal",
+    "subtitle": "Abertura e fecho de caixa do turno actual.",
+    "openTitle": "Abrir Caixa",
+    "openDescription": "Preencha o valor inicial e o nome do operador para abrir o turno."
   },
   "gate": {
     "closedTitle": "Caixa Fechado:",

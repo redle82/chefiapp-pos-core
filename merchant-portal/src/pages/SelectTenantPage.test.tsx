@@ -9,6 +9,20 @@ import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { SelectTenantPage } from "./SelectTenantPage";
 
+vi.mock("react-i18next", () => ({
+  useTranslation: () => ({
+    t: (key: string) => {
+      const map: Record<string, string> = {
+        "common:selectTenant.loading": "A carregar",
+        "common:selectTenant.redirecting": "A redirecionar",
+        "tenant.yourRestaurants": "Seus Restaurantes",
+      };
+      return map[key] ?? key;
+    },
+    i18n: { language: "pt-PT" },
+  }),
+}));
+
 const mockSwitchTenant = vi.fn();
 const mockNavigate = vi.fn();
 

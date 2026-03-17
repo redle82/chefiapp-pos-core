@@ -9,7 +9,11 @@ vi.mock("react-router-dom", async () => {
   const actual = await vi.importActual<typeof import("react-router-dom")>(
     "react-router-dom",
   );
-  return { ...actual, useOutletContext: () => ({}) };
+  return {
+    ...actual,
+    useOutletContext: () => ({}),
+    useSearchParams: () => [new URLSearchParams(), vi.fn()],
+  };
 });
 
 vi.mock("../../context/RestaurantRuntimeContext", () => ({
@@ -25,6 +29,7 @@ vi.mock("./hooks/useTPVRestaurantId", () => ({
 vi.mock("../../infra/readers/OrderReader", () => ({
   readActiveOrders: (...args: unknown[]) => readActiveOrders(...args),
   readOrderItems: (...args: unknown[]) => readOrderItems(...args),
+  readPreparedItems: vi.fn().mockResolvedValue([]),
 }));
 
 vi.mock("../../core/infra/CoreOrdersApi", () => ({
@@ -33,6 +38,18 @@ vi.mock("../../core/infra/CoreOrdersApi", () => ({
 
 vi.mock("../../infra/writers/OrderWriter", () => ({
   markItemReady: vi.fn().mockResolvedValue(undefined),
+}));
+
+vi.mock("../../infra/writers/TableWriter", () => ({
+  markTableReadyToServe: vi.fn().mockResolvedValue(undefined),
+}));
+
+vi.mock("../../core/tpv/TPVCentralEvents", () => ({
+  TPVCentralEmitters: {
+    alertTable: vi.fn(),
+    orderReady: vi.fn(),
+  },
+  tpvEventBus: { on: vi.fn(() => vi.fn()), emit: vi.fn() },
 }));
 
 vi.mock("../KDSMinimal/OrderStatusCalculator", () => ({
@@ -108,12 +125,14 @@ describe("TPVKitchenPage", () => {
 
     render(<TPVKitchenPage />);
 
-    expect(await screen.findByText("Fila")).toBeTruthy();
-    expect(screen.getByText("Detalhes")).toBeTruthy();
+    // English translations from vitest.setup.ts: queue -> "Queue", details -> "Details"
+    // "Queue" appears in both a tab button and an h3 heading
+    expect((await screen.findAllByText(/Queue/)).length).toBeGreaterThanOrEqual(1);
+    expect(screen.getByText("Details")).toBeTruthy();
     expect(screen.getByText("Info")).toBeTruthy();
-    // #1001 appears in both left panel row and center panel header — use getAllByText
+    // orderLabel -> "Order #{{id}}" so #1001 or A1 appears
     await waitFor(() => {
-      expect(screen.getAllByText(/#1001/).length).toBeGreaterThanOrEqual(1);
+      expect(screen.getAllByText(/#?1001|A1/).length).toBeGreaterThanOrEqual(1);
     });
   });
 
@@ -137,19 +156,15 @@ describe("TPVKitchenPage", () => {
 
     render(<TPVKitchenPage />);
 
-    // Wait for first order to appear (text shows in both panels)
+    // Wait for first order to appear — English: "Order #1001"
     await waitFor(() => {
-      expect(screen.getAllByText(/Pedido #1001/).length).toBeGreaterThanOrEqual(
-        1,
-      );
+      expect(screen.getAllByText(/Order #1001|#1001|A1/).length).toBeGreaterThanOrEqual(1);
     });
 
     fireEvent.click(screen.getByTestId("order-row-order-2"));
 
     await waitFor(() => {
-      expect(screen.getAllByText(/Pedido #1002/).length).toBeGreaterThanOrEqual(
-        1,
-      );
+      expect(screen.getAllByText(/Order #1002|#1002/).length).toBeGreaterThanOrEqual(1);
     });
   });
 });

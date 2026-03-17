@@ -7,6 +7,7 @@
  * Fase 1: stubs por tipo (Pagamentos, WhatsApp, APIs & Webhooks, Delivery, Outros).
  */
 
+import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 import styles from "./ConfigIntegrationsPage.module.css";
 
@@ -15,64 +16,56 @@ const INTEGRATIONS_BASE = "/admin/config/integrations";
 const HUB_SECTIONS: Array<{
   id: string;
   icon: string;
-  label: string;
-  description: string;
+  i18nKey: string;
   status: "stub" | "available";
   path?: string;
 }> = [
   {
     id: "payments",
     icon: "💳",
-    label: "Pagamentos",
-    description: "Stripe e outros; config, status, logs.",
+    i18nKey: "payments",
     status: "stub",
     path: `${INTEGRATIONS_BASE}/payments`,
   },
   {
     id: "whatsapp",
     icon: "📱",
-    label: "WhatsApp",
-    description: "Canal de entrada, notificações, automações.",
+    i18nKey: "whatsapp",
     status: "available",
     path: `${INTEGRATIONS_BASE}/whatsapp`,
   },
   {
     id: "webhooks",
     icon: "🔗",
-    label: "APIs & Webhooks",
-    description: "Webhooks OUT (endpoint, eventos); API IN (chaves, limites).",
+    i18nKey: "webhooks",
     status: "stub",
     path: `${INTEGRATIONS_BASE}/webhooks`,
   },
   {
     id: "delivery",
     icon: "🛵",
-    label: "Delivery",
-    description: "GloriaFood, Glovo, Uber Eats; ativar/desativar por adapter.",
+    i18nKey: "delivery",
     status: "available",
     path: `${INTEGRATIONS_BASE}/delivery`,
   },
   {
     id: "google-business",
     icon: "📍",
-    label: "Google Business",
-    description: "Perfil, avaliações e respostas do Google Business Profile.",
+    i18nKey: "googleBusiness",
     status: "available",
     path: `${INTEGRATIONS_BASE}/google-business`,
   },
   {
     id: "instagram",
     icon: "📸",
-    label: "Instagram",
-    description: "Publicação automática de pratos e promoções.",
+    i18nKey: "instagram",
     status: "available",
     path: `${INTEGRATIONS_BASE}/instagram`,
   },
   {
     id: "other",
     icon: "📦",
-    label: "Outros sistemas",
-    description: "ERP, fiscal, BI, analytics.",
+    i18nKey: "other",
     status: "stub",
     path: `${INTEGRATIONS_BASE}/other`,
   },
@@ -86,15 +79,16 @@ type ConfigIntegrationsPageProps = {
 export function ConfigIntegrationsPage({
   hideHeader,
 }: ConfigIntegrationsPageProps = {}) {
+  const { t } = useTranslation("config");
   const navigate = useNavigate();
 
   return (
     <div>
       {!hideHeader && (
         <div className={styles.headerContainer}>
-          <h1 className={styles.title}>Integrações</h1>
+          <h1 className={styles.title}>{t("integrations.title")}</h1>
           <p className={styles.subtitle}>
-            Ligue TPV, delivery e outros serviços ao seu restaurante.
+            {t("integrations.subtitle")}
           </p>
         </div>
       )}
@@ -115,17 +109,17 @@ export function ConfigIntegrationsPage({
           >
             <div className={styles.sectionIcon}>{section.icon}</div>
             <div className={styles.sectionHeader}>
-              <div className={styles.sectionLabel}>{section.label}</div>
+              <div className={styles.sectionLabel}>{t(`integrations.section.${section.i18nKey}.label`)}</div>
               {section.status === "stub" && (
-                <span className={styles.sectionStatus}>Em breve</span>
+                <span className={styles.sectionStatus}>{t("integrations.comingSoon")}</span>
               )}
               {section.status === "available" && (
                 <span className={styles.sectionStatusAvailable}>
-                  Disponível
+                  {t("integrations.available")}
                 </span>
               )}
             </div>
-            <p className={styles.sectionDescription}>{section.description}</p>
+            <p className={styles.sectionDescription}>{t(`integrations.section.${section.i18nKey}.description`)}</p>
           </div>
         ))}
       </div>

@@ -58,6 +58,11 @@ export function useAppStaffTables(restaurantId: string | null): UseAppStaffTable
 
   useEffect(() => {
     loadTables();
+
+    // Polling 10s — cross-surface sync (qualquer origem pode ocupar/libertar mesa)
+    if (!restaurantId) return;
+    const interval = setInterval(loadTables, 10_000);
+    return () => clearInterval(interval);
   }, [restaurantId]);
 
   return {

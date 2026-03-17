@@ -73,33 +73,22 @@ type TabType =
 
 type StockMovementAction = "IN" | "OUT" | "ADJUST" | "TRANSFER";
 
-const TAB_LABELS: Record<TabType, { icon: string; label: string }> = {
-  locations: { icon: "📍", label: "Locais" },
-  equipment: { icon: "🔧", label: "Equipamentos" },
-  ingredients: { icon: "🥘", label: "Ingredientes" },
-  stock: { icon: "📊", label: "Estoque" },
-  recipes: { icon: "📝", label: "Receitas" },
-  movements: { icon: "🔁", label: "Movimentos" },
-  scan: { icon: "📷", label: "Scan" },
+const TAB_ICONS: Record<TabType, string> = {
+  locations: "📍",
+  equipment: "🔧",
+  ingredients: "🥘",
+  stock: "📊",
+  recipes: "📝",
+  movements: "🔁",
+  scan: "📷",
 };
 
-const MOVEMENT_ACTIONS: { value: StockMovementAction; label: string }[] = [
-  { value: "IN", label: "Entrada" },
-  { value: "OUT", label: "Saida" },
-  { value: "ADJUST", label: "Ajuste" },
-  { value: "TRANSFER", label: "Transferencia" },
-];
+const MOVEMENT_ACTION_KEYS: StockMovementAction[] = ["IN", "OUT", "ADJUST", "TRANSFER"];
 
-const UNIT_OPTIONS = [
-  { value: "unit", label: "Unidade" },
-  { value: "g", label: "g" },
-  { value: "kg", label: "kg" },
-  { value: "ml", label: "ml" },
-  { value: "l", label: "l" },
-];
+const UNIT_OPTION_KEYS = ["unit", "g", "kg", "ml", "l"] as const;
 
 export function InventoryStockMinimal() {
-  const { t } = useTranslation();
+  const { t } = useTranslation("operational");
   const navigate = useNavigate();
   const { symbol: currencySymbol } = useCurrency();
   const { identity } = useRestaurantIdentity();
@@ -701,7 +690,7 @@ export function InventoryStockMinimal() {
 
       {/* Tabs */}
       <nav className={styles.tabs}>
-        {(Object.keys(TAB_LABELS) as TabType[]).map((tab) => (
+        {(Object.keys(TAB_ICONS) as TabType[]).map((tab) => (
           <button
             key={tab}
             type="button"
@@ -710,8 +699,8 @@ export function InventoryStockMinimal() {
               activeTab === tab ? styles.tabActive : ""
             } ${tab === "scan" ? styles.tabScan : ""}`}
           >
-            <span className={styles.tabIcon}>{TAB_LABELS[tab].icon}</span>
-            <span className={styles.tabLabel}>{TAB_LABELS[tab].label}</span>
+            <span className={styles.tabIcon}>{TAB_ICONS[tab]}</span>
+            <span className={styles.tabLabel}>{t(`inventory.tab.${tab}`)}</span>
           </button>
         ))}
       </nav>
@@ -1374,7 +1363,7 @@ export function InventoryStockMinimal() {
                         e.target.value as CoreIngredient["unit"],
                       )
                     }
-                    options={UNIT_OPTIONS}
+                    options={UNIT_OPTION_KEYS.map((k) => ({ value: k, label: k === "unit" ? t("inventory.unit.unit") : k }))}
                   />
                 </div>
                 <div className={styles.formActions}>
@@ -1545,7 +1534,7 @@ export function InventoryStockMinimal() {
                       }
                     }}
                     aria-label="Tipo de movimento"
-                    options={MOVEMENT_ACTIONS}
+                    options={MOVEMENT_ACTION_KEYS.map((k) => ({ value: k, label: t(`inventory.movement.${k}`) }))}
                   />
 
                   <Select

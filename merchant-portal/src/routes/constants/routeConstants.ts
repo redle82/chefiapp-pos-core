@@ -10,6 +10,16 @@ export const OPERATIONAL_ROUTES = {
   POS_ALIAS: "/op/pos",
 } as const;
 
+/** Dedicated screen routes — isolated from TPV shell (no sidebar/header). */
+export const SCREEN_ROUTES = {
+  ROOT: "/screen",
+  KITCHEN: "/screen/kitchen",
+  BAR: "/screen/bar",
+  EXPO: "/screen/expo",
+  DELIVERY: "/screen/delivery",
+  CUSTOMER_DISPLAY: "/screen/customer-display",
+} as const;
+
 export const APP_ROUTES = {
   ROOT: "/app",
   ACTIVATION: "/app/activation",

@@ -4,30 +4,27 @@
  */
 
 // ============================================================================
-// STATUS DE MESA
+// STATUS DE MESA — fonte canónica: tableStates.ts
+// Waiter adiciona estados locais (calling, paying) que não persistem no DB.
 // ============================================================================
 
+import {
+  TABLE_STATES,
+  type TableStatus as CanonicalTableStatus,
+} from "../../core/operational/tableStates";
+
 export const TableStatus = {
-  /** Mesa livre, disponível */
-  FREE: 'free',
-  /** Mesa ocupada (clientes sentados, sem comanda ainda) */
-  OCCUPIED: 'occupied',
-  /** Cliente chamou o garçom (urgente se repetido) */
+  ...TABLE_STATES,
+  /** Cliente chamou o garçom (urgente se repetido) — Waiter-only, não persiste */
   CALLING: 'calling',
-  /** Conta foi solicitada */
-  BILL_REQUESTED: 'bill_requested',
-  /** Cliente está pagando */
+  /** Cliente está pagando — Waiter-only, não persiste */
   PAYING: 'paying',
-  /** Cozinha marcou pedido como pronto */
-  KITCHEN_READY: 'kitchen_ready',
-  /** Mesa precisa de limpeza */
-  CLEANING: 'cleaning',
-  /** Mesa Reservada */
-  RESERVED: 'reserved',
-  /** Mesa Fechada (Admin) */
+  /** Cozinha marcou pedido como pronto — alias para ready_to_serve */
+  KITCHEN_READY: TABLE_STATES.READY_TO_SERVE,
+  /** Mesa Fechada (Admin) — normalizado para "free" no DB */
   CLOSED: 'closed',
 } as const;
-export type TableStatus = typeof TableStatus[keyof typeof TableStatus];
+export type TableStatus = CanonicalTableStatus | 'calling' | 'paying' | 'closed';
 
 // ============================================================================
 // PRIORIDADE DE ALERTAS

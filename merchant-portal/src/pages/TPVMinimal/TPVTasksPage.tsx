@@ -51,19 +51,12 @@ const PRIORITY_COLORS: Record<string, { bg: string; text: string }> = {
   BAIXA: { bg: "rgba(34,197,94,0.15)", text: "#22c55e" },
 };
 
-const STATUS_LABELS: Record<string, string> = {
-  OPEN: "Aberta",
-  ACKNOWLEDGED: "Vista",
-  IN_PROGRESS: "Em curso",
-  RESOLVED: "Resolvida",
-};
-
 // ---------------------------------------------------------------------------
 // Component
 // ---------------------------------------------------------------------------
 
 export function TPVTasksPage() {
-  const { t } = useTranslation();
+  const { t } = useTranslation("tpv");
   const restaurantId = useTPVRestaurantId();
   const { runtime } = useRestaurantRuntime();
 
@@ -170,7 +163,7 @@ export function TPVTasksPage() {
   const timeAgo = (dateStr: string) => {
     const diff = Date.now() - new Date(dateStr).getTime();
     const mins = Math.floor(diff / 60000);
-    if (mins < 1) return "agora";
+    if (mins < 1) return t("tasks.now");
     if (mins < 60) return `${mins}m`;
     const hours = Math.floor(mins / 60);
     return `${hours}h ${mins % 60}m`;
@@ -189,7 +182,7 @@ export function TPVTasksPage() {
           fontSize: 14,
         }}
       >
-        A carregar tarefas…
+        {t("tasks.loading")}
       </div>
     );
   }
@@ -224,7 +217,7 @@ export function TPVTasksPage() {
               color: "var(--text-primary, #fafafa)",
             }}
           >
-            ✅ Tarefas
+            {t("tasks.title")}
           </h2>
           <span
             style={{
@@ -236,7 +229,7 @@ export function TPVTasksPage() {
               color: "var(--text-secondary, #a3a3a3)",
             }}
           >
-            {openCount} aberta{openCount !== 1 ? "s" : ""}
+            {t("tasks.openCount", { count: openCount })}
           </span>
           {criticalCount > 0 && (
             <span
@@ -249,7 +242,7 @@ export function TPVTasksPage() {
                 color: "#dc2626",
               }}
             >
-              {criticalCount} crítica{criticalCount !== 1 ? "s" : ""}
+              {t("tasks.criticalCount", { count: criticalCount })}
             </span>
           )}
         </div>
@@ -262,12 +255,12 @@ export function TPVTasksPage() {
               style={FILTER_BTN(stationFilter === f)}
             >
               {f === "ALL"
-                ? "Todas"
+                ? t("tasks.filterAll")
                 : f === "SERVICE"
-                ? "Serviço"
+                ? t("tasks.filterService")
                 : f === "KITCHEN"
-                ? "Cozinha"
-                : "Bar"}
+                ? t("tasks.filterKitchen")
+                : t("tasks.filterBar")}
             </button>
           ))}
           <button
@@ -285,7 +278,7 @@ export function TPVTasksPage() {
               color: showCreateForm ? "#dc2626" : "#000",
             }}
           >
-            {showCreateForm ? "✕ Cancelar" : "+ Nova tarefa"}
+            {showCreateForm ? t("common:cancel") : t("tasks.newTask")}
           </button>
         </div>
       </div>
@@ -305,7 +298,7 @@ export function TPVTasksPage() {
           <input
             value={newTaskTitle}
             onChange={(e) => setNewTaskTitle(e.target.value)}
-            placeholder="Descrição da tarefa…"
+            placeholder={t("tasks.taskPlaceholder")}
             onKeyDown={(e) => e.key === "Enter" && handleCreateTask()}
             style={{
               flex: 1,
@@ -319,7 +312,7 @@ export function TPVTasksPage() {
             }}
           />
           <select
-            title="Prioridade da tarefa"
+            title={t("tasks.priorityLabel")}
             value={newTaskPriority}
             onChange={(e) => setNewTaskPriority(e.target.value)}
             style={{
@@ -332,10 +325,10 @@ export function TPVTasksPage() {
               outline: "none",
             }}
           >
-            <option value="BAIXA">Baixa</option>
-            <option value="MEDIA">Média</option>
-            <option value="ALTA">Alta</option>
-            <option value="CRITICA">Crítica</option>
+            <option value="BAIXA">{t("tasks.priority.BAIXA")}</option>
+            <option value="MEDIA">{t("tasks.priority.MEDIA")}</option>
+            <option value="ALTA">{t("tasks.priority.ALTA")}</option>
+            <option value="CRITICA">{t("tasks.priority.CRITICA")}</option>
           </select>
           <button
             onClick={handleCreateTask}
@@ -375,16 +368,16 @@ export function TPVTasksPage() {
         >
           <span style={{ fontSize: 40 }}>🎯</span>
           <span style={{ fontSize: 14 }}>
-            Sem tarefas
-            {stationFilter !== "ALL"
-              ? ` para ${
-                  stationFilter === "SERVICE"
-                    ? "serviço"
-                    : stationFilter === "KITCHEN"
-                    ? "cozinha"
-                    : "bar"
-                }`
-              : ""}
+            {stationFilter === "ALL"
+              ? t("tasks.noTasks")
+              : t("tasks.noTasksForStation", {
+                  station:
+                    stationFilter === "SERVICE"
+                      ? t("tasks.filterService")
+                      : stationFilter === "KITCHEN"
+                      ? t("tasks.filterKitchen")
+                      : t("tasks.filterBar"),
+                })}
           </span>
         </div>
       ) : (
@@ -447,15 +440,15 @@ export function TPVTasksPage() {
                     {task.station && (
                       <span>
                         {task.station === "KITCHEN"
-                          ? "Cozinha"
+                          ? t("tasks.filterKitchen")
                           : task.station === "BAR"
-                          ? "Bar"
-                          : "Serviço"}
+                          ? t("tasks.filterBar")
+                          : t("tasks.filterService")}
                       </span>
                     )}
                     {task.source_event && (
                       <span>
-                        {task.source_event === "MANUAL" ? "Manual" : "Auto"}
+                        {task.source_event === "MANUAL" ? t("tasks.sourceManual") : t("tasks.sourceAuto")}
                       </span>
                     )}
                     <span>{timeAgo(task.created_at)}</span>
@@ -474,7 +467,7 @@ export function TPVTasksPage() {
                     whiteSpace: "nowrap",
                   }}
                 >
-                  {STATUS_LABELS[task.status] ?? task.status}
+                  {t(`tasks.status.${task.status}`)}
                 </span>
 
                 {/* Actions */}
@@ -493,9 +486,9 @@ export function TPVTasksPage() {
                         backgroundColor: "rgba(59,130,246,0.15)",
                         color: "#3b82f6",
                       }}
-                      title="Marcar como vista"
+                      title={t("tasks.actionAcknowledgeTitle")}
                     >
-                      {actingOn === task.id ? "…" : "👁 Vista"}
+                      {actingOn === task.id ? "…" : t("tasks.actionAcknowledge")}
                     </button>
                   )}
                   {(task.status === "OPEN" ||
@@ -514,9 +507,9 @@ export function TPVTasksPage() {
                         backgroundColor: "rgba(34,197,94,0.15)",
                         color: "#22c55e",
                       }}
-                      title="Resolver tarefa"
+                      title={t("tasks.actionResolveTitle")}
                     >
-                      {actingOn === task.id ? "…" : "✓ Resolver"}
+                      {actingOn === task.id ? "…" : t("tasks.actionResolve")}
                     </button>
                   )}
                 </div>

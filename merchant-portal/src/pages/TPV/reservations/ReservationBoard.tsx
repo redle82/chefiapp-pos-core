@@ -45,15 +45,12 @@ interface ReservationRow {
   updated_at: string;
 }
 
-const STATUS_COLORS: Record<
-  string,
-  { bg: string; text: string; label: string }
-> = {
-  CONFIRMED: { bg: "#dbeafe", text: "#1d4ed8", label: "Confirmada" },
-  SEATED: { bg: "#dcfce7", text: "#15803d", label: "Sentado" },
-  COMPLETED: { bg: "#f3f4f6", text: "#6b7280", label: "Concluída" },
-  NO_SHOW: { bg: "#fef3c7", text: "#b45309", label: "Não compareceu" },
-  CANCELLED: { bg: "#fee2e2", text: "#dc2626", label: "Cancelada" },
+const STATUS_COLORS: Record<string, { bg: string; text: string }> = {
+  CONFIRMED: { bg: "rgba(59,130,246,0.15)", text: "#60a5fa" },
+  SEATED: { bg: "rgba(34,197,94,0.15)", text: "#4ade80" },
+  COMPLETED: { bg: "rgba(107,114,128,0.15)", text: "#9ca3af" },
+  NO_SHOW: { bg: "rgba(245,158,11,0.15)", text: "#fbbf24" },
+  CANCELLED: { bg: "rgba(239,68,68,0.15)", text: "#f87171" },
 };
 
 function formatDate(d: Date): string {
@@ -105,7 +102,7 @@ function ReservationForm({
   onCancel: () => void;
   saving: boolean;
 }) {
-  const { t } = useTranslation();
+  const { t } = useTranslation("tpv");
   const [form, setForm] = useState<ReservationFormData>(initial);
 
   const set = <K extends keyof ReservationFormData>(
@@ -138,16 +135,16 @@ function ReservationForm({
       {/* Row: Name + Phone */}
       <div style={{ display: "flex", gap: 12 }}>
         <div style={{ flex: 2 }}>
-          <label style={labelStyle}>Nome do cliente *</label>
+          <label style={labelStyle}>{t("reservations.customerName")}</label>
           <input
             style={inputStyle}
-            placeholder="Nome"
+            placeholder={t("reservations.namePlaceholder")}
             value={form.customer_name}
             onChange={(e) => set("customer_name", e.target.value)}
           />
         </div>
         <div style={{ flex: 1 }}>
-          <label style={labelStyle}>Telefone</label>
+          <label style={labelStyle}>{t("reservations.phone")}</label>
           <input
             style={inputStyle}
             placeholder="+351 9..."
@@ -159,7 +156,7 @@ function ReservationForm({
 
       {/* Row: Email */}
       <div>
-        <label style={labelStyle}>Email</label>
+        <label style={labelStyle}>{t("reservations.email")}</label>
         <input
           style={inputStyle}
           placeholder="email@exemplo.com"
@@ -172,7 +169,7 @@ function ReservationForm({
       {/* Row: Date + Time + Party size */}
       <div style={{ display: "flex", gap: 12 }}>
         <div style={{ flex: 1 }}>
-          <label style={labelStyle}>Data *</label>
+          <label style={labelStyle}>{t("reservations.date")}</label>
           <input
             style={inputStyle}
             type="date"
@@ -181,7 +178,7 @@ function ReservationForm({
           />
         </div>
         <div style={{ flex: 1 }}>
-          <label style={labelStyle}>Hora *</label>
+          <label style={labelStyle}>{t("reservations.time")}</label>
           <input
             style={inputStyle}
             type="time"
@@ -190,7 +187,7 @@ function ReservationForm({
           />
         </div>
         <div style={{ flex: 1 }}>
-          <label style={labelStyle}>Pessoas *</label>
+          <label style={labelStyle}>{t("reservations.partySize")}</label>
           <input
             style={inputStyle}
             type="number"
@@ -204,7 +201,7 @@ function ReservationForm({
 
       {/* Row: Duration */}
       <div style={{ maxWidth: 160 }}>
-        <label style={labelStyle}>Duração (min)</label>
+        <label style={labelStyle}>{t("reservations.duration")}</label>
         <select
           style={inputStyle}
           value={form.duration_minutes}
@@ -220,14 +217,14 @@ function ReservationForm({
 
       {/* Special requests */}
       <div>
-        <label style={labelStyle}>Pedidos especiais</label>
+        <label style={labelStyle}>{t("reservations.specialRequests")}</label>
         <textarea
           style={{
             ...inputStyle,
             minHeight: 48,
             resize: "vertical",
           }}
-          placeholder="Alergias, preferências..."
+          placeholder={t("reservations.specialRequestsPlaceholder")}
           value={form.special_requests}
           onChange={(e) => set("special_requests", e.target.value)}
         />
@@ -248,7 +245,7 @@ function ReservationForm({
             color: colors.text.secondary,
           }}
         >
-          Cancelar
+          {t("common:cancel")}
         </button>
         <button
           onClick={() => onSave(form)}
@@ -298,7 +295,7 @@ function actionBtnStyle(color: string): React.CSSProperties {
 export default function ReservationBoard({
   restaurantId,
 }: ReservationBoardProps) {
-  const { t } = useTranslation();
+  const { t } = useTranslation("tpv");
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [reservations, setReservations] = useState<ReservationRow[]>([]);
   const [loading, setLoading] = useState(true);
@@ -535,7 +532,7 @@ export default function ReservationBoard({
               {formatDateLabel(selectedDate)}
             </div>
             <div style={{ fontSize: 12, color: colors.text.secondary }}>
-              {stats.active} reservas · {stats.totalGuests} pessoas
+              {t("reservations.statsLine", { active: stats.active, guests: stats.totalGuests })}
             </div>
           </div>
           <button
@@ -565,7 +562,7 @@ export default function ReservationBoard({
               color: colors.text.secondary,
             }}
           >
-            Hoje
+            {t("reservations.today")}
           </button>
         </div>
 
@@ -589,7 +586,7 @@ export default function ReservationBoard({
             color: "#fff",
           }}
         >
-          + Nova Reserva
+          {t("reservations.newReservation")}
         </button>
       </div>
 
@@ -610,7 +607,7 @@ export default function ReservationBoard({
               marginBottom: 12,
             }}
           >
-            {editingId ? "Editar Reserva" : "Nova Reserva"}
+            {editingId ? t("reservations.editReservation") : t("reservations.newReservation")}
           </div>
           <ReservationForm
             initial={formInitial}
@@ -634,7 +631,7 @@ export default function ReservationBoard({
               color: colors.text.secondary,
             }}
           >
-            Carregando reservas...
+            {t("reservations.loading")}
           </div>
         ) : tableUnavailable ? (
           <div
@@ -646,12 +643,10 @@ export default function ReservationBoard({
           >
             <div style={{ fontSize: 40, marginBottom: 12 }}>🔧</div>
             <div style={{ fontSize: 16, fontWeight: 600, marginBottom: 4 }}>
-              Reservas indisponíveis
+              {t("reservations.unavailable")}
             </div>
             <div style={{ fontSize: 13 }}>
-              A tabela <code>gm_reservations</code> não existe no Core. Aplicar
-              migrations em <code>docker-core/schema/migrations</code> (ex.{" "}
-              <code>20260209_reservations_tables.sql</code>).
+              {t("reservations.unavailableHint")}
             </div>
           </div>
         ) : reservations.length === 0 ? (
@@ -664,10 +659,10 @@ export default function ReservationBoard({
           >
             <div style={{ fontSize: 40, marginBottom: 12 }}>📅</div>
             <div style={{ fontSize: 16, fontWeight: 600, marginBottom: 4 }}>
-              Sem reservas para este dia
+              {t("reservations.noReservations")}
             </div>
             <div style={{ fontSize: 13 }}>
-              Clique em &quot;+ Nova Reserva&quot; para adicionar.
+              {t("reservations.noReservationsHint")}
             </div>
           </div>
         ) : (
@@ -758,7 +753,7 @@ export default function ReservationBoard({
                       whiteSpace: "nowrap",
                     }}
                   >
-                    {statusInfo.label}
+                    {t(`reservations.status.${r.status}`)}
                   </span>
 
                   {/* Actions */}
@@ -766,7 +761,7 @@ export default function ReservationBoard({
                     <div style={{ display: "flex", gap: 4 }}>
                       {r.status === "CONFIRMED" && (
                         <button
-                          title="Marcar como sentado"
+                          title={t("reservations.actionSeat")}
                           onClick={() => handleStatusChange(r.id, "SEATED")}
                           style={actionBtnStyle("#10b981")}
                         >
@@ -775,7 +770,7 @@ export default function ReservationBoard({
                       )}
                       {r.status === "SEATED" && (
                         <button
-                          title="Concluir"
+                          title={t("reservations.actionComplete")}
                           onClick={() => handleStatusChange(r.id, "COMPLETED")}
                           style={actionBtnStyle("#6366f1")}
                         >
@@ -783,7 +778,7 @@ export default function ReservationBoard({
                         </button>
                       )}
                       <button
-                        title="Não compareceu"
+                        title={t("reservations.actionNoShow")}
                         onClick={() => handleStatusChange(r.id, "NO_SHOW")}
                         style={actionBtnStyle("#f59e0b")}
                       >
@@ -797,7 +792,7 @@ export default function ReservationBoard({
                         🗑
                       </button>
                       <button
-                        title="Editar"
+                        title={t("reservations.actionEdit")}
                         onClick={() => {
                           setEditingId(r.id);
                           setShowForm(true);

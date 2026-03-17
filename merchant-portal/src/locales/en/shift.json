@@ -11,7 +11,12 @@
     "closeButton": "Close shift",
     "registerClosed": "Register closed",
     "openButton": "Open shift",
-    "operatorLabel": "Operator"
+    "operatorLabel": "Operator",
+    "defaultOperator": "POS Cashier",
+    "defaultRegisterName": "Main Register",
+    "subtitle": "Open and close the register for the current shift.",
+    "openTitle": "Open Register",
+    "openDescription": "Enter the opening balance and operator name to start the shift."
   },
   "gate": {
     "closedTitle": "Register closed:",

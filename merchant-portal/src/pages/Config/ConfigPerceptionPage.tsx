@@ -24,14 +24,7 @@ const VPC = {
 const STORAGE_KEY_CAMERA_URL = "chefiapp_perception_camera_url";
 const STORAGE_KEY_CAMERA_ZONE = "chefiapp_perception_camera_zone";
 
-const ZONE_OPTIONS: Array<{ value: string; label: string }> = [
-  { value: "kitchen", label: "Cozinha" },
-  { value: "floor", label: "Salão" },
-  { value: "storage", label: "Estoque" },
-  { value: "cash", label: "Caixa" },
-  { value: "entrance", label: "Entrada" },
-  { value: "other", label: "Outro" },
-];
+const ZONE_OPTION_KEYS = ["kitchen", "floor", "storage", "cash", "entrance", "other"] as const;
 
 /** Links de partilha iCSee (d.jfapp.net, etc.) são páginas, não stream direto. */
 function isIcSeeShareUrl(url: string): boolean {
@@ -47,7 +40,7 @@ function isIcSeeShareUrl(url: string): boolean {
 type StreamStatus = "idle" | "loading" | "live" | "error";
 
 export function ConfigPerceptionPage() {
-  const { t } = useTranslation();
+  const { t } = useTranslation("config");
   const [cameraUrl, setCameraUrl] = useState("");
   const [cameraZone, setCameraZone] = useState("");
   const [saved, setSaved] = useState(false);
@@ -87,7 +80,6 @@ export function ConfigPerceptionPage() {
       setPreviewUrl(null);
       return;
     }
-    // Partilhas iCSee são páginas web, não stream — não tentar incorporar (evita "Sem sinal" + caixa preta)
     if (isIcSeeShareUrl(url)) {
       setPreviewUrl(null);
       setStreamStatus("idle");
@@ -131,14 +123,13 @@ export function ConfigPerceptionPage() {
   const handleAnalyze = async () => {
     const urlToUse = cameraUrl.trim();
     if (!urlToUse) {
-      setAnalysisError("Coloque o link da câmera acima e guarde.");
+      setAnalysisError(t("perception.errorNoLink"));
       return;
     }
     setAnalyzing(true);
     setAnalysisError(null);
     setAnalysisResult(null);
     try {
-      // AI Gateway: um intent, um contexto (ver docs/CHEFIAPP_AI_GATEWAY_SPEC.md)
       const context: Record<string, unknown> = {
         zone: cameraZone || "other",
         cameraUrl: urlToUse,
@@ -152,7 +143,7 @@ export function ConfigPerceptionPage() {
         : result.explanation;
       setAnalysisResult(text);
     } catch (e) {
-      setAnalysisError(e instanceof Error ? e.message : "Erro ao chamar API.");
+      setAnalysisError(e instanceof Error ? e.message : t("perception.errorApi"));
     } finally {
       setAnalyzing(false);
     }
@@ -181,7 +172,7 @@ export function ConfigPerceptionPage() {
             letterSpacing: "-0.02em",
           }}
         >
-          Percepção Operacional
+          {t("perception.title")}
         </h1>
         <p
           style={{
@@ -190,8 +181,7 @@ export function ConfigPerceptionPage() {
             margin: "0 0 8px 0",
           }}
         >
-          Link da câmera (stream ou partilha) e análise de cena com IA. Sem
-          identificar pessoas.
+          {t("perception.subtitle")}
         </p>
         <p
           style={{
@@ -201,8 +191,7 @@ export function ConfigPerceptionPage() {
             fontWeight: 500,
           }}
         >
-          Cole o link da câmera abaixo, guarde e use «Analisar com IA» para
-          obter uma descrição da cena.
+          {t("perception.instruction")}
         </p>
       </header>
 
@@ -224,13 +213,13 @@ export function ConfigPerceptionPage() {
             color: VPC.text,
           }}
         >
-          Link da câmera
+          {t("perception.cameraLinkLabel")}
         </label>
         <input
           type="url"
           value={cameraUrl}
           onChange={(e) => setCameraUrl(e.target.value)}
-          placeholder="https://... (ex.: partilha iCSee d.jfapp.net, ou URL de stream)"
+          placeholder={t("perception.cameraLinkPlaceholder")}
           style={inputStyle}
         />
         <label
@@ -242,21 +231,20 @@ export function ConfigPerceptionPage() {
             color: VPC.text,
           }}
         >
-          Zona da câmera
+          {t("perception.cameraZoneLabel")}
         </label>
         <p style={{ fontSize: 12, color: VPC.textMuted, margin: "0 0 8px 0" }}>
-          Onde esta câmera está (cozinha, salão, estoque, etc.). Necessário para
-          interpretar eventos.
+          {t("perception.cameraZoneDesc")}
         </p>
         <select
           value={cameraZone}
           onChange={(e) => setCameraZone(e.target.value)}
           style={{ ...inputStyle, marginBottom: 12 }}
         >
-          <option value="">— Escolher zona —</option>
-          {ZONE_OPTIONS.map((opt) => (
-            <option key={opt.value} value={opt.value}>
-              {opt.label}
+          <option value="">{t("perception.selectZone")}</option>
+          {ZONE_OPTION_KEYS.map((key) => (
+            <option key={key} value={key}>
+              {t(`perception.zone.${key}`)}
             </option>
           ))}
         </select>
@@ -283,7 +271,7 @@ export function ConfigPerceptionPage() {
               cursor: "pointer",
             }}
           >
-            {t("common:saveLink")}
+            {t("perception.saveLink")}
           </button>
           {saved && (
             <span
@@ -293,7 +281,7 @@ export function ConfigPerceptionPage() {
                 fontWeight: 500,
               }}
             >
-              Guardado.
+              {t("perception.saved")}
             </span>
           )}
           <button
@@ -302,7 +290,7 @@ export function ConfigPerceptionPage() {
             disabled={!!(cameraUrl.trim() && isIcSeeShareUrl(cameraUrl))}
             title={
               cameraUrl.trim() && isIcSeeShareUrl(cameraUrl)
-                ? "Para links iCSee use «Abrir câmera noutra janela» na secção abaixo"
+                ? t("perception.icseeTooltip")
                 : undefined
             }
             style={{
@@ -326,12 +314,12 @@ export function ConfigPerceptionPage() {
                   : "pointer",
             }}
           >
-            {previewUrl ? "Ocultar transmissão" : "Ver ao vivo"}
+            {previewUrl ? t("perception.hideLive") : t("perception.showLive")}
           </button>
         </div>
       </div>
 
-      {/* Confirmação — Câmera ligada? */}
+      {/* Camera check */}
       <div
         style={{
           maxWidth: 640,
@@ -350,11 +338,10 @@ export function ConfigPerceptionPage() {
             color: VPC.text,
           }}
         >
-          Confirmação — Câmera ligada?
+          {t("perception.cameraCheck")}
         </h2>
         <p style={{ fontSize: 13, color: VPC.textMuted, margin: "0 0 16px 0" }}>
-          Use «Ver ao vivo» para confirmar se a câmera está acesa e a enviar
-          sinal.
+          {t("perception.cameraCheckDesc")}
         </p>
         {cameraUrl.trim() && isIcSeeShareUrl(cameraUrl) && (
           <div
@@ -374,7 +361,7 @@ export function ConfigPerceptionPage() {
                 marginBottom: 6,
               }}
             >
-              Link iCSee (partilha)
+              {t("perception.icseeShareTitle")}
             </div>
             <p
               style={{
@@ -383,8 +370,7 @@ export function ConfigPerceptionPage() {
                 margin: "0 0 12px 0",
               }}
             >
-              Este link abre a página da iCSee. Use o botão abaixo para abrir
-              noutra janela.
+              {t("perception.icseeShareDesc")}
             </p>
             <button
               type="button"
@@ -403,18 +389,17 @@ export function ConfigPerceptionPage() {
                 cursor: "pointer",
               }}
             >
-              Abrir câmera noutra janela
+              {t("perception.openCameraNewWindow")}
             </button>
           </div>
         )}
         {cameraUrl.trim() && isIcSeeShareUrl(cameraUrl) ? (
           <p style={{ fontSize: 13, color: VPC.textMuted, margin: 0 }}>
-            Para partilhas iCSee use o botão{" "}
-            <strong>Abrir câmera noutra janela</strong> acima.
+            {t("perception.icseeHint")}
           </p>
         ) : !previewUrl ? (
           <p style={{ fontSize: 13, color: VPC.textMuted, margin: 0 }}>
-            Guarde o link acima e clique em <strong>Ver ao vivo</strong>.
+            {t("perception.saveAndWatch")}
           </p>
         ) : (
           <>
@@ -428,7 +413,7 @@ export function ConfigPerceptionPage() {
             >
               {streamStatus === "loading" && (
                 <span style={{ fontSize: 14, color: VPC.accent }}>
-                  A carregar…
+                  {t("perception.streamLoading")}
                 </span>
               )}
               {streamStatus === "live" && (
@@ -444,7 +429,7 @@ export function ConfigPerceptionPage() {
                   <span
                     style={{ fontSize: 14, color: VPC.accent, fontWeight: 600 }}
                   >
-                    Câmera ligada — a receber sinal
+                    {t("perception.streamLive")}
                   </span>
                 </>
               )}
@@ -461,7 +446,7 @@ export function ConfigPerceptionPage() {
                   <span
                     style={{ fontSize: 14, color: "#f87171", fontWeight: 600 }}
                   >
-                    Sem sinal — verifique o link
+                    {t("perception.streamError")}
                   </span>
                 </>
               )}
@@ -479,7 +464,7 @@ export function ConfigPerceptionPage() {
             >
               <img
                 src={previewUrl}
-                alt="Transmissão ao vivo da câmera"
+                alt={t("perception.streamAlt")}
                 style={{ width: "100%", height: "100%", objectFit: "contain" }}
                 onLoad={() => setStreamStatus("live")}
                 onError={() => setStreamStatus("error")}
@@ -493,14 +478,13 @@ export function ConfigPerceptionPage() {
                 marginBottom: 0,
               }}
             >
-              Se não vir imagem, o link pode ser uma página (ex.: iCSee). Use um
-              link de stream ou snapshot.
+              {t("perception.streamHint")}
             </p>
           </>
         )}
       </div>
 
-      {/* Observação (padrões básicos) */}
+      {/* Observation (basic patterns) */}
       <div
         style={{
           maxWidth: 640,
@@ -519,16 +503,15 @@ export function ConfigPerceptionPage() {
             color: VPC.text,
           }}
         >
-          Observação (padrões básicos)
+          {t("perception.observationTitle")}
         </h2>
         <p style={{ fontSize: 13, color: VPC.textMuted, margin: "0 0 12px 0" }}>
-          Deteta movimento vs. ausência de movimento, duração por zona. Gera
-          eventos estruturados.
+          {t("perception.observationDesc")}
         </p>
         <button
           type="button"
           disabled
-          title="Em breve: deteção de padrões por zona."
+          title={t("perception.observationComingSoon")}
           style={{
             minHeight: VPC.btnMinHeight,
             padding: "12px 24px",
@@ -541,7 +524,7 @@ export function ConfigPerceptionPage() {
             cursor: "not-allowed",
           }}
         >
-          Gerar observação
+          {t("perception.generateObservation")}
         </button>
         <p
           style={{
@@ -551,11 +534,11 @@ export function ConfigPerceptionPage() {
             marginBottom: 0,
           }}
         >
-          Em breve: deteção de padrões por zona.
+          {t("perception.observationComingSoon")}
         </p>
       </div>
 
-      {/* Analisar com LLM */}
+      {/* Analyze with LLM */}
       <div
         style={{
           maxWidth: 640,
@@ -574,11 +557,10 @@ export function ConfigPerceptionPage() {
             color: VPC.text,
           }}
         >
-          Analisar com LLM
+          {t("perception.analyzeTitle")}
         </h2>
         <p style={{ fontSize: 13, color: VPC.textMuted, marginBottom: 12 }}>
-          Usa o link e a zona guardados. O AI Gateway devolve explicação e
-          sugestão. Opcional: VITE_AI_GATEWAY_ENDPOINT.
+          {t("perception.analyzeDesc")}
         </p>
         <button
           type="button"
@@ -596,7 +578,7 @@ export function ConfigPerceptionPage() {
             cursor: analyzing ? "not-allowed" : "pointer",
           }}
         >
-          {analyzing ? "A analisar…" : "Analisar com IA"}
+          {analyzing ? t("perception.analyzing") : t("perception.analyzeWithAI")}
         </button>
         {analysisError && (
           <div

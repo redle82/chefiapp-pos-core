@@ -102,6 +102,8 @@ export function isPathAllowedForState(
   pathname: string,
   state: RestaurantLifecycleState,
 ): boolean {
+  // Public Void Protocol: /public/* is customer-facing — always allowed regardless of lifecycle state.
+  if (pathname.startsWith("/public")) return true;
   if (state === "READY_TO_OPERATE") {
     return true;
   }

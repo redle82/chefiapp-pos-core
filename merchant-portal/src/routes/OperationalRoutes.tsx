@@ -663,6 +663,31 @@ const TPVSettingsPage = lazy(() =>
     default: m.TPVSettingsPage,
   })),
 );
+const TPVWebEditorPage = lazy(() =>
+  import("../pages/TPVMinimal/TPVWebEditorPage").then((m) => ({
+    default: m.TPVWebEditorPage,
+  })),
+);
+const TPVScreensPage = lazy(() =>
+  import("../pages/TPVMinimal/TPVScreensPage").then((m) => ({
+    default: m.TPVScreensPage,
+  })),
+);
+const TPVExpoPage = lazy(() =>
+  import("../pages/TPVMinimal/TPVExpoPage").then((m) => ({
+    default: m.TPVExpoPage,
+  })),
+);
+const TPVCustomerDisplayPage = lazy(() =>
+  import("../pages/TPVMinimal/TPVCustomerDisplayPage").then((m) => ({
+    default: m.TPVCustomerDisplayPage,
+  })),
+);
+const TPVDeliveryPage = lazy(() =>
+  import("../pages/TPVMinimal/TPVDeliveryPage").then((m) => ({
+    default: m.TPVDeliveryPage,
+  })),
+);
 const TPVShiftPage = lazy(() =>
   import("../pages/TPVMinimal/TPVShiftPage").then((m) => ({
     default: m.TPVShiftPage,
@@ -680,6 +705,33 @@ const TPVTasksPage = lazy(() =>
 );
 const TPVReadyPage = lazy(() =>
   import("../pages/TPVReadyPage").then((m) => ({ default: m.TPVReadyPage })),
+);
+
+// pages — Dedicated Screens (isolated from TPV shell)
+const ScreenKitchenPage = lazy(() =>
+  import("../pages/TPVMinimal/screens/ScreenKitchenPage").then((m) => ({
+    default: m.ScreenKitchenPage,
+  })),
+);
+const ScreenBarPage = lazy(() =>
+  import("../pages/TPVMinimal/screens/ScreenBarPage").then((m) => ({
+    default: m.ScreenBarPage,
+  })),
+);
+const ScreenExpoPage = lazy(() =>
+  import("../pages/TPVMinimal/screens/ScreenExpoPage").then((m) => ({
+    default: m.ScreenExpoPage,
+  })),
+);
+const ScreenDeliveryPage = lazy(() =>
+  import("../pages/TPVMinimal/screens/ScreenDeliveryPage").then((m) => ({
+    default: m.ScreenDeliveryPage,
+  })),
+);
+const ScreenCustomerDisplayPage = lazy(() =>
+  import("../pages/TPVMinimal/screens/ScreenCustomerDisplayPage").then((m) => ({
+    default: m.ScreenCustomerDisplayPage,
+  })),
 );
 
 // pages — Tasks
@@ -727,7 +779,7 @@ export const OperationalRoutesFragment = (
   <Fragment>
     <Route path="/electron/setup" element={<ElectronSetupPage />} />
     <Route path="/public/:slug" element={<PublicWebPage />} />
-    <Route path="/public/:slug/mesa/:number" element={<TablePage />} />
+    <Route path="/public/:slug/mesa/:number" element={<PublicWebPage />} />
     <Route
       path="/public/:slug/order/:orderId"
       element={<CustomerOrderStatusView />}
@@ -792,10 +844,26 @@ export const OperationalRoutesFragment = (
           <Route path="tasks" element={<TPVTasksPage />} />
           <Route path="reservations" element={<TPVReservationsPage />} />
           <Route path="settings" element={<TPVSettingsPage />} />
+          <Route path="expo" element={<TPVExpoPage />} />
+          <Route path="customer-display" element={<TPVCustomerDisplayPage />} />
+          <Route path="delivery" element={<TPVDeliveryPage />} />
+          <Route path="web-editor" element={<TPVWebEditorPage />} />
+          <Route path="screens" element={<TPVScreensPage />} />
         </Route>
       </Route>
       {/* KDS lives inside TPV — redirect standalone route */}
       <Route path="/op/kds" element={<Navigate to="/op/tpv/kitchen" replace />} />
+
+      {/* ── Dedicated Screen Routes (/screen/*) ──────────────────────────
+           Isolated surfaces launched from TPV Screens Hub.
+           No TPV sidebar/header — ScreenLayout provides minimal chrome.
+      */}
+      <Route path="/screen/kitchen" element={<ScreenKitchenPage />} />
+      <Route path="/screen/bar" element={<ScreenBarPage />} />
+      <Route path="/screen/expo" element={<ScreenExpoPage />} />
+      <Route path="/screen/delivery" element={<ScreenDeliveryPage />} />
+      <Route path="/screen/customer-display" element={<ScreenCustomerDisplayPage />} />
+
       <Route path="/op/cash" element={<Navigate to="/op/tpv" replace />} />
       <Route path="/op/pos" element={<Navigate to="/op/tpv" replace />} />
       <Route path="/op/pos/*" element={<Navigate to="/op/tpv" replace />} />

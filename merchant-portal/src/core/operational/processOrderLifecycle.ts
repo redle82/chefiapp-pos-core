@@ -17,7 +17,8 @@
  *   - useOperationalStore (KPIs, stock, currentOrder)
  */
 
-import { createOrder } from "../../infra/writers/OrderWriter";
+import { createOrder, type OrderTableInfo } from "../../infra/writers/OrderWriter";
+import { markTableInPrep, markTableCleaning } from "../../infra/writers/TableWriter";
 import { updateOrderStatus } from "../infra/CoreOrdersApi";
 import { Logger } from "../logger/Logger";
 import { useOperationalStore } from "./useOperationalStore";
@@ -83,7 +84,7 @@ export function createOrderLifecycle() {
    * Para fluxos directos (takeaway), pode-se chamar
    * confirmAndPay() que cria + fecha atomicamente.
    */
-  function startOrder(mode: string, tableNumber?: string | null): string {
+  function startOrder(mode: string, tableNumber?: string | null, tableId?: string | null): string {
     orderCounter += 1;
     const localId = `LOCAL-${Date.now()}-${orderCounter}`;
 
@@ -97,6 +98,7 @@ export function createOrderLifecycle() {
       paidAt: null,
       mode,
       tableNumber: tableNumber ?? null,
+      tableId: tableId ?? null,
     });
 
     store.setKpis({
@@ -104,7 +106,7 @@ export function createOrderLifecycle() {
     });
 
     pendingItems.set(localId, []);
-    logFlow("startOrder", { localId, mode, tableNumber });
+    logFlow("startOrder", { localId, mode, tableNumber, tableId });
     return localId;
   }
 
@@ -180,6 +182,13 @@ export function createOrderLifecycle() {
     }
 
     try {
+      // Build tableInfo from store (mesa → ocupação automática)
+      const { tableId, tableNumber } = store.currentOrder;
+      const tableInfo: OrderTableInfo | null =
+        tableId && tableNumber
+          ? { tableId, tableNumber: Number(tableNumber) }
+          : null;
+
       // Criar pedido atomicamente no backend (com items)
       const result = await createOrder(
         restaurantId,
@@ -191,6 +200,8 @@ export function createOrderLifecycle() {
         })),
         "TPV",
         "pending",
+        undefined,
+        tableInfo,
       );
 
       const realOrderId = result.id;
@@ -220,6 +231,11 @@ export function createOrderLifecycle() {
         store.setKitchenMetrics({
           delayedOrdersCount: store.kitchen.delayedOrdersCount + 1,
         });
+      }
+
+      // Bridge: mesa → in_prep (fire-and-forget)
+      if (tableId) {
+        markTableInPrep(tableId, restaurantId).catch(() => {});
       }
 
       logFlow("sendToKitchen", {
@@ -302,6 +318,12 @@ export function createOrderLifecycle() {
         });
       }
 
+      // Bridge: mesa → cleaning (fire-and-forget)
+      const { tableId: fTableId } = store.currentOrder;
+      if (fTableId) {
+        markTableCleaning(fTableId, restaurantId).catch(() => {});
+      }
+
       // Marcar pedido como pago e resetar
       store.setCurrentOrder({
         status: "PAID",
@@ -346,6 +368,13 @@ export function createOrderLifecycle() {
     }
 
     try {
+      // Build tableInfo from store (mesa → ocupação automática)
+      const { tableId, tableNumber } = store.currentOrder;
+      const tableInfo: OrderTableInfo | null =
+        tableId && tableNumber
+          ? { tableId, tableNumber: Number(tableNumber) }
+          : null;
+
       // Criar pedido atomicamente no backend
       const result = await createOrder(
         restaurantId,
@@ -357,6 +386,8 @@ export function createOrderLifecycle() {
         })),
         "TPV",
         paymentMethod,
+        undefined,
+        tableInfo,
       );
 
       const realOrderId = result.id;

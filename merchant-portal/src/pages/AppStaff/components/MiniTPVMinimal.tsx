@@ -6,7 +6,7 @@
 import { useCurrency } from "@/core/currency/useCurrency";
 import { useEffect, useRef, useState } from "react";
 import { CONFIG } from "../../../config";
-import { createOrder } from "../../../infra/writers/OrderWriter";
+import { createOrder, type OrderTableInfo } from "../../../infra/writers/OrderWriter";
 import { toUserMessage } from "../../../ui/errors";
 
 const VPC = {
@@ -40,11 +40,13 @@ interface CartItem {
 interface MiniTPVMinimalProps {
   restaurantId: string;
   maxHeight?: string;
+  tableInfo?: OrderTableInfo | null;
 }
 
 export function MiniTPVMinimal({
   restaurantId,
   maxHeight = "400px",
+  tableInfo,
 }: MiniTPVMinimalProps) {
   const { formatAmount } = useCurrency();
   const [products, setProducts] = useState<Product[]>([]);
@@ -187,7 +189,7 @@ export function MiniTPVMinimal({
       setError(null);
       setSuccess(null);
 
-      const result = await createOrder(restaurantId, cart, "CAIXA", "cash", {});
+      const result = await createOrder(restaurantId, cart, "CAIXA", "cash", {}, tableInfo);
 
       setSuccess(`Pedido #${result.id.slice(0, 8)} criado!`);
       setCart([]);

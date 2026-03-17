@@ -15,6 +15,7 @@
  */
 
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useOutletContext, useSearchParams } from "react-router-dom";
 import { OrderStatusPanel } from "../../components/pos/OrderStatusPanel";
 import { CONFIG } from "../../config";
@@ -48,6 +49,7 @@ import "./TPVPOSView.css";
 const DEFAULT_RESTAURANT_ID = "00000000-0000-0000-0000-000000000100";
 
 export function TPVPOSView() {
+  const { t } = useTranslation("tpv");
   const runtimeContext = useRestaurantRuntime();
   const runtime = runtimeContext?.runtime;
   const bootstrap = useBootstrapState();
@@ -58,6 +60,7 @@ export function TPVPOSView() {
   const [searchParams] = useSearchParams();
   const isDemoMode = searchParams.get("demo") === "1";
   const tableParam = searchParams.get("table") ?? null;
+  const tableIdParam = searchParams.get("tableId") ?? null;
 
   // Orchestrador operacional: estável por toda a vida do componente
   const lifecycle = useMemo(() => createOrderLifecycle(), []);
@@ -171,7 +174,7 @@ export function TPVPOSView() {
   const addToCart = (product: CoreProduct) => {
     if (isSentToKitchen) {
       toast.warning(
-        "Pedido já enviado para cozinha. Finalize ou cancele antes de novo pedido.",
+        t("posView.orderAlreadySentToKitchen"),
       );
       return;
     }
@@ -190,7 +193,7 @@ export function TPVPOSView() {
 
     // Iniciar pedido operacional se for o primeiro item
     if (cart.length === 0) {
-      lifecycle.startOrder(orderMode, tableParam);
+      lifecycle.startOrder(orderMode, tableParam, tableIdParam);
     }
 
     // Reservar estoque operacional
@@ -244,7 +247,7 @@ export function TPVPOSView() {
   const handleSendToKitchen = async () => {
     if (cart.length === 0) return;
     if (bootstrap.coreStatus !== "online") {
-      toast.warning("Core offline. Não é possível enviar pedido.");
+      toast.warning(t("posView.coreOfflineCannotSend"));
       return;
     }
     setSending(true);
@@ -252,13 +255,13 @@ export function TPVPOSView() {
       const result = await lifecycle.sendToKitchen(restaurantId);
       if (result.success) {
         toast.success(
-          `Pedido #${result.orderId?.slice(0, 8)} enviado para cozinha!`,
+          t("posView.orderSentToKitchen", { id: result.orderId?.slice(0, 8) }),
         );
       } else {
-        toast.error(result.error ?? "Erro ao enviar para cozinha.");
+        toast.error(result.error ?? t("posView.errorSendToKitchen"));
       }
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Erro inesperado.");
+      toast.error(err instanceof Error ? err.message : t("posView.unexpectedError"));
     } finally {
       setSending(false);
     }
@@ -275,7 +278,7 @@ export function TPVPOSView() {
       setCart([]);
       setTipCents(0);
       toast.success(
-        `Pagamento simulado em modo demo! Total: ${formatAmount(demoTotal)}`,
+        t("posView.demoPaymentSimulated", { total: formatAmount(demoTotal) }),
       );
       return;
     }
@@ -292,7 +295,7 @@ export function TPVPOSView() {
       bootstrap.coreStatus !== "online" ||
       bootstrap.publishStatus !== "publicado"
     ) {
-      toast.warning("Core offline ou não publicado.");
+      toast.warning(t("posView.coreOfflineOrNotPublished"));
       return;
     }
     setSending(true);
@@ -313,7 +316,7 @@ export function TPVPOSView() {
           setCart([]);
           setTipCents(0);
         } else {
-          toast.error(result.error ?? "Erro ao finalizar pedido.");
+          toast.error(result.error ?? t("posView.errorFinalizeOrder"));
         }
       } else {
         const result = await lifecycle.confirmAndPay(restaurantId, payMethod);
@@ -328,7 +331,7 @@ export function TPVPOSView() {
           setCart([]);
           setTipCents(0);
         } else {
-          toast.error(result.error ?? "Erro ao criar pedido.");
+          toast.error(result.error ?? t("posView.errorCreateOrder"));
         }
       }
     } catch (err) {
@@ -350,7 +353,7 @@ export function TPVPOSView() {
       const store = useOperationalStore.getState();
       const orderId = store.currentOrder.orderId;
       if (!orderId || orderId.startsWith("LOCAL-")) {
-        toast.error("Pedido não foi enviado para cozinha.");
+        toast.error(t("posView.orderNotSentToKitchen"));
         return;
       }
 
@@ -372,7 +375,7 @@ export function TPVPOSView() {
         const cashRegisterId = registers?.[0]?.id;
 
         if (!cashRegisterId) {
-          toast.error("Nenhuma caixa aberta. Abra um turno primeiro.");
+          toast.error(t("posView.noCashRegisterOpen"));
           return;
         }
 
@@ -385,7 +388,7 @@ export function TPVPOSView() {
         });
 
         toast.success(
-          `Pagamento parcial de ${formatAmount(amountCents)} registado.`,
+          t("posView.partialPaymentRegistered", { amount: formatAmount(amountCents) }),
         );
 
         if (result.isFullyPaid) {
@@ -393,12 +396,12 @@ export function TPVPOSView() {
           await lifecycle.finalizeOrder(restaurantId, totalCents);
           setCart([]);
           setSplitBillOpen(false);
-          toast.success("Conta totalmente paga!");
+          toast.success(t("posView.billFullyPaid"));
         }
       } catch (err) {
         Logger.error("[SplitBill] Payment failed", err);
         toast.error(
-          err instanceof Error ? err.message : "Erro ao processar pagamento.",
+          err instanceof Error ? err.message : t("posView.errorProcessPayment"),
         );
       } finally {
         setSplitPayProcessing(false);
@@ -418,7 +421,7 @@ export function TPVPOSView() {
     discountCents: 0,
     onClearAll: handleCancelOrder,
     onUpdateQuantity: updateQuantity,
-    onPrintReceipt: () => toast.info("Impressão de recibo em breve."),
+    onPrintReceipt: () => toast.info(t("posView.printReceiptComingSoon")),
     onProceed: () => {
       handleProceed();
       setMobileCartOpen(false);
@@ -435,11 +438,11 @@ export function TPVPOSView() {
     },
     onHoldOrder: () => {
       lifecycle.holdOrder();
-      toast.info("Pedido em espera.");
+      toast.info(t("posView.orderOnHold"));
     },
     onSplitBill: () => {
       if (!isSentToKitchen) {
-        toast.warning("Envie o pedido para cozinha antes de dividir a conta.");
+        toast.warning(t("posView.sendToKitchenBeforeSplit"));
         return;
       }
       setSplitBillOpen(true);
@@ -466,8 +469,7 @@ export function TPVPOSView() {
         >
           <span>🧪</span>
           <span>
-            Modo Demo — Nenhum pedido real será criado. Adiciona itens e clica
-            em &quot;Pagar&quot; para simular uma venda.
+            {t("posView.demoBanner")}
           </span>
         </div>
       )}
@@ -522,13 +524,13 @@ export function TPVPOSView() {
       <button
         className="tpv-mobile-cart-button"
         onClick={() => setMobileCartOpen(true)}
-        aria-label="Ver carrinho"
+        aria-label={t("posView.viewCart")}
       >
         <span className="tpv-mobile-cart-button__content">
           <span>
             {cartItemCount > 0
-              ? `Ver Pedido · ${formatAmount(totalCents)}`
-              : "Carrinho Vazio"}
+              ? `${t("posView.viewOrder")} · ${formatAmount(totalCents)}`
+              : t("posView.emptyCart")}
           </span>
           {cartItemCount > 0 && (
             <span className="tpv-mobile-cart-button__badge">
@@ -552,7 +554,7 @@ export function TPVPOSView() {
           onClick={() => setMobileCartOpen(false)}
           role="button"
           tabIndex={0}
-          aria-label="Fechar carrinho"
+          aria-label={t("posView.closeCart")}
           onKeyDown={(e) => e.key === "Enter" && setMobileCartOpen(false)}
         />
         <div className="tpv-mobile-drawer__content">
@@ -605,7 +607,7 @@ export function TPVPOSView() {
             }}
           >
             <h2 style={{ color: "#fff", fontSize: 20, fontWeight: 700, margin: 0 }}>
-              Gorjeta
+              {t("posView.tipTitle")}
             </h2>
             <p style={{ color: "#a1a1aa", fontSize: 13, margin: 0 }}>
               Subtotal: {formatAmount(totalCents)}
@@ -635,7 +637,7 @@ export function TPVPOSView() {
                       cursor: "pointer",
                     }}
                   >
-                    {pct === 0 ? "Sem" : `${pct}%`}
+                    {pct === 0 ? t("posView.noTip") : `${pct}%`}
                     {pct > 0 && (
                       <div
                         style={{ fontSize: 11, color: "#71717a", marginTop: 2 }}
@@ -668,7 +670,7 @@ export function TPVPOSView() {
                     letterSpacing: 0.8,
                   }}
                 >
-                  Total com gorjeta
+                  {t("posView.totalWithTip")}
                 </div>
                 <div
                   style={{ color: "#10b981", fontSize: 24, fontWeight: 800 }}
@@ -685,7 +687,7 @@ export function TPVPOSView() {
                       textTransform: "uppercase",
                     }}
                   >
-                    Gorjeta
+                    {t("posView.tipLabel")}
                   </div>
                   <div style={{ color: "#e4e4e7", fontSize: 16, fontWeight: 700 }}>
                     {formatAmount(tipCents)}
@@ -706,15 +708,15 @@ export function TPVPOSView() {
                   marginBottom: 8,
                 }}
               >
-                Método de pagamento
+                {t("posView.paymentMethod")}
               </div>
               <div style={{ display: "flex", gap: 8 }}>
                 {(
                   [
-                    { id: "cash", label: "Dinheiro" },
-                    { id: "card", label: "Cartão" },
-                    { id: "pix", label: "PIX" },
-                  ] as const
+                    { id: "cash" as const, label: t("posView.methodCash") },
+                    { id: "card" as const, label: t("posView.methodCard") },
+                    { id: "pix" as const, label: t("posView.methodPix") },
+                  ]
                 ).map((m) => (
                   <button
                     key={m.id}
@@ -744,7 +746,7 @@ export function TPVPOSView() {
             {/* Table indicator */}
             {tableParam && (
               <div style={{ color: "#a1a1aa", fontSize: 13 }}>
-                Mesa: <strong style={{ color: "#e4e4e7" }}>{tableParam}</strong>
+                {t("posView.table")}: <strong style={{ color: "#e4e4e7" }}>{tableParam}</strong>
               </div>
             )}
 
@@ -766,10 +768,10 @@ export function TPVPOSView() {
               }}
             >
               {sending
-                ? "A processar..."
+                ? t("posView.processing")
                 : tipCents > 0
-                  ? `Pagar ${formatAmount(totalCents + tipCents)}`
-                  : `Pagar ${formatAmount(totalCents)}`}
+                  ? `${t("posView.pay")} ${formatAmount(totalCents + tipCents)}`
+                  : `${t("posView.pay")} ${formatAmount(totalCents)}`}
             </button>
           </div>
         </div>
@@ -805,7 +807,7 @@ export function TPVPOSView() {
           >
             <div style={{ fontSize: 40 }}>✓</div>
             <h2 style={{ margin: 0, fontSize: 20, fontWeight: 800 }}>
-              Pagamento Confirmado
+              {t("posView.paymentConfirmed")}
             </h2>
             <div
               style={{
@@ -814,7 +816,7 @@ export function TPVPOSView() {
                 fontFamily: "monospace",
               }}
             >
-              Pedido #{lastReceipt.orderId}
+              {t("posView.receiptOrderId", { id: lastReceipt.orderId })}
             </div>
 
             <div
@@ -831,25 +833,25 @@ export function TPVPOSView() {
             >
               {lastReceipt.table && (
                 <div style={{ display: "flex", justifyContent: "space-between" }}>
-                  <span style={{ color: "#71717a" }}>Mesa</span>
+                  <span style={{ color: "#71717a" }}>{t("posView.table")}</span>
                   <span style={{ fontWeight: 600 }}>{lastReceipt.table}</span>
                 </div>
               )}
               <div style={{ display: "flex", justifyContent: "space-between" }}>
-                <span style={{ color: "#71717a" }}>Método</span>
+                <span style={{ color: "#71717a" }}>{t("posView.receiptMethod")}</span>
                 <span style={{ fontWeight: 600 }}>
                   {lastReceipt.method === "cash"
-                    ? "Dinheiro"
+                    ? t("posView.methodCash")
                     : lastReceipt.method === "card"
-                      ? "Cartão"
-                      : "PIX"}
+                      ? t("posView.methodCard")
+                      : t("posView.methodPix")}
                 </span>
               </div>
               {lastReceipt.tip > 0 && (
                 <div
                   style={{ display: "flex", justifyContent: "space-between" }}
                 >
-                  <span style={{ color: "#71717a" }}>Gorjeta</span>
+                  <span style={{ color: "#71717a" }}>{t("posView.tipLabel")}</span>
                   <span style={{ fontWeight: 600 }}>
                     {formatAmount(lastReceipt.tip)}
                   </span>
@@ -864,7 +866,7 @@ export function TPVPOSView() {
                   marginTop: 4,
                 }}
               >
-                <span style={{ fontWeight: 700, fontSize: 16 }}>Total</span>
+                <span style={{ fontWeight: 700, fontSize: 16 }}>{t("posView.total")}</span>
                 <span style={{ fontWeight: 800, fontSize: 16 }}>
                   {formatAmount(lastReceipt.total)}
                 </span>
@@ -886,7 +888,7 @@ export function TPVPOSView() {
                 cursor: "pointer",
               }}
             >
-              Novo Pedido
+              {t("posView.newOrder")}
             </button>
           </div>
         </div>
