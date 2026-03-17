@@ -11,6 +11,7 @@ import { useTranslation } from "react-i18next";
 import type { ScreenTypeId } from "./screens/screenTypes";
 import { SCREEN_REGISTRY } from "./screens/screenTypes";
 import { useActiveScreens } from "./screens/useActiveScreens";
+import { useScreenInstances } from "./hooks/useScreenInstances";
 import { useToast } from "../../ui/design-system/Toast";
 
 /* ── Constants ─────────────────────────────────────────────────── */
@@ -94,12 +95,26 @@ const ICON_MAP: Record<string, () => JSX.Element> = {
   WEB_EDITOR: IconWeb,
 };
 
+/* ── Heartbeat type mapping ───────────────────────────────────────── */
+
+/** Maps ScreenTypeId → heartbeat type string used by useScreenHeartbeat. */
+const HEARTBEAT_TYPE_MAP: Record<string, string> = {
+  KDS_KITCHEN: "kds",
+  KDS_BAR: "kds",
+  KDS_EXPO: "kds",
+  CUSTOMER_DISPLAY: "customer_display",
+  DELIVERY: "delivery",
+  TASKS: "tasks",
+  WEB_EDITOR: "web_editor",
+};
+
 /* ── Page ───────────────────────────────────────────────────────── */
 
 export function TPVScreensPage() {
   const { t } = useTranslation("tpv");
   const { screens, openScreen, focusScreen, closeScreen, removeScreen, copyLink } =
     useActiveScreens();
+  const { instances, getStatusForType } = useScreenInstances();
   const toast = useToast();
 
   // Naming popover state
@@ -214,6 +229,14 @@ export function TPVScreensPage() {
         >
           {SCREEN_REGISTRY.map((def) => {
             const IconComponent = ICON_MAP[def.id] ?? IconScreen;
+            const heartbeatType = HEARTBEAT_TYPE_MAP[def.id] ?? def.id.toLowerCase();
+            const liveStatus = getStatusForType(heartbeatType);
+            const typeInstances = instances.filter(
+              (i) => i.type === heartbeatType,
+            );
+            const onlineCount = typeInstances.filter(
+              (i) => i.status === "online",
+            ).length;
             return (
               <button
                 key={def.id}
@@ -221,6 +244,13 @@ export function TPVScreensPage() {
                 disabled={!def.available}
                 onClick={() => handleCardClick(def.id)}
                 data-testid={`screen-create-${def.id}`}
+                title={
+                  typeInstances.length > 0
+                    ? t("screens.lastSeen", {
+                        time: formatLastSeen(typeInstances),
+                      })
+                    : undefined
+                }
                 style={{
                   position: "relative",
                   display: "flex",
@@ -286,6 +316,14 @@ export function TPVScreensPage() {
                 >
                   {t(`screens.types.${def.id}.description`, def.description)}
                 </span>
+                {/* Heartbeat status line */}
+                {def.available && (
+                  <ScreenStatusLine
+                    status={liveStatus}
+                    instanceCount={onlineCount}
+                    t={t}
+                  />
+                )}
               </button>
             );
           })}
@@ -675,4 +713,86 @@ function ActionButton({
       {label}
     </button>
   );
+}
+
+/* ── Screen Status Components ──────────────────────────────────── */
+
+import type { ScreenInstance } from "./hooks/useScreenInstances";
+
+const STATUS_DOT_COLORS: Record<string, string> = {
+  online: "#4ade80",
+  stale: "#facc15",
+  offline: "#6b7280",
+  unknown: "#6b7280",
+};
+
+const STATUS_LABEL_KEYS: Record<string, string> = {
+  online: "screens.statusOnline",
+  stale: "screens.statusStale",
+  offline: "screens.statusOffline",
+  unknown: "screens.statusUnknown",
+};
+
+function ScreenStatusLine({
+  status,
+  instanceCount,
+  t,
+}: {
+  status: "online" | "offline" | "unknown";
+  instanceCount: number;
+  t: TFunc;
+}) {
+  const dotColor = STATUS_DOT_COLORS[status];
+  const labelKey = STATUS_LABEL_KEYS[status];
+  const instanceLabel =
+    instanceCount === 0
+      ? null
+      : instanceCount === 1
+        ? t("screens.instanceSingle")
+        : t("screens.instanceCount", { count: instanceCount });
+
+  return (
+    <div
+      style={{
+        display: "flex",
+        alignItems: "center",
+        gap: 6,
+        marginTop: 2,
+      }}
+    >
+      <div
+        style={{
+          width: 7,
+          height: 7,
+          borderRadius: "50%",
+          backgroundColor: dotColor,
+          flexShrink: 0,
+        }}
+      />
+      <span
+        style={{
+          fontSize: 11,
+          color: status === "online" ? "#4ade80" : "#9ca3af",
+          fontWeight: 500,
+        }}
+      >
+        {t(labelKey)}
+        {instanceLabel ? ` (${instanceLabel})` : ""}
+      </span>
+    </div>
+  );
+}
+
+function formatLastSeen(typeInstances: ScreenInstance[]): string {
+  if (typeInstances.length === 0) return "";
+  const latest = typeInstances.reduce((a, b) =>
+    a.lastHeartbeat > b.lastHeartbeat ? a : b,
+  );
+  const secs = Math.floor(
+    (Date.now() - latest.lastHeartbeat.getTime()) / 1000,
+  );
+  if (secs < 5) return "<5s";
+  if (secs < 60) return `${secs}s`;
+  const mins = Math.floor(secs / 60);
+  return `${mins}m`;
 }

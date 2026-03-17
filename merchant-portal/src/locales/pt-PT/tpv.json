@@ -415,6 +415,14 @@
     "badgeKDS": "KDS",
     "badgeTasks": "TAREFAS",
     "badgeWeb": "WEB",
+    "statusOnline": "Online",
+    "statusOffline": "Offline",
+    "statusStale": "Sem resposta",
+    "statusUnknown": "Desconhecido",
+    "instanceCount": "{{count}} instâncias",
+    "instanceSingle": "1 instância",
+    "lastSeen": "Último sinal: {{time}}",
+    "openNew": "Abrir Nova",
     "types": {
       "KDS_KITCHEN": {
         "label": "Cozinha KDS",

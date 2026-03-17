@@ -31,6 +31,7 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { Link, Navigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
+import { useScreenHeartbeat } from "../../core/tpv/useScreenHeartbeat";
 import { getTabIsolated } from "../../core/storage/TabIsolatedStorage";
 import { DevicePairingView } from "../../features/auth/connectByCode/DevicePairingView";
 // FASE 3.5: Migrado para OrderReader (usa dockerCoreClient)
@@ -69,6 +70,7 @@ import { toUserMessage } from "../../ui/errors";
 import { RestaurantLogo } from "../../ui/RestaurantLogo";
 import { TPVStateDisplay } from "../TPV/components/TPVStateDisplay";
 import { ItemTimer } from "./ItemTimer";
+import { useKdsAlerts } from "./useKdsAlerts";
 import {
   calculateOrderStatus,
   type OrderStatusResult,
@@ -149,6 +151,7 @@ interface KDSMinimalProps {
 }
 
 export function KDSMinimal({ defaultStation }: KDSMinimalProps = {}) {
+  useScreenHeartbeat("kds", "Kitchen Display");
   const { t } = useTranslation("kds");
   const { identity } = useRestaurantIdentity();
   const readiness = useOperationalReadiness("KDS");
@@ -196,6 +199,11 @@ export function KDSMinimal({ defaultStation }: KDSMinimalProps = {}) {
   const [tasks, setTasks] = useState<CoreTask[]>([]);
   const fetchDebounceRef = useRef<NodeJS.Timeout | null>(null);
   const ordersRef = useRef<number>(0);
+
+  // Audio alerts for new orders
+  const { audioEnabled, toggleAudio } = useKdsAlerts({
+    orderCount: orders.length,
+  });
 
   // Em localhost + Docker: SEMPRE seed (TPV e KDS no mesmo restaurante; evita 1a35f047/cache).
   const installedKdsRestaurantId = getKdsRestaurantId();
@@ -653,17 +661,52 @@ export function KDSMinimal({ defaultStation }: KDSMinimalProps = {}) {
                 : t("pageTitle")}
             </h1>
           </div>
-          {/* B4: sem ruído técnico (Docker/Supabase/realtime); mostrar apenas um estado de ligação simples */}
-          <div
-            style={{
-              fontSize: VPC.fontSizeBase,
-              color:
-                realtimeStatus === "SUBSCRIBED" ? VPC.accent : VPC.textMuted,
-            }}
-          >
-            {realtimeStatus === "SUBSCRIBED"
-              ? t("realtimeActive")
-              : t("pollingActive")}
+          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+            {/* Audio toggle button */}
+            <button
+              type="button"
+              data-testid="kds-audio-toggle"
+              onClick={toggleAudio}
+              title={audioEnabled ? t("audioOn") : t("audioOff")}
+              style={{
+                position: "relative",
+                background: "none",
+                border: `1px solid ${VPC.border}`,
+                borderRadius: VPC.radius,
+                padding: "8px 12px",
+                cursor: "pointer",
+                fontSize: "20px",
+                lineHeight: 1,
+                color: VPC.text,
+              }}
+            >
+              {audioEnabled ? "\uD83D\uDD14" : "\uD83D\uDD15"}
+              {audioEnabled && (
+                <span
+                  style={{
+                    position: "absolute",
+                    top: 6,
+                    right: 6,
+                    width: 8,
+                    height: 8,
+                    borderRadius: "50%",
+                    backgroundColor: "#22c55e",
+                  }}
+                />
+              )}
+            </button>
+            {/* B4: sem ruído técnico (Docker/Supabase/realtime); mostrar apenas um estado de ligação simples */}
+            <div
+              style={{
+                fontSize: VPC.fontSizeBase,
+                color:
+                  realtimeStatus === "SUBSCRIBED" ? VPC.accent : VPC.textMuted,
+              }}
+            >
+              {realtimeStatus === "SUBSCRIBED"
+                ? t("realtimeActive")
+                : t("pollingActive")}
+            </div>
           </div>
         </div>
 
@@ -1054,6 +1097,36 @@ export function KDSMinimal({ defaultStation }: KDSMinimalProps = {}) {
                                       🧠 {t("taskBadge")}
                                     </span>
                                   )}
+                                  {/* Product thumbnail */}
+                                  <span
+                                    style={{
+                                      width: 32,
+                                      height: 32,
+                                      borderRadius: 6,
+                                      backgroundColor: "#27272a",
+                                      display: "flex",
+                                      alignItems: "center",
+                                      justifyContent: "center",
+                                      flexShrink: 0,
+                                      fontSize: "16px",
+                                      overflow: "hidden",
+                                    }}
+                                  >
+                                    {(item as any).image_url ? (
+                                      <img
+                                        src={(item as any).image_url}
+                                        alt=""
+                                        style={{
+                                          width: 32,
+                                          height: 32,
+                                          objectFit: "cover",
+                                          borderRadius: 6,
+                                        }}
+                                      />
+                                    ) : (
+                                      "\uD83C\uDF73"
+                                    )}
+                                  </span>
                                   <span style={{ flex: 1, fontWeight: "500" }}>
                                     {item.name_snapshot} x{item.quantity}
                                   </span>
@@ -1289,6 +1362,36 @@ export function KDSMinimal({ defaultStation }: KDSMinimalProps = {}) {
                                       🧠 {t("taskBadge")}
                                     </span>
                                   )}
+                                  {/* Product thumbnail */}
+                                  <span
+                                    style={{
+                                      width: 32,
+                                      height: 32,
+                                      borderRadius: 6,
+                                      backgroundColor: "#27272a",
+                                      display: "flex",
+                                      alignItems: "center",
+                                      justifyContent: "center",
+                                      flexShrink: 0,
+                                      fontSize: "16px",
+                                      overflow: "hidden",
+                                    }}
+                                  >
+                                    {(item as any).image_url ? (
+                                      <img
+                                        src={(item as any).image_url}
+                                        alt=""
+                                        style={{
+                                          width: 32,
+                                          height: 32,
+                                          objectFit: "cover",
+                                          borderRadius: 6,
+                                        }}
+                                      />
+                                    ) : (
+                                      "\uD83C\uDF7A"
+                                    )}
+                                  </span>
                                   <span style={{ flex: 1, fontWeight: "500" }}>
                                     {item.name_snapshot} x{item.quantity}
                                   </span>

@@ -52,7 +52,7 @@ import {
   setTabIsolated,
 } from "../../../core/storage/TabIsolatedStorage";
 import { eventTaskGenerator } from "../../../core/tasks/EventTaskGenerator";
-import { occupyTableForOrder, markTableCleaning } from "../../../infra/writers/TableWriter";
+import { occupyTableForOrder, markTableInPrep, markTableCleaning } from "../../../infra/writers/TableWriter";
 import { useOfflineOrder } from "./OfflineOrderContext";
 import { OrderContext, type OrderCreateInput } from "./OrderContextToken"; // FASE 3.4: Token isolado
 // DOCKER CORE: All writes go through PostgREST RPCs (see ARCHITECTURE_DECISION.md)
@@ -983,6 +983,16 @@ export function OrderProvider({
             origin: "TPV",
           });
           if (updateError) throw new Error(updateError.message);
+
+          // Bridge: mesa → in_prep após envio à cozinha (fire-and-forget)
+          try {
+            const sentOrder = await OrderEngine.getOrderById(orderId);
+            if (sentOrder?.tableId) {
+              markTableInPrep(sentOrder.tableId, restaurantId).catch(() => {});
+            }
+          } catch {
+            // Non-blocking — table state is best-effort
+          }
           break;
 
         case "ready":

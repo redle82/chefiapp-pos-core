@@ -20,6 +20,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import type { CoreOrder } from "../../infra/docker-core/types";
 import { readActiveOrders } from "../../infra/readers/OrderReader";
+import { useScreenHeartbeat } from "../../core/tpv/useScreenHeartbeat";
 import { useTPVRestaurantId } from "./hooks/useTPVRestaurantId";
 
 /* ── TTL constants for READY orders (display-only) ────────────────── */
@@ -104,6 +105,7 @@ function playReadyChime() {
 const HIGHLIGHT_DURATION = 8000;
 
 export function TPVCustomerDisplayPage() {
+  useScreenHeartbeat("customer_display", "Customer Display");
   const { t } = useTranslation("tpv");
   const restaurantId = useTPVRestaurantId();
   const [orders, setOrders] = useState<CoreOrder[]>([]);
