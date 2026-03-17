@@ -1,13 +1,13 @@
 /**
  * TPVSidebar — Barra lateral esquerda do TPV.
  *
- * Two modes: compact (72px, icon-only) and expanded (220px, icon + label).
+ * Two modes: compact (72px, icon-only) and expanded (240px, icon + label).
  * State persisted in localStorage key `tpv_sidebar_expanded`.
  *
  * Architecture — 3 sections separated by dividers:
  *
  *   OPERAÇÃO (daily operations):
- *     POS · Mesas · Turno/Caixa · Comando KDS · Tarefas · Delivery · Reservas
+ *     POS · Mesas · Turno/Caixa · Comando KDS · Tarefas · Reservas
  *
  *   TELAS (external screens):
  *     Telas
@@ -15,12 +15,14 @@
  *   SISTEMA (system/config):
  *     Impressoras · Definições
  *
- * Philosophy: TPV = operação viva. Módulos de gestão profunda (Catering,
- * Saladitos, Marketing, Redes Sociais) pertencem ao Admin, não ao TPV.
+ * Note: Delivery lives inside Command KDS as a filter/tab, not as
+ * a separate sidebar item. The Command KDS is the operational nerve
+ * centre — cozinha, bar, expo, delivery pipeline, preparados.
  *
  * Features:
  * - Styled CSS-only tooltips (compact mode only)
  * - Notification badges for Kitchen, Tasks, and Reservations
+ * - Role-based visibility via ContextEngine
  * - Restaurant identity at top, app identity at bottom
  * - Exit confirmation modal
  */
@@ -40,7 +42,7 @@ const APP_NAME = "ChefIApp";
 
 const SIDEBAR_EXPANDED_KEY = "tpv_sidebar_expanded";
 const COMPACT_WIDTH = 72;
-const EXPANDED_WIDTH = 220;
+const EXPANDED_WIDTH = 240;
 
 /* ── Accent orange (reference design) ──────────────────────────── */
 const ACCENT = "#f97316";
@@ -255,7 +257,6 @@ const SECTIONS: SidebarSection[] = [
       { type: "nav", to: "/op/tpv/kitchen", label: "kitchen", icon: "kitchen", badgeKey: "kitchen" },
       { type: "nav", to: "/op/tpv/tasks", label: "tasks", icon: "tasks", badgeKey: "tasks" },
       { type: "nav", to: "/op/tpv/reservations", label: "reservations", icon: "calendar", badgeKey: "reservations" },
-      { type: "nav", to: "/op/tpv/delivery", label: "delivery", icon: "delivery" },
     ],
   },
   {
@@ -290,7 +291,6 @@ const NAV_TO_MODULE: Record<string, keyof ModuleVisibility | "canCloseRegister" 
   "/op/tpv/kitchen": "kitchen",
   "/op/tpv/tasks": null,               // Tasks: everyone sees their own
   "/op/tpv/reservations": "tables",    // Reservations = table management
-  "/op/tpv/delivery": "orders",        // Delivery = order management
   "/op/tpv/screens": "settings",       // Screens: manager+
   "/op/tpv/printers": "settings",
   "/op/tpv/settings": "settings",
@@ -538,10 +538,10 @@ function SectionDivider({ expanded }: { expanded: boolean }) {
     <div
       data-testid="section-divider"
       style={{
-        width: expanded ? "calc(100% - 24px)" : 32,
+        width: expanded ? "calc(100% - 36px)" : 32,
         height: 1,
         backgroundColor: "rgba(255,255,255,0.06)",
-        margin: "6px 0",
+        margin: expanded ? "8px 0" : "6px 0",
       }}
     />
   );
@@ -558,12 +558,13 @@ function SectionHeader({ label, expanded }: { label: string; expanded: boolean }
       style={{
         fontSize: 10,
         fontWeight: 700,
-        letterSpacing: 1.5,
+        letterSpacing: 1.8,
         textTransform: "uppercase",
         color: "#525252",
-        padding: "8px 16px 4px",
+        padding: "12px 20px 6px",
         width: "100%",
         userSelect: "none",
+        boxSizing: "border-box",
       }}
     >
       {label}
@@ -690,7 +691,7 @@ export function TPVSidebar() {
 
   const itemStyle = (isActive: boolean): React.CSSProperties => ({
     height: 44,
-    borderRadius: 12,
+    borderRadius: 10,
     display: "flex",
     alignItems: "center",
     justifyContent: expanded ? "flex-start" : "center",
@@ -698,13 +699,14 @@ export function TPVSidebar() {
     background: isActive ? ACCENT_BG : "transparent",
     textDecoration: "none",
     transition: "all 0.15s ease",
-    padding: expanded ? "0 12px" : 0,
-    width: expanded ? "calc(100% - 16px)" : 44,
-    gap: expanded ? 10 : 0,
+    padding: expanded ? "0 14px" : 0,
+    width: expanded ? "calc(100% - 24px)" : 44,
+    gap: expanded ? 12 : 0,
     color: isActive ? ACCENT : "#737373",
     position: "relative" as const,
     flexShrink: 0,
     cursor: "pointer",
+    marginLeft: expanded ? 12 : 0,
   });
 
   return (
@@ -733,7 +735,7 @@ export function TPVSidebar() {
         onClick={toggleExpanded}
         title={expanded ? t("sidebar.collapse", "Recolher") : t("sidebar.expand", "Expandir")}
         style={{
-          width: expanded ? "calc(100% - 16px)" : 44,
+          width: expanded ? "calc(100% - 24px)" : 44,
           height: 32,
           borderRadius: 8,
           border: "none",
@@ -743,7 +745,7 @@ export function TPVSidebar() {
           alignItems: "center",
           justifyContent: expanded ? "flex-end" : "center",
           cursor: "pointer",
-          padding: expanded ? "0 12px" : 0,
+          padding: expanded ? "0 14px" : 0,
           marginBottom: 4,
           flexShrink: 0,
           transition: "all 0.15s ease",
@@ -757,11 +759,12 @@ export function TPVSidebar() {
         style={{
           display: "flex",
           alignItems: "center",
-          gap: expanded ? 10 : 0,
-          padding: expanded ? "8px 12px" : "8px 0",
-          width: expanded ? "calc(100% - 16px)" : "auto",
+          gap: expanded ? 12 : 0,
+          padding: expanded ? "8px 14px" : "8px 0",
+          width: expanded ? "calc(100% - 24px)" : "auto",
           flexShrink: 0,
           overflow: "hidden",
+          marginLeft: expanded ? 12 : 0,
         }}
       >
         <img
@@ -836,8 +839,7 @@ export function TPVSidebar() {
                         fontSize: 13,
                         fontWeight: 500,
                         whiteSpace: "nowrap",
-                        overflow: "hidden",
-                        textOverflow: "ellipsis",
+                        lineHeight: 1.3,
                       }}
                     >
                       {tooltipLabel}
@@ -891,8 +893,9 @@ export function TPVSidebar() {
           marginTop: 12,
           gap: expanded ? 8 : 4,
           opacity: 0.55,
-          padding: expanded ? "0 12px" : 0,
-          width: expanded ? "calc(100% - 16px)" : "auto",
+          padding: expanded ? "0 14px" : 0,
+          width: expanded ? "calc(100% - 24px)" : "auto",
+          marginLeft: expanded ? 12 : 0,
         }}
       >
         <img
