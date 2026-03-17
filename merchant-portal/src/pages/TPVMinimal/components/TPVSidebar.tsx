@@ -1,28 +1,33 @@
 /**
- * TPVSidebar — Barra lateral esquerda do TPV (icon-only, 72px).
+ * TPVSidebar — Barra lateral esquerda do TPV.
  *
- * Arquitectura canónica — 3 secções separadas por divisores:
+ * Two modes: compact (72px, icon-only) and expanded (220px, icon + label).
+ * State persisted in localStorage key `tpv_sidebar_expanded`.
  *
- *   OPERAÇÃO (uso diário):
- *     POS · Mesas · Turno · Cozinha · Tarefas · Reservas
+ * Architecture — 4 sections separated by dividers:
  *
- *   TELAS (lançar ecrãs operacionais em nova janela):
- *     Cozinha KDS · Bar KDS · Expo (em breve) · Display (em breve)
+ *   OPERACAO (daily operations):
+ *     POS · Mesas · Turno/Caixa · Comando KDS · Tarefas · Reservas · Delivery
  *
- *   CONFIG (configuração rápida do posto):
- *     Página Web · Definições
+ *   TELAS (external screens):
+ *     Telas
  *
- * Isolamento desktop: no app Electron, "Página Web" não é mostrado.
+ *   NEGOCIO (restaurant business modules):
+ *     Catering · Saladitos · Marketing
+ *
+ *   SISTEMA (system/config):
+ *     Impressoras · Definicoes
  *
  * Features:
- * - Styled CSS-only tooltips (replaces native title on hover)
+ * - Styled CSS-only tooltips (compact mode only)
  * - Notification badges for Kitchen, Tasks, and Reservations
+ * - Restaurant identity at top, app identity at bottom
+ * - Exit confirmation modal
  */
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { NavLink, useNavigate } from "react-router-dom";
-import { isDesktopApp } from "../../../core/operational/platformDetection";
 import tpvEventBus from "../../../core/tpv/TPVCentralEvents";
 import type { KitchenPressurePayload } from "../../../core/tpv/TPVCentralEvents";
 import { dockerCoreClient } from "../../../infra/docker-core/connection";
@@ -31,6 +36,10 @@ import { useTPVRestaurantId } from "../hooks/useTPVRestaurantId";
 const APP_LOGO_URL = "/Logo%20Chefiapp%20Transparent.png";
 const APP_NAME = "ChefIApp";
 
+const SIDEBAR_EXPANDED_KEY = "tpv_sidebar_expanded";
+const COMPACT_WIDTH = 72;
+const EXPANDED_WIDTH = 220;
+
 /* ── Accent orange (reference design) ──────────────────────────── */
 const ACCENT = "#f97316";
 const ACCENT_BG = "rgba(249,115,22,0.12)";
@@ -38,7 +47,7 @@ const ACCENT_BG = "rgba(249,115,22,0.12)";
 /** Polling interval for badge counts (30 seconds) */
 const BADGE_POLL_INTERVAL = 30_000;
 
-/* ── SVG inline icons (20×20) ──────────────────────────────────── */
+/* ── SVG inline icons (20x20) ──────────────────────────────────── */
 
 function IconGrid() {
   return (
@@ -47,17 +56,6 @@ function IconGrid() {
       <rect x="11.5" y="3" width="5.5" height="5.5" rx="1.5" />
       <rect x="3" y="11.5" width="5.5" height="5.5" rx="1.5" />
       <rect x="11.5" y="11.5" width="5.5" height="5.5" rx="1.5" />
-    </svg>
-  );
-}
-
-function IconReceipt() {
-  return (
-    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M5 2h10a1 1 0 011 1v14l-2-1.5L12 17l-2-1.5L8 17l-2-1.5L4 17V3a1 1 0 011-1z" />
-      <line x1="7" y1="6" x2="13" y2="6" />
-      <line x1="7" y1="9" x2="13" y2="9" />
-      <line x1="7" y1="12" x2="10" y2="12" />
     </svg>
   );
 }
@@ -132,7 +130,6 @@ function IconExit() {
   );
 }
 
-/** Monitor/screen icon — for TELAS section launchers */
 function IconScreen() {
   return (
     <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
@@ -143,20 +140,82 @@ function IconScreen() {
   );
 }
 
-/** Cocktail glass icon — for Bar KDS launcher */
-function IconBar() {
+function IconDelivery() {
   return (
     <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M5 3h10l-4 6v5h2" />
-      <path d="M7 17h6" />
-      <line x1="11" y1="9" x2="11" y2="14" />
+      <circle cx="6" cy="16" r="2" />
+      <circle cx="16" cy="16" r="2" />
+      <path d="M2 4h8v10H4" />
+      <path d="M10 7h3l3 4v5h-2" />
+      <line x1="8" y1="14" x2="14" y2="14" />
+    </svg>
+  );
+}
+
+function IconCatering() {
+  return (
+    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M3 13h14" />
+      <path d="M4 13a6 6 0 0112 0" />
+      <line x1="10" y1="7" x2="10" y2="5" />
+      <circle cx="10" cy="4" r="1" />
+      <path d="M5 13v2a1 1 0 001 1h8a1 1 0 001-1v-2" />
+    </svg>
+  );
+}
+
+function IconSaladitos() {
+  return (
+    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M10 2c-3 3-6 5-6 9a6 6 0 0012 0c0-4-3-6-6-9z" />
+      <path d="M10 18v-6" />
+      <path d="M10 12c-2-1.5-3-3-3-5" />
+      <path d="M10 12c2-1.5 3-3 3-5" />
+    </svg>
+  );
+}
+
+function IconMarketing() {
+  return (
+    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M16 3L6 8H3a1 1 0 00-1 1v2a1 1 0 001 1h3l10 5V3z" />
+      <path d="M6 8v4" />
+      <path d="M17 7.5a3.5 3.5 0 010 5" />
+    </svg>
+  );
+}
+
+function IconPrinter() {
+  return (
+    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="5" y="2" width="10" height="4" rx="1" />
+      <rect x="3" y="6" width="14" height="8" rx="2" />
+      <rect x="5" y="12" width="10" height="5" rx="1" />
+      <circle cx="14" cy="9" r="0.5" fill="currentColor" />
+    </svg>
+  );
+}
+
+function IconChevronToggle({ expanded }: { expanded: boolean }) {
+  return (
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+      {expanded ? (
+        <>
+          <path d="M9 4L5 8l4 4" />
+          <path d="M13 4L9 8l4 4" />
+        </>
+      ) : (
+        <>
+          <path d="M3 4l4 4-4 4" />
+          <path d="M7 4l4 4-4 4" />
+        </>
+      )}
     </svg>
   );
 }
 
 type IconKey =
   | "grid"
-  | "receipt"
   | "cash"
   | "table"
   | "kitchen"
@@ -164,14 +223,16 @@ type IconKey =
   | "calendar"
   | "gear"
   | "screen"
-  | "bar";
+  | "delivery"
+  | "catering"
+  | "saladitos"
+  | "marketing"
+  | "printer";
 
 function iconFor(k: IconKey) {
   switch (k) {
     case "grid":
       return <IconGrid />;
-    case "receipt":
-      return <IconReceipt />;
     case "cash":
       return <IconCash />;
     case "table":
@@ -186,8 +247,16 @@ function iconFor(k: IconKey) {
       return <IconGear />;
     case "screen":
       return <IconScreen />;
-    case "bar":
-      return <IconBar />;
+    case "delivery":
+      return <IconDelivery />;
+    case "catering":
+      return <IconCatering />;
+    case "saladitos":
+      return <IconSaladitos />;
+    case "marketing":
+      return <IconMarketing />;
+    case "printer":
+      return <IconPrinter />;
   }
 }
 
@@ -199,29 +268,26 @@ interface NavItem {
   label: string;
   icon: IconKey;
   end?: boolean;
-  hideDesktop?: boolean;
   /** Key used to look up badge counts from badgeCounts map */
   badgeKey?: string;
 }
 
-interface LauncherItem {
-  type: "launcher";
-  url: string;
-  label: string;
-  icon: IconKey;
-  disabled?: boolean;
-}
-
-type SidebarItem = NavItem | LauncherItem;
+type SidebarItem = NavItem;
 
 interface SidebarSection {
   id: string;
+  /** i18n key for section header (used in expanded mode) */
+  headerKey: string;
+  /** Fallback label if i18n key not found */
+  headerFallback: string;
   items: SidebarItem[];
 }
 
 const SECTIONS: SidebarSection[] = [
   {
     id: "operacao",
+    headerKey: "sidebar.sectionOperacao",
+    headerFallback: "OPERACAO",
     items: [
       { type: "nav", to: "/op/tpv", label: "pos", icon: "grid", end: true },
       { type: "nav", to: "/op/tpv/tables", label: "tables", icon: "table" },
@@ -229,18 +295,33 @@ const SECTIONS: SidebarSection[] = [
       { type: "nav", to: "/op/tpv/kitchen", label: "kitchen", icon: "kitchen", badgeKey: "kitchen" },
       { type: "nav", to: "/op/tpv/tasks", label: "tasks", icon: "tasks", badgeKey: "tasks" },
       { type: "nav", to: "/op/tpv/reservations", label: "reservations", icon: "calendar", badgeKey: "reservations" },
+      { type: "nav", to: "/op/tpv/delivery", label: "delivery", icon: "delivery" },
     ],
   },
   {
     id: "telas",
+    headerKey: "sidebar.sectionTelas",
+    headerFallback: "TELAS",
     items: [
       { type: "nav", to: "/op/tpv/screens", label: "screens", icon: "screen" },
     ],
   },
   {
-    id: "config",
+    id: "negocio",
+    headerKey: "sidebar.sectionNegocio",
+    headerFallback: "NEGOCIO",
     items: [
-      { type: "nav", to: "/op/tpv/web-editor", label: "webPage", icon: "receipt", hideDesktop: true },
+      { type: "nav", to: "/op/tpv/catering", label: "catering", icon: "catering" },
+      { type: "nav", to: "/op/tpv/saladitos", label: "saladitos", icon: "saladitos" },
+      { type: "nav", to: "/op/tpv/marketing", label: "marketing", icon: "marketing" },
+    ],
+  },
+  {
+    id: "sistema",
+    headerKey: "sidebar.sectionSistema",
+    headerFallback: "SISTEMA",
+    items: [
+      { type: "nav", to: "/op/tpv/printers", label: "printers", icon: "printer" },
       { type: "nav", to: "/op/tpv/settings", label: "settings", icon: "gear" },
     ],
   },
@@ -291,6 +372,9 @@ function ensureTooltipStyles() {
     .tpv-sidebar-tooltip-wrap:hover .tpv-sidebar-tooltip {
       opacity: 1;
       transition-delay: 200ms;
+    }
+    .tpv-sidebar-expanded .tpv-sidebar-tooltip-wrap:hover .tpv-sidebar-tooltip {
+      opacity: 0 !important;
     }
   `;
   document.head.appendChild(style);
@@ -480,11 +564,12 @@ function useSidebarBadges(restaurantId: string): BadgeCounts {
 
 /* ── Separator line ────────────────────────────────────────────── */
 
-function SectionDivider() {
+function SectionDivider({ expanded }: { expanded: boolean }) {
   return (
     <div
+      data-testid="section-divider"
       style={{
-        width: 32,
+        width: expanded ? "calc(100% - 24px)" : 32,
         height: 1,
         backgroundColor: "rgba(255,255,255,0.06)",
         margin: "6px 0",
@@ -493,21 +578,29 @@ function SectionDivider() {
   );
 }
 
-/* ── Item button style (shared) ────────────────────────────────── */
+/* ── Section header (visible only in expanded mode) ──────────── */
 
-const ITEM_BASE: React.CSSProperties = {
-  width: 44,
-  height: 44,
-  borderRadius: 12,
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "center",
-  border: "none",
-  background: "transparent",
-  textDecoration: "none",
-  transition: "all 0.15s ease",
-  padding: 0,
-};
+function SectionHeader({ label, expanded }: { label: string; expanded: boolean }) {
+  if (!expanded) return null;
+
+  return (
+    <div
+      data-testid="section-header"
+      style={{
+        fontSize: 10,
+        fontWeight: 700,
+        letterSpacing: 1.5,
+        textTransform: "uppercase",
+        color: "#525252",
+        padding: "8px 16px 4px",
+        width: "100%",
+        userSelect: "none",
+      }}
+    >
+      {label}
+    </div>
+  );
+}
 
 /* ── Exit confirmation modal ───────────────────────────────────── */
 
@@ -592,8 +685,28 @@ export function TPVSidebar() {
   const { t } = useTranslation("tpv");
   const [showExitModal, setShowExitModal] = useState(false);
   const navigate = useNavigate();
-  const desktop = useMemo(() => isDesktopApp(), []);
   const restaurantId = useTPVRestaurantId();
+
+  // Expanded/collapsed state persisted in localStorage
+  const [expanded, setExpanded] = useState(() => {
+    try {
+      return localStorage.getItem(SIDEBAR_EXPANDED_KEY) === "true";
+    } catch {
+      return false;
+    }
+  });
+
+  const toggleExpanded = useCallback(() => {
+    setExpanded((prev) => {
+      const next = !prev;
+      try {
+        localStorage.setItem(SIDEBAR_EXPANDED_KEY, String(next));
+      } catch {
+        // ignore
+      }
+      return next;
+    });
+  }, []);
 
   // Inject tooltip CSS once on mount
   useEffect(() => {
@@ -603,125 +716,155 @@ export function TPVSidebar() {
   // Badge counts from event bus + polling
   const badgeCounts = useSidebarBadges(restaurantId);
 
-  const sections = useMemo(() => {
-    return SECTIONS.map((section) => ({
-      ...section,
-      items: section.items.filter((item) => {
-        if (item.type === "nav" && item.hideDesktop && desktop) return false;
-        return true;
-      }),
-    }));
-  }, [desktop]);
+  const sidebarWidth = expanded ? EXPANDED_WIDTH : COMPACT_WIDTH;
+
+  const itemStyle = (isActive: boolean): React.CSSProperties => ({
+    height: 44,
+    borderRadius: 12,
+    display: "flex",
+    alignItems: "center",
+    justifyContent: expanded ? "flex-start" : "center",
+    border: "none",
+    background: isActive ? ACCENT_BG : "transparent",
+    textDecoration: "none",
+    transition: "all 0.15s ease",
+    padding: expanded ? "0 12px" : 0,
+    width: expanded ? "calc(100% - 16px)" : 44,
+    gap: expanded ? 10 : 0,
+    color: isActive ? ACCENT : "#737373",
+    position: "relative" as const,
+    flexShrink: 0,
+    cursor: "pointer",
+  });
 
   return (
     <aside
+      className={expanded ? "tpv-sidebar-expanded" : ""}
+      data-testid="tpv-sidebar"
       style={{
-        width: 72,
-        minWidth: 72,
+        width: sidebarWidth,
+        minWidth: sidebarWidth,
         backgroundColor: "#141414",
         borderRight: "1px solid rgba(255,255,255,0.06)",
         display: "flex",
         flexDirection: "column",
         alignItems: "center",
-        paddingTop: 16,
+        paddingTop: 8,
         paddingBottom: 16,
         gap: 4,
+        transition: "width 200ms ease, min-width 200ms ease",
+        overflow: "hidden",
       }}
     >
-      {/* Sections */}
-      {sections.map((section, sIdx) => (
-        <React.Fragment key={section.id}>
-          {sIdx > 0 && <SectionDivider />}
-          {section.items.map((item) => {
-            if (item.type === "nav") {
-              const tooltipLabel = t(`sidebar.${item.label}`);
-              const badge = item.badgeKey
-                ? badgeCounts[item.badgeKey as keyof BadgeCounts]
-                : null;
+      {/* Toggle expand/collapse button */}
+      <button
+        type="button"
+        data-testid="sidebar-toggle"
+        onClick={toggleExpanded}
+        title={expanded ? t("sidebar.collapse", "Recolher") : t("sidebar.expand", "Expandir")}
+        style={{
+          width: expanded ? "calc(100% - 16px)" : 44,
+          height: 32,
+          borderRadius: 8,
+          border: "none",
+          background: "transparent",
+          color: "#525252",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: expanded ? "flex-end" : "center",
+          cursor: "pointer",
+          padding: expanded ? "0 12px" : 0,
+          marginBottom: 4,
+          flexShrink: 0,
+          transition: "all 0.15s ease",
+        }}
+      >
+        <IconChevronToggle expanded={expanded} />
+      </button>
 
-              return (
-                <TooltipWrap key={item.to} label={tooltipLabel}>
-                  <NavLink
-                    to={item.to}
-                    end={item.end}
-                    title={tooltipLabel}
-                    style={({ isActive }) => ({
-                      ...ITEM_BASE,
-                      color: isActive ? ACCENT : "#737373",
-                      backgroundColor: isActive ? ACCENT_BG : "transparent",
-                      position: "relative" as const,
-                    })}
-                  >
+      {/* Restaurant identity */}
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: expanded ? 10 : 0,
+          padding: expanded ? "8px 12px" : "8px 0",
+          width: expanded ? "calc(100% - 16px)" : "auto",
+          flexShrink: 0,
+          overflow: "hidden",
+        }}
+      >
+        <img
+          src={APP_LOGO_URL}
+          alt="Restaurant"
+          width={36}
+          height={36}
+          style={{
+            borderRadius: "50%",
+            objectFit: "cover",
+            flexShrink: 0,
+          }}
+        />
+        {expanded && (
+          <span
+            style={{
+              color: "#fafafa",
+              fontSize: 13,
+              fontWeight: 600,
+              whiteSpace: "nowrap",
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+            }}
+          >
+            {t("sidebar.restaurantName", "Restaurante")}
+          </span>
+        )}
+      </div>
+
+      <SectionDivider expanded={expanded} />
+
+      {/* Navigation sections */}
+      {SECTIONS.map((section, sIdx) => (
+        <React.Fragment key={section.id}>
+          {sIdx > 0 && <SectionDivider expanded={expanded} />}
+          <SectionHeader
+            label={t(section.headerKey, section.headerFallback)}
+            expanded={expanded}
+          />
+          {section.items.map((item) => {
+            const tooltipLabel = t(`sidebar.${item.label}`, item.label);
+            const badge = item.badgeKey
+              ? badgeCounts[item.badgeKey as keyof BadgeCounts]
+              : null;
+
+            return (
+              <TooltipWrap key={item.to} label={tooltipLabel}>
+                <NavLink
+                  to={item.to}
+                  end={item.end}
+                  title={tooltipLabel}
+                  style={({ isActive }) => itemStyle(isActive)}
+                >
+                  <span style={{ flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", position: "relative" }}>
                     {iconFor(item.icon)}
                     {badge && badge.count > 0 && (
                       <NotificationBadge count={badge.count} color={badge.color} />
                     )}
-                  </NavLink>
-                </TooltipWrap>
-              );
-            }
-
-            // Launcher: disabled placeholder
-            if (item.disabled) {
-              const disabledLabel = `${t(`sidebar.${item.label}`)} — ${t("sidebar.comingSoon")}`;
-              return (
-                <TooltipWrap key={item.label} label={disabledLabel}>
-                  <button
-                    type="button"
-                    title={disabledLabel}
-                    disabled
-                    style={{
-                      ...ITEM_BASE,
-                      color: "#737373",
-                      opacity: 0.35,
-                      cursor: "not-allowed",
-                    }}
-                  >
-                    {iconFor(item.icon)}
-                  </button>
-                </TooltipWrap>
-              );
-            }
-
-            // Launcher: active
-            // Desktop (Electron): open in new window
-            // Browser: navigate in-window (BrowserBlockGuard blocks new tabs)
-            if (desktop) {
-              const desktopLabel = `${t(`sidebar.${item.label}`)} — ${t("sidebar.newWindow")}`;
-              return (
-                <TooltipWrap key={item.label} label={desktopLabel}>
-                  <a
-                    href={item.url}
-                    target="_blank"
-                    rel="noreferrer"
-                    title={desktopLabel}
-                    style={{
-                      ...ITEM_BASE,
-                      color: "#737373",
-                      cursor: "pointer",
-                    }}
-                  >
-                    {iconFor(item.icon)}
-                  </a>
-                </TooltipWrap>
-              );
-            }
-
-            const launcherLabel = t(`sidebar.${item.label}`);
-            return (
-              <TooltipWrap key={item.label} label={launcherLabel}>
-                <button
-                  type="button"
-                  title={launcherLabel}
-                  onClick={() => navigate(item.url)}
-                  style={{
-                    ...ITEM_BASE,
-                    color: "#737373",
-                    cursor: "pointer",
-                  }}
-                >
-                  {iconFor(item.icon)}
-                </button>
+                  </span>
+                  {expanded && (
+                    <span
+                      style={{
+                        fontSize: 13,
+                        fontWeight: 500,
+                        whiteSpace: "nowrap",
+                        overflow: "hidden",
+                        textOverflow: "ellipsis",
+                      }}
+                    >
+                      {tooltipLabel}
+                    </span>
+                  )}
+                </NavLink>
               </TooltipWrap>
             );
           })}
@@ -731,42 +874,58 @@ export function TPVSidebar() {
       <div style={{ flex: 1 }} />
 
       {/* Exit with confirmation */}
-      <TooltipWrap label={t("sidebar.exitTooltip")}>
+      <TooltipWrap label={t("sidebar.exitTooltip", "Sair do TPV")}>
         <button
           type="button"
-          title={t("sidebar.exitTooltip")}
+          title={t("sidebar.exitTooltip", "Sair do TPV")}
           onClick={() => setShowExitModal(true)}
           style={{
-            ...ITEM_BASE,
-            color: "#737373",
+            ...itemStyle(false),
             cursor: "pointer",
           }}
         >
-          <IconExit />
+          <span style={{ flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
+            <IconExit />
+          </span>
+          {expanded && (
+            <span
+              style={{
+                fontSize: 13,
+                fontWeight: 500,
+                whiteSpace: "nowrap",
+                color: "#737373",
+              }}
+            >
+              {t("sidebar.exitTooltip", "Sair do TPV")}
+            </span>
+          )}
         </button>
       </TooltipWrap>
 
-      {/* App signature — discrete brand mark below exit */}
+      {/* App signature — discrete brand mark */}
       <div
         style={{
           display: "flex",
-          flexDirection: "column",
+          flexDirection: expanded ? "row" : "column",
           alignItems: "center",
           marginTop: 12,
-          gap: 4,
+          gap: expanded ? 8 : 4,
           opacity: 0.55,
+          padding: expanded ? "0 12px" : 0,
+          width: expanded ? "calc(100% - 16px)" : "auto",
         }}
       >
         <img
           src={APP_LOGO_URL}
           alt={APP_NAME}
-          width={52}
-          height={52}
+          width={expanded ? 24 : 36}
+          height={expanded ? 24 : 36}
           style={{
             borderRadius: "50%",
             objectFit: "cover",
             imageRendering: "auto",
             filter: "contrast(1.05) brightness(1.02)",
+            flexShrink: 0,
           }}
         />
         <span
@@ -776,6 +935,7 @@ export function TPVSidebar() {
             fontWeight: 600,
             letterSpacing: 0.5,
             textTransform: "uppercase",
+            whiteSpace: "nowrap",
           }}
         >
           {APP_NAME}
