@@ -130,3 +130,33 @@ export async function generateScheduledTasks(restaurantId: string): Promise<void
   });
   if (error) throw new Error(error.message ?? "Falha ao gerar tarefas agendadas");
 }
+
+/**
+ * Escalate task priority (e.g. MEDIA -> ALTA -> CRITICA).
+ */
+export async function escalateTask(taskId: string): Promise<void> {
+  const { data: task, error: readErr } = await dockerCoreClient
+    .from("gm_tasks")
+    .select("priority")
+    .eq("id", taskId)
+    .maybeSingle();
+
+  if (readErr || !task) throw new Error("Task not found");
+
+  const ESCALATION: Record<string, string> = {
+    BAIXA: "MEDIA",
+    LOW: "MEDIA",
+    MEDIA: "ALTA",
+    ALTA: "CRITICA",
+    CRITICA: "CRITICA",
+  };
+
+  const newPriority = ESCALATION[task.priority ?? "MEDIA"] ?? "ALTA";
+
+  const { error } = await dockerCoreClient
+    .from("gm_tasks")
+    .update({ priority: newPriority })
+    .eq("id", taskId);
+
+  if (error) throw new Error(error.message ?? "Failed to escalate task");
+}

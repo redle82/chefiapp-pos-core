@@ -103,3 +103,68 @@ export async function readEmployeeTaskHistory(
   if (error) return [];
   return (data ?? []) as CoreTask[];
 }
+
+/**
+ * All tasks for today (all statuses) -- for the execution board.
+ * Returns OPEN, ACKNOWLEDGED, IN_PROGRESS, RESOLVED, DISMISSED tasks created today.
+ */
+export async function readTodayTasks(
+  restaurantId: string,
+  station?: string
+): Promise<CoreTask[]> {
+  const todayStart = new Date();
+  todayStart.setHours(0, 0, 0, 0);
+
+  let q = dockerCoreClient
+    .from("gm_tasks")
+    .select("*")
+    .eq("restaurant_id", restaurantId)
+    .gte("created_at", todayStart.toISOString())
+    .order("created_at", { ascending: false });
+  if (station) q = q.eq("station", station);
+  const { data, error } = await q;
+  if (error) return [];
+  return (data ?? []) as CoreTask[];
+}
+
+/**
+ * Tasks in progress (IN_PROGRESS status).
+ */
+export async function readInProgressTasks(
+  restaurantId: string,
+  station?: string
+): Promise<CoreTask[]> {
+  let q = dockerCoreClient
+    .from("gm_tasks")
+    .select("*")
+    .eq("restaurant_id", restaurantId)
+    .eq("status", "IN_PROGRESS")
+    .order("created_at", { ascending: false });
+  if (station) q = q.eq("station", station);
+  const { data, error } = await q;
+  if (error) return [];
+  return (data ?? []) as CoreTask[];
+}
+
+/**
+ * Resolved tasks today.
+ */
+export async function readResolvedTodayTasks(
+  restaurantId: string,
+  station?: string
+): Promise<CoreTask[]> {
+  const todayStart = new Date();
+  todayStart.setHours(0, 0, 0, 0);
+
+  let q = dockerCoreClient
+    .from("gm_tasks")
+    .select("*")
+    .eq("restaurant_id", restaurantId)
+    .in("status", ["RESOLVED", "DISMISSED"])
+    .gte("created_at", todayStart.toISOString())
+    .order("created_at", { ascending: false });
+  if (station) q = q.eq("station", station);
+  const { data, error } = await q;
+  if (error) return [];
+  return (data ?? []) as CoreTask[];
+}
