@@ -103,6 +103,9 @@ export function TPVPOSView() {
     method: string;
     table: string | null;
   } | null>(null);
+  // Discount state
+  const [discountCents, setDiscountCents] = useState(0);
+  const [discountReason, setDiscountReason] = useState<string | undefined>();
   // Mobile cart drawer state
   const [mobileCartOpen, setMobileCartOpen] = useState(false);
 
@@ -318,7 +321,7 @@ export function TPVPOSView() {
   }, 0);
   const taxRate = parseFloat(localStorage.getItem("chefiapp_tax_rate") || "0.05");
   const taxCents = Math.round(subtotalCents * taxRate);
-  const totalCents = subtotalCents + taxCents;
+  const totalCents = subtotalCents + taxCents - discountCents;
   const grandTotalCents = totalCents + tipCents;
 
   // ─── Enviar para cozinha (cria pedido no backend) ───────────────
@@ -355,6 +358,8 @@ export function TPVPOSView() {
       const demoTotal = cart.reduce((s, i) => s + i.unit_price * i.quantity, 0);
       setCart([]);
       setTipCents(0);
+      setDiscountCents(0);
+      setDiscountReason(undefined);
       toast.success(
         t("posView.demoPaymentSimulated", { total: formatAmount(demoTotal) }),
       );
@@ -393,6 +398,8 @@ export function TPVPOSView() {
           });
           setCart([]);
           setTipCents(0);
+          setDiscountCents(0);
+          setDiscountReason(undefined);
         } else {
           toast.error(result.error ?? t("posView.errorFinalizeOrder"));
         }
@@ -408,6 +415,8 @@ export function TPVPOSView() {
           });
           setCart([]);
           setTipCents(0);
+          setDiscountCents(0);
+          setDiscountReason(undefined);
         } else {
           toast.error(result.error ?? t("posView.errorCreateOrder"));
         }
@@ -422,6 +431,8 @@ export function TPVPOSView() {
   // ─── Cancelar ─────────────────────────────────────────────────────
   const handleCancelOrder = async () => {
     setCart([]);
+    setDiscountCents(0);
+    setDiscountReason(undefined);
     await lifecycle.cancelOrder(restaurantId);
   };
 
@@ -492,11 +503,21 @@ export function TPVPOSView() {
   const cartItemCount = cart.reduce((sum, item) => sum + item.quantity, 0);
 
   // Shared order panel props
+  const handleApplyDiscount = (cents: number, reason?: string) => {
+    setDiscountCents(cents);
+    setDiscountReason(reason);
+  };
+
+  const handleRemoveDiscount = () => {
+    setDiscountCents(0);
+    setDiscountReason(undefined);
+  };
+
   const orderPanelProps = {
     items: cart,
     subtotalCents,
     taxCents,
-    discountCents: 0,
+    discountCents,
     onClearAll: handleCancelOrder,
     onUpdateQuantity: updateQuantity,
     onPrintReceipt: () => toast.info(t("posView.printReceiptComingSoon")),
@@ -507,6 +528,9 @@ export function TPVPOSView() {
     proceedDisabled: (cart.length === 0 && !isSentToKitchen) || sending,
     orderMode,
     onOrderModeChange: setOrderMode,
+    onApplyDiscount: handleApplyDiscount,
+    onRemoveDiscount: handleRemoveDiscount,
+    discountReason,
   };
 
   const statusPanelProps = {

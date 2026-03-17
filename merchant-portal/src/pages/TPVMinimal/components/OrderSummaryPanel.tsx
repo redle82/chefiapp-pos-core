@@ -9,6 +9,7 @@
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useCurrency } from "../../../core/currency/useCurrency";
+import { DiscountModal } from "./DiscountModal";
 import { OrderModeSelector, type OrderMode } from "./OrderModeSelector";
 
 const ACCENT = "#f97316";
@@ -93,6 +94,10 @@ interface OrderSummaryPanelProps {
   /** Order mode (managed by parent) */
   orderMode: OrderMode;
   onOrderModeChange: (mode: OrderMode) => void;
+  /** Discount callbacks (optional — when provided, enables discount UI) */
+  onApplyDiscount?: (discountCents: number, reason?: string) => void;
+  onRemoveDiscount?: () => void;
+  discountReason?: string;
 }
 
 const PLACEHOLDER_EMOJI = "\uD83C\uDF7D\uFE0F";
@@ -109,9 +114,13 @@ export function OrderSummaryPanel({
   proceedDisabled = false,
   orderMode,
   onOrderModeChange,
+  onApplyDiscount,
+  onRemoveDiscount,
+  discountReason,
 }: OrderSummaryPanelProps) {
   const { t } = useTranslation("tpv");
   const [failedImageIds, setFailedImageIds] = useState<Set<string>>(new Set());
+  const [discountModalOpen, setDiscountModalOpen] = useState(false);
   const { formatAmount } = useCurrency();
   const totalCents = subtotalCents + taxCents - discountCents;
 
@@ -383,6 +392,113 @@ export function OrderSummaryPanel({
           })
         )}
       </div>
+
+      {/* Discount row */}
+      {onApplyDiscount && (
+        <div
+          style={{
+            borderTop: "1px solid rgba(255,255,255,0.06)",
+            paddingTop: 10,
+            marginTop: 10,
+          }}
+        >
+          {discountCents > 0 ? (
+            <div
+              data-testid="discount-active"
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                padding: "8px 10px",
+                background: "#1a1207",
+                borderRadius: 8,
+                border: "1px solid #f9731633",
+              }}
+            >
+              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                <span style={{ color: "#f97316", fontSize: 13, fontWeight: 600 }}>
+                  -{formatAmount(discountCents)}
+                </span>
+                {discountReason && (
+                  <span style={{ color: "#9ca3af", fontSize: 11 }}>
+                    {discountReason}
+                  </span>
+                )}
+              </div>
+              <div style={{ display: "flex", gap: 6 }}>
+                <button
+                  type="button"
+                  onClick={() => setDiscountModalOpen(true)}
+                  style={{
+                    padding: "2px 8px",
+                    background: "transparent",
+                    border: "1px solid #27272a",
+                    borderRadius: 6,
+                    color: "#9ca3af",
+                    fontSize: 11,
+                    cursor: "pointer",
+                  }}
+                >
+                  {t("discount.title", "Aplicar Desconto")}
+                </button>
+                {onRemoveDiscount && (
+                  <button
+                    type="button"
+                    data-testid="remove-discount-inline"
+                    onClick={onRemoveDiscount}
+                    style={{
+                      padding: "2px 6px",
+                      background: "transparent",
+                      border: "none",
+                      color: "#dc2626",
+                      fontSize: 14,
+                      cursor: "pointer",
+                      lineHeight: 1,
+                    }}
+                  >
+                    {"\u2715"}
+                  </button>
+                )}
+              </div>
+            </div>
+          ) : (
+            <button
+              type="button"
+              data-testid="add-discount-btn"
+              onClick={() => setDiscountModalOpen(true)}
+              style={{
+                width: "100%",
+                padding: "8px 0",
+                background: "transparent",
+                border: "1px dashed #27272a",
+                borderRadius: 8,
+                color: "#9ca3af",
+                fontSize: 12,
+                cursor: "pointer",
+              }}
+            >
+              {t("discount.addDiscount", "Adicionar desconto")}
+            </button>
+          )}
+        </div>
+      )}
+
+      {/* Discount Modal */}
+      {discountModalOpen && onApplyDiscount && (
+        <DiscountModal
+          subtotalCents={subtotalCents}
+          currentDiscountCents={discountCents}
+          onApply={(cents, r) => {
+            onApplyDiscount(cents, r);
+            setDiscountModalOpen(false);
+          }}
+          onRemove={() => {
+            onRemoveDiscount?.();
+            setDiscountModalOpen(false);
+          }}
+          onClose={() => setDiscountModalOpen(false)}
+        />
+      )}
 
       {/* Summary */}
       <div

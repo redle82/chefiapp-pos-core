@@ -477,7 +477,20 @@
     "actionSeat": "Mark as seated",
     "actionComplete": "Complete",
     "actionNoShow": "No show",
-    "actionEdit": "Edit"
+    "actionEdit": "Edit",
+    "viewDay": "Day",
+    "viewWeek": "Week",
+    "weekRange": "{{start}} - {{end}}",
+    "previousWeek": "Previous week",
+    "nextWeek": "Next week",
+    "confirmCancelTitle": "Cancel reservation?",
+    "confirmCancelMessage": "The reservation for {{name}} will be cancelled. This action cannot be undone.",
+    "confirmNoShowTitle": "Mark as no-show?",
+    "confirmNoShowMessage": "{{name}} will be marked as no-show.",
+    "confirm": "Confirm",
+    "cancel": "Cancel",
+    "noReservationsWeek": "No reservations this week",
+    "guests": "{{count}} guests"
   },
   "layout": {
     "owner": "Owner"
@@ -521,6 +534,20 @@
     "receiptMethod": "Method",
     "total": "Total",
     "newOrder": "New Order"
+  },
+  "discount": {
+    "title": "Apply Discount",
+    "percentage": "Percentage",
+    "fixed": "Fixed Amount",
+    "custom": "Custom",
+    "reason": "Reason (optional)",
+    "reasonPlaceholder": "E.g.: Employee discount, Happy Hour...",
+    "preview": "Discount: {{amount}}",
+    "apply": "Apply",
+    "remove": "Remove discount",
+    "addDiscount": "Add discount",
+    "maxExceeded": "Discount cannot exceed the total",
+    "active": "Discount applied"
   },
   "orderSummary": {
     "items": "Items",

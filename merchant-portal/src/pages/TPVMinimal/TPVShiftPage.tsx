@@ -8,6 +8,8 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useCurrency } from "../../core/currency/useCurrency";
+import { getTableClient } from "../../core/infra/coreRpc";
+import { Logger } from "../../core/logger";
 import { useShift } from "../../core/shift/ShiftContext";
 import {
   CashRegisterEngine,
@@ -19,6 +21,12 @@ import { InlineAlert } from "../../ui/design-system/InlineAlert";
 import { KpiCard } from "../../ui/design-system/KpiCard";
 import { Skeleton } from "../../ui/design-system/Skeleton";
 import { DenominationCounter } from "./components/DenominationCounter";
+import {
+  ShiftReport,
+  type ShiftReportPayments,
+  type ShiftReportOrderStats,
+  type ShiftReportRegister,
+} from "./components/ShiftReport";
 import { useTPVRestaurantId } from "./hooks/useTPVRestaurantId";
 
 /* ── Styles ─────────────────────────────────────────────────────── */
@@ -163,6 +171,12 @@ export function TPVShiftPage() {
   const [closingName, setClosingName] = useState(t("page.defaultOperator", "Caixa TPV"));
   const [acting, setActing] = useState(false);
   const [countMode, setCountMode] = useState<"detailed" | "quick">("detailed");
+  const [reportData, setReportData] = useState<{
+    register: ShiftReportRegister;
+    payments?: ShiftReportPayments;
+    orderStats?: ShiftReportOrderStats;
+  } | null>(null);
+  const [showReport, setShowReport] = useState(false);
 
   const expectedBalanceCents = useMemo(() => {
     if (!register) return 0;
@@ -226,6 +240,58 @@ export function TPVShiftPage() {
     }
   };
 
+  /** Fetch payment breakdown for the shift report after closing. */
+  const fetchReportData = useCallback(
+    async (closedRegister: CashRegister, declaredClosingCents: number) => {
+      const reportRegister: ShiftReportRegister = {
+        id: closedRegister.id,
+        name: closedRegister.name,
+        openedBy: closedRegister.openedBy || t("page.defaultOperator", "Caixa TPV"),
+        closedBy: closedRegister.closedBy,
+        openingBalanceCents: closedRegister.openingBalanceCents,
+        closingBalanceCents: declaredClosingCents,
+        totalSalesCents: closedRegister.totalSalesCents,
+        openedAt: closedRegister.openedAt?.toISOString() ?? "",
+        closedAt: closedRegister.closedAt?.toISOString() ?? new Date().toISOString(),
+      };
+
+      let payments: ShiftReportPayments | undefined;
+      try {
+        const client = await getTableClient();
+        const { data: paymentRows } = await client
+          .from("gm_order_payments")
+          .select("method, amount_cents")
+          .eq("restaurant_id", restaurantId)
+          .gte("created_at", closedRegister.openedAt?.toISOString() ?? "")
+          .lte("created_at", new Date().toISOString());
+
+        if (paymentRows && paymentRows.length > 0) {
+          const agg = { cash: { count: 0, totalCents: 0 }, card: { count: 0, totalCents: 0 }, pix: { count: 0, totalCents: 0 } };
+          for (const row of paymentRows as Array<{ method: string; amount_cents: number }>) {
+            const method = (row.method || "").toLowerCase();
+            if (method === "cash" || method === "dinheiro" || method === "efectivo") {
+              agg.cash.count++;
+              agg.cash.totalCents += row.amount_cents;
+            } else if (method === "card" || method === "cartão" || method === "tarjeta" || method === "cartao") {
+              agg.card.count++;
+              agg.card.totalCents += row.amount_cents;
+            } else {
+              agg.pix.count++;
+              agg.pix.totalCents += row.amount_cents;
+            }
+          }
+          payments = agg;
+        }
+      } catch (err) {
+        Logger.error("SHIFT_REPORT_PAYMENTS_FETCH", err, { registerId: closedRegister.id });
+      }
+
+      setReportData({ register: reportRegister, payments });
+      setShowReport(true);
+    },
+    [restaurantId, t],
+  );
+
   const handleClose = async () => {
     if (!register) return;
     const value = Number.parseFloat(closingCash.replace(",", "."));
@@ -236,13 +302,17 @@ export function TPVShiftPage() {
     setActing(true);
     setError(null);
     try {
-      await CashRegisterEngine.closeCashRegister({
+      const closedReg = await CashRegisterEngine.closeCashRegister({
         cashRegisterId: register.id,
         restaurantId,
         closingBalanceCents: Math.round(value * 100),
         closedBy: closingName || t("page.defaultOperator", "Caixa TPV"),
       });
       await shift.refreshShiftStatus();
+
+      // Build report data before clearing state
+      await fetchReportData(closedReg, Math.round(value * 100));
+
       setRegister(null);
       setClosingCash("");
     } catch (err) {
@@ -422,6 +492,17 @@ export function TPVShiftPage() {
         </Card>
       )}
 
+      {/* ── Shift Report Overlay ──────────────────────────────────── */}
+      {showReport && reportData && (
+        <ShiftReport
+          register={reportData.register}
+          payments={reportData.payments}
+          orderStats={reportData.orderStats}
+          onPrint={() => window.print()}
+          onClose={() => setShowReport(false)}
+        />
+      )}
+
       {/* ── Register CLOSED — show open form ────────────────────── */}
       {!loading && !register && !error && (
         <Card surface="layer1" padding="lg">
@@ -470,7 +551,7 @@ export function TPVShiftPage() {
             </div>
           </div>
 
-          <div style={{ display: "flex", justifyContent: "flex-start", marginTop: 8 }}>
+          <div style={{ display: "flex", justifyContent: "flex-start", gap: 12, marginTop: 8 }}>
             <Button
               variant="constructive"
               size="md"
@@ -480,6 +561,15 @@ export function TPVShiftPage() {
             >
               {t("page.openButton")}
             </Button>
+            {reportData && (
+              <Button
+                variant="neutral"
+                size="md"
+                onClick={() => setShowReport(true)}
+              >
+                {t("shiftReport.viewLastReport", "View last shift report")}
+              </Button>
+            )}
           </div>
         </Card>
       )}

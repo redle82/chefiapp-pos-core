@@ -477,7 +477,20 @@
     "actionSeat": "Marcar como sentado",
     "actionComplete": "Completar",
     "actionNoShow": "No se presentó",
-    "actionEdit": "Editar"
+    "actionEdit": "Editar",
+    "viewDay": "Día",
+    "viewWeek": "Semana",
+    "weekRange": "{{start}} - {{end}}",
+    "previousWeek": "Semana anterior",
+    "nextWeek": "Próxima semana",
+    "confirmCancelTitle": "¿Cancelar reserva?",
+    "confirmCancelMessage": "La reserva de {{name}} será cancelada. Esta acción no se puede deshacer.",
+    "confirmNoShowTitle": "¿Marcar como no presentado?",
+    "confirmNoShowMessage": "{{name}} será marcado como no presentado.",
+    "confirm": "Confirmar",
+    "cancel": "Cancelar",
+    "noReservationsWeek": "Sin reservas esta semana",
+    "guests": "{{count}} personas"
   },
   "layout": {
     "owner": "Propietario"
@@ -521,6 +534,20 @@
     "receiptMethod": "Método",
     "total": "Total",
     "newOrder": "Nuevo Pedido"
+  },
+  "discount": {
+    "title": "Aplicar Descuento",
+    "percentage": "Porcentaje",
+    "fixed": "Valor Fijo",
+    "custom": "Personalizado",
+    "reason": "Motivo (opcional)",
+    "reasonPlaceholder": "Ej: Descuento empleado, Happy Hour...",
+    "preview": "Descuento: {{amount}}",
+    "apply": "Aplicar",
+    "remove": "Eliminar descuento",
+    "addDiscount": "Agregar descuento",
+    "maxExceeded": "El descuento no puede exceder el total",
+    "active": "Descuento aplicado"
   },
   "orderSummary": {
     "items": "Artículos",
