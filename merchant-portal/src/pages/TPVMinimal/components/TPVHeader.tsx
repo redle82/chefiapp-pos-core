@@ -8,6 +8,7 @@ import { useTranslation } from "react-i18next";
 import { useRestaurantRuntime } from "../../../context/RestaurantRuntimeContext";
 import { useRestaurantIdentity } from "../../../core/identity/useRestaurantIdentity";
 import { RestaurantLogo } from "../../../ui/RestaurantLogo";
+import { NotificationBell } from "./NotificationBell";
 
 /* ── Accent orange ─────────────────────────────────────────────── */
 const ACCENT = "#f97316";
@@ -252,6 +253,11 @@ export function TPVHeader({
 
       {/* Spacer when search is hidden */}
       {hideSearch && <div style={{ flex: 1 }} />}
+
+      {/* Notification bell */}
+      {runtime.restaurant_id && (
+        <NotificationBell restaurantId={runtime.restaurant_id} />
+      )}
 
       {/* Separator (before staff, right side) */}
       <div

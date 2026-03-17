@@ -20,6 +20,7 @@ import { useOutletContext, useSearchParams } from "react-router-dom";
 import { OrderStatusPanel } from "../../components/pos/OrderStatusPanel";
 import { CONFIG } from "../../config";
 import { useRestaurantRuntime } from "../../context/RestaurantRuntimeContext";
+import { useCatalogStore } from "../../core/catalog/catalogStore";
 import { useCurrency } from "../../core/currency/useCurrency";
 import { Logger } from "../../core/logger";
 import { createOrderLifecycle } from "../../core/operational/processOrderLifecycle";
@@ -30,6 +31,10 @@ import { EXAMPLE_MENUS } from "../../features/admin/onboarding/exampleMenus";
 import { useBootstrapState } from "../../hooks/useBootstrapState";
 import type { CoreProduct } from "../../infra/readers/RestaurantReader";
 import { readMenuCategories } from "../../infra/readers/RestaurantReader";
+import {
+  ModifierSelectorModal,
+  type SelectedModifier,
+} from "../TPV/components/ModifierSelectorModal";
 import { SplitBillModalWrapper } from "../TPV/components/SplitBillModalWrapper";
 import { ToastContainer, useToast } from "../../ui/design-system/Toast";
 import { isPlaceholderPhoto } from "../../utils/isPlaceholderPhoto";
@@ -37,6 +42,7 @@ import type { OrderMode } from "./components/OrderModeSelector";
 import {
   OrderSummaryPanel,
   type OrderSummaryItem,
+  type CartItemModifier,
 } from "./components/OrderSummaryPanel";
 import {
   ProductCategoryFilter,
@@ -99,6 +105,20 @@ export function TPVPOSView() {
   } | null>(null);
   // Mobile cart drawer state
   const [mobileCartOpen, setMobileCartOpen] = useState(false);
+
+  // --- Modifier modal state ---
+  const [modifierModalProduct, setModifierModalProduct] = useState<CoreProduct | null>(null);
+
+  // Catalog store: modifier groups + modifiers (loaded once)
+  const catalogModifierGroups = useCatalogStore((s) => s.modifierGroups);
+  const catalogModifiers = useCatalogStore((s) => s.modifiers);
+  const catalogProducts = useCatalogStore((s) => s.products);
+  const catalogLoadAll = useCatalogStore((s) => s.loadAll);
+
+  // Load catalog data (modifier groups, modifiers, catalog products) once
+  useEffect(() => {
+    catalogLoadAll(restaurantId).catch(() => {});
+  }, [restaurantId, catalogLoadAll]);
 
   // Flag: pedido já enviado para cozinha (tem ID real no backend)
   const isSentToKitchen = currentOrderStatus === "SENT";
@@ -171,15 +191,29 @@ export function TPVPOSView() {
     return matchCategory && matchSearch;
   });
 
-  const addToCart = (product: CoreProduct) => {
+  // --- Resolve modifier group IDs for a product ---
+  const getModifierGroupIds = useCallback(
+    (productId: string): string[] => {
+      const catProduct = catalogProducts.find((p) => p.id === productId);
+      return catProduct?.modifierGroupIds ?? [];
+    },
+    [catalogProducts],
+  );
+
+  // --- Add to cart (with modifier interception) ---
+  const addToCart = (product: CoreProduct, selectedModifiers?: CartItemModifier[]) => {
     if (isSentToKitchen) {
-      toast.warning(
-        t("posView.orderAlreadySentToKitchen"),
-      );
+      toast.warning(t("posView.orderAlreadySentToKitchen"));
       return;
     }
 
-    const existing = cart.find((i) => i.product_id === product.id);
+    // Check if this product has modifier groups and none were selected yet
+    const modGroupIds = getModifierGroupIds(product.id);
+    if (modGroupIds.length > 0 && !selectedModifiers) {
+      setModifierModalProduct(product);
+      return;
+    }
+
     const categoryName = categories.find(
       (c) => c.id === product.category_id,
     )?.name;
@@ -191,38 +225,77 @@ export function TPVPOSView() {
     const imageUrl =
       trustedImageUrl ?? getFoodPhotoUrl(product.category_id, categoryName);
 
+    // Calculate modifier price delta for lifecycle tracking
+    const modDelta = (selectedModifiers ?? []).reduce(
+      (sum, m) => sum + m.priceDeltaCents,
+      0,
+    );
+
     // Iniciar pedido operacional se for o primeiro item
     if (cart.length === 0) {
       lifecycle.startOrder(orderMode, tableParam, tableIdParam);
     }
 
-    // Reservar estoque operacional
+    // Build modifier input for backend persistence
+    const modifierInputs = (selectedModifiers ?? []).map((m) => ({
+      id: m.id,
+      name: m.name,
+      group_id: m.groupId,
+      group_name: m.groupName,
+      price_delta_cents: m.priceDeltaCents,
+    }));
+
+    // Reservar estoque operacional (include modifier delta in price)
     lifecycle.addItem({
       id: product.id,
       name: product.name,
-      priceCents: product.price_cents,
-      costCents: Math.round(product.price_cents * 0.35), // estimativa de custo
+      priceCents: product.price_cents + modDelta,
+      costCents: Math.round(product.price_cents * 0.35),
+      ...(modifierInputs.length > 0 ? { modifiers: modifierInputs } : {}),
     });
+
+    // When modifiers are selected, always add as new line
+    const hasModifiers = selectedModifiers && selectedModifiers.length > 0;
+    const existing = hasModifiers
+      ? undefined
+      : cart.find((i) => i.product_id === product.id && !i.modifiers?.length);
 
     if (existing) {
       setCart(
         cart.map((i) =>
-          i.product_id === product.id ? { ...i, quantity: i.quantity + 1 } : i,
+          i === existing ? { ...i, quantity: i.quantity + 1 } : i,
         ),
       );
     } else {
       setCart([
         ...cart,
         {
-          product_id: product.id,
+          product_id: hasModifiers
+            ? `${product.id}__${Date.now()}`
+            : product.id,
           name: product.name,
           subtitle: categoryName ?? undefined,
           quantity: 1,
           unit_price: product.price_cents,
           image_url: imageUrl,
+          modifiers: selectedModifiers,
         },
       ]);
     }
+  };
+
+  // --- Modifier modal confirm handler ---
+  const handleModifierConfirm = (selected: SelectedModifier[]) => {
+    if (!modifierModalProduct) return;
+    const cartModifiers: CartItemModifier[] = selected.map((s) => ({
+      id: s.id,
+      name: s.name,
+      groupId: s.groupId,
+      groupName: s.groupName,
+      priceDeltaCents: s.priceDeltaCents,
+    }));
+    addToCart(modifierModalProduct, cartModifiers);
+    setModifierModalProduct(null);
   };
 
   const updateQuantity = (productId: string, quantity: number) => {
@@ -235,11 +308,16 @@ export function TPVPOSView() {
     );
   };
 
-  const subtotalCents = cart.reduce(
-    (sum, i) => sum + i.unit_price * i.quantity,
-    0,
-  );
-  const taxCents = Math.round(subtotalCents * 0.05);
+  // Subtotal includes modifier deltas
+  const subtotalCents = cart.reduce((sum, i) => {
+    const modDelta = (i.modifiers ?? []).reduce(
+      (s, m) => s + m.priceDeltaCents,
+      0,
+    );
+    return sum + (i.unit_price + modDelta) * i.quantity;
+  }, 0);
+  const taxRate = parseFloat(localStorage.getItem("chefiapp_tax_rate") || "0.05");
+  const taxCents = Math.round(subtotalCents * taxRate);
   const totalCents = subtotalCents + taxCents;
   const grandTotalCents = totalCents + tipCents;
 
@@ -450,6 +528,17 @@ export function TPVPOSView() {
     disabled: cart.length === 0 || sending,
   };
 
+  // Resolve modifier groups for the modal product
+  const modalModifierGroupIds = modifierModalProduct
+    ? getModifierGroupIds(modifierModalProduct.id)
+    : [];
+  const modalGroups = catalogModifierGroups.filter((g) =>
+    modalModifierGroupIds.includes(g.id),
+  );
+  const modalModifiers = catalogModifiers.filter((m) =>
+    modalModifierGroupIds.includes(m.groupId),
+  );
+
   return (
     <div className="tpv-container">
       {/* Demo mode banner */}
@@ -562,6 +651,17 @@ export function TPVPOSView() {
           <OrderStatusPanel {...statusPanelProps} />
         </div>
       </div>
+
+      {/* Modifier Selector Modal */}
+      {modifierModalProduct && modalGroups.length > 0 && (
+        <ModifierSelectorModal
+          productName={modifierModalProduct.name}
+          groups={modalGroups}
+          modifiers={modalModifiers}
+          onConfirm={handleModifierConfirm}
+          onCancel={() => setModifierModalProduct(null)}
+        />
+      )}
 
       {/* Split Bill Modal */}
       {splitBillOpen && currentOrderId && (

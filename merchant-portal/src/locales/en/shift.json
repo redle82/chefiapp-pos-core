@@ -102,6 +102,17 @@
     "difference": "Difference",
     "closeInTpv": "Close in POS"
   },
+  "denomination": {
+    "modeQuick": "Quick",
+    "modeDetailed": "Detailed",
+    "notes": "Notes",
+    "coins": "Coins",
+    "total": "Total",
+    "difference": "Difference",
+    "match": "Balance correct!",
+    "over": "Over by {{amount}}",
+    "under": "Short by {{amount}}"
+  },
   "error": {
     "loadCash": "Error loading register.",
     "noRestaurant": "Restaurant not set.",

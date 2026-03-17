@@ -222,7 +222,14 @@
   },
   "header": {
     "searchPlaceholder": "Pesquisar produto por nome, categoria ou SKU",
-    "clearSearch": "Limpar"
+    "clearSearch": "Limpar",
+    "notifications": "Notificacoes",
+    "noNotifications": "Sem notificacoes -- tudo em ordem!",
+    "tableReady": "Mesa {{number}} -- comida pronta ha {{time}}",
+    "tableBillRequested": "Mesa {{number}} -- conta pedida",
+    "tableCleaning": "Mesa {{number}} -- precisa limpeza",
+    "tasksPending": "{{count}} tarefas pendentes",
+    "kitchenDelayed": "{{count}} pedidos atrasados na cozinha"
   },
   "settings": {
     "title": "Definicoes",
@@ -491,6 +498,22 @@
     "receiptMethod": "Método",
     "total": "Total",
     "newOrder": "Novo Pedido"
+  },
+  "orderSummary": {
+    "items": "Itens",
+    "clearAll": "Limpar Tudo",
+    "emptyOrder": "Nenhum item no pedido",
+    "subtotal": "Subtotal",
+    "tax": "Imposto (5%)",
+    "discount": "Desconto",
+    "total": "Total",
+    "printReceipt": "Imprimir Recibo",
+    "proceed": "Prosseguir"
+  },
+  "orderMode": {
+    "takeAway": "Take away",
+    "dineIn": "Comer aqui",
+    "delivery": "Entrega"
   },
   "webEditor": {
     "headerTitle": "Editor rápido da Página Web",

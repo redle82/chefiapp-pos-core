@@ -102,6 +102,17 @@
     "difference": "Diferencia",
     "closeInTpv": "Cerrar en TPV"
   },
+  "denomination": {
+    "modeQuick": "Rapido",
+    "modeDetailed": "Detallado",
+    "notes": "Billetes",
+    "coins": "Monedas",
+    "total": "Total",
+    "difference": "Diferencia",
+    "match": "Saldo correcto!",
+    "over": "Exceso de {{amount}}",
+    "under": "Falta {{amount}}"
+  },
   "error": {
     "loadCash": "Error al cargar la caja.",
     "noRestaurant": "Restaurante no definido.",

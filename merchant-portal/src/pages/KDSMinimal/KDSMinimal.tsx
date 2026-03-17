@@ -1071,6 +1071,25 @@ export function KDSMinimal({ defaultStation }: KDSMinimalProps = {}) {
                                   )}
                                   {/* MENU_DERIVATIONS: KDS não exibe preço por item. */}
                                 </div>
+                                {/* Modifier badges */}
+                                {Array.isArray(item.modifiers) && item.modifiers.length > 0 && (
+                                  <div style={{ display: "flex", flexWrap: "wrap", gap: "4px", marginTop: "3px", paddingLeft: "4px" }}>
+                                    {(item.modifiers as Array<{ name?: string }>).map((mod, idx) => (
+                                      <span
+                                        key={idx}
+                                        style={{
+                                          fontSize: "11px",
+                                          color: "#d4d4d8",
+                                          backgroundColor: "rgba(255,255,255,0.08)",
+                                          padding: "1px 6px",
+                                          borderRadius: "4px",
+                                        }}
+                                      >
+                                        {mod.name ?? String(mod)}
+                                      </span>
+                                    ))}
+                                  </div>
+                                )}
 
                                 {/* Métrica: Tempo real vs esperado */}
                                 {isItemReady && (
@@ -1286,6 +1305,25 @@ export function KDSMinimal({ defaultStation }: KDSMinimalProps = {}) {
                                     </span>
                                   )}
                                 </div>
+                                {/* Modifier badges (compact view) */}
+                                {Array.isArray(item.modifiers) && item.modifiers.length > 0 && (
+                                  <div style={{ display: "flex", flexWrap: "wrap", gap: "4px", marginTop: "3px", paddingLeft: "4px" }}>
+                                    {(item.modifiers as Array<{ name?: string }>).map((mod, idx) => (
+                                      <span
+                                        key={idx}
+                                        style={{
+                                          fontSize: "11px",
+                                          color: "#d4d4d8",
+                                          backgroundColor: "rgba(255,255,255,0.08)",
+                                          padding: "1px 6px",
+                                          borderRadius: "4px",
+                                        }}
+                                      >
+                                        {mod.name ?? String(mod)}
+                                      </span>
+                                    ))}
+                                  </div>
+                                )}
                                 {isItemReady && (
                                   <div
                                     style={{

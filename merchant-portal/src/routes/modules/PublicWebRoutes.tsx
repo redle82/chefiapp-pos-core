@@ -29,6 +29,11 @@ const PublicKDS = lazy(() =>
     default: m.PublicKDS,
   })),
 );
+const TrackOrderPage = lazy(() =>
+  import("../../pages/PublicWeb/TrackOrderPage").then((m) => ({
+    default: m.TrackOrderPage,
+  })),
+);
 
 const PublicSuspense = ({ children }: { children: React.ReactNode }) => (
   <Suspense fallback={<LoadingState variant="minimal" />}>{children}</Suspense>
@@ -51,6 +56,10 @@ export const PublicWebRoutesFragment = (
     <Route
       path="/public/:slug/kds"
       element={<PublicSuspense><PublicKDS /></PublicSuspense>}
+    />
+    <Route
+      path="/track/:orderId"
+      element={<PublicSuspense><TrackOrderPage /></PublicSuspense>}
     />
   </Fragment>
 );

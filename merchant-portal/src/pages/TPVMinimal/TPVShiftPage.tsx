@@ -18,6 +18,7 @@ import { Card } from "../../ui/design-system/Card";
 import { InlineAlert } from "../../ui/design-system/InlineAlert";
 import { KpiCard } from "../../ui/design-system/KpiCard";
 import { Skeleton } from "../../ui/design-system/Skeleton";
+import { DenominationCounter } from "./components/DenominationCounter";
 import { useTPVRestaurantId } from "./hooks/useTPVRestaurantId";
 
 /* ── Styles ─────────────────────────────────────────────────────── */
@@ -115,6 +116,34 @@ const styles = {
     gap: 16,
     padding: 8,
   } as React.CSSProperties,
+
+  modeToggle: {
+    display: "inline-flex",
+    borderRadius: 8,
+    overflow: "hidden",
+    border: "1px solid var(--border-subtle, rgba(255,255,255,0.12))",
+    marginBottom: 12,
+  } as React.CSSProperties,
+
+  modeButton: {
+    padding: "6px 16px",
+    fontSize: 13,
+    fontWeight: 600,
+    border: "none",
+    cursor: "pointer",
+    transition: "background 0.15s ease, color 0.15s ease",
+    outline: "none",
+  } as React.CSSProperties,
+
+  modeButtonActive: {
+    background: "var(--brand-accent, #f97316)",
+    color: "#fff",
+  } as React.CSSProperties,
+
+  modeButtonInactive: {
+    background: "var(--surface-base, #0f0f0f)",
+    color: "var(--text-secondary, #9ca3af)",
+  } as React.CSSProperties,
 } as const;
 
 /* ── Component ──────────────────────────────────────────────────── */
@@ -123,7 +152,7 @@ export function TPVShiftPage() {
   const { t } = useTranslation("shift");
   const restaurantId = useTPVRestaurantId();
   const shift = useShift();
-  const { formatAmount } = useCurrency();
+  const { formatAmount, currency } = useCurrency();
 
   const [loading, setLoading] = useState(true);
   const [register, setRegister] = useState<CashRegister | null>(null);
@@ -133,6 +162,7 @@ export function TPVShiftPage() {
   const [operatorName, setOperatorName] = useState(t("page.defaultOperator", "Caixa TPV"));
   const [closingName, setClosingName] = useState(t("page.defaultOperator", "Caixa TPV"));
   const [acting, setActing] = useState(false);
+  const [countMode, setCountMode] = useState<"detailed" | "quick">("detailed");
 
   const expectedBalanceCents = useMemo(() => {
     if (!register) return 0;
@@ -307,20 +337,64 @@ export function TPVShiftPage() {
             />
           </div>
 
+          {/* Count mode toggle */}
+          <div style={styles.modeToggle}>
+            <button
+              type="button"
+              style={{
+                ...styles.modeButton,
+                ...(countMode === "detailed"
+                  ? styles.modeButtonActive
+                  : styles.modeButtonInactive),
+              }}
+              onClick={() => setCountMode("detailed")}
+            >
+              {t("denomination.modeDetailed", "Detalhado")}
+            </button>
+            <button
+              type="button"
+              style={{
+                ...styles.modeButton,
+                ...(countMode === "quick"
+                  ? styles.modeButtonActive
+                  : styles.modeButtonInactive),
+              }}
+              onClick={() => setCountMode("quick")}
+            >
+              {t("denomination.modeQuick", "Rapido")}
+            </button>
+          </div>
+
           {/* Close form */}
-          <div style={styles.formRow}>
-            <div style={styles.formGroup}>
-              <label style={styles.label}>{t("page.closingBalanceLabel")}</label>
-              <input
-                type="text"
-                inputMode="decimal"
-                value={closingCash}
-                onChange={(e) => setClosingCash(e.target.value)}
-                style={styles.input}
-                onFocus={(e) => { e.target.style.borderColor = "#f97316"; }}
-                onBlur={(e) => { e.target.style.borderColor = "var(--border-subtle, rgba(255,255,255,0.12))"; }}
+          {countMode === "detailed" ? (
+            <div style={{ marginBottom: 16 }}>
+              <DenominationCounter
+                currency={currency}
+                onChange={(totalCents) => {
+                  setClosingCash((totalCents / 100).toFixed(2));
+                }}
+                expectedCents={expectedBalanceCents}
               />
             </div>
+          ) : (
+            <div style={styles.formRow}>
+              <div style={styles.formGroup}>
+                <label style={styles.label}>{t("page.closingBalanceLabel")}</label>
+                <input
+                  type="text"
+                  inputMode="decimal"
+                  value={closingCash}
+                  onChange={(e) => setClosingCash(e.target.value)}
+                  style={styles.input}
+                  onFocus={(e) => { e.target.style.borderColor = "#f97316"; }}
+                  onBlur={(e) => { e.target.style.borderColor = "var(--border-subtle, rgba(255,255,255,0.12))"; }}
+                />
+              </div>
+            </div>
+          )}
+
+          {/* Closing operator name */}
+          <div style={styles.formRow}>
             <div style={styles.formGroup}>
               <label style={styles.label}>{t("page.closingNameLabel")}</label>
               <input

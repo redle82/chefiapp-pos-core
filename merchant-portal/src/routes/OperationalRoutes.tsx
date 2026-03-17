@@ -569,6 +569,11 @@ const TablePage = lazy(() =>
     default: m.TablePage,
   })),
 );
+const TrackOrderPage = lazy(() =>
+  import("../pages/PublicWeb/TrackOrderPage").then((m) => ({
+    default: m.TrackOrderPage,
+  })),
+);
 
 // pages — Publish / Purchases / Reports
 const PublishPage = lazy(() =>
@@ -785,6 +790,7 @@ export const OperationalRoutesFragment = (
       element={<CustomerOrderStatusView />}
     />
     <Route path="/public/:slug/kds" element={<PublicKDS />} />
+    <Route path="/track/:orderId" element={<TrackOrderPage />} />
 
     <Route path="/welcome" element={<WelcomePage />} />
     <Route path="/onboarding" element={<OnboardingAssistantPage />} />

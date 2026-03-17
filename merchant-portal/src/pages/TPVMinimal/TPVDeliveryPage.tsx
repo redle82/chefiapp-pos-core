@@ -12,7 +12,7 @@
  *   delivered   → entregue ao cliente (status CLOSED)
  */
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { updateOrderStatus as coreUpdateOrderStatus } from "../../core/infra/CoreOrdersApi";
 import { useCurrency } from "../../core/currency/useCurrency";
@@ -100,6 +100,16 @@ export function TPVDeliveryPage() {
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<FilterKey>("all");
   const [acting, setActing] = useState<string | null>(null);
+  const [copiedId, setCopiedId] = useState<string | null>(null);
+  const copyTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const copyTrackingLink = useCallback((orderId: string) => {
+    const url = `${window.location.origin}/track/${orderId}`;
+    void navigator.clipboard.writeText(url);
+    setCopiedId(orderId);
+    if (copyTimerRef.current) clearTimeout(copyTimerRef.current);
+    copyTimerRef.current = setTimeout(() => setCopiedId(null), 2000);
+  }, []);
 
   const loadOrders = useCallback(async () => {
     if (!restaurantId) return;
@@ -350,28 +360,50 @@ export function TPVDeliveryPage() {
                     </div>
                   </div>
 
-                  {action && (
+                  <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
                     <button
                       type="button"
-                      disabled={acting === order.id}
-                      onClick={() => advanceStatus(order.id, action.to)}
+                      onClick={() => copyTrackingLink(order.id)}
                       style={{
-                        padding: "8px 16px",
-                        borderRadius: 8,
+                        padding: "6px 10px",
+                        borderRadius: 6,
                         border: "none",
-                        backgroundColor: action.color,
-                        color: "#fff",
-                        fontSize: 13,
-                        fontWeight: 700,
-                        cursor:
-                          acting === order.id ? "not-allowed" : "pointer",
-                        opacity: acting === order.id ? 0.6 : 1,
+                        backgroundColor: "rgba(255,255,255,0.08)",
+                        color: copiedId === order.id ? "#22c55e" : "#a3a3a3",
+                        fontSize: 11,
+                        fontWeight: 600,
+                        cursor: "pointer",
                         whiteSpace: "nowrap",
                       }}
                     >
-                      {acting === order.id ? "..." : t(action.i18nKey)}
+                      {copiedId === order.id
+                        ? t("delivery.linkCopied")
+                        : t("delivery.copyLink")}
                     </button>
-                  )}
+
+                    {action && (
+                      <button
+                        type="button"
+                        disabled={acting === order.id}
+                        onClick={() => advanceStatus(order.id, action.to)}
+                        style={{
+                          padding: "8px 16px",
+                          borderRadius: 8,
+                          border: "none",
+                          backgroundColor: action.color,
+                          color: "#fff",
+                          fontSize: 13,
+                          fontWeight: 700,
+                          cursor:
+                            acting === order.id ? "not-allowed" : "pointer",
+                          opacity: acting === order.id ? 0.6 : 1,
+                          whiteSpace: "nowrap",
+                        }}
+                      >
+                        {acting === order.id ? "..." : t(action.i18nKey)}
+                      </button>
+                    )}
+                  </div>
                 </div>
               );
             })}

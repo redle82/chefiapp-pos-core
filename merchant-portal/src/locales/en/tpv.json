@@ -222,7 +222,14 @@
   },
   "header": {
     "searchPlaceholder": "Search product by name, category or SKU",
-    "clearSearch": "Clear"
+    "clearSearch": "Clear",
+    "notifications": "Notifications",
+    "noNotifications": "No notifications -- all good!",
+    "tableReady": "Table {{number}} -- food ready for {{time}}",
+    "tableBillRequested": "Table {{number}} -- bill requested",
+    "tableCleaning": "Table {{number}} -- needs cleaning",
+    "tasksPending": "{{count}} pending tasks",
+    "kitchenDelayed": "{{count}} delayed orders in kitchen"
   },
   "settings": {
     "title": "Settings",
@@ -491,6 +498,22 @@
     "receiptMethod": "Method",
     "total": "Total",
     "newOrder": "New Order"
+  },
+  "orderSummary": {
+    "items": "Items",
+    "clearAll": "Clear All",
+    "emptyOrder": "No items in order",
+    "subtotal": "Subtotal",
+    "tax": "Tax (5%)",
+    "discount": "Discount",
+    "total": "Total",
+    "printReceipt": "Print Receipt",
+    "proceed": "Proceed"
+  },
+  "orderMode": {
+    "takeAway": "Take away",
+    "dineIn": "Dine in",
+    "delivery": "Delivery"
   },
   "webEditor": {
     "headerTitle": "Quick Web Page Editor",

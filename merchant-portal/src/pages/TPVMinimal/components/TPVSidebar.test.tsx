@@ -30,6 +30,22 @@ vi.mock("react-i18next", () => ({
   }),
 }));
 
+vi.mock("../../../infra/docker-core/connection", () => ({
+  dockerCoreClient: {
+    from: () => ({
+      select: () => ({
+        eq: () => ({
+          eq: () => Promise.resolve({ count: 0, error: null }),
+        }),
+      }),
+    }),
+  },
+}));
+
+vi.mock("../hooks/useTPVRestaurantId", () => ({
+  useTPVRestaurantId: () => "test-restaurant-id",
+}));
+
 describe("TPVSidebar", () => {
   afterEach(() => {
     delete (window as Window & { electronBridge?: unknown }).electronBridge;
@@ -116,5 +132,17 @@ describe("TPVSidebar", () => {
 
     fireEvent.click(screen.getByText("Cancelar"));
     expect(screen.queryByTestId("exit-modal")).toBeNull();
+  });
+
+  it("renders styled tooltip elements for sidebar items", () => {
+    render(
+      <MemoryRouter>
+        <TPVSidebar />
+      </MemoryRouter>,
+    );
+
+    const tooltips = screen.getAllByRole("tooltip");
+    expect(tooltips.length).toBeGreaterThan(0);
+    expect(tooltips[0].textContent).toBe("POS");
   });
 });

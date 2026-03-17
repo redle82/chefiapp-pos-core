@@ -8,6 +8,7 @@ import { CustomerOrderStatusView } from "../../pages/Public/CustomerOrderStatusV
 import { PublicKDS } from "../../pages/Public/PublicKDS";
 import { PublicWebPage } from "../../pages/PublicWeb/PublicWebPage";
 import { TablePage } from "../../pages/PublicWeb/TablePage";
+import { TrackOrderPage } from "../../pages/PublicWeb/TrackOrderPage";
 import { SelectTenantPage } from "../../pages/SelectTenantPage";
 import { WelcomePage } from "../../pages/Welcome/WelcomePage";
 import { APP_ROUTES } from "../constants/routeConstants";
@@ -21,6 +22,7 @@ export const PublicBootstrapRoutesFragment = (
       element={<CustomerOrderStatusView />}
     />
     <Route path="/public/:slug/kds" element={<PublicKDS />} />
+    <Route path="/track/:orderId" element={<TrackOrderPage />} />
 
     <Route path="/welcome" element={<WelcomePage />} />
     <Route path="/onboarding" element={<OnboardingAssistantPage />} />

@@ -13,14 +13,20 @@
  *     Página Web · Definições
  *
  * Isolamento desktop: no app Electron, "Página Web" não é mostrado.
+ *
+ * Features:
+ * - Styled CSS-only tooltips (replaces native title on hover)
+ * - Notification badges for Kitchen, Tasks, and Reservations
  */
 
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { NavLink, useNavigate } from "react-router-dom";
 import { isDesktopApp } from "../../../core/operational/platformDetection";
 import tpvEventBus from "../../../core/tpv/TPVCentralEvents";
 import type { KitchenPressurePayload } from "../../../core/tpv/TPVCentralEvents";
+import { dockerCoreClient } from "../../../infra/docker-core/connection";
+import { useTPVRestaurantId } from "../hooks/useTPVRestaurantId";
 
 const APP_LOGO_URL = "/Logo%20Chefiapp%20Transparent.png";
 const APP_NAME = "ChefIApp";
@@ -28,6 +34,9 @@ const APP_NAME = "ChefIApp";
 /* ── Accent orange (reference design) ──────────────────────────── */
 const ACCENT = "#f97316";
 const ACCENT_BG = "rgba(249,115,22,0.12)";
+
+/** Polling interval for badge counts (30 seconds) */
+const BADGE_POLL_INTERVAL = 30_000;
 
 /* ── SVG inline icons (20×20) ──────────────────────────────────── */
 
@@ -191,6 +200,8 @@ interface NavItem {
   icon: IconKey;
   end?: boolean;
   hideDesktop?: boolean;
+  /** Key used to look up badge counts from badgeCounts map */
+  badgeKey?: string;
 }
 
 interface LauncherItem {
@@ -215,9 +226,9 @@ const SECTIONS: SidebarSection[] = [
       { type: "nav", to: "/op/tpv", label: "pos", icon: "grid", end: true },
       { type: "nav", to: "/op/tpv/tables", label: "tables", icon: "table" },
       { type: "nav", to: "/op/tpv/shift", label: "shift", icon: "cash" },
-      { type: "nav", to: "/op/tpv/kitchen", label: "kitchen", icon: "kitchen" },
-      { type: "nav", to: "/op/tpv/tasks", label: "tasks", icon: "tasks" },
-      { type: "nav", to: "/op/tpv/reservations", label: "reservations", icon: "calendar" },
+      { type: "nav", to: "/op/tpv/kitchen", label: "kitchen", icon: "kitchen", badgeKey: "kitchen" },
+      { type: "nav", to: "/op/tpv/tasks", label: "tasks", icon: "tasks", badgeKey: "tasks" },
+      { type: "nav", to: "/op/tpv/reservations", label: "reservations", icon: "calendar", badgeKey: "reservations" },
     ],
   },
   {
@@ -234,6 +245,238 @@ const SECTIONS: SidebarSection[] = [
     ],
   },
 ];
+
+/* ── CSS-only tooltip styles (injected once) ─────────────────── */
+
+const TOOLTIP_STYLE_ID = "tpv-sidebar-tooltip-styles";
+
+function ensureTooltipStyles() {
+  if (typeof document === "undefined") return;
+  if (document.getElementById(TOOLTIP_STYLE_ID)) return;
+
+  const style = document.createElement("style");
+  style.id = TOOLTIP_STYLE_ID;
+  style.textContent = `
+    .tpv-sidebar-tooltip-wrap {
+      position: relative;
+    }
+    .tpv-sidebar-tooltip-wrap .tpv-sidebar-tooltip {
+      position: absolute;
+      left: calc(100% + 12px);
+      top: 50%;
+      transform: translateY(-50%);
+      background: #1a1a1a;
+      color: #fff;
+      font-size: 12px;
+      font-weight: 600;
+      padding: 6px 12px;
+      border-radius: 8px;
+      white-space: nowrap;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 150ms ease;
+      z-index: 1000;
+      border: 1px solid rgba(255,255,255,0.08);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+    }
+    .tpv-sidebar-tooltip-wrap .tpv-sidebar-tooltip::before {
+      content: '';
+      position: absolute;
+      right: 100%;
+      top: 50%;
+      transform: translateY(-50%);
+      border: 5px solid transparent;
+      border-right-color: #1a1a1a;
+    }
+    .tpv-sidebar-tooltip-wrap:hover .tpv-sidebar-tooltip {
+      opacity: 1;
+      transition-delay: 200ms;
+    }
+  `;
+  document.head.appendChild(style);
+}
+
+/* ── Tooltip wrapper component ───────────────────────────────── */
+
+function TooltipWrap({
+  label,
+  children,
+}: {
+  label: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="tpv-sidebar-tooltip-wrap">
+      {children}
+      <span className="tpv-sidebar-tooltip" role="tooltip">
+        {label}
+      </span>
+    </div>
+  );
+}
+
+/* ── Notification badge component ────────────────────────────── */
+
+const BADGE_STYLE: React.CSSProperties = {
+  position: "absolute",
+  top: 2,
+  right: 2,
+  minWidth: 16,
+  height: 16,
+  borderRadius: 8,
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  fontSize: 10,
+  fontWeight: 700,
+  lineHeight: 1,
+  padding: "0 4px",
+  color: "#fff",
+  border: "2px solid #141414",
+};
+
+function NotificationBadge({
+  count,
+  color,
+}: {
+  count: number;
+  color: "red" | "orange" | "gray";
+}) {
+  if (count <= 0) return null;
+
+  const bgMap = { red: "#dc2626", orange: "#f59e0b", gray: "#6b7280" };
+
+  return (
+    <span
+      data-testid="sidebar-badge"
+      style={{
+        ...BADGE_STYLE,
+        backgroundColor: bgMap[color],
+      }}
+    >
+      {count > 99 ? "99+" : count}
+    </span>
+  );
+}
+
+/* ── Badge counts hook ───────────────────────────────────────── */
+
+interface BadgeCounts {
+  kitchen: { count: number; color: "red" | "orange" | "gray" };
+  tasks: { count: number; color: "red" | "orange" | "gray" };
+  reservations: { count: number; color: "red" | "orange" | "gray" };
+}
+
+const EMPTY_BADGES: BadgeCounts = {
+  kitchen: { count: 0, color: "gray" },
+  tasks: { count: 0, color: "gray" },
+  reservations: { count: 0, color: "gray" },
+};
+
+function useSidebarBadges(restaurantId: string): BadgeCounts {
+  const [badges, setBadges] = useState<BadgeCounts>(EMPTY_BADGES);
+  const mountedRef = useRef(true);
+
+  // Kitchen pressure — from event bus (already exists, merge into badges)
+  const [kitchenPressure, setKitchenPressure] = useState<{
+    delayed: number;
+    level: "low" | "medium" | "high";
+  } | null>(null);
+
+  useEffect(() => {
+    const unsub = tpvEventBus.on<KitchenPressurePayload>(
+      "kitchen.pressure_change",
+      (event) => {
+        const p = event.payload as KitchenPressurePayload;
+        setKitchenPressure({
+          delayed: p.delayedOrders,
+          level: p.currentLevel,
+        });
+      },
+    );
+    return unsub;
+  }, []);
+
+  // Poll tasks + reservations counts
+  const fetchCounts = useCallback(async () => {
+    if (!restaurantId) return;
+
+    try {
+      const [tasksResult, reservationsResult] = await Promise.allSettled([
+        dockerCoreClient
+          .from("gm_tasks")
+          .select("id", { count: "exact", head: true })
+          .eq("status", "OPEN")
+          .eq("restaurant_id", restaurantId),
+        dockerCoreClient
+          .from("gm_reservations")
+          .select("id", { count: "exact", head: true })
+          .eq("restaurant_id", restaurantId)
+          .eq("reservation_date", new Date().toISOString().slice(0, 10)),
+      ]);
+
+      if (!mountedRef.current) return;
+
+      const tasksCount =
+        tasksResult.status === "fulfilled" && !tasksResult.value.error
+          ? tasksResult.value.count ?? 0
+          : 0;
+
+      const reservationsCount =
+        reservationsResult.status === "fulfilled" && !reservationsResult.value.error
+          ? reservationsResult.value.count ?? 0
+          : 0;
+
+      setBadges((prev) => ({
+        ...prev,
+        tasks: {
+          count: tasksCount,
+          color: tasksCount >= 5 ? "red" : tasksCount > 0 ? "orange" : "gray",
+        },
+        reservations: {
+          count: reservationsCount,
+          color: reservationsCount > 0 ? "orange" : "gray",
+        },
+      }));
+    } catch {
+      // Silently ignore — table might not exist yet
+    }
+  }, [restaurantId]);
+
+  useEffect(() => {
+    mountedRef.current = true;
+    fetchCounts();
+    const interval = setInterval(fetchCounts, BADGE_POLL_INTERVAL);
+    return () => {
+      mountedRef.current = false;
+      clearInterval(interval);
+    };
+  }, [fetchCounts]);
+
+  // Merge kitchen pressure into badges
+  const kitchenBadge: BadgeCounts["kitchen"] = useMemo(() => {
+    if (!kitchenPressure || kitchenPressure.delayed <= 0) {
+      return { count: 0, color: "gray" };
+    }
+    return {
+      count: kitchenPressure.delayed,
+      color:
+        kitchenPressure.level === "high"
+          ? "red"
+          : kitchenPressure.level === "medium"
+            ? "orange"
+            : "gray",
+    };
+  }, [kitchenPressure]);
+
+  return useMemo(
+    () => ({
+      ...badges,
+      kitchen: kitchenBadge,
+    }),
+    [badges, kitchenBadge],
+  );
+}
 
 /* ── Separator line ────────────────────────────────────────────── */
 
@@ -350,26 +593,15 @@ export function TPVSidebar() {
   const [showExitModal, setShowExitModal] = useState(false);
   const navigate = useNavigate();
   const desktop = useMemo(() => isDesktopApp(), []);
+  const restaurantId = useTPVRestaurantId();
 
-  // Kitchen pressure badge — listens to TPVCentralEvents
-  const [kitchenPressure, setKitchenPressure] = useState<{
-    delayed: number;
-    level: "low" | "medium" | "high";
-  } | null>(null);
-
+  // Inject tooltip CSS once on mount
   useEffect(() => {
-    const unsub = tpvEventBus.on<KitchenPressurePayload>(
-      "kitchen.pressure_change",
-      (event) => {
-        const p = event.payload as KitchenPressurePayload;
-        setKitchenPressure({
-          delayed: p.delayedOrders,
-          level: p.currentLevel,
-        });
-      },
-    );
-    return unsub;
+    ensureTooltipStyles();
   }, []);
+
+  // Badge counts from event bus + polling
+  const badgeCounts = useSidebarBadges(restaurantId);
 
   const sections = useMemo(() => {
     return SECTIONS.map((section) => ({
@@ -402,73 +634,52 @@ export function TPVSidebar() {
           {sIdx > 0 && <SectionDivider />}
           {section.items.map((item) => {
             if (item.type === "nav") {
-              const showBadge =
-                item.to === "/op/tpv/kitchen" &&
-                kitchenPressure &&
-                kitchenPressure.delayed > 0;
+              const tooltipLabel = t(`sidebar.${item.label}`);
+              const badge = item.badgeKey
+                ? badgeCounts[item.badgeKey as keyof BadgeCounts]
+                : null;
+
               return (
-                <NavLink
-                  key={item.to}
-                  to={item.to}
-                  end={item.end}
-                  title={t(`sidebar.${item.label}`)}
-                  style={({ isActive }) => ({
-                    ...ITEM_BASE,
-                    color: isActive ? ACCENT : "#737373",
-                    backgroundColor: isActive ? ACCENT_BG : "transparent",
-                    position: "relative" as const,
-                  })}
-                >
-                  {iconFor(item.icon)}
-                  {showBadge && (
-                    <span
-                      style={{
-                        position: "absolute",
-                        top: 2,
-                        right: 2,
-                        minWidth: 16,
-                        height: 16,
-                        borderRadius: 8,
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        fontSize: 10,
-                        fontWeight: 700,
-                        lineHeight: 1,
-                        padding: "0 4px",
-                        backgroundColor:
-                          kitchenPressure.level === "high"
-                            ? "#ef4444"
-                            : kitchenPressure.level === "medium"
-                              ? "#f59e0b"
-                              : "#6b7280",
-                        color: "#fff",
-                      }}
-                    >
-                      {kitchenPressure.delayed}
-                    </span>
-                  )}
-                </NavLink>
+                <TooltipWrap key={item.to} label={tooltipLabel}>
+                  <NavLink
+                    to={item.to}
+                    end={item.end}
+                    title={tooltipLabel}
+                    style={({ isActive }) => ({
+                      ...ITEM_BASE,
+                      color: isActive ? ACCENT : "#737373",
+                      backgroundColor: isActive ? ACCENT_BG : "transparent",
+                      position: "relative" as const,
+                    })}
+                  >
+                    {iconFor(item.icon)}
+                    {badge && badge.count > 0 && (
+                      <NotificationBadge count={badge.count} color={badge.color} />
+                    )}
+                  </NavLink>
+                </TooltipWrap>
               );
             }
 
             // Launcher: disabled placeholder
             if (item.disabled) {
+              const disabledLabel = `${t(`sidebar.${item.label}`)} — ${t("sidebar.comingSoon")}`;
               return (
-                <button
-                  key={item.label}
-                  type="button"
-                  title={`${t(`sidebar.${item.label}`)} — ${t("sidebar.comingSoon")}`}
-                  disabled
-                  style={{
-                    ...ITEM_BASE,
-                    color: "#737373",
-                    opacity: 0.35,
-                    cursor: "not-allowed",
-                  }}
-                >
-                  {iconFor(item.icon)}
-                </button>
+                <TooltipWrap key={item.label} label={disabledLabel}>
+                  <button
+                    type="button"
+                    title={disabledLabel}
+                    disabled
+                    style={{
+                      ...ITEM_BASE,
+                      color: "#737373",
+                      opacity: 0.35,
+                      cursor: "not-allowed",
+                    }}
+                  >
+                    {iconFor(item.icon)}
+                  </button>
+                </TooltipWrap>
               );
             }
 
@@ -476,13 +687,33 @@ export function TPVSidebar() {
             // Desktop (Electron): open in new window
             // Browser: navigate in-window (BrowserBlockGuard blocks new tabs)
             if (desktop) {
+              const desktopLabel = `${t(`sidebar.${item.label}`)} — ${t("sidebar.newWindow")}`;
               return (
-                <a
-                  key={item.label}
-                  href={item.url}
-                  target="_blank"
-                  rel="noreferrer"
-                  title={`${t(`sidebar.${item.label}`)} — ${t("sidebar.newWindow")}`}
+                <TooltipWrap key={item.label} label={desktopLabel}>
+                  <a
+                    href={item.url}
+                    target="_blank"
+                    rel="noreferrer"
+                    title={desktopLabel}
+                    style={{
+                      ...ITEM_BASE,
+                      color: "#737373",
+                      cursor: "pointer",
+                    }}
+                  >
+                    {iconFor(item.icon)}
+                  </a>
+                </TooltipWrap>
+              );
+            }
+
+            const launcherLabel = t(`sidebar.${item.label}`);
+            return (
+              <TooltipWrap key={item.label} label={launcherLabel}>
+                <button
+                  type="button"
+                  title={launcherLabel}
+                  onClick={() => navigate(item.url)}
                   style={{
                     ...ITEM_BASE,
                     color: "#737373",
@@ -490,24 +721,8 @@ export function TPVSidebar() {
                   }}
                 >
                   {iconFor(item.icon)}
-                </a>
-              );
-            }
-
-            return (
-              <button
-                key={item.label}
-                type="button"
-                title={t(`sidebar.${item.label}`)}
-                onClick={() => navigate(item.url)}
-                style={{
-                  ...ITEM_BASE,
-                  color: "#737373",
-                  cursor: "pointer",
-                }}
-              >
-                {iconFor(item.icon)}
-              </button>
+                </button>
+              </TooltipWrap>
             );
           })}
         </React.Fragment>
@@ -516,18 +731,20 @@ export function TPVSidebar() {
       <div style={{ flex: 1 }} />
 
       {/* Exit with confirmation */}
-      <button
-        type="button"
-        title={t("sidebar.exitTooltip")}
-        onClick={() => setShowExitModal(true)}
-        style={{
-          ...ITEM_BASE,
-          color: "#737373",
-          cursor: "pointer",
-        }}
-      >
-        <IconExit />
-      </button>
+      <TooltipWrap label={t("sidebar.exitTooltip")}>
+        <button
+          type="button"
+          title={t("sidebar.exitTooltip")}
+          onClick={() => setShowExitModal(true)}
+          style={{
+            ...ITEM_BASE,
+            color: "#737373",
+            cursor: "pointer",
+          }}
+        >
+          <IconExit />
+        </button>
+      </TooltipWrap>
 
       {/* App signature — discrete brand mark below exit */}
       <div

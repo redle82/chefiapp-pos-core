@@ -17,7 +17,7 @@
  *   - useOperationalStore (KPIs, stock, currentOrder)
  */
 
-import { createOrder, type OrderTableInfo } from "../../infra/writers/OrderWriter";
+import { createOrder, type OrderTableInfo, type OrderItemModifierInput } from "../../infra/writers/OrderWriter";
 import { markTableInPrep, markTableCleaning } from "../../infra/writers/TableWriter";
 import { updateOrderStatus } from "../infra/CoreOrdersApi";
 import { Logger } from "../logger/Logger";
@@ -40,6 +40,8 @@ export interface LifecycleProduct {
   priceCents: number;
   costCents: number;
   station?: string;
+  /** Modifier snapshots to persist with the order item. */
+  modifiers?: OrderItemModifierInput[];
 }
 
 export interface LifecycleOrderItem {
@@ -189,7 +191,7 @@ export function createOrderLifecycle() {
           ? { tableId, tableNumber: Number(tableNumber) }
           : null;
 
-      // Criar pedido atomicamente no backend (com items)
+      // Criar pedido atomicamente no backend (com items + modifiers)
       const result = await createOrder(
         restaurantId,
         items.map((item) => ({
@@ -197,6 +199,9 @@ export function createOrderLifecycle() {
           name: item.name,
           quantity: 1,
           unit_price: item.priceCents,
+          ...(item.modifiers && item.modifiers.length > 0
+            ? { modifiers: item.modifiers }
+            : {}),
         })),
         "TPV",
         "pending",
@@ -375,7 +380,7 @@ export function createOrderLifecycle() {
           ? { tableId, tableNumber: Number(tableNumber) }
           : null;
 
-      // Criar pedido atomicamente no backend
+      // Criar pedido atomicamente no backend (com items + modifiers)
       const result = await createOrder(
         restaurantId,
         items.map((item) => ({
@@ -383,6 +388,9 @@ export function createOrderLifecycle() {
           name: item.name,
           quantity: 1,
           unit_price: item.priceCents,
+          ...(item.modifiers && item.modifiers.length > 0
+            ? { modifiers: item.modifiers }
+            : {}),
         })),
         "TPV",
         paymentMethod,

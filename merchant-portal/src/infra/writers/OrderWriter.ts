@@ -6,11 +6,22 @@ import { createOrderAtomic } from "../../core/infra/CoreOrdersApi";
 import { dockerCoreClient } from "../docker-core/connection";
 import { occupyTableForOrder } from "./TableWriter";
 
+/** Modifier snapshot persisted with order items (JSONB in gm_order_items.modifiers). */
+export interface OrderItemModifierInput {
+  id: string;
+  name: string;
+  group_id: string;
+  group_name: string;
+  price_delta_cents: number;
+}
+
 export interface OrderItemInput {
   product_id: string | null;
   name: string;
   quantity: number;
   unit_price: number;
+  /** Selected modifiers (persisted in gm_order_items.modifiers JSONB). */
+  modifiers?: OrderItemModifierInput[];
 }
 
 export interface CreateOrderResult {
@@ -58,6 +69,7 @@ export async function createOrder(
       name: i.name,
       quantity: i.quantity,
       unit_price: i.unit_price,
+      ...(i.modifiers && i.modifiers.length > 0 ? { modifiers: i.modifiers } : {}),
     })),
     p_payment_method: paymentMethod,
     p_sync_metadata: sync,
