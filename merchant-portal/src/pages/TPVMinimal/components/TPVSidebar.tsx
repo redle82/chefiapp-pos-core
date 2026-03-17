@@ -32,12 +32,13 @@ import { useTranslation } from "react-i18next";
 import { NavLink, useNavigate } from "react-router-dom";
 import { useContextEngine } from "../../../core/context/ContextEngine";
 import type { ModuleVisibility } from "../../../core/context/ContextTypes";
+import { useRestaurantIdentity } from "../../../core/identity/useRestaurantIdentity";
 import tpvEventBus from "../../../core/tpv/TPVCentralEvents";
 import type { KitchenPressurePayload } from "../../../core/tpv/TPVCentralEvents";
 import { dockerCoreClient } from "../../../infra/docker-core/connection";
+import { RestaurantLogo } from "../../../ui/RestaurantLogo";
 import { useTPVRestaurantId } from "../hooks/useTPVRestaurantId";
 
-const APP_LOGO_URL = "/Logo%20Chefiapp%20Transparent.png";
 const APP_NAME = "ChefIApp";
 
 const SIDEBAR_EXPANDED_KEY = "tpv_sidebar_expanded";
@@ -658,6 +659,7 @@ export function TPVSidebar() {
   const navigate = useNavigate();
   const restaurantId = useTPVRestaurantId();
   const { visibleModules, permissions } = useContextEngine();
+  const { identity } = useRestaurantIdentity();
 
   // Expanded/collapsed state persisted in localStorage
   const [expanded, setExpanded] = useState(() => {
@@ -761,12 +763,12 @@ export function TPVSidebar() {
         <IconChevronToggle expanded={expanded} />
       </button>
 
-      {/* Restaurant identity */}
+      {/* Restaurant identity — real name + logo from gm_restaurants */}
       <div
         style={{
           display: "flex",
           alignItems: "center",
-          gap: expanded ? 12 : 0,
+          gap: expanded ? 10 : 0,
           padding: expanded ? "8px 2px" : "8px 0",
           width: expanded ? "100%" : "auto",
           flexShrink: 0,
@@ -775,14 +777,13 @@ export function TPVSidebar() {
           justifyContent: expanded ? "flex-start" : "center",
         }}
       >
-        <img
-          src={APP_LOGO_URL}
-          alt="Restaurant"
-          width={36}
-          height={36}
+        <RestaurantLogo
+          logoUrl={identity.logoUrl}
+          name={identity.name || "R"}
+          size={36}
           style={{
             borderRadius: "50%",
-            objectFit: "cover",
+            border: "1.5px solid rgba(255,255,255,0.10)",
             flexShrink: 0,
           }}
         />
@@ -795,9 +796,10 @@ export function TPVSidebar() {
               whiteSpace: "nowrap",
               overflow: "hidden",
               textOverflow: "ellipsis",
+              minWidth: 0,
             }}
           >
-            {t("sidebar.restaurantName", "Restaurante")}
+            {identity.name || t("sidebar.restaurantName", "Restaurante")}
           </span>
         )}
       </div>
@@ -904,38 +906,21 @@ export function TPVSidebar() {
         </button>
       </TooltipWrap>
 
-      {/* App signature — discrete brand mark */}
+      {/* App signature — discrete text-only brand mark */}
       <div
         style={{
           display: "flex",
-          flexDirection: expanded ? "row" : "column",
           alignItems: "center",
-          justifyContent: expanded ? "flex-start" : "center",
-          marginTop: 12,
-          gap: expanded ? 8 : 4,
-          opacity: 0.55,
-          padding: expanded ? "0 2px" : 0,
-          width: expanded ? "100%" : "auto",
-          boxSizing: "border-box",
+          justifyContent: "center",
+          marginTop: 8,
+          opacity: 0.35,
           flexShrink: 0,
+          width: "100%",
         }}
       >
-        <img
-          src={APP_LOGO_URL}
-          alt={APP_NAME}
-          width={expanded ? 24 : 36}
-          height={expanded ? 24 : 36}
-          style={{
-            borderRadius: "50%",
-            objectFit: "cover",
-            imageRendering: "auto",
-            filter: "contrast(1.05) brightness(1.02)",
-            flexShrink: 0,
-          }}
-        />
         <span
           style={{
-            color: "#737373",
+            color: "#525252",
             fontSize: 8,
             fontWeight: 600,
             letterSpacing: 0.5,
