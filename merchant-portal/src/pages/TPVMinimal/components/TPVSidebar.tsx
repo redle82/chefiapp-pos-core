@@ -538,10 +538,11 @@ function SectionDivider({ expanded }: { expanded: boolean }) {
     <div
       data-testid="section-divider"
       style={{
-        width: expanded ? "calc(100% - 36px)" : 32,
+        width: expanded ? "100%" : 32,
         height: 1,
         backgroundColor: "rgba(255,255,255,0.06)",
-        margin: expanded ? "8px 0" : "6px 0",
+        margin: expanded ? "8px 0" : "6px auto",
+        flexShrink: 0,
       }}
     />
   );
@@ -561,7 +562,7 @@ function SectionHeader({ label, expanded }: { label: string; expanded: boolean }
         letterSpacing: 1.8,
         textTransform: "uppercase",
         color: "#525252",
-        padding: "12px 20px 6px",
+        padding: "12px 2px 6px",
         width: "100%",
         userSelect: "none",
         boxSizing: "border-box",
@@ -700,13 +701,14 @@ export function TPVSidebar() {
     textDecoration: "none",
     transition: "all 0.15s ease",
     padding: expanded ? "0 14px" : 0,
-    width: expanded ? "calc(100% - 24px)" : 44,
+    width: expanded ? "100%" : 44,
     gap: expanded ? 12 : 0,
     color: isActive ? ACCENT : "#737373",
     position: "relative" as const,
     flexShrink: 0,
     cursor: "pointer",
-    marginLeft: expanded ? 12 : 0,
+    boxSizing: "border-box" as const,
+    alignSelf: expanded ? "stretch" : "center",
   });
 
   return (
@@ -720,12 +722,15 @@ export function TPVSidebar() {
         borderRight: "1px solid rgba(255,255,255,0.06)",
         display: "flex",
         flexDirection: "column",
-        alignItems: "center",
+        alignItems: expanded ? "stretch" : "center",
         paddingTop: 8,
         paddingBottom: 16,
-        gap: 4,
+        paddingLeft: expanded ? 12 : 0,
+        paddingRight: expanded ? 12 : 0,
+        gap: 2,
         transition: "width 200ms ease, min-width 200ms ease",
         overflow: "hidden",
+        boxSizing: "border-box",
       }}
     >
       {/* Toggle expand/collapse button */}
@@ -735,7 +740,7 @@ export function TPVSidebar() {
         onClick={toggleExpanded}
         title={expanded ? t("sidebar.collapse", "Recolher") : t("sidebar.expand", "Expandir")}
         style={{
-          width: expanded ? "calc(100% - 24px)" : 44,
+          width: expanded ? "100%" : 44,
           height: 32,
           borderRadius: 8,
           border: "none",
@@ -745,10 +750,12 @@ export function TPVSidebar() {
           alignItems: "center",
           justifyContent: expanded ? "flex-end" : "center",
           cursor: "pointer",
-          padding: expanded ? "0 14px" : 0,
+          padding: expanded ? "0 2px" : 0,
           marginBottom: 4,
           flexShrink: 0,
           transition: "all 0.15s ease",
+          boxSizing: "border-box",
+          alignSelf: expanded ? "stretch" : "center",
         }}
       >
         <IconChevronToggle expanded={expanded} />
@@ -760,11 +767,12 @@ export function TPVSidebar() {
           display: "flex",
           alignItems: "center",
           gap: expanded ? 12 : 0,
-          padding: expanded ? "8px 14px" : "8px 0",
-          width: expanded ? "calc(100% - 24px)" : "auto",
+          padding: expanded ? "8px 2px" : "8px 0",
+          width: expanded ? "100%" : "auto",
           flexShrink: 0,
           overflow: "hidden",
-          marginLeft: expanded ? 12 : 0,
+          boxSizing: "border-box",
+          justifyContent: expanded ? "flex-start" : "center",
         }}
       >
         <img
@@ -796,6 +804,19 @@ export function TPVSidebar() {
 
       <SectionDivider expanded={expanded} />
 
+      {/* Scrollable navigation area */}
+      <div
+        style={{
+          flex: 1,
+          overflowY: "auto",
+          overflowX: "hidden",
+          display: "flex",
+          flexDirection: "column",
+          alignItems: expanded ? "stretch" : "center",
+          gap: 2,
+          minHeight: 0,
+        }}
+      >
       {/* Navigation sections — filtered by operator role */}
       {SECTIONS.map((section, sIdx) => {
         const visibleItems = section.items.filter((item) => {
@@ -852,8 +873,7 @@ export function TPVSidebar() {
         </React.Fragment>
         );
       })}
-
-      <div style={{ flex: 1 }} />
+      </div>
 
       {/* Exit with confirmation */}
       <TooltipWrap label={t("sidebar.exitTooltip", "Sair do TPV")}>
@@ -890,12 +910,14 @@ export function TPVSidebar() {
           display: "flex",
           flexDirection: expanded ? "row" : "column",
           alignItems: "center",
+          justifyContent: expanded ? "flex-start" : "center",
           marginTop: 12,
           gap: expanded ? 8 : 4,
           opacity: 0.55,
-          padding: expanded ? "0 14px" : 0,
-          width: expanded ? "calc(100% - 24px)" : "auto",
-          marginLeft: expanded ? 12 : 0,
+          padding: expanded ? "0 2px" : 0,
+          width: expanded ? "100%" : "auto",
+          boxSizing: "border-box",
+          flexShrink: 0,
         }}
       >
         <img
