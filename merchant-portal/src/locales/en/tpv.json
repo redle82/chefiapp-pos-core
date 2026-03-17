@@ -630,6 +630,26 @@
   "orderMode": {
     "takeAway": "Take away",
     "dineIn": "Dine in",
+    "counter": "Counter",
+    "delivery": "Delivery"
+  },
+  "contextGate": {
+    "title": "Where is this order going?",
+    "subtitle": "Choose the destination before building the order",
+    "table": "Table",
+    "tableHint": "Select a table from the map",
+    "counter": "Counter",
+    "counterHint": "Dine-in without a table",
+    "takeaway": "Takeaway",
+    "takeawayHint": "Customer picks up at counter",
+    "delivery": "Delivery",
+    "deliveryHint": "Internal delivery",
+    "canChangeLater": "You can change this later in the order panel"
+  },
+  "contextBadge": {
+    "table": "Table {{n}}",
+    "counter": "Counter",
+    "takeaway": "Takeaway",
     "delivery": "Delivery"
   },
   "tracking": {

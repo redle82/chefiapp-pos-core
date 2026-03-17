@@ -16,7 +16,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { useOutletContext, useSearchParams } from "react-router-dom";
+import { useNavigate, useOutletContext, useSearchParams } from "react-router-dom";
 import { OrderStatusPanel } from "../../components/pos/OrderStatusPanel";
 import { CONFIG } from "../../config";
 import { useRestaurantRuntime } from "../../context/RestaurantRuntimeContext";
@@ -38,6 +38,7 @@ import {
 import { SplitBillModalWrapper } from "../TPV/components/SplitBillModalWrapper";
 import { ToastContainer, useToast } from "../../ui/design-system/Toast";
 import { isPlaceholderPhoto } from "../../utils/isPlaceholderPhoto";
+import { OrderContextGate } from "./components/OrderContextGate";
 import type { OrderMode } from "./components/OrderModeSelector";
 import {
   OrderSummaryPanel,
@@ -56,6 +57,7 @@ const DEFAULT_RESTAURANT_ID = "00000000-0000-0000-0000-000000000100";
 
 export function TPVPOSView() {
   const { t } = useTranslation("tpv");
+  const navigate = useNavigate();
   const runtimeContext = useRestaurantRuntime();
   const runtime = runtimeContext?.runtime;
   const bootstrap = useBootstrapState();
@@ -83,7 +85,8 @@ export function TPVPOSView() {
   const [products, setProducts] = useState<CoreProduct[]>([]);
   const [categories, setCategories] = useState<TPVCategory[]>([]);
   const [cart, setCart] = useState<OrderSummaryItem[]>([]);
-  const [orderMode, setOrderMode] = useState<OrderMode>("take_away");
+  const [orderMode, setOrderMode] = useState<OrderMode | null>(null);
+  const [contextChosen, setContextChosen] = useState(false);
   const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(
     null,
   );
@@ -126,10 +129,21 @@ export function TPVPOSView() {
   // Flag: pedido já enviado para cozinha (tem ID real no backend)
   const isSentToKitchen = currentOrderStatus === "SENT";
 
-  // Auto-set dine_in mode when navigating from table map
+  // Auto-set dine_in mode and skip gate when navigating from table map
   useEffect(() => {
-    if (tableParam) setOrderMode("dine_in");
+    if (tableParam) {
+      setOrderMode("dine_in");
+      setContextChosen(true);
+    }
   }, [tableParam]);
+
+  // Skip gate in demo mode
+  useEffect(() => {
+    if (isDemoMode) {
+      setOrderMode("take_away");
+      setContextChosen(true);
+    }
+  }, [isDemoMode]);
 
   // Demo mode: pre-fill cart with example restaurant items
   useEffect(() => {
@@ -236,7 +250,7 @@ export function TPVPOSView() {
 
     // Iniciar pedido operacional se for o primeiro item
     if (cart.length === 0) {
-      lifecycle.startOrder(orderMode, tableParam, tableIdParam);
+      lifecycle.startOrder(orderMode ?? "take_away", tableParam, tableIdParam);
     }
 
     // Build modifier input for backend persistence
@@ -433,6 +447,8 @@ export function TPVPOSView() {
     setCart([]);
     setDiscountCents(0);
     setDiscountReason(undefined);
+    setContextChosen(false);
+    setOrderMode(null);
     await lifecycle.cancelOrder(restaurantId);
   };
 
@@ -526,8 +542,9 @@ export function TPVPOSView() {
       setMobileCartOpen(false);
     },
     proceedDisabled: (cart.length === 0 && !isSentToKitchen) || sending,
-    orderMode,
-    onOrderModeChange: setOrderMode,
+    orderMode: orderMode ?? "take_away",
+    onOrderModeChange: (mode: OrderMode) => setOrderMode(mode),
+    tableNumber: tableParam,
     onApplyDiscount: handleApplyDiscount,
     onRemoveDiscount: handleRemoveDiscount,
     discountReason,
@@ -587,57 +604,71 @@ export function TPVPOSView() {
         </div>
       )}
 
-      {/* Left: categories + product grid */}
-      <div className="tpv-products">
-        <ProductCategoryFilter
-          categories={categories}
-          selectedId={selectedCategoryId}
-          onSelect={setSelectedCategoryId}
+      {/* Order Context Gate — shown when no context is chosen yet */}
+      {!contextChosen ? (
+        <OrderContextGate
+          onSelect={(mode) => {
+            setOrderMode(mode);
+            setContextChosen(true);
+          }}
+          onNavigateToTables={() => navigate("/op/tables")}
         />
-        <div className="tpv-products-grid">
-          {filteredProducts.map((product) => {
-            const categoryName = categories.find(
-              (c) => c.id === product.category_id,
-            )?.name;
-            const foodPhotoUrl = getFoodPhotoUrl(
-              product.category_id,
-              categoryName,
-            );
-            const resolvedImageUrl = resolveProductImageUrl(product);
-            const trustedPhotoUrl =
-              resolvedImageUrl && !isPlaceholderPhoto(resolvedImageUrl)
-                ? resolvedImageUrl
-                : null;
-            return (
-              <TPVProductCard
-                key={product.id}
-                product={{
-                  id: product.id,
-                  name: product.name,
-                  description: product.description,
-                  price_cents: product.price_cents,
-                  photo_url: trustedPhotoUrl,
-                  category_id: product.category_id,
-                }}
-                fallbackPhotoUrl={foodPhotoUrl}
-                onAdd={() => addToCart(product)}
-              />
-            );
-          })}
-        </div>
-      </div>
+      ) : (
+        <>
+          {/* Left: categories + product grid */}
+          <div className="tpv-products">
+            <ProductCategoryFilter
+              categories={categories}
+              selectedId={selectedCategoryId}
+              onSelect={setSelectedCategoryId}
+            />
+            <div className="tpv-products-grid">
+              {filteredProducts.map((product) => {
+                const categoryName = categories.find(
+                  (c) => c.id === product.category_id,
+                )?.name;
+                const foodPhotoUrl = getFoodPhotoUrl(
+                  product.category_id,
+                  categoryName,
+                );
+                const resolvedImageUrl = resolveProductImageUrl(product);
+                const trustedPhotoUrl =
+                  resolvedImageUrl && !isPlaceholderPhoto(resolvedImageUrl)
+                    ? resolvedImageUrl
+                    : null;
+                return (
+                  <TPVProductCard
+                    key={product.id}
+                    product={{
+                      id: product.id,
+                      name: product.name,
+                      description: product.description,
+                      price_cents: product.price_cents,
+                      photo_url: trustedPhotoUrl,
+                      category_id: product.category_id,
+                    }}
+                    fallbackPhotoUrl={foodPhotoUrl}
+                    onAdd={() => addToCart(product)}
+                  />
+                );
+              })}
+            </div>
+          </div>
 
-      {/* Right: order panel + operational status (desktop only via CSS) */}
-      <div className="tpv-order-panel">
-        <OrderSummaryPanel {...orderPanelProps} />
-        <OrderStatusPanel {...statusPanelProps} />
-      </div>
+          {/* Right: order panel + operational status (desktop only via CSS) */}
+          <div className="tpv-order-panel">
+            <OrderSummaryPanel {...orderPanelProps} />
+            <OrderStatusPanel {...statusPanelProps} />
+          </div>
+        </>
+      )}
 
-      {/* Mobile: Floating cart button */}
+      {/* Mobile: Floating cart button — hidden when gate is showing */}
       <button
         className="tpv-mobile-cart-button"
         onClick={() => setMobileCartOpen(true)}
         aria-label={t("posView.viewCart")}
+        style={contextChosen ? undefined : { display: "none" }}
       >
         <span className="tpv-mobile-cart-button__content">
           <span>
@@ -999,7 +1030,11 @@ export function TPVPOSView() {
 
             <button
               type="button"
-              onClick={() => setLastReceipt(null)}
+              onClick={() => {
+                setLastReceipt(null);
+                setContextChosen(false);
+                setOrderMode(null);
+              }}
               style={{
                 marginTop: 8,
                 padding: "12px 32px",

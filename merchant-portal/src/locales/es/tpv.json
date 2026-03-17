@@ -630,7 +630,27 @@
   "orderMode": {
     "takeAway": "Para llevar",
     "dineIn": "Comer aquí",
+    "counter": "Barra",
     "delivery": "Entrega"
+  },
+  "contextGate": {
+    "title": "¿A dónde va este pedido?",
+    "subtitle": "Elija el destino antes de armar el pedido",
+    "table": "Mesa",
+    "tableHint": "Seleccionar mesa en el mapa",
+    "counter": "Barra",
+    "counterHint": "Consumo en el local sin mesa",
+    "takeaway": "Para llevar",
+    "takeawayHint": "El cliente retira en barra",
+    "delivery": "Delivery",
+    "deliveryHint": "Entrega interna",
+    "canChangeLater": "Puede cambiar después en el panel del pedido"
+  },
+  "contextBadge": {
+    "table": "Mesa {{n}}",
+    "counter": "Barra",
+    "takeaway": "Para llevar",
+    "delivery": "Delivery"
   },
   "tracking": {
     "title": "Sigue tu pedido",

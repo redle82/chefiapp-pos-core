@@ -205,7 +205,7 @@ export function createOrderLifecycle() {
         })),
         "TPV",
         "pending",
-        undefined,
+        { order_type: store.currentOrder.mode },
         tableInfo,
       );
 
@@ -394,7 +394,7 @@ export function createOrderLifecycle() {
         })),
         "TPV",
         paymentMethod,
-        undefined,
+        { order_type: store.currentOrder.mode },
         tableInfo,
       );
 

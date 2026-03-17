@@ -5,13 +5,14 @@
 
 import { useTranslation } from "react-i18next";
 
-export type OrderMode = "take_away" | "dine_in" | "delivery";
+export type OrderMode = "dine_in" | "counter" | "take_away" | "delivery";
 
-const MODE_IDS: OrderMode[] = ["take_away", "dine_in", "delivery"];
+const MODE_IDS: OrderMode[] = ["dine_in", "counter", "take_away", "delivery"];
 
 const MODE_KEYS: Record<OrderMode, string> = {
-  take_away: "orderMode.takeAway",
   dine_in: "orderMode.dineIn",
+  counter: "orderMode.counter",
+  take_away: "orderMode.takeAway",
   delivery: "orderMode.delivery",
 };
 

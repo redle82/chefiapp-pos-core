@@ -81,6 +81,14 @@ function itemTotalCents(item: OrderSummaryItem): number {
   return (item.unit_price + modDelta) * item.quantity;
 }
 
+/** Emoji + accent per order mode for context badge. */
+const MODE_BADGE: Record<string, { emoji: string; color: string }> = {
+  dine_in: { emoji: "🍽", color: "#f97316" },
+  counter: { emoji: "🏪", color: "#22c55e" },
+  take_away: { emoji: "📦", color: "#3b82f6" },
+  delivery: { emoji: "🛵", color: "#8b5cf6" },
+};
+
 interface OrderSummaryPanelProps {
   items: OrderSummaryItem[];
   subtotalCents: number;
@@ -94,6 +102,8 @@ interface OrderSummaryPanelProps {
   /** Order mode (managed by parent) */
   orderMode: OrderMode;
   onOrderModeChange: (mode: OrderMode) => void;
+  /** Table number — shown in context badge when dine_in */
+  tableNumber?: string | null;
   /** Discount callbacks (optional — when provided, enables discount UI) */
   onApplyDiscount?: (discountCents: number, reason?: string) => void;
   onRemoveDiscount?: () => void;
@@ -114,6 +124,7 @@ export function OrderSummaryPanel({
   proceedDisabled = false,
   orderMode,
   onOrderModeChange,
+  tableNumber,
   onApplyDiscount,
   onRemoveDiscount,
   discountReason,
@@ -140,6 +151,41 @@ export function OrderSummaryPanel({
         padding: "16px 14px",
       }}
     >
+      {/* Context badge — shows active order destination */}
+      {orderMode && (
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 8,
+            padding: "8px 12px",
+            background: `${(MODE_BADGE[orderMode] ?? MODE_BADGE.take_away).color}10`,
+            border: `1px solid ${(MODE_BADGE[orderMode] ?? MODE_BADGE.take_away).color}30`,
+            borderRadius: 10,
+            marginBottom: 8,
+          }}
+        >
+          <span style={{ fontSize: 20 }}>
+            {(MODE_BADGE[orderMode] ?? MODE_BADGE.take_away).emoji}
+          </span>
+          <span
+            style={{
+              color: (MODE_BADGE[orderMode] ?? MODE_BADGE.take_away).color,
+              fontWeight: 700,
+              fontSize: 14,
+            }}
+          >
+            {orderMode === "dine_in" && tableNumber
+              ? t("contextBadge.table", { n: tableNumber })
+              : orderMode === "counter"
+                ? t("contextBadge.counter")
+                : orderMode === "delivery"
+                  ? t("contextBadge.delivery")
+                  : t("contextBadge.takeaway")}
+          </span>
+        </div>
+      )}
+
       {/* Mode tabs */}
       <OrderModeSelector value={orderMode} onChange={onOrderModeChange} />
 
