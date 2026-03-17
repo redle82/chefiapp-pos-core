@@ -548,18 +548,25 @@ let clientInstance: DockerCoreClientShape | null = null;
  * run ./scripts/core/apply-missing-migrations.sh. See docs/architecture/OPTIONAL_FEATURE_TABLES_CONTRACT.md.
  */
 export async function probeOptionalTables(): Promise<void> {
-  if (typeof window !== "undefined" && IS_DEV) {
-    const ttl = OPTIONAL_TABLES_TTL_DEV_MS;
-    OPTIONAL_TABLES.forEach((table) =>
-      tableUnavailableUntil.set(table, Date.now() + ttl),
-    );
-    return;
-  }
+  // Always probe optional tables — even in DEV. If the table exists (migration
+  // applied), it will be marked available; if not, it gets a 30s TTL in prod
+  // or 24h in DEV so we don't spam 404s.
+  // Clear any stale unavailability cache so the probe actually hits the network.
+  OPTIONAL_TABLES.forEach((table) => markTableAvailable(table));
   const core = getDockerCoreFetchClient();
   await Promise.all(
-    OPTIONAL_TABLES.map((table) => core.from(table).select("id").limit(0)),
+    OPTIONAL_TABLES.map(async (table) => {
+      try {
+        const { error } = await core.from(table).select("id").limit(0);
+        if (!error) {
+          markTableAvailable(table);
+        }
+      } catch {
+        // Non-fatal: Core may be down or not reachable
+      }
+    }),
   ).catch(() => {
-    // Non-fatal: Core may be down or not reachable
+    // Non-fatal
   });
 }
 
