@@ -12,6 +12,7 @@ import { ShiftHealthWidget } from "../../ui/design-system/ShiftHealthWidget";
 import { TaskCard } from "../../ui/design-system/TaskCard";
 import { AdvancedSearchPanel } from "./components/AdvancedSearchPanel"; // P4-8
 import { AgoraSection } from "./components/AgoraSection"; // Tela Agora: tarefas pendentes + pedidos READY
+import { MyCoreTasks } from "./components/MyCoreTasks"; // Core tasks card list
 import { GamificationPanel } from "./components/GamificationPanel"; // P6-8
 import { InventoryLiteSection } from "./components/InventoryLiteSection"; // Inventory Lite: alertas repor X
 import { SessionXPWidget } from "./components/SessionXPWidget"; // Phase 3: Gamification
@@ -96,6 +97,17 @@ export const WorkerTaskStream: React.FC = () => {
           <AgoraSection
             restaurantId={coreRestaurantId ?? operationalContract.id}
             userId={activeWorkerId ?? undefined}
+          />
+        </div>
+      )}
+
+      {/* MY CORE TASKS — Grouped by priority, SLA indicators */}
+      {operationalContract?.id && (
+        <div className={styles.sectionSpacing}>
+          <MyCoreTasks
+            restaurantId={coreRestaurantId ?? operationalContract.id}
+            userId={activeWorkerId ?? undefined}
+            userName={activeWorkerId ?? undefined}
           />
         </div>
       )}

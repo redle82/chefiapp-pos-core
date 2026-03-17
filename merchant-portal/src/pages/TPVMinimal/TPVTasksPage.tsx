@@ -20,7 +20,12 @@ import {
   resolveTask,
   escalateTask,
   dismissTask,
+  reassignTask,
 } from "../../infra/writers/TaskWriter";
+import {
+  readRestaurantPeople,
+  type CoreRestaurantPerson,
+} from "../../infra/readers/RestaurantPeopleReader";
 import { useTPVRestaurantId } from "./hooks/useTPVRestaurantId";
 
 // ---------------------------------------------------------------------------
@@ -384,6 +389,8 @@ export function TPVTasksPage() {
   const [newTaskTitle, setNewTaskTitle] = useState("");
   const [newTaskPriority, setNewTaskPriority] = useState("MEDIA");
   const [newTaskStation, setNewTaskStation] = useState("SERVICE");
+  const [people, setPeople] = useState<CoreRestaurantPerson[]>([]);
+  const [reassigning, setReassigning] = useState(false);
 
   // ---- Data loading ----
   const loadTasks = useCallback(async () => {
@@ -416,6 +423,12 @@ export function TPVTasksPage() {
     const interval = setInterval(loadTasks, 5000);
     return () => clearInterval(interval);
   }, [loadTasks]);
+
+  // Load people for reassignment dropdown
+  useEffect(() => {
+    if (!restaurantId) return;
+    readRestaurantPeople(restaurantId).then(setPeople).catch(() => {});
+  }, [restaurantId]);
 
   // ---- Computed columns ----
   const filtered = useMemo(
@@ -1421,7 +1434,8 @@ export function TPVTasksPage() {
                     : `\u{1F464} ${t("tasks.unassigned", "Unassigned")}`
                 }
               />
-              {selectedTask.assigned_name && (
+              {/* Reassign dropdown */}
+              {people.length > 0 && (
                 <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
                   <span
                     style={{
@@ -1431,11 +1445,50 @@ export function TPVTasksPage() {
                       letterSpacing: 0.5,
                     }}
                   >
-                    &nbsp;
+                    {t("tasks.reassign", "Reassign")}
                   </span>
-                  <span style={{ fontSize: 11, color: "#737373", fontStyle: "italic" }}>
-                    {t("tasks.reassignPlaceholder", "Reassign (coming soon)")}
-                  </span>
+                  <select
+                    disabled={reassigning}
+                    value={selectedTask.assigned_name ?? ""}
+                    onChange={async (e) => {
+                      const person = people.find((p) => p.name === e.target.value);
+                      setReassigning(true);
+                      try {
+                        await reassignTask(
+                          selectedTask.id,
+                          person?.id ?? null,
+                          person?.name ?? null,
+                        );
+                        await loadTasks();
+                        // Update selected task in-place
+                        setSelectedTask((prev) =>
+                          prev
+                            ? { ...prev, assigned_to: person?.id ?? null, assigned_name: person?.name ?? null }
+                            : null,
+                        );
+                      } catch {
+                        // silent
+                      } finally {
+                        setReassigning(false);
+                      }
+                    }}
+                    style={{
+                      fontSize: 12,
+                      padding: "4px 8px",
+                      borderRadius: 6,
+                      border: "1px solid #404040",
+                      background: "#1e1e1e",
+                      color: "#e5e5e5",
+                      cursor: reassigning ? "wait" : "pointer",
+                    }}
+                  >
+                    <option value="">{t("tasks.unassigned", "Unassigned")}</option>
+                    {people.map((p) => (
+                      <option key={p.id} value={p.name}>
+                        {p.name} ({p.role})
+                      </option>
+                    ))}
+                  </select>
                 </div>
               )}
             </div>

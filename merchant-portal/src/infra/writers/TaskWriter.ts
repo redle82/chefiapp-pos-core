@@ -154,6 +154,21 @@ export async function generateScheduledTasks(restaurantId: string): Promise<void
 }
 
 /**
+ * Reassign task to a different person (or remove assignee).
+ */
+export async function reassignTask(
+  taskId: string,
+  assignedTo: string | null,
+  assignedName: string | null,
+): Promise<void> {
+  const { error } = await dockerCoreClient
+    .from("gm_tasks")
+    .update({ assigned_to: assignedTo, assigned_name: assignedName })
+    .eq("id", taskId);
+  if (error) throw new Error(error.message ?? "Falha ao reatribuir tarefa");
+}
+
+/**
  * Escalate task priority (e.g. MEDIA -> ALTA -> CRITICA).
  */
 export async function escalateTask(taskId: string): Promise<void> {

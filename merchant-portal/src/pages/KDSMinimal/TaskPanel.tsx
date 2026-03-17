@@ -94,7 +94,7 @@ export function TaskPanel({
         evidence = { text: evidenceInput[taskId] };
       }
 
-      await resolveTask(taskId, undefined, evidence);
+      await resolveTask(taskId);
       // Limpar input de evidência
       setEvidenceInput((prev) => {
         const next = { ...prev };

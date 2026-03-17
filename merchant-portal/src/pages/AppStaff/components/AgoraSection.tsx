@@ -77,9 +77,9 @@ export const AgoraSection: React.FC<AgoraSectionProps> = ({
     try {
       await rejectTaskRpc(
         taskId,
-        "Rejeitado pelo staff",
         userId ?? null,
-        restaurantId
+        restaurantId,
+        "Rejeitado pelo staff"
       );
       success("Tarefa rejeitada");
       await refresh();
