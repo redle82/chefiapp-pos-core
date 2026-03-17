@@ -74,6 +74,27 @@ interface TPVHeaderProps {
   staffAvatarUrl?: string | null;
   /** Hide search bar + filter (non-POS pages like screens, tables, settings). */
   hideSearch?: boolean;
+  /** Lock callback — returns to operator selection screen. */
+  onLock?: () => void;
+}
+
+/** Ícone cadeado SVG */
+function LockIcon() {
+  return (
+    <svg
+      width="14"
+      height="14"
+      viewBox="0 0 14 14"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <rect x="2.5" y="6" width="9" height="6.5" rx="1.5" />
+      <path d="M4.5 6V4.5a2.5 2.5 0 015 0V6" />
+    </svg>
+  );
 }
 
 export function TPVHeader({
@@ -85,6 +106,7 @@ export function TPVHeader({
   staffRole = "owner",
   staffAvatarUrl = null,
   hideSearch = false,
+  onLock,
 }: TPVHeaderProps) {
   const { t } = useTranslation(["tpv", "operational"]);
   const { identity } = useRestaurantIdentity();
@@ -337,6 +359,31 @@ export function TPVHeader({
             </span>
           )}
         </div>
+        {/* Lock / switch operator button */}
+        {onLock && (
+          <button
+            type="button"
+            data-testid="tpv-lock-button"
+            onClick={onLock}
+            title={t("tpv:header.lockTooltip", "Trocar operador")}
+            style={{
+              width: 32,
+              height: 32,
+              borderRadius: 8,
+              border: "1px solid rgba(255,255,255,0.08)",
+              backgroundColor: "transparent",
+              color: "#737373",
+              cursor: "pointer",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              flexShrink: 0,
+              transition: "border-color 0.15s, color 0.15s",
+            }}
+          >
+            <LockIcon />
+          </button>
+        )}
       </div>
     </header>
   );

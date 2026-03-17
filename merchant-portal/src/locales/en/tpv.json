@@ -231,6 +231,7 @@
   "header": {
     "searchPlaceholder": "Search product by name, category or SKU",
     "clearSearch": "Clear",
+    "lockTooltip": "Switch operator",
     "notifications": "Notifications",
     "noNotifications": "No notifications",
     "tableReady": "Table {{number}} — ready for {{time}}",
@@ -750,5 +751,23 @@
       "saturday": "Saturday",
       "sunday": "Sunday"
     }
+  },
+  "lockScreen": {
+    "title": "Who's operating?",
+    "subtitle": "Select your profile to continue",
+    "pinTitle": "Enter your PIN",
+    "pinError": "Incorrect PIN",
+    "pinBack": "Back",
+    "continueAsOwner": "Continue as Owner",
+    "noStaff": "No staff members configured",
+    "noStaffHint": "Set up staff in Settings → Team",
+    "loading": "Loading team..."
+  },
+  "roles": {
+    "owner": "Owner",
+    "manager": "Manager",
+    "waiter": "Waiter",
+    "kitchen": "Kitchen",
+    "staff": "Staff"
   }
 }

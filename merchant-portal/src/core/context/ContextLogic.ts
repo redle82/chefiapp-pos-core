@@ -72,14 +72,17 @@ export function resolveContext(
       visibleModules.tables = true;
       visibleModules.kitchen = true; // Monitors status
       visibleModules.settings = true; // Operational settings
+      visibleModules.menu = true; // Can modify menu
       break;
     case "owner":
-      // Owner sees everything relevant to decision making
+      // Owner sees everything
+      visibleModules.orders = true; // POS access
       visibleModules.reports = true;
       visibleModules.finance = true;
       visibleModules.settings = true;
-      visibleModules.tables = true; // Macro view
-      visibleModules.kitchen = true; // Macro view
+      visibleModules.tables = true;
+      visibleModules.kitchen = true;
+      visibleModules.menu = true;
       break;
   }
 

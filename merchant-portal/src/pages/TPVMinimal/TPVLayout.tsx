@@ -15,9 +15,12 @@ import { useRestaurantIdentity } from "../../core/identity/useRestaurantIdentity
 import { MadeWithLoveFooter } from "../../components/MadeWithLoveFooter";
 import { OperationalHeader } from "../../components/pos/OperationalHeader";
 import { TPVHeader } from "./components/TPVHeader";
+import { TPVLockScreen } from "./components/TPVLockScreen";
 import { TPVNotificationBar } from "./components/TPVNotificationBar";
 import { TPVSidebar } from "./components/TPVSidebar";
+import { OperatorProvider, useOperator } from "./context/OperatorContext";
 import { useTPVEventBridge } from "./hooks/useTPVEventBridge";
+import { useTPVRestaurantId } from "./hooks/useTPVRestaurantId";
 
 /** Error boundary local: se o header operacional falhar, o TPV continua a carregar. */
 class OperationalHeaderBoundary extends Component<
@@ -94,6 +97,16 @@ class ContentBoundary extends Component<
 }
 
 export function TPVLayout() {
+  const restaurantId = useTPVRestaurantId();
+
+  return (
+    <OperatorProvider restaurantId={restaurantId}>
+      <TPVLayoutInner />
+    </OperatorProvider>
+  );
+}
+
+function TPVLayoutInner() {
   const { t } = useTranslation("tpv");
   const location = useLocation();
   const [searchQuery, setSearchQuery] = useState("");
@@ -101,6 +114,26 @@ export function TPVLayout() {
     useTPVEventBridge();
   const { user } = useAuth();
   const { identity } = useRestaurantIdentity();
+  const restaurantId = useTPVRestaurantId();
+  const { operator, isLocked, unlock, lock } = useOperator();
+
+  // Lock screen: no operator selected yet
+  if (isLocked) {
+    return (
+      <div
+        style={{
+          display: "flex",
+          flex: 1,
+          minHeight: "100%",
+          backgroundColor: "#0a0a0a",
+          fontFamily: "Inter, system-ui, sans-serif",
+          color: "#fafafa",
+        }}
+      >
+        <TPVLockScreen onUnlock={unlock} restaurantId={restaurantId} />
+      </div>
+    );
+  }
 
   // KDS mode: esconde header do TPV, KPIs, notificações e footer
   const isKitchen = location.pathname.includes("/kitchen");
@@ -113,14 +146,11 @@ export function TPVLayout() {
   ];
   const hideSearch = NON_POS_SUFFIXES.some((s) => location.pathname.endsWith(s));
 
-  // Owner identity: auth session > restaurant owner name > fallback
-  // Same user across Admin and TPV (single-owner scenario)
-  const ownerName =
-    (user?.user_metadata?.name as string) ||
-    user?.email?.split("@")[0] ||
-    identity.ownerName ||
-    "Dono";
-  const ownerId = user?.email ?? (user ? "—" : t("layout.owner"));
+  // Operator identity from lock screen selection (not hardcoded anymore)
+  const staffName = operator?.name ?? "Dono";
+  const staffRole = operator?.role ?? "owner";
+  const staffId = user?.email ?? (user ? "—" : t("layout.owner"));
+  const staffAvatarUrl = operator?.avatarUrl ?? null;
 
   return (
     <div
@@ -148,9 +178,11 @@ export function TPVLayout() {
             searchQuery={searchQuery}
             onSearchChange={setSearchQuery}
             hideSearch={hideSearch}
-            staffName={ownerName}
-            staffId={ownerId}
-            staffRole="owner"
+            staffName={staffName}
+            staffId={staffId}
+            staffRole={staffRole}
+            staffAvatarUrl={staffAvatarUrl}
+            onLock={lock}
           />
         )}
         {!isKitchen && (

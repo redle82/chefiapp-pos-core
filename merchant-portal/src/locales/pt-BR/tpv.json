@@ -229,6 +229,7 @@
   "header": {
     "searchPlaceholder": "Pesquisar produto por nome, categoria ou SKU",
     "clearSearch": "Limpar",
+    "lockTooltip": "Trocar operador",
     "notifications": "Notificações",
     "noNotifications": "Sem notificações",
     "tableReady": "Mesa {{number}} — pronto há {{time}}",
@@ -748,5 +749,23 @@
       "saturday": "Sábado",
       "sunday": "Domingo"
     }
+  },
+  "lockScreen": {
+    "title": "Quem vai operar?",
+    "subtitle": "Selecione o seu perfil para continuar",
+    "pinTitle": "Digite o PIN",
+    "pinError": "PIN incorreto",
+    "pinBack": "Voltar",
+    "continueAsOwner": "Continuar como Dono",
+    "noStaff": "Nenhum colaborador configurado",
+    "noStaffHint": "Configure colaboradores em Configurações → Equipe",
+    "loading": "Carregando equipe..."
+  },
+  "roles": {
+    "owner": "Dono",
+    "manager": "Gerente",
+    "waiter": "Garçom",
+    "kitchen": "Cozinha",
+    "staff": "Staff"
   }
 }

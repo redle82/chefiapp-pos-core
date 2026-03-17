@@ -28,6 +28,8 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { NavLink, useNavigate } from "react-router-dom";
+import { useContextEngine } from "../../../core/context/ContextEngine";
+import type { ModuleVisibility } from "../../../core/context/ContextTypes";
 import tpvEventBus from "../../../core/tpv/TPVCentralEvents";
 import type { KitchenPressurePayload } from "../../../core/tpv/TPVCentralEvents";
 import { dockerCoreClient } from "../../../infra/docker-core/connection";
@@ -274,6 +276,25 @@ const SECTIONS: SidebarSection[] = [
     ],
   },
 ];
+
+/* ── Role-based visibility mapping ────────────────────────────── */
+
+/**
+ * Maps sidebar nav paths to ContextEngine module visibility keys.
+ * `null` means always visible regardless of role.
+ */
+const NAV_TO_MODULE: Record<string, keyof ModuleVisibility | "canCloseRegister" | null> = {
+  "/op/tpv": null,                    // POS: always visible
+  "/op/tpv/tables": "tables",
+  "/op/tpv/shift": "canCloseRegister", // Shift: manager+ (uses permission)
+  "/op/tpv/kitchen": "kitchen",
+  "/op/tpv/tasks": null,               // Tasks: everyone sees their own
+  "/op/tpv/reservations": "tables",    // Reservations = table management
+  "/op/tpv/delivery": "orders",        // Delivery = order management
+  "/op/tpv/screens": "settings",       // Screens: manager+
+  "/op/tpv/printers": "settings",
+  "/op/tpv/settings": "settings",
+};
 
 /* ── CSS-only tooltip styles (injected once) ─────────────────── */
 
@@ -634,6 +655,7 @@ export function TPVSidebar() {
   const [showExitModal, setShowExitModal] = useState(false);
   const navigate = useNavigate();
   const restaurantId = useTPVRestaurantId();
+  const { visibleModules, permissions } = useContextEngine();
 
   // Expanded/collapsed state persisted in localStorage
   const [expanded, setExpanded] = useState(() => {
@@ -771,15 +793,24 @@ export function TPVSidebar() {
 
       <SectionDivider expanded={expanded} />
 
-      {/* Navigation sections */}
-      {SECTIONS.map((section, sIdx) => (
+      {/* Navigation sections — filtered by operator role */}
+      {SECTIONS.map((section, sIdx) => {
+        const visibleItems = section.items.filter((item) => {
+          const moduleKey = NAV_TO_MODULE[item.to];
+          if (moduleKey === null) return true; // always visible
+          if (moduleKey === "canCloseRegister") return permissions.canCloseRegister;
+          return visibleModules[moduleKey];
+        });
+        if (visibleItems.length === 0) return null;
+
+        return (
         <React.Fragment key={section.id}>
           {sIdx > 0 && <SectionDivider expanded={expanded} />}
           <SectionHeader
             label={t(section.headerKey, section.headerFallback)}
             expanded={expanded}
           />
-          {section.items.map((item) => {
+          {visibleItems.map((item) => {
             const tooltipLabel = t(`sidebar.${item.label}`, item.label);
             const badge = item.badgeKey
               ? badgeCounts[item.badgeKey as keyof BadgeCounts]
@@ -817,7 +848,8 @@ export function TPVSidebar() {
             );
           })}
         </React.Fragment>
-      ))}
+        );
+      })}
 
       <div style={{ flex: 1 }} />
 
