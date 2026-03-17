@@ -392,7 +392,19 @@
     "cockpitTitle": "Shift Overview",
     "emptyColumnNow": "No urgent tasks",
     "emptyColumnInProgress": "Nothing in progress",
-    "emptyColumnDone": "No tasks completed yet"
+    "emptyColumnDone": "No tasks completed yet",
+    "kpiUnassigned": "Unassigned",
+    "columnWaiting": "Waiting",
+    "emptyWaiting": "No waiting tasks",
+    "actionAssume": "Take On",
+    "actionComplete": "Complete",
+    "slaOverdue": "Overdue",
+    "slaOnTrack": "On track",
+    "slaRemaining": "remaining",
+    "completed": "Completed",
+    "waitingOn": "Waiting on",
+    "viewOrder": "View Order",
+    "reassignPlaceholder": "Reassign"
   },
   "handoff": {
     "title": "Handoffs",

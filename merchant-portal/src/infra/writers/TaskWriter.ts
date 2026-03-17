@@ -45,6 +45,28 @@ export async function dismissTask(
 }
 
 /**
+ * Assume + Start a task (moves to IN_PROGRESS via direct update).
+ * Used when an operator clicks "Assumir" — takes ownership and begins work.
+ */
+export async function assumeTask(
+  taskId: string,
+  assigneeName?: string | null,
+): Promise<void> {
+  const updates: Record<string, unknown> = {
+    status: "IN_PROGRESS",
+    acknowledged_at: new Date().toISOString(),
+  };
+  if (assigneeName) {
+    updates.assigned_name = assigneeName;
+  }
+  const { error } = await dockerCoreClient
+    .from("gm_tasks")
+    .update(updates)
+    .eq("id", taskId);
+  if (error) throw new Error(error.message ?? "Falha ao assumir tarefa");
+}
+
+/**
  * Inicia tarefa (OPEN → ACKNOWLEDGED). RPC start_task.
  */
 export async function startTaskRpc(

@@ -392,7 +392,19 @@
     "cockpitTitle": "Visión del Turno",
     "emptyColumnNow": "Sin tareas urgentes",
     "emptyColumnInProgress": "Nada en curso",
-    "emptyColumnDone": "Ninguna tarea completada aún"
+    "emptyColumnDone": "Ninguna tarea completada aún",
+    "kpiUnassigned": "Sin asignar",
+    "columnWaiting": "En espera",
+    "emptyWaiting": "Sin tareas en espera",
+    "actionAssume": "Asumir",
+    "actionComplete": "Completar",
+    "slaOverdue": "Atrasada",
+    "slaOnTrack": "En plazo",
+    "slaRemaining": "restante",
+    "completed": "Completada",
+    "waitingOn": "Esperando",
+    "viewOrder": "Ver Pedido",
+    "reassignPlaceholder": "Reasignar"
   },
   "handoff": {
     "title": "Finalizaciones (Handoff)",

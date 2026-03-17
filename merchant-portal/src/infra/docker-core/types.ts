@@ -87,6 +87,9 @@ export interface CoreTask {
   message?: string | null;
   priority?: string | null;
   station?: string | null;
+  assigned_to?: string | null;
+  assigned_name?: string | null;
+  due_at?: string | null;
   auto_generated?: boolean;
   created_at: string;
   updated_at?: string | null;

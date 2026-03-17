@@ -1,7 +1,7 @@
 /**
  * TPVTasksPage — Kanban execution board for operational tasks.
  *
- * Three-column layout (Action Now | In Progress | Done Today)
+ * Four-column layout (Agir Agora | Em Curso | Aguardando | Concluídas)
  * with a cockpit KPI strip, station filter bar, and a sliding
  * detail panel on task selection.
  *
@@ -9,13 +9,14 @@
  * Poll: every 5 seconds.
  */
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useRestaurantRuntime } from "../../context/RestaurantRuntimeContext";
 import { dockerCoreClient } from "../../infra/docker-core/connection";
 import type { CoreTask } from "../../infra/docker-core/types";
 import {
   acknowledgeTask,
+  assumeTask,
   resolveTask,
   escalateTask,
   dismissTask,
@@ -26,7 +27,14 @@ import { useTPVRestaurantId } from "./hooks/useTPVRestaurantId";
 // Types
 // ---------------------------------------------------------------------------
 
-type StationFilter = "ALL" | "SERVICE" | "KITCHEN" | "BAR";
+type StationFilter =
+  | "ALL"
+  | "SERVICE"
+  | "KITCHEN"
+  | "BAR"
+  | "DELIVERY"
+  | "STOCK"
+  | "CLEANING";
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -49,9 +57,23 @@ const PRIORITY_BG: Record<string, string> = {
 const COL_ORANGE = "#f97316";
 const COL_BLUE = "#3b82f6";
 const COL_GREEN = "#22c55e";
+const COL_YELLOW = "#eab308";
+const COL_AMBER = "#f59e0b";
 
 const OVERDUE_MS_CRITICA = 15 * 60 * 1000;
 const OVERDUE_MS_DEFAULT = 30 * 60 * 1000;
+
+const ORIGIN_COLORS: Record<string, string> = {
+  TPV: "#f97316",
+  KDS: "#8b5cf6",
+  APPSTAFF: "#3b82f6",
+  AUTO: "#06b6d4",
+  MANUAL: "#a3a3a3",
+  SYSTEM: "#6b7280",
+  DELIVERY: "#ec4899",
+};
+
+const OVERDUE_STYLE_ID = "tpv-tasks-overdue-keyframes";
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -67,10 +89,47 @@ function timeAgo(dateStr: string, nowLabel: string): string {
 }
 
 function isOverdue(task: CoreTask): boolean {
+  if (task.due_at) {
+    return Date.now() > new Date(task.due_at).getTime();
+  }
   const age = Date.now() - new Date(task.created_at).getTime();
   const threshold =
     task.priority === "CRITICA" ? OVERDUE_MS_CRITICA : OVERDUE_MS_DEFAULT;
   return age > threshold;
+}
+
+function slaDisplay(task: CoreTask, t: (key: string, fallback: string) => string): { text: string; color: string } {
+  if (task.due_at) {
+    const remaining = new Date(task.due_at).getTime() - Date.now();
+    if (remaining <= 0) {
+      const overMins = Math.abs(Math.floor(remaining / 60000));
+      return {
+        text: t("tasks.slaOverdueMin", `Overdue ${overMins}min`).replace("{min}", String(overMins)),
+        color: "#dc2626",
+      };
+    }
+    const minsLeft = Math.floor(remaining / 60000);
+    if (minsLeft < 60) {
+      return { text: `${minsLeft}m`, color: minsLeft < 5 ? "#dc2626" : minsLeft < 15 ? "#eab308" : "#22c55e" };
+    }
+    const hrsLeft = Math.floor(minsLeft / 60);
+    return { text: `${hrsLeft}h ${minsLeft % 60}m`, color: "#22c55e" };
+  }
+
+  // Elapsed-based SLA
+  const elapsed = Date.now() - new Date(task.created_at).getTime();
+  const mins = Math.floor(elapsed / 60000);
+  const isCritica = task.priority === "CRITICA";
+  const greenThresh = isCritica ? 15 : 30;
+  const yellowThresh = isCritica ? 30 : 60;
+
+  let color = "#22c55e";
+  if (mins >= yellowThresh) color = "#dc2626";
+  else if (mins >= greenThresh) color = "#eab308";
+
+  if (mins < 60) return { text: `${mins}m`, color };
+  const hours = Math.floor(mins / 60);
+  return { text: `${hours}h ${mins % 60}m`, color };
 }
 
 function humanizeTitle(task: CoreTask): string {
@@ -100,6 +159,12 @@ function stationEmoji(station: string): string {
       return "\u{1F37A}";
     case "SERVICE":
       return "\u{1F6CE}";
+    case "DELIVERY":
+      return "\u{1F6F5}";
+    case "STOCK":
+      return "\u{1F4E6}";
+    case "CLEANING":
+      return "\u{1F9F9}";
     default:
       return "\u{1F4CB}";
   }
@@ -113,6 +178,12 @@ function stationLabelKey(station: string): string {
       return "Bar";
     case "SERVICE":
       return "Service";
+    case "DELIVERY":
+      return "Delivery";
+    case "STOCK":
+      return "Stock";
+    case "CLEANING":
+      return "Cleaning";
     default:
       return "All";
   }
@@ -143,6 +214,12 @@ function sortTasks(a: CoreTask, b: CoreTask): number {
   const pb = prioOrder[b.priority ?? "MEDIA"] ?? 2;
   if (pa !== pb) return pa - pb;
   return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+}
+
+function isWaiting(task: CoreTask): boolean {
+  if ((task as Record<string, unknown>).status === "WAITING") return true;
+  if (task.context && typeof task.context === "object" && "waiting_on" in task.context && task.context.waiting_on) return true;
+  return false;
 }
 
 // ---------------------------------------------------------------------------
@@ -186,6 +263,17 @@ const fullActionBtnStyle = (color: string): React.CSSProperties => ({
   transition: "background-color 0.15s ease",
 });
 
+const originBadgeStyle = (source: string): React.CSSProperties => ({
+  fontSize: 9,
+  fontWeight: 700,
+  padding: "1px 5px",
+  borderRadius: 4,
+  backgroundColor: (ORIGIN_COLORS[source.toUpperCase()] ?? "#6b7280") + "20",
+  color: ORIGIN_COLORS[source.toUpperCase()] ?? "#6b7280",
+  textTransform: "uppercase",
+  letterSpacing: 0.3,
+});
+
 // ---------------------------------------------------------------------------
 // Sub-components (inline)
 // ---------------------------------------------------------------------------
@@ -211,7 +299,7 @@ function KpiBox({
         borderRadius: 12,
         backgroundColor: active ? color + "15" : "#141414",
         border: `1px solid ${active ? color + "40" : "#27272a"}`,
-        minWidth: 100,
+        minWidth: 90,
       }}
     >
       <span
@@ -237,7 +325,7 @@ function KpiBox({
   );
 }
 
-function MetaItem({ label, value }: { label: string; value: string }) {
+function MetaItem({ label, value, valueColor }: { label: string; value: string; valueColor?: string }) {
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
       <span
@@ -250,7 +338,7 @@ function MetaItem({ label, value }: { label: string; value: string }) {
       >
         {label}
       </span>
-      <span style={{ fontSize: 13, color: "#fafafa", fontWeight: 500 }}>
+      <span style={{ fontSize: 13, color: valueColor ?? "#fafafa", fontWeight: 500 }}>
         {value}
       </span>
     </div>
@@ -265,6 +353,26 @@ export function TPVTasksPage() {
   const { t } = useTranslation("tpv");
   const restaurantId = useTPVRestaurantId();
   const { runtime } = useRestaurantRuntime();
+  const styleInjected = useRef(false);
+
+  // Inject overdue keyframes once
+  useEffect(() => {
+    if (styleInjected.current) return;
+    if (document.getElementById(OVERDUE_STYLE_ID)) {
+      styleInjected.current = true;
+      return;
+    }
+    const style = document.createElement("style");
+    style.id = OVERDUE_STYLE_ID;
+    style.textContent = `
+      @keyframes overdueFlash {
+        0%, 100% { border-left-color: #dc2626; }
+        50% { border-left-color: #7f1d1d; }
+      }
+    `;
+    document.head.appendChild(style);
+    styleInjected.current = true;
+  }, []);
 
   // State
   const [allTasks, setAllTasks] = useState<CoreTask[]>([]);
@@ -320,24 +428,38 @@ export function TPVTasksPage() {
     [allTasks, stationFilter],
   );
 
+  // Agir Agora: OPEN tasks (not waiting)
   const columnNow = useMemo(
     () =>
       filtered
+        .filter((t) => t.status === "OPEN" && !isWaiting(t))
+        .sort(sortTasks),
+    [filtered],
+  );
+
+  // Em Curso: ACKNOWLEDGED + IN_PROGRESS (not waiting)
+  const columnInProgress = useMemo(
+    () =>
+      filtered
         .filter(
-          (t) => t.status === "OPEN" || t.status === "ACKNOWLEDGED",
+          (t) =>
+            (t.status === "ACKNOWLEDGED" || t.status === "IN_PROGRESS") &&
+            !isWaiting(t),
         )
         .sort(sortTasks),
     [filtered],
   );
 
-  const columnInProgress = useMemo(
+  // Aguardando: tasks with waiting_on context or WAITING status
+  const columnWaiting = useMemo(
     () =>
       filtered
-        .filter((t) => t.status === "IN_PROGRESS")
+        .filter((t) => isWaiting(t) && t.status !== "RESOLVED" && t.status !== "DISMISSED")
         .sort(sortTasks),
     [filtered],
   );
 
+  // Concluídas: RESOLVED + DISMISSED
   const columnDone = useMemo(
     () =>
       filtered.filter(
@@ -352,6 +474,10 @@ export function TPVTasksPage() {
   ).length;
 
   const overdueCount = columnNow.filter((t) => isOverdue(t)).length;
+
+  const unassignedCount = columnNow.filter(
+    (t) => !t.assigned_name,
+  ).length;
 
   const avgResolutionMins = useMemo(() => {
     const resolved = columnDone.filter(
@@ -379,11 +505,11 @@ export function TPVTasksPage() {
   }, [columnNow]);
 
   // ---- Actions ----
-  const handleAcknowledge = useCallback(
+  const handleAssume = useCallback(
     async (taskId: string) => {
       try {
         setActingOn(taskId);
-        await acknowledgeTask(taskId);
+        await assumeTask(taskId);
         await loadTasks();
         if (selectedTask?.id === taskId) {
           setSelectedTask((prev) =>
@@ -391,7 +517,7 @@ export function TPVTasksPage() {
           );
         }
       } catch (err) {
-        console.error("[TPV Tasks] Acknowledge error:", err);
+        console.error("[TPV Tasks] Assume error:", err);
       } finally {
         setActingOn(null);
       }
@@ -494,11 +620,11 @@ export function TPVTasksPage() {
       >
         {/* KPI strip skeleton */}
         <div style={{ display: "flex", gap: 8 }}>
-          {[1, 2, 3, 4, 5, 6].map((i) => (
+          {[1, 2, 3, 4, 5, 6, 7].map((i) => (
             <div
               key={i}
               style={{
-                width: 100,
+                width: 90,
                 height: 56,
                 borderRadius: 12,
                 backgroundColor: "#141414",
@@ -509,7 +635,7 @@ export function TPVTasksPage() {
         </div>
         {/* Column skeletons */}
         <div style={{ display: "flex", gap: 12, flex: 1 }}>
-          {[1, 2, 3].map((c) => (
+          {[1, 2, 3, 4].map((c) => (
             <div
               key={c}
               style={{
@@ -547,12 +673,13 @@ export function TPVTasksPage() {
   }
 
   // ---- Render task card ----
-  const renderTaskCard = (task: CoreTask, columnStatus: string) => {
+  const renderTaskCard = (task: CoreTask, columnKey: string) => {
     const pColor = PRIORITY_COLOR[task.priority ?? "MEDIA"] ?? PRIORITY_COLOR.MEDIA;
     const pBg = PRIORITY_BG[task.priority ?? "MEDIA"] ?? PRIORITY_BG.MEDIA;
     const overdue = isOverdue(task);
     const isSelected = selectedTask?.id === task.id;
     const isActing = actingOn === task.id;
+    const sla = slaDisplay(task, t);
 
     return (
       <div
@@ -563,17 +690,24 @@ export function TPVTasksPage() {
           borderRadius: 12,
           padding: 12,
           cursor: "pointer",
-          borderLeft: `3px solid ${pColor}`,
           border: isSelected
             ? `1px solid ${COL_ORANGE}`
             : `1px solid #27272a`,
           borderLeftWidth: 3,
           borderLeftColor: pColor,
+          borderLeftStyle: "solid",
           transition: "all 0.15s ease",
           opacity: isActing ? 0.6 : 1,
+          ...(overdue
+            ? {
+                animation: "overdueFlash 2s ease-in-out infinite",
+                borderLeftWidth: 3,
+                borderLeftStyle: "solid",
+              }
+            : {}),
         }}
       >
-        {/* Top row: priority badge + time */}
+        {/* Top row: priority badge + SLA */}
         <div
           style={{
             display: "flex",
@@ -597,11 +731,11 @@ export function TPVTasksPage() {
           <span
             style={{
               fontSize: 10,
-              color: overdue ? "#dc2626" : "#737373",
-              fontWeight: overdue ? 700 : 400,
+              color: sla.color,
+              fontWeight: overdue ? 700 : 500,
             }}
           >
-            {timeAgo(task.created_at, t("tasks.now", "now"))}
+            {sla.text}
           </span>
         </div>
 
@@ -620,15 +754,21 @@ export function TPVTasksPage() {
           {humanizeTitle(task)}
         </div>
 
-        {/* Meta row */}
+        {/* Meta row: origin + station + assignee */}
         <div
           style={{
             display: "flex",
             gap: 6,
             alignItems: "center",
             flexWrap: "wrap",
+            marginBottom: 2,
           }}
         >
+          {task.source_event && (
+            <span style={originBadgeStyle(task.source_event)}>
+              {sourceEventKey(task.source_event)}
+            </span>
+          )}
           {task.station && (
             <span
               style={{
@@ -646,31 +786,36 @@ export function TPVTasksPage() {
               )}
             </span>
           )}
-          {task.source_event && (
-            <span style={{ fontSize: 10, color: "#737373" }}>
-              {t(
-                `tasks.source${sourceEventKey(task.source_event)}`,
-                sourceEventKey(task.source_event),
-              )}
-            </span>
-          )}
         </div>
 
-        {/* Quick actions: Action Now column */}
-        {(columnStatus === "NOW") && (
+        {/* Assignee line */}
+        <div
+          style={{
+            fontSize: 10,
+            color: task.assigned_name ? "#a3a3a3" : "#737373",
+            display: "flex",
+            alignItems: "center",
+            gap: 3,
+            marginTop: 2,
+          }}
+        >
+          <span>{"\u{1F464}"}</span>
+          <span>{task.assigned_name ?? t("tasks.unassigned", "Unassigned")}</span>
+        </div>
+
+        {/* Quick actions based on column */}
+        {columnKey === "NOW" && (
           <div style={{ display: "flex", gap: 4, marginTop: 8 }}>
-            {task.status === "OPEN" && (
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleAcknowledge(task.id);
-                }}
-                disabled={isActing}
-                style={actionBtnStyle(COL_BLUE)}
-              >
-                {isActing ? "..." : t("tasks.actionAcknowledge", "Ack")}
-              </button>
-            )}
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                handleAssume(task.id);
+              }}
+              disabled={isActing}
+              style={actionBtnStyle(COL_BLUE)}
+            >
+              {isActing ? "..." : t("tasks.actionAssume", "Assumir")}
+            </button>
             <button
               onClick={(e) => {
                 e.stopPropagation();
@@ -679,13 +824,12 @@ export function TPVTasksPage() {
               disabled={isActing}
               style={actionBtnStyle(COL_GREEN)}
             >
-              {isActing ? "..." : t("tasks.actionResolve", "Done")}
+              {isActing ? "..." : t("tasks.actionResolve", "Concluir")}
             </button>
           </div>
         )}
 
-        {/* Quick action: In Progress column */}
-        {columnStatus === "PROGRESS" && (
+        {columnKey === "PROGRESS" && (
           <div style={{ display: "flex", gap: 4, marginTop: 8 }}>
             <button
               onClick={(e) => {
@@ -695,7 +839,22 @@ export function TPVTasksPage() {
               disabled={isActing}
               style={actionBtnStyle(COL_GREEN)}
             >
-              {isActing ? "..." : t("tasks.actionResolve", "Done")}
+              {isActing ? "..." : t("tasks.actionResolve", "Concluir")}
+            </button>
+          </div>
+        )}
+
+        {columnKey === "WAITING" && (
+          <div style={{ display: "flex", gap: 4, marginTop: 8 }}>
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                handleResolve(task.id);
+              }}
+              disabled={isActing}
+              style={actionBtnStyle(COL_GREEN)}
+            >
+              {isActing ? "..." : t("tasks.actionResolve", "Concluir")}
             </button>
           </div>
         )}
@@ -782,6 +941,9 @@ export function TPVTasksPage() {
     </div>
   );
 
+  // ---- Detail panel SLA ----
+  const detailSla = selectedTask ? slaDisplay(selectedTask, t) : null;
+
   // ---- Main render ----
   return (
     <div
@@ -825,6 +987,12 @@ export function TPVTasksPage() {
             active={overdueCount > 0}
           />
           <KpiBox
+            value={unassignedCount}
+            label={t("tasks.kpiUnassigned", "Unassigned")}
+            color={COL_AMBER}
+            active={unassignedCount > 0}
+          />
+          <KpiBox
             value={columnInProgress.length}
             label={t("tasks.kpiInProgress", "In progress")}
             color={COL_BLUE}
@@ -866,7 +1034,7 @@ export function TPVTasksPage() {
             flexWrap: "wrap",
           }}
         >
-          {(["ALL", "SERVICE", "KITCHEN", "BAR"] as const).map((f) => (
+          {(["ALL", "SERVICE", "KITCHEN", "BAR", "DELIVERY", "STOCK", "CLEANING"] as const).map((f) => (
             <button
               key={f}
               onClick={() => setStationFilter(f)}
@@ -874,11 +1042,7 @@ export function TPVTasksPage() {
             >
               {f === "ALL"
                 ? t("tasks.filterAll", "All")
-                : f === "SERVICE"
-                  ? t("tasks.filterService", "Service")
-                  : f === "KITCHEN"
-                    ? t("tasks.filterKitchen", "Kitchen")
-                    : t("tasks.filterBar", "Bar")}
+                : `${stationEmoji(f)} ${t(`tasks.filter${stationLabelKey(f)}`, stationLabelKey(f))}`}
             </button>
           ))}
 
@@ -991,6 +1155,15 @@ export function TPVTasksPage() {
               <option value="BAR">
                 {t("tasks.filterBar", "Bar")}
               </option>
+              <option value="DELIVERY">
+                {t("tasks.filterDelivery", "Delivery")}
+              </option>
+              <option value="STOCK">
+                {t("tasks.filterStock", "Stock")}
+              </option>
+              <option value="CLEANING">
+                {t("tasks.filterCleaning", "Cleaning")}
+              </option>
             </select>
             <button
               onClick={handleCreateTask}
@@ -1034,21 +1207,28 @@ export function TPVTasksPage() {
           }}
         >
           {renderColumn(
-            t("tasks.columnNow", "Action Now"),
+            t("tasks.columnNow", "Agir Agora"),
             COL_ORANGE,
             columnNow,
             "NOW",
             t("tasks.emptyNow", "No pending tasks"),
           )}
           {renderColumn(
-            t("tasks.columnInProgress", "In Progress"),
+            t("tasks.columnInProgress", "Em Curso"),
             COL_BLUE,
             columnInProgress,
             "PROGRESS",
             t("tasks.emptyInProgress", "No tasks in progress"),
           )}
           {renderColumn(
-            t("tasks.columnDone", "Done Today"),
+            t("tasks.columnWaiting", "Aguardando"),
+            COL_YELLOW,
+            columnWaiting,
+            "WAITING",
+            t("tasks.emptyWaiting", "No waiting tasks"),
+          )}
+          {renderColumn(
+            t("tasks.columnDone", "Conclu\u00eddas"),
             COL_GREEN,
             columnDone,
             "DONE",
@@ -1064,7 +1244,7 @@ export function TPVTasksPage() {
               top: 0,
               right: 0,
               bottom: 0,
-              width: 340,
+              width: 360,
               backgroundColor: "#141414",
               borderLeft: "1px solid #27272a",
               padding: 20,
@@ -1105,7 +1285,7 @@ export function TPVTasksPage() {
             </div>
 
             {/* Priority + Status badges */}
-            <div style={{ display: "flex", gap: 8 }}>
+            <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
               <span
                 style={{
                   fontSize: 11,
@@ -1140,7 +1320,30 @@ export function TPVTasksPage() {
                   selectedTask.status,
                 )}
               </span>
+              {selectedTask.source_event && (
+                <span style={originBadgeStyle(selectedTask.source_event)}>
+                  {sourceEventKey(selectedTask.source_event)}
+                </span>
+              )}
             </div>
+
+            {/* Table number prominent display */}
+            {selectedTask.context?.table_number && (
+              <div
+                style={{
+                  padding: "8px 12px",
+                  backgroundColor: COL_ORANGE + "15",
+                  borderRadius: 8,
+                  border: `1px solid ${COL_ORANGE}40`,
+                  fontSize: 16,
+                  fontWeight: 700,
+                  color: COL_ORANGE,
+                  textAlign: "center",
+                }}
+              >
+                Mesa {String(selectedTask.context.table_number)}
+              </div>
+            )}
 
             {/* Title */}
             <div
@@ -1181,6 +1384,11 @@ export function TPVTasksPage() {
                       )
                     : "--"
                 }
+                valueColor={
+                  selectedTask.source_event
+                    ? ORIGIN_COLORS[selectedTask.source_event.toUpperCase()] ?? "#fafafa"
+                    : undefined
+                }
               />
               <MetaItem
                 label={t("tasks.stationLabel", "Station")}
@@ -1202,13 +1410,49 @@ export function TPVTasksPage() {
               />
               <MetaItem
                 label={t("tasks.detailSLA", "SLA")}
+                value={detailSla?.text ?? "--"}
+                valueColor={detailSla?.color}
+              />
+              <MetaItem
+                label={t("tasks.detailAssignee", "Assignee")}
                 value={
-                  isOverdue(selectedTask)
-                    ? t("tasks.slaOverdue", "Overdue")
-                    : t("tasks.slaOnTrack", "On track")
+                  selectedTask.assigned_name
+                    ? `\u{1F464} ${selectedTask.assigned_name}`
+                    : `\u{1F464} ${t("tasks.unassigned", "Unassigned")}`
                 }
               />
+              {selectedTask.assigned_name && (
+                <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+                  <span
+                    style={{
+                      fontSize: 10,
+                      color: "#737373",
+                      textTransform: "uppercase",
+                      letterSpacing: 0.5,
+                    }}
+                  >
+                    &nbsp;
+                  </span>
+                  <span style={{ fontSize: 11, color: "#737373", fontStyle: "italic" }}>
+                    {t("tasks.reassignPlaceholder", "Reassign (coming soon)")}
+                  </span>
+                </div>
+              )}
             </div>
+
+            {/* Order link */}
+            {selectedTask.context?.order_id && (
+              <div
+                style={{
+                  fontSize: 12,
+                  color: COL_BLUE,
+                  cursor: "pointer",
+                  textDecoration: "underline",
+                }}
+              >
+                {t("tasks.viewOrder", "View Order")} #{String(selectedTask.context.order_id).slice(0, 8)}
+              </div>
+            )}
 
             {/* Context details */}
             {selectedTask.context &&
@@ -1261,6 +1505,14 @@ export function TPVTasksPage() {
                       </span>
                     </div>
                   )}
+                  {selectedTask.context.waiting_on && (
+                    <div style={{ fontSize: 12, color: "#a3a3a3" }}>
+                      {t("tasks.contextWaitingOn", "Waiting on")}:{" "}
+                      <span style={{ color: COL_YELLOW, fontWeight: 600 }}>
+                        {String(selectedTask.context.waiting_on)}
+                      </span>
+                    </div>
+                  )}
                 </div>
               )}
 
@@ -1273,44 +1525,54 @@ export function TPVTasksPage() {
                 marginTop: "auto",
               }}
             >
-              {selectedTask.status === "OPEN" && (
-                <button
-                  onClick={() => handleAcknowledge(selectedTask.id)}
-                  disabled={actingOn === selectedTask.id}
-                  style={fullActionBtnStyle(COL_BLUE)}
+              {(selectedTask.status === "RESOLVED" ||
+                selectedTask.status === "DISMISSED") ? (
+                <div
+                  style={{
+                    padding: "10px 16px",
+                    borderRadius: 8,
+                    backgroundColor: COL_GREEN + "10",
+                    color: COL_GREEN,
+                    fontSize: 13,
+                    fontWeight: 600,
+                    textAlign: "center",
+                  }}
                 >
-                  {actingOn === selectedTask.id
-                    ? "..."
-                    : t("tasks.actionAcknowledge", "Acknowledge")}
-                </button>
-              )}
-              {(selectedTask.status === "OPEN" ||
-                selectedTask.status === "ACKNOWLEDGED" ||
-                selectedTask.status === "IN_PROGRESS") && (
-                <button
-                  onClick={() => handleResolve(selectedTask.id)}
-                  disabled={actingOn === selectedTask.id}
-                  style={fullActionBtnStyle(COL_GREEN)}
-                >
-                  {actingOn === selectedTask.id
-                    ? "..."
-                    : t("tasks.actionResolve", "Resolve")}
-                </button>
-              )}
-              {selectedTask.status !== "RESOLVED" &&
-                selectedTask.priority !== "CRITICA" && (
+                  {t("tasks.completed", "Completed")}
+                </div>
+              ) : (
+                <>
+                  {selectedTask.status === "OPEN" && (
+                    <button
+                      onClick={() => handleAssume(selectedTask.id)}
+                      disabled={actingOn === selectedTask.id}
+                      style={fullActionBtnStyle(COL_BLUE)}
+                    >
+                      {actingOn === selectedTask.id
+                        ? "..."
+                        : t("tasks.actionAssume", "Assumir")}
+                    </button>
+                  )}
                   <button
-                    onClick={() => handleEscalate(selectedTask.id)}
+                    onClick={() => handleResolve(selectedTask.id)}
                     disabled={actingOn === selectedTask.id}
-                    style={fullActionBtnStyle("#ea580c")}
+                    style={fullActionBtnStyle(COL_GREEN)}
                   >
                     {actingOn === selectedTask.id
                       ? "..."
-                      : t("tasks.actionEscalate", "Escalate")}
+                      : t("tasks.actionResolve", "Concluir")}
                   </button>
-                )}
-              {selectedTask.status !== "RESOLVED" &&
-                selectedTask.status !== "DISMISSED" && (
+                  {selectedTask.priority !== "CRITICA" && (
+                    <button
+                      onClick={() => handleEscalate(selectedTask.id)}
+                      disabled={actingOn === selectedTask.id}
+                      style={fullActionBtnStyle("#ea580c")}
+                    >
+                      {actingOn === selectedTask.id
+                        ? "..."
+                        : t("tasks.actionEscalate", "Escalar")}
+                    </button>
+                  )}
                   <button
                     onClick={() => handleDismiss(selectedTask.id)}
                     disabled={actingOn === selectedTask.id}
@@ -1318,9 +1580,10 @@ export function TPVTasksPage() {
                   >
                     {actingOn === selectedTask.id
                       ? "..."
-                      : t("tasks.actionDismiss", "Dismiss")}
+                      : t("tasks.actionDismiss", "Descartar")}
                   </button>
-                )}
+                </>
+              )}
             </div>
           </div>
         )}
