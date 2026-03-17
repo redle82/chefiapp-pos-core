@@ -21,6 +21,8 @@ import {
   escalateTask,
   dismissTask,
   reassignTask,
+  blockTask,
+  unblockTask,
 } from "../../infra/writers/TaskWriter";
 import {
   readRestaurantPeople,
@@ -40,6 +42,13 @@ type StationFilter =
   | "DELIVERY"
   | "STOCK"
   | "CLEANING";
+
+type ViewFilter =
+  | "TODAS"
+  | "MINHAS"
+  | "CRITICAS"
+  | "BLOQUEADAS"
+  | "CONCLUIDAS";
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -139,12 +148,84 @@ function slaDisplay(task: CoreTask, t: (key: string, fallback: string) => string
 
 function humanizeTitle(task: CoreTask): string {
   const msg = task.message ?? "";
+  const ctx = task.context ?? {};
+  const taskType = (task.task_type ?? task.type ?? "").toUpperCase();
+  const station = (task.station ?? "").toUpperCase();
+  const source = (task.source_event ?? "").toUpperCase();
+
+  // -- Build smart title based on task_type / context combinations --
+
+  // Table waiting with delay
+  if (ctx.table_number && ctx.delay_seconds) {
+    const mins = Math.round(Number(ctx.delay_seconds) / 60);
+    return `Mesa ${ctx.table_number} espera h\u00e1 ${mins} min`;
+  }
+
+  // Table tasks without delay
+  if (ctx.table_number && taskType) {
+    const typeLabel: Record<string, string> = {
+      CLOSING_TASK: "Fechar",
+      CLEAN_TABLE: "Limpar",
+      SET_TABLE: "Montar",
+      CHECK_TABLE: "Verificar",
+    };
+    if (typeLabel[taskType]) return `${typeLabel[taskType]} mesa ${ctx.table_number}`;
+  }
+
+  // Restock tasks
+  if (taskType === "RESTOCK") {
+    const stationLabel: Record<string, string> = {
+      BAR: "no bar",
+      KITCHEN: "na cozinha",
+      SERVICE: "no sal\u00e3o",
+    };
+    const item = ctx.item_name ?? ctx.category ?? "suprimentos";
+    return `Reposi\u00e7\u00e3o de ${item} ${stationLabel[station] ?? ""}`.trim();
+  }
+
+  // Pre-prep tasks
+  if (taskType === "PRE_PREP") {
+    const item = ctx.item_name ?? ctx.category ?? "";
+    const time = ctx.scheduled_time ?? "";
+    return `Pr\u00e9-preparo${item ? ` de ${item}` : ""}${time ? ` ${time}` : ""}`.trim();
+  }
+
+  // Closing tasks
+  if (taskType === "CLOSING_TASK") {
+    const target = ctx.target ?? ctx.item_name ?? ctx.category ?? "";
+    return `Fechar ${target}`.trim();
+  }
+
+  // Opening tasks
+  if (taskType === "OPENING_TASK") {
+    const target = ctx.target ?? ctx.item_name ?? ctx.category ?? "";
+    return `Abrir ${target}`.trim();
+  }
+
+  // Delivery packaging
+  if (source === "DELIVERY" && (taskType === "PACK" || taskType === "PACKAGE")) {
+    const orderId = ctx.order_short_id ?? (ctx.order_id ? String(ctx.order_id).slice(0, 4).toUpperCase() : "");
+    return `Embalar pedido delivery${orderId ? ` #${orderId}` : ""}`;
+  }
+
+  // Delivery source without specific type
+  if (source === "DELIVERY" && ctx.order_id) {
+    const orderId = ctx.order_short_id ?? String(ctx.order_id).slice(0, 4).toUpperCase();
+    return `Pedido delivery #${orderId}`;
+  }
+
+  // Table with category fallback
+  if (ctx.table_number) {
+    return `Mesa ${ctx.table_number} \u2014 ${ctx.category ?? msg.split(" ")[0] ?? ""}`.trim();
+  }
+
+  // Delay without table
+  if (ctx.delay_seconds) {
+    return `Atraso ${Math.round(Number(ctx.delay_seconds) / 60)}min`;
+  }
+
+  // Strip UUIDs from messages that contain them
   if (msg.match(/[0-9a-f]{8}-[0-9a-f]{4}/i)) {
-    const ctx = task.context;
-    if (ctx?.table_number)
-      return `Mesa ${ctx.table_number} — ${ctx.category ?? msg.split(" ")[0]}`;
-    if (ctx?.delay_seconds)
-      return `Atraso ${Math.round(Number(ctx.delay_seconds) / 60)}min`;
     const stripped = msg
       .replace(
         /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/gi,
@@ -153,6 +234,7 @@ function humanizeTitle(task: CoreTask): string {
       .trim();
     return stripped || msg;
   }
+
   return msg;
 }
 
@@ -374,6 +456,10 @@ export function TPVTasksPage() {
         0%, 100% { border-left-color: #dc2626; }
         50% { border-left-color: #7f1d1d; }
       }
+      @keyframes bottleneckPulse {
+        0%, 100% { box-shadow: 0 0 0 0 rgba(234,179,8,0.5); }
+        50% { box-shadow: 0 0 0 4px rgba(234,179,8,0.2); }
+      }
     `;
     document.head.appendChild(style);
     styleInjected.current = true;
@@ -391,6 +477,9 @@ export function TPVTasksPage() {
   const [newTaskStation, setNewTaskStation] = useState("SERVICE");
   const [people, setPeople] = useState<CoreRestaurantPerson[]>([]);
   const [reassigning, setReassigning] = useState(false);
+  const [viewFilter, setViewFilter] = useState<ViewFilter>("TODAS");
+  const [blockingReason, setBlockingReason] = useState("");
+  const [showBlockInput, setShowBlockInput] = useState(false);
 
   // ---- Data loading ----
   const loadTasks = useCallback(async () => {
@@ -433,12 +522,31 @@ export function TPVTasksPage() {
   // ---- Computed columns ----
   const filtered = useMemo(
     () =>
-      allTasks.filter(
-        (task) =>
-          stationFilter === "ALL" ||
-          (task.station ?? "SERVICE").toUpperCase() === stationFilter,
-      ),
-    [allTasks, stationFilter],
+      allTasks.filter((task) => {
+        // Station filter
+        if (
+          stationFilter !== "ALL" &&
+          (task.station ?? "SERVICE").toUpperCase() !== stationFilter
+        )
+          return false;
+
+        // View filter
+        switch (viewFilter) {
+          case "MINHAS":
+            // No user context in TPV yet — show all
+            return true;
+          case "CRITICAS":
+            return task.priority === "CRITICA";
+          case "BLOQUEADAS":
+            return isWaiting(task);
+          case "CONCLUIDAS":
+            return task.status === "RESOLVED" || task.status === "DISMISSED";
+          case "TODAS":
+          default:
+            return true;
+        }
+      }),
+    [allTasks, stationFilter, viewFilter],
   );
 
   // Agir Agora: OPEN tasks (not waiting)
@@ -608,6 +716,54 @@ export function TPVTasksPage() {
     }
   }, [restaurantId, newTaskTitle, newTaskPriority, newTaskStation, loadTasks]);
 
+  const handleBlock = useCallback(
+    async (taskId: string, reason: string) => {
+      if (!reason.trim()) return;
+      try {
+        setActingOn(taskId);
+        await blockTask(taskId, reason.trim());
+        setShowBlockInput(false);
+        setBlockingReason("");
+        await loadTasks();
+        setSelectedTask((prev) =>
+          prev
+            ? {
+                ...prev,
+                context: { ...(prev.context ?? {}), waiting_on: reason.trim() },
+              }
+            : null,
+        );
+      } catch (err) {
+        console.error("[TPV Tasks] Block error:", err);
+      } finally {
+        setActingOn(null);
+      }
+    },
+    [loadTasks],
+  );
+
+  const handleUnblock = useCallback(
+    async (taskId: string) => {
+      try {
+        setActingOn(taskId);
+        await unblockTask(taskId);
+        await loadTasks();
+        setSelectedTask((prev) => {
+          if (!prev) return null;
+          const { waiting_on: _w, blocked_at: _b, ...ctxRest } = prev.context ?? {};
+          void _w;
+          void _b;
+          return { ...prev, context: ctxRest };
+        });
+      } catch (err) {
+        console.error("[TPV Tasks] Unblock error:", err);
+      } finally {
+        setActingOn(null);
+      }
+    },
+    [loadTasks],
+  );
+
   // Keep selected task in sync with refreshed data
   useEffect(() => {
     if (selectedTask) {
@@ -697,7 +853,11 @@ export function TPVTasksPage() {
     return (
       <div
         key={task.id}
-        onClick={() => setSelectedTask(task)}
+        onClick={() => {
+          setSelectedTask(task);
+          setShowBlockInput(false);
+          setBlockingReason("");
+        }}
         style={{
           backgroundColor: "#1e1e1e",
           borderRadius: 12,
@@ -816,6 +976,34 @@ export function TPVTasksPage() {
           <span>{task.assigned_name ?? t("tasks.unassigned", "Unassigned")}</span>
         </div>
 
+        {/* Waiting reason chip */}
+        {task.context?.waiting_on && (
+          <div
+            style={{
+              fontSize: 10,
+              color: COL_YELLOW,
+              backgroundColor: COL_YELLOW + "15",
+              padding: "2px 6px",
+              borderRadius: 4,
+              marginTop: 4,
+              display: "flex",
+              alignItems: "center",
+              gap: 4,
+            }}
+          >
+            <span>{"\u23F3"}</span>
+            <span
+              style={{
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+                whiteSpace: "nowrap",
+              }}
+            >
+              {String(task.context.waiting_on)}
+            </span>
+          </div>
+        )}
+
         {/* Quick actions based on column */}
         {columnKey === "NOW" && (
           <div style={{ display: "flex", gap: 4, marginTop: 8 }}>
@@ -882,7 +1070,9 @@ export function TPVTasksPage() {
     tasks: CoreTask[],
     columnKey: string,
     emptyMsg: string,
-  ) => (
+  ) => {
+    const colOverdueCount = columnKey === "NOW" ? tasks.filter((t) => isOverdue(t)).length : 0;
+    return (
     <div
       style={{
         flex: 1,
@@ -907,18 +1097,36 @@ export function TPVTasksPage() {
         }}
       >
         <span style={{ fontSize: 13, fontWeight: 700, color }}>{title}</span>
-        <span
-          style={{
-            fontSize: 11,
-            fontWeight: 600,
-            color,
-            backgroundColor: color + "20",
-            padding: "2px 8px",
-            borderRadius: 10,
-          }}
-        >
-          {tasks.length}
-        </span>
+        <div style={{ display: "flex", gap: 4, alignItems: "center" }}>
+          {colOverdueCount > 0 && (
+            <span
+              style={{
+                fontSize: 10,
+                fontWeight: 700,
+                color: "#fff",
+                backgroundColor: "#dc2626",
+                padding: "2px 6px",
+                borderRadius: 10,
+                minWidth: 18,
+                textAlign: "center",
+              }}
+            >
+              {colOverdueCount}
+            </span>
+          )}
+          <span
+            style={{
+              fontSize: 11,
+              fontWeight: 600,
+              color,
+              backgroundColor: color + "20",
+              padding: "2px 8px",
+              borderRadius: 10,
+            }}
+          >
+            {tasks.length}
+          </span>
+        </div>
       </div>
 
       {/* Card list */}
@@ -952,7 +1160,8 @@ export function TPVTasksPage() {
         )}
       </div>
     </div>
-  );
+    );
+  };
 
   // ---- Detail panel SLA ----
   const detailSla = selectedTask ? slaDisplay(selectedTask, t) : null;
@@ -1038,7 +1247,7 @@ export function TPVTasksPage() {
           />
         </div>
 
-        {/* Filter bar */}
+        {/* Station filter bar */}
         <div
           style={{
             display: "flex",
@@ -1047,17 +1256,28 @@ export function TPVTasksPage() {
             flexWrap: "wrap",
           }}
         >
-          {(["ALL", "SERVICE", "KITCHEN", "BAR", "DELIVERY", "STOCK", "CLEANING"] as const).map((f) => (
-            <button
-              key={f}
-              onClick={() => setStationFilter(f)}
-              style={filterBtnStyle(stationFilter === f)}
-            >
-              {f === "ALL"
-                ? t("tasks.filterAll", "All")
-                : `${stationEmoji(f)} ${t(`tasks.filter${stationLabelKey(f)}`, stationLabelKey(f))}`}
-            </button>
-          ))}
+          {(["ALL", "SERVICE", "KITCHEN", "BAR", "DELIVERY", "STOCK", "CLEANING"] as const).map((f) => {
+            const isBottleneck = bottleneck !== null && f === bottleneck;
+            return (
+              <button
+                key={f}
+                onClick={() => setStationFilter(f)}
+                style={{
+                  ...filterBtnStyle(stationFilter === f),
+                  ...(isBottleneck
+                    ? {
+                        border: `2px solid ${COL_YELLOW}`,
+                        animation: "bottleneckPulse 2s ease-in-out infinite",
+                      }
+                    : {}),
+                }}
+              >
+                {f === "ALL"
+                  ? t("tasks.filterAll", "All")
+                  : `${stationEmoji(f)} ${t(`tasks.filter${stationLabelKey(f)}`, stationLabelKey(f))}`}
+              </button>
+            );
+          })}
 
           <div
             style={{
@@ -1087,6 +1307,47 @@ export function TPVTasksPage() {
               ? t("common:cancel", "Cancel")
               : t("tasks.newTask", "+ New")}
           </button>
+        </div>
+
+        {/* View mode filter row */}
+        <div
+          style={{
+            display: "flex",
+            gap: 6,
+            alignItems: "center",
+            flexWrap: "wrap",
+          }}
+        >
+          {(
+            [
+              { key: "TODAS" as ViewFilter, label: t("tasks.viewAll", "Todas") },
+              { key: "MINHAS" as ViewFilter, label: t("tasks.viewMine", "Minhas") },
+              { key: "CRITICAS" as ViewFilter, label: t("tasks.viewCritical", "Cr\u00edticas") },
+              { key: "BLOQUEADAS" as ViewFilter, label: t("tasks.viewBlocked", "Bloqueadas") },
+              { key: "CONCLUIDAS" as ViewFilter, label: t("tasks.viewDone", "Conclu\u00eddas") },
+            ] as const
+          ).map(({ key, label }) => {
+            const isActive = viewFilter === key;
+            return (
+              <button
+                key={key}
+                onClick={() => setViewFilter(key)}
+                style={{
+                  padding: "4px 12px",
+                  borderRadius: 6,
+                  border: "none",
+                  fontSize: 12,
+                  fontWeight: isActive ? 700 : 500,
+                  cursor: "pointer",
+                  backgroundColor: isActive ? "#3b82f620" : "#141414",
+                  color: isActive ? COL_BLUE : "#737373",
+                  transition: "all 0.15s ease",
+                }}
+              >
+                {label}
+              </button>
+            );
+          })}
         </div>
 
         {/* Create form */}
@@ -1615,6 +1876,112 @@ export function TPVTasksPage() {
                       ? "..."
                       : t("tasks.actionResolve", "Concluir")}
                   </button>
+
+                  {/* Block / Unblock */}
+                  {isWaiting(selectedTask) ? (
+                    <button
+                      onClick={() => handleUnblock(selectedTask.id)}
+                      disabled={actingOn === selectedTask.id}
+                      style={fullActionBtnStyle(COL_YELLOW)}
+                    >
+                      {actingOn === selectedTask.id
+                        ? "..."
+                        : t("tasks.actionUnblock", "Desbloquear")}
+                    </button>
+                  ) : (
+                    <>
+                      {!showBlockInput ? (
+                        <button
+                          onClick={() => setShowBlockInput(true)}
+                          style={fullActionBtnStyle(COL_YELLOW)}
+                        >
+                          {t("tasks.actionBlock", "Bloquear / Aguardar")}
+                        </button>
+                      ) : (
+                        <div
+                          style={{
+                            display: "flex",
+                            gap: 6,
+                            padding: 8,
+                            backgroundColor: COL_YELLOW + "10",
+                            borderRadius: 8,
+                            border: `1px solid ${COL_YELLOW}30`,
+                          }}
+                        >
+                          <input
+                            value={blockingReason}
+                            onChange={(e) => setBlockingReason(e.target.value)}
+                            placeholder={t(
+                              "tasks.blockPlaceholder",
+                              "Motivo do bloqueio...",
+                            )}
+                            onKeyDown={(e) => {
+                              if (e.key === "Enter")
+                                handleBlock(selectedTask.id, blockingReason);
+                              if (e.key === "Escape") {
+                                setShowBlockInput(false);
+                                setBlockingReason("");
+                              }
+                            }}
+                            autoFocus
+                            style={{
+                              flex: 1,
+                              padding: "6px 10px",
+                              borderRadius: 6,
+                              border: "1px solid #27272a",
+                              backgroundColor: "#0a0a0a",
+                              color: "#fafafa",
+                              fontSize: 12,
+                              outline: "none",
+                            }}
+                          />
+                          <button
+                            onClick={() =>
+                              handleBlock(selectedTask.id, blockingReason)
+                            }
+                            disabled={
+                              !blockingReason.trim() ||
+                              actingOn === selectedTask.id
+                            }
+                            style={{
+                              padding: "6px 12px",
+                              borderRadius: 6,
+                              border: "none",
+                              fontSize: 11,
+                              fontWeight: 600,
+                              cursor: blockingReason.trim()
+                                ? "pointer"
+                                : "not-allowed",
+                              backgroundColor: blockingReason.trim()
+                                ? COL_YELLOW
+                                : "#1e1e1e",
+                              color: blockingReason.trim() ? "#000" : "#737373",
+                            }}
+                          >
+                            OK
+                          </button>
+                          <button
+                            onClick={() => {
+                              setShowBlockInput(false);
+                              setBlockingReason("");
+                            }}
+                            style={{
+                              padding: "6px 8px",
+                              borderRadius: 6,
+                              border: "none",
+                              fontSize: 11,
+                              cursor: "pointer",
+                              backgroundColor: "transparent",
+                              color: "#737373",
+                            }}
+                          >
+                            {"\u2715"}
+                          </button>
+                        </div>
+                      )}
+                    </>
+                  )}
+
                   {selectedTask.priority !== "CRITICA" && (
                     <button
                       onClick={() => handleEscalate(selectedTask.id)}

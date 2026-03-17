@@ -169,6 +169,107 @@ export async function reassignTask(
 }
 
 /**
+ * Block a task — sets waiting_on in context and optionally changes status.
+ * Used when a task can't progress (waiting for ingredient, waiting for table, etc.)
+ */
+export async function blockTask(
+  taskId: string,
+  reason: string,
+): Promise<void> {
+  // First read current context
+  const { data: task, error: readErr } = await dockerCoreClient
+    .from("gm_tasks")
+    .select("context")
+    .eq("id", taskId)
+    .maybeSingle();
+
+  if (readErr || !task) throw new Error("Task not found");
+
+  const currentContext = (task.context ?? {}) as Record<string, unknown>;
+  const updatedContext = {
+    ...currentContext,
+    waiting_on: reason,
+    blocked_at: new Date().toISOString(),
+  };
+
+  const { error } = await dockerCoreClient
+    .from("gm_tasks")
+    .update({ context: updatedContext })
+    .eq("id", taskId);
+
+  if (error) throw new Error(error.message ?? "Falha ao bloquear tarefa");
+}
+
+/**
+ * Unblock a task — removes waiting_on from context.
+ */
+export async function unblockTask(taskId: string): Promise<void> {
+  const { data: task, error: readErr } = await dockerCoreClient
+    .from("gm_tasks")
+    .select("context")
+    .eq("id", taskId)
+    .maybeSingle();
+
+  if (readErr || !task) throw new Error("Task not found");
+
+  const currentContext = (task.context ?? {}) as Record<string, unknown>;
+  const { waiting_on, blocked_at, ...rest } = currentContext;
+
+  const { error } = await dockerCoreClient
+    .from("gm_tasks")
+    .update({ context: rest })
+    .eq("id", taskId);
+
+  if (error) throw new Error(error.message ?? "Falha ao desbloquear tarefa");
+}
+
+/**
+ * Add evidence to a task before completing (temperature log, text note, etc.)
+ */
+export async function addTaskEvidence(
+  taskId: string,
+  evidence: Record<string, unknown>,
+): Promise<void> {
+  const { data: task, error: readErr } = await dockerCoreClient
+    .from("gm_tasks")
+    .select("context")
+    .eq("id", taskId)
+    .maybeSingle();
+
+  if (readErr || !task) throw new Error("Task not found");
+
+  const currentContext = (task.context ?? {}) as Record<string, unknown>;
+  const updatedContext = {
+    ...currentContext,
+    evidence: {
+      ...(currentContext.evidence as Record<string, unknown> ?? {}),
+      ...evidence,
+      recorded_at: new Date().toISOString(),
+    },
+  };
+
+  const { error } = await dockerCoreClient
+    .from("gm_tasks")
+    .update({ context: updatedContext })
+    .eq("id", taskId);
+
+  if (error) throw new Error(error.message ?? "Falha ao adicionar evidência");
+}
+
+/**
+ * Resolve task with evidence in one operation.
+ */
+export async function resolveTaskWithEvidence(
+  taskId: string,
+  evidence?: Record<string, unknown>,
+): Promise<void> {
+  if (evidence) {
+    await addTaskEvidence(taskId, evidence);
+  }
+  await resolveTask(taskId);
+}
+
+/**
  * Escalate task priority (e.g. MEDIA -> ALTA -> CRITICA).
  */
 export async function escalateTask(taskId: string): Promise<void> {
