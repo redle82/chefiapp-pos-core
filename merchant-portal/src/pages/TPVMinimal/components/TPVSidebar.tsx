@@ -4,19 +4,19 @@
  * Two modes: compact (72px, icon-only) and expanded (220px, icon + label).
  * State persisted in localStorage key `tpv_sidebar_expanded`.
  *
- * Architecture — 4 sections separated by dividers:
+ * Architecture — 3 sections separated by dividers:
  *
- *   OPERACAO (daily operations):
- *     POS · Mesas · Turno/Caixa · Comando KDS · Tarefas · Reservas · Delivery
+ *   OPERAÇÃO (daily operations):
+ *     POS · Mesas · Turno/Caixa · Comando KDS · Tarefas · Delivery · Reservas
  *
  *   TELAS (external screens):
  *     Telas
  *
- *   NEGOCIO (restaurant business modules):
- *     Catering · Saladitos · Marketing
- *
  *   SISTEMA (system/config):
- *     Impressoras · Definicoes
+ *     Impressoras · Definições
+ *
+ * Philosophy: TPV = operação viva. Módulos de gestão profunda (Catering,
+ * Saladitos, Marketing, Redes Sociais) pertencem ao Admin, não ao TPV.
  *
  * Features:
  * - Styled CSS-only tooltips (compact mode only)
@@ -152,39 +152,6 @@ function IconDelivery() {
   );
 }
 
-function IconCatering() {
-  return (
-    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M3 13h14" />
-      <path d="M4 13a6 6 0 0112 0" />
-      <line x1="10" y1="7" x2="10" y2="5" />
-      <circle cx="10" cy="4" r="1" />
-      <path d="M5 13v2a1 1 0 001 1h8a1 1 0 001-1v-2" />
-    </svg>
-  );
-}
-
-function IconSaladitos() {
-  return (
-    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M10 2c-3 3-6 5-6 9a6 6 0 0012 0c0-4-3-6-6-9z" />
-      <path d="M10 18v-6" />
-      <path d="M10 12c-2-1.5-3-3-3-5" />
-      <path d="M10 12c2-1.5 3-3 3-5" />
-    </svg>
-  );
-}
-
-function IconMarketing() {
-  return (
-    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M16 3L6 8H3a1 1 0 00-1 1v2a1 1 0 001 1h3l10 5V3z" />
-      <path d="M6 8v4" />
-      <path d="M17 7.5a3.5 3.5 0 010 5" />
-    </svg>
-  );
-}
-
 function IconPrinter() {
   return (
     <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
@@ -224,9 +191,6 @@ type IconKey =
   | "gear"
   | "screen"
   | "delivery"
-  | "catering"
-  | "saladitos"
-  | "marketing"
   | "printer";
 
 function iconFor(k: IconKey) {
@@ -249,12 +213,6 @@ function iconFor(k: IconKey) {
       return <IconScreen />;
     case "delivery":
       return <IconDelivery />;
-    case "catering":
-      return <IconCatering />;
-    case "saladitos":
-      return <IconSaladitos />;
-    case "marketing":
-      return <IconMarketing />;
     case "printer":
       return <IconPrinter />;
   }
@@ -304,16 +262,6 @@ const SECTIONS: SidebarSection[] = [
     headerFallback: "TELAS",
     items: [
       { type: "nav", to: "/op/tpv/screens", label: "screens", icon: "screen" },
-    ],
-  },
-  {
-    id: "negocio",
-    headerKey: "sidebar.sectionNegocio",
-    headerFallback: "NEGOCIO",
-    items: [
-      { type: "nav", to: "/op/tpv/catering", label: "catering", icon: "catering" },
-      { type: "nav", to: "/op/tpv/saladitos", label: "saladitos", icon: "saladitos" },
-      { type: "nav", to: "/op/tpv/marketing", label: "marketing", icon: "marketing" },
     ],
   },
   {

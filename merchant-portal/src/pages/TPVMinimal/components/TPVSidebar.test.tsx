@@ -15,14 +15,10 @@ vi.mock("react-i18next", () => ({
         "sidebar.reservations": "Reservas",
         "sidebar.delivery": "Delivery",
         "sidebar.screens": "Telas",
-        "sidebar.catering": "Catering",
-        "sidebar.saladitos": "Saladitos",
-        "sidebar.marketing": "Marketing",
         "sidebar.printers": "Impressoras",
         "sidebar.settings": "Definicoes",
         "sidebar.sectionOperacao": "OPERACAO",
         "sidebar.sectionTelas": "TELAS",
-        "sidebar.sectionNegocio": "NEGOCIO",
         "sidebar.sectionSistema": "SISTEMA",
         "sidebar.exitConfirmTitle": "Tem a certeza que quer sair do TPV?",
         "sidebar.exitConfirmBody": "A sessao operacional sera encerrada.",
@@ -93,22 +89,6 @@ describe("TPVSidebar", () => {
     expect(telasLink.getAttribute("href")).toBe("/op/tpv/screens");
   });
 
-  it("renders NEGOCIO section items", () => {
-    renderSidebar();
-
-    const cateringLink = screen.getByTitle("Catering");
-    expect(cateringLink).toBeTruthy();
-    expect(cateringLink.getAttribute("href")).toBe("/op/tpv/catering");
-
-    const saladitosLink = screen.getByTitle("Saladitos");
-    expect(saladitosLink).toBeTruthy();
-    expect(saladitosLink.getAttribute("href")).toBe("/op/tpv/saladitos");
-
-    const marketingLink = screen.getByTitle("Marketing");
-    expect(marketingLink).toBeTruthy();
-    expect(marketingLink.getAttribute("href")).toBe("/op/tpv/marketing");
-  });
-
   it("renders SISTEMA section items", () => {
     renderSidebar();
 
@@ -165,8 +145,8 @@ describe("TPVSidebar", () => {
     renderSidebar();
 
     const dividers = screen.getAllByTestId("section-divider");
-    // 1 after restaurant identity + 3 between sections = 4 total
-    expect(dividers.length).toBe(4);
+    // 1 after restaurant identity + 2 between 3 sections = 3 total
+    expect(dividers.length).toBe(3);
   });
 
   it("starts in compact mode by default", () => {
@@ -196,11 +176,10 @@ describe("TPVSidebar", () => {
     fireEvent.click(screen.getByTestId("sidebar-toggle"));
 
     const headers = screen.getAllByTestId("section-header");
-    expect(headers.length).toBe(4);
+    expect(headers.length).toBe(3);
     expect(headers[0].textContent).toBe("OPERACAO");
     expect(headers[1].textContent).toBe("TELAS");
-    expect(headers[2].textContent).toBe("NEGOCIO");
-    expect(headers[3].textContent).toBe("SISTEMA");
+    expect(headers[2].textContent).toBe("SISTEMA");
   });
 
   it("persists expanded state to localStorage", () => {
