@@ -63,17 +63,16 @@ export function CleaningHome() {
         }}
       >
         {cleaningTasks.length === 0 ? (
-          <>
-            <li style={{ padding: "8px 0", color: colors.text.secondary }}>
-              ☐ Mesa 3
-            </li>
-            <li style={{ padding: "8px 0", color: colors.text.secondary }}>
-              ☐ WC
-            </li>
-            <li style={{ padding: "8px 0", color: colors.text.secondary }}>
-              ☐ Área externa
-            </li>
-          </>
+          <li
+            style={{
+              padding: "24px 12px",
+              color: colors.text.tertiary,
+              textAlign: "center",
+              fontSize: 14,
+            }}
+          >
+            Sem tarefas de limpeza pendentes.
+          </li>
         ) : (
           cleaningTasks.slice(0, 10).map((t) => (
             <li

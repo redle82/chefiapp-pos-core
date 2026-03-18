@@ -19,7 +19,7 @@ export function ManagerHome() {
 
   const pendingTasks = tasks.filter((t) => t.status !== "done");
   const criticalAlerts = specDrifts.filter(
-    (d) => d.severity === "critical" || d.severity === "high",
+    (d) => d.status === "new",
   );
 
   // Gargalos

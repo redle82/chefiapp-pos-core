@@ -73,7 +73,11 @@ export function TeamSectorDashboard() {
         </>
       }
       exceptions={exceptions}
-      actions={[{ label: "Ver equipe em turno", to: "/app/staff/mode/team" }]}
+      actions={[
+        { label: "📋 Escalas da semana", to: "/app/staff/home/schedule" },
+        { label: "💬 Comunicação", to: "/app/staff/home/comms" },
+        { label: "Ver equipe em turno", to: "/app/staff/mode/team" },
+      ]}
     />
   );
 }

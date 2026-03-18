@@ -17,6 +17,7 @@ import { LocaleSwitcher } from "../../../components/LocaleSwitcher";
 import { OfflineIndicator } from "../../../ui/OfflineIndicator";
 import { RestaurantLogo } from "../../../ui/RestaurantLogo";
 import { AppStaffBootScreen } from "../AppStaffBootScreen";
+import { OfflineBanner } from "../components/OfflineBanner";
 import { useStaff } from "../context/StaffContext";
 import { getOperatorProfile } from "../data/operatorProfiles";
 import {
@@ -299,6 +300,7 @@ export function StaffAppShellLayout({
       </header>
 
       <OfflineIndicator />
+      <OfflineBanner />
 
       {/* Browser access blocked by BrowserBlockGuard — no PWA install banner needed */}
 

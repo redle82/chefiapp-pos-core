@@ -497,6 +497,7 @@ const StaffProviderInternal: React.FC<StaffProviderProps> = ({
 
     const fetchEmployees = async () => {
       try {
+        const { db } = await import("../../../core/db");
         const { data } = await db
           .from("gm_staff")
           .select("id, restaurant_id, name, role, active")
@@ -752,8 +753,20 @@ const StaffProviderInternal: React.FC<StaffProviderProps> = ({
   const verifyPin = (employeeId: string, pin: string) => {
     const emp = employees.find((e) => e.id === employeeId);
     if (!emp) return false;
-    if (!emp.pin) return true; // Security flaw? Or feature? Assuming no PIN = open
-    return emp.pin === pin;
+    // Employees without a PIN configured require PIN setup before operating
+    if (!emp.pin) {
+      console.warn(
+        `[StaffContext] Employee ${employeeId} has no PIN configured. Denying access — require PIN setup.`,
+      );
+      return false;
+    }
+    // Constant-time comparison to prevent timing attacks
+    if (pin.length !== emp.pin.length) return false;
+    let result = 0;
+    for (let i = 0; i < pin.length; i++) {
+      result |= pin.charCodeAt(i) ^ emp.pin.charCodeAt(i);
+    }
+    return result === 0;
   };
 
   /** DEV ONLY: simula check-in por perfil (sem tabela employees/shift_logs). */

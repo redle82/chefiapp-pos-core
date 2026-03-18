@@ -350,6 +350,26 @@ const TeamSectorDashboard = lazy(() =>
     default: m.TeamSectorDashboard,
   })),
 );
+const StaffSchedulePage = lazy(() =>
+  import("../pages/AppStaff/pages/SchedulePage").then((m) => ({
+    default: m.SchedulePage,
+  })),
+);
+const StaffCommsPage = lazy(() =>
+  import("../pages/AppStaff/pages/CommsPage").then((m) => ({
+    default: m.CommsPage,
+  })),
+);
+const StaffNotificationsPage = lazy(() =>
+  import("../pages/AppStaff/pages/NotificationsPage").then((m) => ({
+    default: m.NotificationsPage,
+  })),
+);
+const StaffTipsAnalyticsPage = lazy(() =>
+  import("../pages/AppStaff/pages/TipsAnalyticsPage").then((m) => ({
+    default: m.TipsAnalyticsPage,
+  })),
+);
 const CleaningHome = lazy(() =>
   import("../pages/AppStaff/homes/CleaningHome").then((m) => ({
     default: m.CleaningHome,
@@ -708,6 +728,26 @@ const TPVTasksPage = lazy(() =>
     default: m.TPVTasksPage,
   })),
 );
+const TPVPrintersPage = lazy(() =>
+  import("../pages/TPVMinimal/PrintersPage").then((m) => ({
+    default: m.PrintersPage,
+  })),
+);
+const TPVDashboardPage = lazy(() =>
+  import("../pages/TPVMinimal/DashboardPage").then((m) => ({
+    default: m.DashboardPage,
+  })),
+);
+const TPVTableQRCodesPage = lazy(() =>
+  import("../pages/TPVMinimal/TableQRCodesPage").then((m) => ({
+    default: m.TableQRCodesPage,
+  })),
+);
+const CustomerMenuPage = lazy(() =>
+  import("../pages/CustomerMenu/CustomerMenuPage").then((m) => ({
+    default: m.CustomerMenuPage,
+  })),
+);
 const TPVReadyPage = lazy(() =>
   import("../pages/TPVReadyPage").then((m) => ({ default: m.TPVReadyPage })),
 );
@@ -790,6 +830,7 @@ export const OperationalRoutesFragment = (
       element={<CustomerOrderStatusView />}
     />
     <Route path="/public/:slug/kds" element={<PublicKDS />} />
+    <Route path="/public/:slug/menu" element={<CustomerMenuPage />} />
     <Route path="/track/:orderId" element={<TrackOrderPage />} />
 
     <Route path="/welcome" element={<WelcomePage />} />
@@ -855,6 +896,9 @@ export const OperationalRoutesFragment = (
           <Route path="delivery" element={<TPVDeliveryPage />} />
           <Route path="web-editor" element={<TPVWebEditorPage />} />
           <Route path="screens" element={<TPVScreensPage />} />
+          <Route path="printers" element={<TPVPrintersPage />} />
+          <Route path="dashboard" element={<TPVDashboardPage />} />
+          <Route path="qr-codes" element={<TPVTableQRCodesPage />} />
         </Route>
       </Route>
       {/* KDS lives inside TPV — redirect standalone route */}
@@ -973,7 +1017,23 @@ export const OperationalRoutesFragment = (
           <BrowserBlockGuard requiredPlatform="mobile" moduleLabel="AppStaff" />
         }
       >
-        <Route path="/app/staff" element={<AppStaffWrapper />}>
+        <Route path="/app/staff" element={
+            <ErrorBoundary
+              context="AppStaff"
+              fallback={
+                <GlobalBlockedView
+                  title="App Staff indisponível"
+                  description="O módulo Staff encontrou um erro. Recarregue a aplicação para continuar."
+                  action={{
+                    label: "Recarregar",
+                    onClick: () => window.location.reload(),
+                  }}
+                />
+              }
+            >
+              <AppStaffWrapper />
+            </ErrorBoundary>
+          }>
           <Route index element={<StaffIndexRedirect />} />
           <Route
             path="home"
@@ -999,6 +1059,10 @@ export const OperationalRoutesFragment = (
             />
             <Route path="sector/tasks" element={<TasksSectorDashboard />} />
             <Route path="sector/team" element={<TeamSectorDashboard />} />
+            <Route path="schedule" element={<StaffSchedulePage />} />
+            <Route path="comms" element={<StaffCommsPage />} />
+            <Route path="notifications" element={<StaffNotificationsPage />} />
+            <Route path="tips" element={<StaffTipsAnalyticsPage />} />
             <Route path="sector/kitchen" element={<KitchenSectorDashboard />} />
             <Route
               path="sector/cleaning"

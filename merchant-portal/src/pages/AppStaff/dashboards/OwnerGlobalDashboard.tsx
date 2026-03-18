@@ -787,6 +787,41 @@ export function OwnerGlobalDashboard() {
         </div>
       </Section>
 
+      <Section title="Ferramentas" subtitle="Acesso rápido">
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))",
+            gap: 10,
+          }}
+        >
+          <ClickableCard
+            label="📋 Escalas"
+            value="Semana"
+            hint="Gerir turnos"
+            onClick={() => navigate("/app/staff/home/schedule")}
+          />
+          <ClickableCard
+            label="💬 Comunicação"
+            value="Chat"
+            hint="Anúncios e equipa"
+            onClick={() => navigate("/app/staff/home/comms")}
+          />
+          <ClickableCard
+            label="🔔 Notificações"
+            value="Alertas"
+            hint="Centro de avisos"
+            onClick={() => navigate("/app/staff/home/notifications")}
+          />
+          <ClickableCard
+            label="💰 Gorjetas"
+            value="Analytics"
+            hint="Performance"
+            onClick={() => navigate("/app/staff/home/tips")}
+          />
+        </div>
+      </Section>
+
       {/* Spacer para clearance do bottom nav */}
       <div style={{ height: 80, flexShrink: 0 }} aria-hidden="true" />
     </div>

@@ -63,9 +63,13 @@ export const BiometricService = {
         server: "chefiapp.pos",
       }).catch(() => {});
 
+      // Generate a unique verification token per registration (not a real password —
+      // the biometric prompt itself is the auth gate, this token is just a required
+      // field for the Keychain/Keystore entry).
+      const verificationToken = `bio-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
       await module.NativeBiometric.setCredentials({
         username: username,
-        password: "biometric-active", // Placeholder token
+        password: verificationToken,
         server: "chefiapp.pos",
       });
       return true;
