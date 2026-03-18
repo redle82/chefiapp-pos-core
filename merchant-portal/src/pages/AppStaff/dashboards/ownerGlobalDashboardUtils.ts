@@ -37,7 +37,7 @@ export function buildFinancialAlerts(snapshot: {
 }) {
   const alerts: string[] = [];
   if (snapshot.avg7dCents > 0 && snapshot.todayCents < snapshot.avg7dCents) {
-    alerts.push("Receita abaixo da media 7 dias");
+    alerts.push("Receita abaixo da média 7 dias");
   }
   if (
     snapshot.yesterdayCents > 0 &&

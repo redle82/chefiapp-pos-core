@@ -59,6 +59,13 @@ export const ROLE_NAV: Record<StaffRole, NavItem[]> = {
     { to: "cleaning/checklists", label: "Checklists", icon: "🧹" },
     { to: "cleaning/alerts", label: "Alertas", icon: "⚠️" },
   ],
+  delivery: [
+    { to: "delivery", label: "Painel", icon: "📦" },
+    { to: "delivery/orders", label: "Entregas", icon: "🚚" },
+    { to: "delivery/map", label: "Mapa", icon: "🗺️" },
+    { to: "delivery/drivers", label: "Condutores", icon: "🚗" },
+    { to: "delivery/reviews", label: "Avaliações", icon: "⭐" },
+  ],
 };
 
 export function getNavItemsForRole(role: StaffRole): NavItem[] {

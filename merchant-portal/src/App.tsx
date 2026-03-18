@@ -286,11 +286,10 @@ function AppContentWithBilling() {
   const isOperationalSurface =
     location.pathname.startsWith("/op/tpv") ||
     location.pathname.startsWith("/op/kds");
-  const isStaffLauncher =
-    location.pathname === "/app/staff/home" ||
-    location.pathname.startsWith("/app/staff/home/");
-  const isStaffMore = location.pathname.startsWith("/app/staff/profile");
-  const shouldShowBillingBanner = isStaffLauncher || isStaffMore;
+  // AppStaff is an operational surface — billing banner never shown here.
+  // Billing management lives in /admin, not in the operational terminal.
+  const isStaffPath = location.pathname.startsWith("/app/staff");
+  const shouldShowBillingBanner = !isStaffPath;
   return (
     <>
       <EventMonitorBootstrap />

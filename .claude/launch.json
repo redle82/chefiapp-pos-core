@@ -4,7 +4,7 @@
     {
       "name": "Merchant Portal (Dev)",
       "runtimeExecutable": "bash",
-      "runtimeArgs": ["-c", "cd /Users/goldmonkey/Projetos/Apps-Proprios/chefiapp-pos-core/.claude/worktrees/beautiful-wilbur/merchant-portal && VITE_DEBUG_DIRECT_FLOW=true VITE_ALLOW_MOCK_AUTH=true npx vite --port 5177"],
+      "runtimeArgs": ["-c", "cd /Users/goldmonkey/Projetos/Apps-Proprios/chefiapp-pos-core/.claude/worktrees/beautiful-wilbur/merchant-portal && VITE_DEBUG_DIRECT_FLOW=true VITE_ALLOW_MOCK_AUTH=true VITE_ALLOW_BROWSER_APPSTAFF_DEV=true npx vite --port 5177"],
       "port": 5177
     },
     {

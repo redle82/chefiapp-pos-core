@@ -1,24 +1,28 @@
 /**
- * TPVLayout — Layout do TPV: sidebar esquerda, header topo, área principal (Outlet).
+ * TPVLayout — Layout do TPV: sidebar esquerda, header topo, area principal (Outlet).
  * Rotas: /op/tpv (index = POS), /op/tpv/orders, /op/tpv/settings.
  * Inclui TPVInstallPrompt para instalar PWA e usar sem barra do navegador.
  *
- * Integração Operacional:
+ * Integracao Operacional:
  * - OperationalHeader: KPIs em tempo real (receita, pedidos, cozinha, impressora).
+ * - Auto-lock: 3-tier idle protection (dim -> lock -> expire).
  */
 
-import { Component, type ReactNode, useState } from "react";
+import { Component, type ReactNode, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Outlet, useLocation } from "react-router-dom";
 import { useAuth } from "../../core/auth/useAuth";
 import { useRestaurantIdentity } from "../../core/identity/useRestaurantIdentity";
 import { MadeWithLoveFooter } from "../../components/MadeWithLoveFooter";
 import { OperationalHeader } from "../../components/pos/OperationalHeader";
+import { IdleDimOverlay } from "./components/IdleDimOverlay";
+import { StationLockScreen } from "./components/StationLockScreen";
 import { TPVHeader } from "./components/TPVHeader";
 import { TPVLockScreen } from "./components/TPVLockScreen";
 import { TPVNotificationBar } from "./components/TPVNotificationBar";
 import { TPVSidebar } from "./components/TPVSidebar";
 import { OperatorProvider, useOperator } from "./context/OperatorContext";
+import { useAutoLock } from "./hooks/useAutoLock";
 import { useTPVEventBridge } from "./hooks/useTPVEventBridge";
 import { useTPVRestaurantId } from "./hooks/useTPVRestaurantId";
 
@@ -39,7 +43,7 @@ class OperationalHeaderBoundary extends Component<
   }
 }
 
-/** Error boundary para conteúdo principal (KDS, POS, etc). Mostra fallback em vez de tela branca. */
+/** Error boundary para conteudo principal (KDS, POS, etc). Mostra fallback em vez de tela branca. */
 class ContentBoundary extends Component<
   { children: ReactNode },
   { hasError: boolean; error: unknown }
@@ -66,12 +70,12 @@ class ContentBoundary extends Component<
             padding: 32,
           }}
         >
-          <span style={{ fontSize: 48 }}>⚠️</span>
+          <span style={{ fontSize: 48 }}>&#x26A0;&#xFE0F;</span>
           <span style={{ fontSize: 18, fontWeight: 700 }}>
-            Erro na visualização
+            Erro na visualizacao
           </span>
           <span style={{ fontSize: 14, color: "#8a8a8a", textAlign: "center" }}>
-            Ocorreu um erro. Tente recarregar a página.
+            Ocorreu um erro. Tente recarregar a pagina.
           </span>
           <button
             type="button"
@@ -106,6 +110,20 @@ export function TPVLayout() {
   );
 }
 
+// ---------------------------------------------------------------------------
+// Routes exempt from auto-lock (KDS, customer display)
+// ---------------------------------------------------------------------------
+
+const EXEMPT_PATTERNS = ["/kitchen", "/screen/", "/customer-display"];
+
+function isAutoLockExempt(pathname: string): boolean {
+  return EXEMPT_PATTERNS.some((p) => pathname.includes(p));
+}
+
+// ---------------------------------------------------------------------------
+// Inner layout with auto-lock integration
+// ---------------------------------------------------------------------------
+
 function TPVLayoutInner() {
   const { t } = useTranslation("tpv");
   const location = useLocation();
@@ -115,7 +133,33 @@ function TPVLayoutInner() {
   const { user } = useAuth();
   const { identity } = useRestaurantIdentity();
   const restaurantId = useTPVRestaurantId();
-  const { operator, isLocked, unlock, lock } = useOperator();
+  const { operator, isLocked, isSessionLocked, unlock, lock, lockSession, unlockSession } = useOperator();
+
+  // Auto-lock: exempt KDS / customer display routes
+  const exempt = isAutoLockExempt(location.pathname);
+  const { idleState, resetIdle } = useAutoLock({
+    enabled: !exempt && !isLocked,
+  });
+
+  // React to idle state transitions
+  useEffect(() => {
+    if (idleState === "locked" && !isSessionLocked) {
+      lockSession();
+    }
+  }, [idleState, isSessionLocked, lockSession]);
+
+  useEffect(() => {
+    if (idleState === "expired") {
+      lock();
+    }
+  }, [idleState, lock]);
+
+  // When session is unlocked (PIN entered), reset idle timer
+  useEffect(() => {
+    if (!isSessionLocked && idleState === "locked") {
+      resetIdle();
+    }
+  }, [isSessionLocked, idleState, resetIdle]);
 
   // Lock screen: no operator selected yet
   if (isLocked) {
@@ -135,7 +179,7 @@ function TPVLayoutInner() {
     );
   }
 
-  // KDS mode: esconde header do TPV, KPIs, notificações e footer
+  // KDS mode: esconde header do TPV, KPIs, notificacoes e footer
   const isKitchen = location.pathname.includes("/kitchen");
 
   // Non-POS sub-views: hide search bar + filter (irrelevant for these pages)
@@ -143,20 +187,25 @@ function TPVLayoutInner() {
     "/screens", "/tables", "/settings", "/shift", "/orders",
     "/handoff", "/production", "/tasks", "/reservations",
     "/web-editor", "/expo", "/customer-display", "/delivery",
+    "/printers", "/dashboard", "/qr-codes",
   ];
   const hideSearch = NON_POS_SUFFIXES.some((s) => location.pathname.endsWith(s));
 
   // Operator identity from lock screen selection (not hardcoded anymore)
   const staffName = operator?.name ?? "Dono";
   const staffRole = operator?.role ?? "owner";
-  const staffId = user?.email ?? (user ? "—" : t("layout.owner"));
+  const staffId = user?.email ?? (user ? "\u2014" : t("layout.owner"));
   const staffAvatarUrl = operator?.avatarUrl ?? null;
+
+  const restaurantName =
+    identity?.name ?? t("sidebar.restaurantName", "Restaurante");
 
   return (
     <div
       className="tpv-layout"
       style={{
         display: "flex",
+        flexDirection: "column",
         flex: 1,
         minHeight: "100%",
         backgroundColor: "#0a0a0a",
@@ -164,52 +213,82 @@ function TPVLayoutInner() {
         color: "#fafafa",
       }}
     >
-      <TPVSidebar />
+      {/* Tier 1: Dim overlay */}
+      {idleState === "dimmed" && !isSessionLocked && (
+        <IdleDimOverlay
+          onDismiss={resetIdle}
+          restaurantName={restaurantName}
+          restaurantId={restaurantId}
+        />
+      )}
+
+      {/* Tier 2: Station lock screen */}
+      {isSessionLocked && operator && (
+        <StationLockScreen
+          operator={operator}
+          restaurantId={restaurantId}
+          onUnlockSession={unlockSession}
+          onLock={lock}
+        />
+      )}
+
+      {/* Header full-width — above sidebar + content */}
+      {!isKitchen && (
+        <TPVHeader
+          searchQuery={searchQuery}
+          onSearchChange={setSearchQuery}
+          hideSearch={hideSearch}
+          staffName={staffName}
+          staffId={staffId}
+          staffRole={staffRole}
+          staffAvatarUrl={staffAvatarUrl}
+          onLock={lock}
+        />
+      )}
+
+      {/* Sidebar + content area — below header */}
       <div
         style={{
           display: "flex",
-          flexDirection: "column",
           flex: 1,
-          minWidth: 0,
+          minHeight: 0,
         }}
       >
-        {!isKitchen && (
-          <TPVHeader
-            searchQuery={searchQuery}
-            onSearchChange={setSearchQuery}
-            hideSearch={hideSearch}
-            staffName={staffName}
-            staffId={staffId}
-            staffRole={staffRole}
-            staffAvatarUrl={staffAvatarUrl}
-            onLock={lock}
-          />
-        )}
-        {!isKitchen && (
-          <OperationalHeaderBoundary>
-            <OperationalHeader />
-          </OperationalHeaderBoundary>
-        )}
-        {!isKitchen && (
-          <TPVNotificationBar
-            alerts={alerts}
-            onDismiss={dismissAlert}
-            onDismissAll={dismissAll}
-          />
-        )}
-        <main
+        <TPVSidebar />
+        <div
           style={{
-            flex: 1,
-            overflow: "auto",
             display: "flex",
             flexDirection: "column",
+            flex: 1,
+            minWidth: 0,
           }}
         >
-          <ContentBoundary>
-            <Outlet context={{ searchQuery, emitKitchenPressure }} />
-          </ContentBoundary>
-        </main>
-        {!isKitchen && <MadeWithLoveFooter variant="default" />}
+          {!isKitchen && (
+            <OperationalHeaderBoundary>
+              <OperationalHeader />
+            </OperationalHeaderBoundary>
+          )}
+          {!isKitchen && (
+            <TPVNotificationBar
+              alerts={alerts}
+              onDismiss={dismissAlert}
+              onDismissAll={dismissAll}
+            />
+          )}
+          <main
+            style={{
+              flex: 1,
+              overflow: "auto",
+              display: "flex",
+              flexDirection: "column",
+            }}
+          >
+            <ContentBoundary>
+              <Outlet context={{ searchQuery, emitKitchenPressure }} />
+            </ContentBoundary>
+          </main>
+          {!isKitchen && <MadeWithLoveFooter variant="default" />}
+        </div>
       </div>
     </div>
   );

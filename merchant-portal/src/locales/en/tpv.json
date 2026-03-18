@@ -763,6 +763,36 @@
     "noStaffHint": "Set up staff in Settings → Team",
     "loading": "Loading team..."
   },
+  "autoLock": {
+    "tapToContinue": "Tap to continue",
+    "sessionLocked": "Session locked",
+    "enterPin": "Enter your PIN to continue",
+    "wrongPin": "Incorrect PIN",
+    "sessionExpired": "Session expired",
+    "lockedAs": "Locked as {{name}}"
+  },
+  "stationLock": {
+    "stationName": "Central POS",
+    "scanToCheckin": "Scan to clock in",
+    "scanHint": "Use AppStaff to scan and start your shift",
+    "enterWithPin": "Enter with PIN",
+    "selectOperator": "Select operator",
+    "stationLocked": "Station locked",
+    "coreOnline": "Core online",
+    "coreOffline": "Core offline",
+    "coreUnavailable": "Core unavailable",
+    "pinTitle": "Enter PIN",
+    "pinError": "Incorrect PIN",
+    "back": "Back",
+    "lockedAs": "{{name}}'s session",
+    "shiftOpen": "Shift open",
+    "shiftClosed": "Shift closed",
+    "onShift": "On shift",
+    "tapToUnlock": "Tap to unlock",
+    "switchOperator": "Switch operator",
+    "scanOrSelectAbove": "Scan to check in or select above",
+    "recognizedOperator": "{{name}} recognized"
+  },
   "roles": {
     "owner": "Owner",
     "manager": "Manager",

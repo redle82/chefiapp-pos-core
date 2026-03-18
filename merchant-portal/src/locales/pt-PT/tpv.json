@@ -763,6 +763,36 @@
     "noStaffHint": "Configure colaboradores em Definições → Equipa",
     "loading": "A carregar equipa..."
   },
+  "autoLock": {
+    "tapToContinue": "Toque para continuar",
+    "sessionLocked": "Sessao bloqueada",
+    "enterPin": "Introduza o PIN para continuar",
+    "wrongPin": "PIN incorreto",
+    "sessionExpired": "Sessao expirada",
+    "lockedAs": "Bloqueado como {{name}}"
+  },
+  "stationLock": {
+    "stationName": "TPV Central",
+    "scanToCheckin": "Escaneie para registar entrada",
+    "scanHint": "Use o AppStaff para escanear e iniciar o trabalho",
+    "enterWithPin": "Entrar com PIN",
+    "selectOperator": "Selecionar operador",
+    "stationLocked": "Posto bloqueado",
+    "coreOnline": "Core online",
+    "coreOffline": "Core offline",
+    "coreUnavailable": "Core indisponível",
+    "pinTitle": "Introduza o PIN",
+    "pinError": "PIN incorreto",
+    "back": "Voltar",
+    "lockedAs": "Sessão de {{name}}",
+    "shiftOpen": "Turno aberto",
+    "shiftClosed": "Turno fechado",
+    "onShift": "Em turno",
+    "tapToUnlock": "Toque para desbloquear",
+    "switchOperator": "Trocar operador",
+    "scanOrSelectAbove": "Escaneie para entrada ou selecione acima",
+    "recognizedOperator": "{{name}} reconhecido(a)"
+  },
   "roles": {
     "owner": "Dono",
     "manager": "Gerente",

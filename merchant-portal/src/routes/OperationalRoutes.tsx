@@ -390,6 +390,16 @@ const WorkerHome = lazy(() =>
     default: m.WorkerHome,
   })),
 );
+const WaiterHome = lazy(() =>
+  import("../pages/AppStaff/homes/WaiterHome").then((m) => ({
+    default: m.WaiterHome,
+  })),
+);
+const DeliveryHome = lazy(() =>
+  import("../pages/AppStaff/homes/DeliveryHome").then((m) => ({
+    default: m.DeliveryHome,
+  })),
+);
 const ConfigDesktopOnlyPage = lazy(() =>
   import("../pages/AppStaff/pages/ConfigDesktopOnlyPage").then((m) => ({
     default: m.ConfigDesktopOnlyPage,
@@ -1048,10 +1058,15 @@ export const OperationalRoutesFragment = (
             <Route index element={<StaffHomeRedirect />} />
             <Route path="owner" element={<OwnerGlobalDashboard />} />
             <Route path="manager" element={<ManagerHome />} />
-            <Route path="waiter" element={<AppStaffHome />} />
+            <Route path="waiter" element={<WaiterHome />} />
             <Route path="kitchen" element={<KitchenHome />} />
             <Route path="cleaning" element={<CleaningHome />} />
             <Route path="worker" element={<WorkerHome />} />
+            <Route path="delivery" element={<DeliveryHome />} />
+            <Route path="delivery/orders" element={<DeliveryHome />} />
+            <Route path="delivery/map" element={<DeliveryHome />} />
+            <Route path="delivery/drivers" element={<DeliveryHome />} />
+            <Route path="delivery/reviews" element={<DeliveryHome />} />
             {/* Dashboards de Setor (nível 2): OwnerHome → Sector → Ferramenta */}
             <Route
               path="sector/operation"

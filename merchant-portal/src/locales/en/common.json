@@ -309,5 +309,41 @@
     "toastFailed_other": "{{count}} orders failed after multiple attempts.",
     "viewDetails": "View Details",
     "closeAlert": "Close alert"
+  },
+  "staffLanding": {
+    "tagline": "Intelligent team management",
+    "availableForTeam": "Available for your team",
+    "comingSoon": "Coming soon",
+    "installViaQR": "Install via QR code",
+    "qrInstructions": "Scan the QR code with your phone to install the Staff app",
+    "enterWithCode": "Enter with code",
+    "enterWithCodeDesc": "Enter the code provided by the manager",
+    "enterAsEmployee": "Enter as employee",
+    "enterAsEmployeeDesc": "Select your profile from the list",
+    "localOperation": "Local operation",
+    "enterAs": "Enter as",
+    "whatToOperate": "What do you want to operate?",
+    "insertCode": "Insert code",
+    "panelCode": "Admin panel code",
+    "verifying": "Verifying…",
+    "connect": "Connect",
+    "unknownError": "Unknown error",
+    "demoGuideCodesLabel": "Test codes",
+    "loadingPeople": "Loading employees…",
+    "noPeopleConfigured": "No employees configured",
+    "choosePersonDesc": "Choose your profile to continue",
+    "joining": "Joining…",
+    "errorLoadPeople": "Error loading employees",
+    "errorJoining": "Error joining",
+    "roles": {
+      "owner": "Owner",
+      "manager": "Manager",
+      "waiter": "Waiter",
+      "kitchen": "Cook",
+      "cook": "Cook",
+      "cleaning": "Cleaning",
+      "staff": "Staff",
+      "employee": "Employee"
+    }
   }
 }

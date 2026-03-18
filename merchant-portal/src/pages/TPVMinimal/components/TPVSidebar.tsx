@@ -32,11 +32,9 @@ import { useTranslation } from "react-i18next";
 import { NavLink, useNavigate } from "react-router-dom";
 import { useContextEngine } from "../../../core/context/ContextEngine";
 import type { ModuleVisibility } from "../../../core/context/ContextTypes";
-import { useRestaurantIdentity } from "../../../core/identity/useRestaurantIdentity";
 import tpvEventBus from "../../../core/tpv/TPVCentralEvents";
 import type { KitchenPressurePayload } from "../../../core/tpv/TPVCentralEvents";
 import { dockerCoreClient } from "../../../infra/docker-core/connection";
-import { RestaurantLogo } from "../../../ui/RestaurantLogo";
 import { useTPVRestaurantId } from "../hooks/useTPVRestaurantId";
 
 const APP_NAME = "ChefIApp";
@@ -659,7 +657,6 @@ export function TPVSidebar() {
   const navigate = useNavigate();
   const restaurantId = useTPVRestaurantId();
   const { visibleModules, permissions } = useContextEngine();
-  const { identity } = useRestaurantIdentity();
 
   // Expanded/collapsed state persisted in localStorage
   const [expanded, setExpanded] = useState(() => {
@@ -735,78 +732,7 @@ export function TPVSidebar() {
         boxSizing: "border-box",
       }}
     >
-      {/* Toggle expand/collapse button */}
-      <button
-        type="button"
-        data-testid="sidebar-toggle"
-        onClick={toggleExpanded}
-        title={expanded ? t("sidebar.collapse", "Recolher") : t("sidebar.expand", "Expandir")}
-        style={{
-          width: expanded ? "100%" : 44,
-          height: 32,
-          borderRadius: 8,
-          border: "none",
-          background: "transparent",
-          color: "#525252",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: expanded ? "flex-end" : "center",
-          cursor: "pointer",
-          padding: expanded ? "0 2px" : 0,
-          marginBottom: 4,
-          flexShrink: 0,
-          transition: "all 0.15s ease",
-          boxSizing: "border-box",
-          alignSelf: expanded ? "stretch" : "center",
-        }}
-      >
-        <IconChevronToggle expanded={expanded} />
-      </button>
-
-      {/* Restaurant identity — real name + logo from gm_restaurants */}
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          gap: expanded ? 10 : 0,
-          padding: expanded ? "8px 2px" : "8px 0",
-          width: expanded ? "100%" : "auto",
-          flexShrink: 0,
-          overflow: "hidden",
-          boxSizing: "border-box",
-          justifyContent: expanded ? "flex-start" : "center",
-        }}
-      >
-        <RestaurantLogo
-          logoUrl={identity.logoUrl}
-          name={identity.name || "R"}
-          size={36}
-          style={{
-            borderRadius: "50%",
-            border: "1.5px solid rgba(255,255,255,0.10)",
-            flexShrink: 0,
-          }}
-        />
-        {expanded && (
-          <span
-            style={{
-              color: "#fafafa",
-              fontSize: 13,
-              fontWeight: 600,
-              whiteSpace: "nowrap",
-              overflow: "hidden",
-              textOverflow: "ellipsis",
-              minWidth: 0,
-            }}
-          >
-            {identity.name || t("sidebar.restaurantName", "Restaurante")}
-          </span>
-        )}
-      </div>
-
-      <SectionDivider expanded={expanded} />
-
-      {/* Scrollable navigation area */}
+      {/* Scrollable navigation area — identity lives in header, sidebar is pure nav */}
       <div
         style={{
           flex: 1,
@@ -905,6 +831,34 @@ export function TPVSidebar() {
           )}
         </button>
       </TooltipWrap>
+
+      {/* Toggle expand/collapse button — at the bottom */}
+      <button
+        type="button"
+        data-testid="sidebar-toggle"
+        onClick={toggleExpanded}
+        title={expanded ? t("sidebar.collapse", "Recolher") : t("sidebar.expand", "Expandir")}
+        style={{
+          width: expanded ? "100%" : 44,
+          height: 32,
+          borderRadius: 8,
+          border: "none",
+          background: "transparent",
+          color: "#525252",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: expanded ? "flex-end" : "center",
+          cursor: "pointer",
+          padding: expanded ? "0 2px" : 0,
+          marginTop: 4,
+          flexShrink: 0,
+          transition: "all 0.15s ease",
+          boxSizing: "border-box",
+          alignSelf: expanded ? "stretch" : "center",
+        }}
+      >
+        <IconChevronToggle expanded={expanded} />
+      </button>
 
       {/* App signature — discrete text-only brand mark */}
       <div

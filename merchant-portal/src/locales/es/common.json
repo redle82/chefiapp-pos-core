@@ -309,5 +309,41 @@
     "toastFailed_other": "{{count}} pedidos fallaron tras múltiples intentos.",
     "viewDetails": "Ver Detalles",
     "closeAlert": "Cerrar alerta"
+  },
+  "staffLanding": {
+    "tagline": "Gestión de equipo inteligente",
+    "availableForTeam": "Disponible para su equipo",
+    "comingSoon": "Próximamente",
+    "installViaQR": "Instale vía código QR",
+    "qrInstructions": "Escanee el código QR con su teléfono para instalar la app Staff",
+    "enterWithCode": "Entrar con código",
+    "enterWithCodeDesc": "Introduzca el código proporcionado por el gerente",
+    "enterAsEmployee": "Entrar como empleado",
+    "enterAsEmployeeDesc": "Seleccione su perfil de la lista",
+    "localOperation": "Operación local",
+    "enterAs": "Entrar como",
+    "whatToOperate": "¿Qué quiere operar?",
+    "insertCode": "Insertar código",
+    "panelCode": "Código del panel de administración",
+    "verifying": "Verificando…",
+    "connect": "Conectar",
+    "unknownError": "Error desconocido",
+    "demoGuideCodesLabel": "Códigos de prueba",
+    "loadingPeople": "Cargando empleados…",
+    "noPeopleConfigured": "Ningún empleado configurado",
+    "choosePersonDesc": "Elija su perfil para continuar",
+    "joining": "Entrando…",
+    "errorLoadPeople": "Error al cargar empleados",
+    "errorJoining": "Error al entrar",
+    "roles": {
+      "owner": "Dueño",
+      "manager": "Gerente",
+      "waiter": "Camarero",
+      "kitchen": "Cocinero",
+      "cook": "Cocinero",
+      "cleaning": "Limpieza",
+      "staff": "Staff",
+      "employee": "Empleado"
+    }
   }
 }
