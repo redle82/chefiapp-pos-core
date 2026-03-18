@@ -641,19 +641,25 @@ export function TPVPOSView() {
 
   return (
     <div className="tpv-container">
-      {/* Demo mode banner */}
+      {/* Demo mode banner — small, non-intrusive */}
       {isDemoMode && (
         <div
           style={{
-            gridColumn: "1 / -1",
-            background: "#fef3c7",
+            position: "fixed",
+            top: 56,
+            left: 72,
+            right: 0,
+            zIndex: 40,
+            background: "rgba(254, 243, 199, 0.9)",
+            backdropFilter: "blur(4px)",
             color: "#92400e",
-            padding: "8px 16px",
-            fontSize: "0.85rem",
+            padding: "4px 16px",
+            fontSize: "0.75rem",
             fontWeight: 600,
             display: "flex",
             alignItems: "center",
-            gap: 8,
+            gap: 6,
+            borderBottom: "1px solid #fbbf24",
           }}
         >
           <span>🧪</span>

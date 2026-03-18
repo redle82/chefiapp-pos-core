@@ -39,9 +39,9 @@ export interface AutoLockResult {
 
 // Dev mode: shorter timers for testing (20s / 40s / 90s)
 const IS_DEV = import.meta.env.DEV;
-const DEFAULT_DIM_MS = IS_DEV ? 20_000 : 30_000;
-const DEFAULT_LOCK_MS = IS_DEV ? 40_000 : 60_000;
-const DEFAULT_EXPIRE_MS = IS_DEV ? 90_000 : 300_000;
+const DEFAULT_DIM_MS = IS_DEV ? 120_000 : 30_000;
+const DEFAULT_LOCK_MS = IS_DEV ? 180_000 : 60_000;
+const DEFAULT_EXPIRE_MS = IS_DEV ? 600_000 : 300_000;
 
 // Events that reset the idle timer (deliberate interactions only)
 // "mousemove", "pointermove", and "touchmove" are intentionally excluded:
