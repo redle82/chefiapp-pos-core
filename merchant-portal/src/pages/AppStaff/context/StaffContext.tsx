@@ -29,6 +29,7 @@ import { now as getNow } from "../../../intelligence/nervous-system/Clock";
 import type { ShiftMetrics } from "../../../intelligence/nervous-system/ShiftEngine";
 import { calculateShiftLoad } from "../../../intelligence/nervous-system/ShiftEngine";
 import { readOpenTasks } from "../../../infra/readers/TaskReader";
+import { materializeShiftTasks } from "../../../core/tasks/ShiftTaskMaterializer";
 import type { CoreTask } from "../../../infra/docker-core/types";
 import {
   createTaskRpc,
@@ -63,6 +64,7 @@ function mapCoreTaskToTask(c: CoreTask): Task {
     ALTA: "urgent",
     CRITICA: "critical",
   };
+  const ctx = (c.context ?? {}) as Record<string, unknown>;
   return {
     id: c.id,
     type: "foundational",
@@ -80,6 +82,23 @@ function mapCoreTaskToTask(c: CoreTask): Task {
         : "floor") as Task["context"],
     createdAt: new Date(c.created_at).getTime(),
     meta: { source: "manual-assignment", createdBy: undefined },
+    // Template metadata (populated for SHIFT_CHECKLIST tasks)
+    ...(ctx.template_key
+      ? {
+          metadata: {
+            templateKey: ctx.template_key as string,
+            templateCategory: ctx.template_category as string | undefined,
+            templateIcon: ctx.template_icon as string | undefined,
+            templateMandatory: ctx.template_mandatory as boolean | undefined,
+            requiredEvidence: ctx.required_evidence as
+              | "TEMP_LOG"
+              | "TEXT"
+              | "PHOTO"
+              | undefined,
+            estimatedMinutes: ctx.estimated_minutes as number | undefined,
+          },
+        }
+      : {}),
   };
 }
 
@@ -121,6 +140,8 @@ export type {
 // ------------------------------------------------------------------
 
 const STAFF_LOCATION_STORAGE_KEY = "chefiapp_staff_location_id";
+const STAFF_WORKER_ID_KEY = "chefiapp_staff_worker_id";
+const STAFF_WORKER_ROLE_KEY = "chefiapp_staff_worker_role";
 
 interface StaffContextType {
   // 0. LOCATION (Staff Session requires Location — STAFF_SESSION_LOCATION_CONTRACT)
@@ -374,33 +395,50 @@ const StaffProviderInternal: React.FC<StaffProviderProps> = ({
     ? ({
         id: restaurantId,
         type: "restaurant",
-        name: "Restaurante (Local)",
+        name: activeLocation?.name || "Restaurante",
         mode: "local",
         permissions: ["admin"],
       } as OperationalContract)
     : null;
   const [operationalContract, setOpContract] =
     useState<OperationalContract | null>(() => initialContract);
-  const [activeWorkerId, setActiveWorkerId] = useState<string | null>(
-    allowAutoJoin ? userId : null,
-  );
+  const [activeWorkerId, setActiveWorkerId] = useState<string | null>(() => {
+    if (allowAutoJoin) return userId;
+    // Restore persisted worker session
+    try {
+      return localStorage.getItem(STAFF_WORKER_ID_KEY) ?? null;
+    } catch {
+      return null;
+    }
+  });
   const resolvedInitialRole =
     allowAutoJoin && !initialRoleProp
       ? "owner"
-      : parseStaffRole(initialRoleProp ?? getTabIsolated("staff_role"));
+      : parseStaffRole(
+          initialRoleProp ??
+            getTabIsolated("staff_role") ??
+            (() => {
+              try {
+                return localStorage.getItem(STAFF_WORKER_ROLE_KEY) ?? undefined;
+              } catch {
+                return undefined;
+              }
+            })(),
+        );
   const [activeRole, setActiveRoleState] =
     useState<StaffRole>(resolvedInitialRole);
   const [roleSource, setRoleSource] = useState<
     "tab" | "login" | "debug" | "invite"
-  >(
-    allowAutoJoin && !initialRoleProp
-      ? "login"
-      : initialRoleProp
-      ? "tab"
-      : getTabIsolated("staff_role")
-      ? "tab"
-      : "tab",
-  );
+  >(() => {
+    if (allowAutoJoin && !initialRoleProp) return "login";
+    if (initialRoleProp) return "tab";
+    if (getTabIsolated("staff_role")) return "tab";
+    // Restored from persisted session
+    try {
+      if (localStorage.getItem(STAFF_WORKER_ID_KEY)) return "login";
+    } catch { /* ignore */ }
+    return "tab";
+  });
   const isSimulated = roleSource === "tab";
 
   const setActiveRole = useCallback((r: StaffRole) => {
@@ -408,10 +446,17 @@ const StaffProviderInternal: React.FC<StaffProviderProps> = ({
     setTabIsolated("staff_role", r);
   }, []);
 
-  // 2. SHIFT STATE — activo desde o início quando AUTO-JOIN (restaurantId+userId); TRIAL GUIDE não AUTO-JOIN
+  // 2. SHIFT STATE — activo desde o início quando AUTO-JOIN ou sessão persistida
   const [shiftState, setShiftState] = useState<
     "offline" | "active" | "closing" | "closed"
-  >(() => (allowAutoJoin ? "active" : "offline"));
+  >(() => {
+    if (allowAutoJoin) return "active";
+    // Se há worker persistido, retomar como activo
+    try {
+      if (localStorage.getItem(STAFF_WORKER_ID_KEY)) return "active";
+    } catch { /* ignore */ }
+    return "offline";
+  });
   const [lastActivityAt, setLastActivityAt] = useState<number>(getNow());
 
   // 3. TASK ENGINE (The Conscious Mind)
@@ -707,6 +752,17 @@ const StaffProviderInternal: React.FC<StaffProviderProps> = ({
       setActiveWorkerId(userId);
       setShiftState("active");
       notifyActivity();
+      // Persist session
+      try {
+        localStorage.setItem(STAFF_WORKER_ID_KEY, userId);
+        localStorage.setItem(STAFF_WORKER_ROLE_KEY, "owner");
+      } catch { /* ignore */ }
+      // Materializar tarefas de turno (opening) para owner
+      if (coreRestaurantId) {
+        materializeShiftTasks(coreRestaurantId, "owner", "opening")
+          .then(() => readOpenTasks(coreRestaurantId).then((ct) => setTasks(ct.map(mapCoreTaskToTask))))
+          .catch((err) => console.error("[AppStaff] shift tasks materialization:", err));
+      }
       return;
     }
 
@@ -725,6 +781,12 @@ const StaffProviderInternal: React.FC<StaffProviderProps> = ({
 
     setShiftState("active");
     notifyActivity();
+
+    // 💾 Persist worker session (survives page reload)
+    try {
+      localStorage.setItem(STAFF_WORKER_ID_KEY, workerName);
+      localStorage.setItem(STAFF_WORKER_ROLE_KEY, currentRole);
+    } catch { /* ignore */ }
 
     // 📝 AUDIT: Create Shift Log
     if (operationalContract?.id && employeeId) {
@@ -747,6 +809,13 @@ const StaffProviderInternal: React.FC<StaffProviderProps> = ({
       } else if (error) {
         console.error("❌ Failed to create Shift Log:", error);
       }
+    }
+
+    // Materializar tarefas de turno (opening) para o role
+    if (coreRestaurantId) {
+      materializeShiftTasks(coreRestaurantId, currentRole, "opening")
+        .then(() => readOpenTasks(coreRestaurantId).then((ct) => setTasks(ct.map(mapCoreTaskToTask))))
+        .catch((err) => console.error("[AppStaff] shift tasks materialization:", err));
     }
   };
 
@@ -788,6 +857,11 @@ const StaffProviderInternal: React.FC<StaffProviderProps> = ({
       setRoleSource("debug");
       setShiftState("active");
       notifyActivity();
+      // Persist session
+      try {
+        localStorage.setItem(STAFF_WORKER_ID_KEY, "dev-" + role);
+        localStorage.setItem(STAFF_WORKER_ROLE_KEY, role);
+      } catch { /* ignore */ }
     },
     [
       isLoginBoundUserSession,
@@ -799,6 +873,15 @@ const StaffProviderInternal: React.FC<StaffProviderProps> = ({
   );
 
   const checkOut = async () => {
+    // Materializar tarefas de fecho antes de encerrar
+    if (coreRestaurantId) {
+      try {
+        await materializeShiftTasks(coreRestaurantId, activeRole, "closing");
+      } catch (err) {
+        console.error("[AppStaff] closing tasks materialization:", err);
+      }
+    }
+
     const { db: coreDb } = await import("../../../core/db");
 
     // 📝 AUDIT: Close Shift Log
@@ -820,6 +903,11 @@ const StaffProviderInternal: React.FC<StaffProviderProps> = ({
     setActiveWorkerId(null);
     setActiveShiftId(null); // Clear audit state
     setOpContract(null);
+    // Clear persisted session
+    try {
+      localStorage.removeItem(STAFF_WORKER_ID_KEY);
+      localStorage.removeItem(STAFF_WORKER_ROLE_KEY);
+    } catch { /* ignore */ }
   };
 
   const startTask = (taskId: string) => {
@@ -1027,6 +1115,20 @@ const StaffProviderInternal: React.FC<StaffProviderProps> = ({
     setSpecDrifts((prev) => [newAlert, ...prev]);
     notifyActivity();
   };
+
+  // 🔧 DEV: Expose devQuickCheckIn on window for testing
+  useEffect(() => {
+    if (isDebug) {
+      (window as any).__staffDevCheckIn = devQuickCheckIn;
+      (window as any).__staffRole = activeRole;
+    }
+    return () => {
+      if (isDebug) {
+        delete (window as any).__staffDevCheckIn;
+        delete (window as any).__staffRole;
+      }
+    };
+  }, [isDebug, devQuickCheckIn, activeRole]);
 
   return (
     <StaffContext.Provider
