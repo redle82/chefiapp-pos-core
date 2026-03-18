@@ -101,7 +101,7 @@ export function IdleDimOverlay({ onDismiss, restaurantName, restaurantId }: Idle
           transition: "opacity 300ms ease-in 50ms",
         }}
       >
-        {/* LEFT: Restaurant logo + name + clock */}
+        {/* LEFT: Restaurant logo (same size as QR) + name + clock */}
         <div
           style={{
             display: "flex",
@@ -114,7 +114,7 @@ export function IdleDimOverlay({ onDismiss, restaurantName, restaurantId }: Idle
           <RestaurantLogo
             logoUrl={identity?.logoUrl ?? null}
             name={displayName}
-            size={220}
+            size={320}
           />
           {displayName && (
             <span
@@ -145,7 +145,7 @@ export function IdleDimOverlay({ onDismiss, restaurantName, restaurantId }: Idle
           </span>
         </div>
 
-        {/* RIGHT: QR Code (huge) */}
+        {/* RIGHT: QR Code (same visual size as logo) + check-in instructions */}
         {restaurantId && (
           <div
             onClick={(e) => e.stopPropagation()}
@@ -158,6 +158,19 @@ export function IdleDimOverlay({ onDismiss, restaurantName, restaurantId }: Idle
               flex: 1,
             }}
           >
+            {/* Title above QR */}
+            <span
+              style={{
+                fontSize: 14,
+                fontWeight: 700,
+                color: "rgba(250, 250, 250, 0.4)",
+                textTransform: "uppercase",
+                letterSpacing: 3,
+                textAlign: "center",
+              }}
+            >
+              {t("stationLock.scanTitle", "ESCANEIE PARA REGISTRAR ENTRADA")}
+            </span>
             <div
               style={{
                 backgroundColor: "#ffffff",
@@ -172,15 +185,18 @@ export function IdleDimOverlay({ onDismiss, restaurantName, restaurantId }: Idle
                 fgColor="#0a0a0a"
               />
             </div>
+            {/* Instructions below QR */}
             <span
               style={{
-                fontSize: 18,
+                fontSize: 16,
                 color: "rgba(250, 250, 250, 0.5)",
                 fontWeight: 500,
                 textAlign: "center",
+                maxWidth: 320,
+                lineHeight: 1.4,
               }}
             >
-              {t("stationLock.scanToCheckin", "Escaneie para registar entrada")}
+              {t("stationLock.scanInstructions", "Use o AppStaff no seu telemovel para escanear este codigo e iniciar o seu turno")}
             </span>
           </div>
         )}
