@@ -611,7 +611,7 @@ export function TPVPOSView() {
             setOrderMode(mode);
             setContextChosen(true);
           }}
-          onNavigateToTables={() => navigate("/op/tables")}
+          onNavigateToTables={() => navigate("/op/tpv/tables")}
         />
       ) : (
         <>
