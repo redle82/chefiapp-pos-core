@@ -35,5 +35,20 @@
   "cannotOpenPrintWindow": "Não foi possível abrir janela de impressão. Verifique o bloqueador de pop-ups nas definições do navegador.",
   "printTimeout": "Tempo limite ao carregar janela de impressão. Tente novamente.",
   "printError": "Erro ao imprimir: {{message}}",
-  "unknownPrintError": "Erro desconhecido"
+  "unknownPrintError": "Erro desconhecido",
+  "qty": "QTD",
+  "item": "ITEM",
+  "unitPriceEach": "@ {{price}} un.",
+  "nif": "NIF:",
+  "tel": "Tel:",
+  "atcud": "ATCUD:",
+  "hashControl": "Hash:",
+  "newOrder": "Novo Pedido",
+  "printReceipt": "Imprimir Recibo",
+  "paymentCash": "Dinheiro",
+  "paymentCard": "Cartão",
+  "paymentPix": "MB Way",
+  "dineIn": "Mesa",
+  "takeAway": "Take-Away",
+  "delivery": "Entrega"
 }

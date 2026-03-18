@@ -88,11 +88,12 @@ export class PrintService {
     order: Order,
     restaurant: RestaurantIdentity,
     paymentMethod?: string,
+    options?: import('./templates/OrderReceipt').ReceiptPrintOptions,
   ): Promise<void> {
     this.assertConnected();
 
     try {
-      const builder = buildOrderReceipt(order, restaurant, paymentMethod);
+      const builder = buildOrderReceipt(order, restaurant, paymentMethod, options);
       await this.transport.send(builder.build());
     } catch (err) {
       if (err instanceof PrinterError) throw err;

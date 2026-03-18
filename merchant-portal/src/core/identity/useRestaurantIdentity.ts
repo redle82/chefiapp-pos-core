@@ -22,6 +22,11 @@ export interface RestaurantIdentity {
   loading: boolean;
   ownerName?: string;
   logoUrl?: string; // Brand Identity
+  logoPrintUrl?: string; // Mono logo for thermal printing
+  address?: string;
+  phone?: string;
+  taxId?: string; // NIF/NIPC
+  receiptExtraText?: string;
   lastPulse?: {
     type: string;
     created_at: string;
@@ -188,6 +193,11 @@ export function useRestaurantIdentity() {
               loading: false,
               ownerName: isTrial ? "Visitante" : "Comandante",
               logoUrl: row.logo_url ?? undefined,
+              logoPrintUrl: (rawRow.logo_print_url as string) ?? undefined,
+              address: (rawRow.address as string) ?? undefined,
+              phone: (rawRow.phone as string) ?? undefined,
+              taxId: (rawRow.tax_id as string) ?? undefined,
+              receiptExtraText: (rawRow.receipt_extra_text as string) ?? undefined,
               ...(isTrial && {
                 lastPulse: {
                   type: "TRIAL_PULSE",

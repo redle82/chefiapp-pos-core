@@ -1,0 +1,354 @@
+/**
+ * FiscalReceipt — Recibo fiscal completo no ecra.
+ *
+ * Espelha a estrutura do template ESC/POS (OrderReceipt.ts):
+ * cabecalho restaurante, items, totais, IVA, pagamento, dados fiscais, QR, rodape.
+ *
+ * Estilo: fundo branco, font monospace, max-width 320px — simula papel termico.
+ */
+
+import { useTranslation } from "react-i18next";
+import { useCurrency } from "../../../core/currency/useCurrency";
+import type { ReceiptData } from "../types/ReceiptData";
+
+interface FiscalReceiptProps {
+  receipt: ReceiptData;
+  onNewOrder: () => void;
+  onPrint: () => void;
+}
+
+export function FiscalReceipt({ receipt, onNewOrder, onPrint }: FiscalReceiptProps) {
+  const { t } = useTranslation("receipt");
+  const { formatAmount } = useCurrency();
+  const r = receipt.restaurant;
+
+  const formatDate = (iso: string) => {
+    const d = new Date(iso);
+    const dd = String(d.getDate()).padStart(2, "0");
+    const mm = String(d.getMonth() + 1).padStart(2, "0");
+    const yyyy = d.getFullYear();
+    const hh = String(d.getHours()).padStart(2, "0");
+    const min = String(d.getMinutes()).padStart(2, "0");
+    return `${dd}/${mm}/${yyyy} ${hh}:${min}`;
+  };
+
+  const payMethodLabel =
+    receipt.paymentMethod === "cash"
+      ? t("paymentCash")
+      : receipt.paymentMethod === "card"
+        ? t("paymentCard")
+        : t("paymentPix");
+
+  const orderModeLabel =
+    receipt.orderMode === "dine_in"
+      ? t("dineIn")
+      : receipt.orderMode === "take_away"
+        ? t("takeAway")
+        : receipt.orderMode === "delivery"
+          ? t("delivery")
+          : "";
+
+  return (
+    <div
+      onClick={onNewOrder}
+      style={{
+        position: "fixed",
+        inset: 0,
+        background: "rgba(0,0,0,0.8)",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        zIndex: 9999,
+        padding: 16,
+      }}
+    >
+      <div
+        onClick={(e) => e.stopPropagation()}
+        style={{
+          background: "#fff",
+          borderRadius: 4,
+          width: "min(340px, 92vw)",
+          maxHeight: "85vh",
+          overflowY: "auto",
+          padding: "24px 20px",
+          fontFamily: "'Courier New', 'Courier', monospace",
+          fontSize: 12,
+          lineHeight: 1.5,
+          color: "#1a1a1a",
+          boxShadow: "0 8px 32px rgba(0,0,0,0.3)",
+        }}
+      >
+        {/* ── Header: logo + restaurant identity ── */}
+        <div style={{ textAlign: "center", marginBottom: 12 }}>
+          {r.logoUrl && (
+            <img
+              src={r.logoUrl}
+              alt={r.name}
+              style={{
+                display: "block",
+                margin: "0 auto 8px auto",
+                maxWidth: 120,
+                maxHeight: 60,
+                objectFit: "contain",
+              }}
+            />
+          )}
+          <div style={{ fontSize: 16, fontWeight: 800, letterSpacing: 1 }}>
+            {r.name.toUpperCase()}
+          </div>
+          {r.address && (
+            <div style={{ fontSize: 11, color: "#555" }}>{r.address}</div>
+          )}
+          {r.taxId && (
+            <div style={{ fontSize: 11, color: "#555" }}>
+              {t("nif")} {r.taxId}
+            </div>
+          )}
+          {r.phone && (
+            <div style={{ fontSize: 11, color: "#555" }}>
+              {t("tel")} {r.phone}
+            </div>
+          )}
+        </div>
+
+        <Separator double />
+
+        {/* ── Order info ── */}
+        <div style={{ marginBottom: 8 }}>
+          <Row label={t("date")} value={formatDate(receipt.timestamp)} />
+          <Row
+            label={t("order")}
+            value={`#${receipt.orderIdShort.toUpperCase()}`}
+          />
+          {receipt.table && <Row label={t("table")} value={receipt.table} />}
+          {orderModeLabel && (
+            <Row label="" value={orderModeLabel} />
+          )}
+        </div>
+
+        <Separator />
+
+        {/* ── Items header ── */}
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            fontWeight: 700,
+            marginBottom: 4,
+          }}
+        >
+          <span style={{ width: 36 }}>{t("qty")}</span>
+          <span style={{ flex: 1 }}>{t("item")}</span>
+          <span style={{ textAlign: "right", minWidth: 60 }}>{t("total")}</span>
+        </div>
+
+        <Separator />
+
+        {/* ── Items ── */}
+        <div style={{ marginBottom: 8 }}>
+          {receipt.items.map((item, idx) => (
+            <div key={idx} style={{ marginBottom: 4 }}>
+              {/* Main item line */}
+              <div style={{ display: "flex", justifyContent: "space-between" }}>
+                <span style={{ width: 36 }}>{item.quantity}x</span>
+                <span style={{ flex: 1, wordBreak: "break-word" }}>
+                  {item.name}
+                </span>
+                <span
+                  style={{
+                    textAlign: "right",
+                    minWidth: 60,
+                    whiteSpace: "nowrap",
+                  }}
+                >
+                  {formatAmount(item.line_total)}
+                </span>
+              </div>
+
+              {/* Unit price (if qty > 1) */}
+              {item.quantity > 1 && (
+                <div style={{ paddingLeft: 36, fontSize: 11, color: "#666" }}>
+                  {t("unitPriceEach", { price: formatAmount(item.unit_price) })}
+                </div>
+              )}
+
+              {/* Modifiers */}
+              {item.modifiers?.map((mod, mi) => (
+                <div
+                  key={mi}
+                  style={{ paddingLeft: 36, fontSize: 11, color: "#666" }}
+                >
+                  + {mod.name}
+                  {mod.priceDeltaCents > 0 &&
+                    ` (+${formatAmount(mod.priceDeltaCents)})`}
+                </div>
+              ))}
+            </div>
+          ))}
+        </div>
+
+        <Separator double />
+
+        {/* ── Totals ── */}
+        <div style={{ marginBottom: 8 }}>
+          <Row label={t("subtotal")} value={formatAmount(receipt.subtotalCents)} />
+
+          {receipt.discountCents > 0 && (
+            <Row
+              label={
+                receipt.discountReason
+                  ? `${t("discount")} (${receipt.discountReason})`
+                  : t("discount")
+              }
+              value={`-${formatAmount(receipt.discountCents)}`}
+            />
+          )}
+
+          {/* VAT breakdown */}
+          {receipt.taxBreakdown.map((tax, idx) => (
+            <Row
+              key={idx}
+              label={t("vatRate", { rate: tax.rateLabel })}
+              value={formatAmount(tax.taxAmount)}
+            />
+          ))}
+
+          {receipt.tipCents > 0 && (
+            <Row label={t("tip")} value={formatAmount(receipt.tipCents)} />
+          )}
+
+          {/* Grand total */}
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              fontWeight: 800,
+              fontSize: 18,
+              borderTop: "2px solid #1a1a1a",
+              paddingTop: 6,
+              marginTop: 6,
+            }}
+          >
+            <span>{t("total")}</span>
+            <span>{formatAmount(receipt.grandTotalCents)}</span>
+          </div>
+        </div>
+
+        <Separator />
+
+        {/* ── Payment method ── */}
+        <Row label={t("paymentMethod")} value={payMethodLabel} bold />
+
+        {/* ── Fiscal data ── */}
+        {receipt.fiscal && (
+          <div style={{ marginTop: 8 }}>
+            <Separator />
+            <Row
+              label={t("documentNumber")}
+              value={receipt.fiscal.documentNumber}
+            />
+            <Row label={t("atcud")} value={receipt.fiscal.atcud} />
+            <Row label={t("hashControl")} value={receipt.fiscal.hashControl} />
+          </div>
+        )}
+
+        {/* ── Footer ── */}
+        <div style={{ textAlign: "center", marginTop: 16, fontSize: 11 }}>
+          <div style={{ fontWeight: 600 }}>{t("thankYou")}</div>
+          {r.receiptExtraText && (
+            <div style={{ marginTop: 4, color: "#666", whiteSpace: "pre-line" }}>
+              {r.receiptExtraText}
+            </div>
+          )}
+          <div style={{ marginTop: 4, color: "#999", fontSize: 10 }}>
+            {formatDate(receipt.timestamp)}
+          </div>
+        </div>
+
+        {/* ── Action buttons (not part of thermal paper) ── */}
+        <div
+          style={{
+            display: "flex",
+            gap: 8,
+            marginTop: 20,
+            borderTop: "1px dashed #ddd",
+            paddingTop: 16,
+          }}
+        >
+          <button
+            type="button"
+            onClick={onPrint}
+            style={{
+              flex: 1,
+              padding: "10px 0",
+              background: "#f4f4f5",
+              border: "1px solid #d4d4d8",
+              borderRadius: 8,
+              color: "#18181b",
+              fontWeight: 600,
+              fontSize: 13,
+              cursor: "pointer",
+              fontFamily: "system-ui, sans-serif",
+            }}
+          >
+            {t("printReceipt")}
+          </button>
+          <button
+            type="button"
+            onClick={onNewOrder}
+            style={{
+              flex: 1,
+              padding: "10px 0",
+              background: "#18181b",
+              border: "none",
+              borderRadius: 8,
+              color: "#fff",
+              fontWeight: 600,
+              fontSize: 13,
+              cursor: "pointer",
+              fontFamily: "system-ui, sans-serif",
+            }}
+          >
+            {t("newOrder")}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ── Helper sub-components ── */
+
+function Separator({ double }: { double?: boolean }) {
+  return (
+    <div
+      style={{
+        borderTop: double ? "2px double #ccc" : "1px dashed #ccc",
+        margin: "6px 0",
+      }}
+    />
+  );
+}
+
+function Row({
+  label,
+  value,
+  bold,
+}: {
+  label: string;
+  value: string;
+  bold?: boolean;
+}) {
+  return (
+    <div
+      style={{
+        display: "flex",
+        justifyContent: "space-between",
+        fontWeight: bold ? 700 : 400,
+      }}
+    >
+      <span style={{ color: "#555" }}>{label}</span>
+      <span>{value}</span>
+    </div>
+  );
+}

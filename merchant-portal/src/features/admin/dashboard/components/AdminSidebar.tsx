@@ -11,6 +11,8 @@
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { NavLink, useLocation } from "react-router-dom";
+import { useRestaurantIdentity } from "../../../../core/identity/useRestaurantIdentity";
+import { RestaurantLogo } from "../../../../ui/RestaurantLogo";
 import { OSSignature } from "../../../../ui/design-system/sovereign/OSSignature";
 import styles from "./AdminSidebar.module.css";
 
@@ -108,6 +110,7 @@ function findActiveGroup(pathname: string): string | null {
 export function AdminSidebar() {
   const { t } = useTranslation("sidebar");
   const location = useLocation();
+  const { identity } = useRestaurantIdentity();
 
   // Exclusive accordion: only 1 group open at a time
   const [openGroup, setOpenGroup] = useState<string | null>(() =>
@@ -127,8 +130,18 @@ export function AdminSidebar() {
   return (
     <aside className={`${styles.sidebar} admin-sidebar-shell`}>
       <div className={styles.sidebarInner}>
-        {/* Brand: ChefIApp™ OS */}
+        {/* Restaurant identity + ChefIApp™ OS */}
         <div className={styles.brandSection}>
+          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 8, width: "100%" }}>
+            <RestaurantLogo
+              logoUrl={identity.logoUrl}
+              name={identity.name}
+              size={48}
+            />
+            <span style={{ fontSize: 13, fontWeight: 700, color: "#e5e5e5", textAlign: "center", lineHeight: 1.2 }}>
+              {identity.name || "Restaurante"}
+            </span>
+          </div>
           <OSSignature state="ember" size="md" />
         </div>
 

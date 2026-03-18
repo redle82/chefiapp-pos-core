@@ -35,5 +35,20 @@
   "cannotOpenPrintWindow": "Could not open the print window. Check pop-up blocker settings in your browser.",
   "printTimeout": "Timeout loading the print window. Please try again.",
   "printError": "Print error: {{message}}",
-  "unknownPrintError": "Unknown error"
+  "unknownPrintError": "Unknown error",
+  "qty": "QTY",
+  "item": "ITEM",
+  "unitPriceEach": "@ {{price}} ea.",
+  "nif": "Tax ID:",
+  "tel": "Tel:",
+  "atcud": "ATCUD:",
+  "hashControl": "Hash:",
+  "newOrder": "New Order",
+  "printReceipt": "Print Receipt",
+  "paymentCash": "Cash",
+  "paymentCard": "Card",
+  "paymentPix": "MB Way",
+  "dineIn": "Dine-In",
+  "takeAway": "Take-Away",
+  "delivery": "Delivery"
 }

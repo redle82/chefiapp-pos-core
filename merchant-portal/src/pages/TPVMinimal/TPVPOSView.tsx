@@ -51,6 +51,13 @@ import {
 } from "./components/ProductCategoryFilter";
 import { TPVProductCard } from "./components/TPVProductCard";
 import { getFoodPhotoUrl } from "./foodPhotoUrls";
+import { useRestaurantIdentity } from "../../core/identity/useRestaurantIdentity";
+import { FiscalReceipt } from "./components/FiscalReceipt";
+import type { ReceiptData, ReceiptLineItem, ReceiptTaxLine } from "./types/ReceiptData";
+import { mapReceiptForPrint } from "./types/ReceiptData";
+import { PrintService } from "../../core/printing/PrintService";
+import { loadLogoRaster } from "../../core/printing/templates/OrderReceipt";
+import { saveReceipt } from "../../core/receipt/ReceiptHistoryService";
 import "./TPVPOSView.css";
 
 const DEFAULT_RESTAURANT_ID = "00000000-0000-0000-0000-000000000100";
@@ -63,6 +70,7 @@ export function TPVPOSView() {
   const bootstrap = useBootstrapState();
   const toast = useToast();
   const { formatAmount } = useCurrency();
+  const { identity } = useRestaurantIdentity();
   const outletContext = useOutletContext<{ searchQuery?: string }>();
   const searchQuery = outletContext?.searchQuery ?? "";
   const [searchParams] = useSearchParams();
@@ -72,6 +80,8 @@ export function TPVPOSView() {
 
   // Orchestrador operacional: estável por toda a vida do componente
   const lifecycle = useMemo(() => createOrderLifecycle(), []);
+  // Serviço de impressão ESC/POS (singleton por componente)
+  const printService = useMemo(() => new PrintService(), []);
 
   // Estado do pedido actual (backend source of truth via store)
   const currentOrderStatus = useOperationalStore((s) => s.currentOrder.status);
@@ -98,14 +108,8 @@ export function TPVPOSView() {
   const [tipCents, setTipCents] = useState(0);
   const [payMethod, setPayMethod] = useState<"cash" | "card" | "pix">("cash");
   const [tipModalOpen, setTipModalOpen] = useState(false);
-  // Receipt state
-  const [lastReceipt, setLastReceipt] = useState<{
-    orderId: string;
-    total: number;
-    tip: number;
-    method: string;
-    table: string | null;
-  } | null>(null);
+  // Receipt state (full fiscal receipt snapshot)
+  const [lastReceipt, setLastReceipt] = useState<ReceiptData | null>(null);
   // Discount state
   const [discountCents, setDiscountCents] = useState(0);
   const [discountReason, setDiscountReason] = useState<string | undefined>();
@@ -367,21 +371,78 @@ export function TPVPOSView() {
   const handleProceed = () => {
     if (cart.length === 0 && !isSentToKitchen) return;
 
-    // Demo mode: simulate payment without backend
+    // Demo mode: simulate payment without backend — show full receipt
     if (isDemoMode) {
-      const demoTotal = cart.reduce((s, i) => s + i.unit_price * i.quantity, 0);
+      const demoOrderId = `DEMO-${Date.now().toString(36)}`;
+      const receiptSnapshot = buildReceiptSnapshot(demoOrderId);
+      setLastReceipt(receiptSnapshot);
+      saveReceipt(restaurantId, receiptSnapshot).catch(() => {});
       setCart([]);
       setTipCents(0);
       setDiscountCents(0);
       setDiscountReason(undefined);
-      toast.success(
-        t("posView.demoPaymentSimulated", { total: formatAmount(demoTotal) }),
-      );
       return;
     }
 
     // Show tip selection before payment
     setTipModalOpen(true);
+  };
+
+  // Build full receipt snapshot from current cart + identity (before cart is cleared)
+  const buildReceiptSnapshot = (orderId: string): ReceiptData => {
+    const items: ReceiptLineItem[] = cart.map((item) => {
+      const modDelta = (item.modifiers ?? []).reduce(
+        (sum, m) => sum + m.priceDeltaCents,
+        0,
+      );
+      return {
+        name: item.name,
+        quantity: item.quantity,
+        unit_price: item.unit_price,
+        line_total: (item.unit_price + modDelta) * item.quantity,
+        modifiers: item.modifiers?.map((m) => ({
+          name: m.name,
+          priceDeltaCents: m.priceDeltaCents,
+        })),
+      };
+    });
+
+    // Tax breakdown: single line from stored tax rate (MVP)
+    const taxBreakdown: ReceiptTaxLine[] = taxCents > 0
+      ? [{
+          rateLabel: `${Math.round(taxRate * 100)}%`,
+          rate: taxRate,
+          baseAmount: subtotalCents,
+          taxAmount: taxCents,
+        }]
+      : [];
+
+    return {
+      orderId,
+      orderIdShort: orderId.slice(0, 8),
+      timestamp: new Date().toISOString(),
+      table: tableParam,
+      orderMode: orderMode,
+      restaurant: {
+        name: identity.name || "Restaurante",
+        legalName: identity.legalName,
+        address: identity.address,
+        taxId: identity.taxId,
+        phone: identity.phone,
+        logoUrl: identity.logoUrl,
+        logoPrintUrl: identity.logoPrintUrl,
+        receiptExtraText: identity.receiptExtraText,
+      },
+      items,
+      subtotalCents,
+      discountCents,
+      discountReason,
+      taxCents,
+      taxBreakdown,
+      tipCents,
+      grandTotalCents,
+      paymentMethod: payMethod,
+    };
   };
 
   // Step 2: confirm payment after tip + method selection
@@ -403,13 +464,12 @@ export function TPVPOSView() {
           grandTotalCents,
         );
         if (result.success) {
-          setLastReceipt({
-            orderId: result.orderId?.slice(0, 8) ?? "",
-            total: grandTotalCents,
-            tip: tipCents,
-            method: payMethod,
-            table: tableParam,
-          });
+          const fullOrderId = result.orderId ?? "";
+          // Snapshot cart BEFORE clearing — receipt needs itemized data
+          const receiptSnapshot = buildReceiptSnapshot(fullOrderId);
+          setLastReceipt(receiptSnapshot);
+          // Persist receipt history (fire-and-forget)
+          saveReceipt(restaurantId, receiptSnapshot).catch(() => {});
           setCart([]);
           setTipCents(0);
           setDiscountCents(0);
@@ -420,13 +480,12 @@ export function TPVPOSView() {
       } else {
         const result = await lifecycle.confirmAndPay(restaurantId, payMethod);
         if (result.success) {
-          setLastReceipt({
-            orderId: result.orderId?.slice(0, 8) ?? "",
-            total: grandTotalCents,
-            tip: tipCents,
-            method: payMethod,
-            table: tableParam,
-          });
+          const fullOrderId = result.orderId ?? "";
+          // Snapshot cart BEFORE clearing — receipt needs itemized data
+          const receiptSnapshot = buildReceiptSnapshot(fullOrderId);
+          setLastReceipt(receiptSnapshot);
+          // Persist receipt history (fire-and-forget)
+          saveReceipt(restaurantId, receiptSnapshot).catch(() => {});
           setCart([]);
           setTipCents(0);
           setDiscountCents(0);
@@ -932,125 +991,53 @@ export function TPVPOSView() {
         </div>
       )}
 
-      {/* Receipt overlay after successful payment */}
+      {/* Fiscal receipt overlay after successful payment */}
       {lastReceipt && (
-        <div
-          onClick={() => setLastReceipt(null)}
-          style={{
-            position: "fixed",
-            inset: 0,
-            background: "rgba(0,0,0,0.8)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            zIndex: 9999,
+        <FiscalReceipt
+          receipt={lastReceipt}
+          onNewOrder={() => {
+            setLastReceipt(null);
+            setContextChosen(false);
+            setOrderMode(null);
           }}
-        >
-          <div
-            onClick={(e) => e.stopPropagation()}
-            style={{
-              background: "#fff",
-              borderRadius: 16,
-              width: "min(360px, 90vw)",
-              padding: 32,
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "center",
-              gap: 12,
-              color: "#18181b",
-            }}
-          >
-            <div style={{ fontSize: 40 }}>✓</div>
-            <h2 style={{ margin: 0, fontSize: 20, fontWeight: 800 }}>
-              {t("posView.paymentConfirmed")}
-            </h2>
-            <div
-              style={{
-                fontSize: 12,
-                color: "#71717a",
-                fontFamily: "monospace",
-              }}
-            >
-              {t("posView.receiptOrderId", { id: lastReceipt.orderId })}
-            </div>
-
-            <div
-              style={{
-                width: "100%",
-                borderTop: "1px dashed #d4d4d8",
-                paddingTop: 12,
-                marginTop: 4,
-                display: "flex",
-                flexDirection: "column",
-                gap: 6,
-                fontSize: 14,
-              }}
-            >
-              {lastReceipt.table && (
-                <div style={{ display: "flex", justifyContent: "space-between" }}>
-                  <span style={{ color: "#71717a" }}>{t("posView.table")}</span>
-                  <span style={{ fontWeight: 600 }}>{lastReceipt.table}</span>
-                </div>
-              )}
-              <div style={{ display: "flex", justifyContent: "space-between" }}>
-                <span style={{ color: "#71717a" }}>{t("posView.receiptMethod")}</span>
-                <span style={{ fontWeight: 600 }}>
-                  {lastReceipt.method === "cash"
-                    ? t("posView.methodCash")
-                    : lastReceipt.method === "card"
-                      ? t("posView.methodCard")
-                      : t("posView.methodPix")}
-                </span>
-              </div>
-              {lastReceipt.tip > 0 && (
-                <div
-                  style={{ display: "flex", justifyContent: "space-between" }}
-                >
-                  <span style={{ color: "#71717a" }}>{t("posView.tipLabel")}</span>
-                  <span style={{ fontWeight: 600 }}>
-                    {formatAmount(lastReceipt.tip)}
-                  </span>
-                </div>
-              )}
-              <div
-                style={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                  borderTop: "1px solid #e4e4e7",
-                  paddingTop: 8,
-                  marginTop: 4,
-                }}
-              >
-                <span style={{ fontWeight: 700, fontSize: 16 }}>{t("posView.total")}</span>
-                <span style={{ fontWeight: 800, fontSize: 16 }}>
-                  {formatAmount(lastReceipt.total)}
-                </span>
-              </div>
-            </div>
-
-            <button
-              type="button"
-              onClick={() => {
-                setLastReceipt(null);
-                setContextChosen(false);
-                setOrderMode(null);
-              }}
-              style={{
-                marginTop: 8,
-                padding: "12px 32px",
-                background: "#18181b",
-                border: "none",
-                borderRadius: 10,
-                color: "#fff",
-                fontWeight: 600,
-                fontSize: 14,
-                cursor: "pointer",
-              }}
-            >
-              {t("posView.newOrder")}
-            </button>
-          </div>
-        </div>
+          onPrint={async () => {
+            if (!lastReceipt) return;
+            try {
+              if (!printService.isReady()) {
+                // Try auto-reconnect to previously paired device
+                const devices = await navigator.usb.getDevices();
+                if (devices.length > 0) {
+                  await printService.connectToDevice(devices[0]);
+                } else {
+                  // No paired device — request new pairing (requires user gesture)
+                  await printService.connect();
+                }
+              }
+              const { order, restaurant, paymentMethodLabel, options } =
+                mapReceiptForPrint(lastReceipt);
+              // Load logo for thermal printing (prefer mono version)
+              const printLogoUrl = lastReceipt.restaurant.logoPrintUrl || lastReceipt.restaurant.logoUrl;
+              if (printLogoUrl) {
+                const raster = await loadLogoRaster(printLogoUrl, 200);
+                if (raster) {
+                  options.logoRaster = raster;
+                }
+              }
+              await printService.printOrderReceipt(
+                order,
+                restaurant,
+                paymentMethodLabel,
+                options,
+              );
+              toast.info(t("posView.receiptPrinted", "Recibo impresso"));
+            } catch (err) {
+              Logger.warn("[TPV] Print failed", { error: err });
+              toast.error(
+                err instanceof Error ? err.message : "Erro ao imprimir",
+              );
+            }
+          }}
+        />
       )}
 
       <ToastContainer toasts={toast.toasts} onDismiss={toast.dismiss} />

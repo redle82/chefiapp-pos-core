@@ -25,10 +25,10 @@ const RESTAURANT_SELECT_FULL =
   "id,name,slug,status,tenant_id,product_mode,billing_status,trial_ends_at,country,timezone,currency,locale,type,logo_url,created_at,updated_at";
 /** Select identidade completo (Docker Core). */
 const IDENTITY_SELECT_FULL =
-  "id,name,slug,status,tenant_id,type,city,address,description,logo_url,country,timezone,currency,locale,created_at,updated_at";
+  "id,name,slug,status,tenant_id,type,city,address,description,logo_url,logo_print_url,phone,email,receipt_extra_text,tax_id,country,timezone,currency,locale,created_at,updated_at";
 /** Select identidade Supabase (sem type). */
 const IDENTITY_SELECT_SUPABASE =
-  "id,name,slug,status,tenant_id,city,address,description,logo_url,country,timezone,currency,locale,created_at,updated_at";
+  "id,name,slug,status,tenant_id,city,address,description,logo_url,logo_print_url,phone,email,receipt_extra_text,tax_id,country,timezone,currency,locale,created_at,updated_at";
 /** Select mínimo para retry quando Supabase não tem city/address/description/etc. (apenas colunas base). */
 const IDENTITY_SELECT_MINIMAL =
   "id,name,slug,status,tenant_id,created_at,updated_at";
@@ -83,6 +83,11 @@ export interface CoreRestaurantIdentityRow extends CoreRestaurantRow {
   address?: string | null;
   description?: string | null;
   logo_url?: string | null;
+  logo_print_url?: string | null;
+  phone?: string | null;
+  email?: string | null;
+  receipt_extra_text?: string | null;
+  tax_id?: string | null;
 }
 
 export interface CoreInstalledModuleRow {
