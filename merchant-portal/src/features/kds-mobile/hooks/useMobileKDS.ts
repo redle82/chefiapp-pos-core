@@ -124,7 +124,7 @@ export function useMobileKDS(restaurantId: string): UseMobileKDSReturn {
               quantity: item.quantity,
               modifications: item.notes,
             })),
-            createdAt: new Date(order.created_at || new Date().toISOString()),
+            createdAt: new Date(order.created_at),
             startedAt: order.started_at
               ? new Date(order.started_at)
               : undefined,

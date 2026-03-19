@@ -30,6 +30,18 @@ export interface PaymentIntentResult {
   clientSecret: string;
 }
 
+export interface PaymentIntentStatusResult {
+  status: string;
+  amount?: number;
+  currency?: string;
+}
+
+export interface RefundResult {
+  refundId: string;
+  status: string;
+  amount: number;
+}
+
 export interface CreatePaymentParams {
   orderId: string;
   amount: number;
@@ -107,6 +119,105 @@ export class PaymentBroker {
     return {
       id: data.id,
       clientSecret: data.clientSecret,
+    };
+  }
+
+  /**
+   * Retrieves the status of a Stripe PaymentIntent via Core RPC.
+   */
+  static async getPaymentIntentStatus(
+    paymentIntentId: string,
+  ): Promise<PaymentIntentStatusResult> {
+    Logger.debug("[PaymentBroker] Getting PaymentIntent status:", { paymentIntentId });
+
+    if (getBackendType() !== BackendType.docker) {
+      throw new Error(CORE_REQUIRED_MSG);
+    }
+
+    const core = getDockerCoreFetchClient();
+    const res = await core.rpc("stripe-payment", {
+      action: "get-payment-intent",
+      payment_intent_id: paymentIntentId,
+    });
+
+    if (res.error) {
+      Logger.error("[PaymentBroker] Core RPC Error (status):", res.error);
+      throw new Error(`Erro ao consultar pagamento: ${res.error.message}`);
+    }
+
+    const data = res.data as {
+      status?: string;
+      amount?: number;
+      currency?: string;
+      error?: string;
+    } | null;
+
+    if (data?.error) {
+      Logger.error("[PaymentBroker] Stripe Error (status):", data.error);
+      throw new Error(data.error);
+    }
+
+    if (!data?.status) {
+      throw new Error("Core não retornou status do PaymentIntent");
+    }
+
+    return {
+      status: data.status,
+      amount: data.amount,
+      currency: data.currency,
+    };
+  }
+
+  /**
+   * Creates a refund for a Stripe PaymentIntent via Core RPC.
+   * Supports full refunds (no amount) and partial refunds (amount in cents).
+   */
+  static async createRefund(params: {
+    paymentIntentId: string;
+    amount?: number;
+  }): Promise<RefundResult> {
+    Logger.debug("[PaymentBroker] Creating refund:", { params });
+
+    if (getBackendType() !== BackendType.docker) {
+      throw new Error(CORE_REQUIRED_MSG);
+    }
+
+    const core = getDockerCoreFetchClient();
+    const rpcParams: Record<string, unknown> = {
+      action: "create-refund",
+      payment_intent_id: params.paymentIntentId,
+    };
+    if (params.amount !== undefined) {
+      rpcParams.amount = params.amount;
+    }
+
+    const res = await core.rpc("stripe-payment", rpcParams);
+
+    if (res.error) {
+      Logger.error("[PaymentBroker] Core RPC Error (refund):", res.error);
+      throw new Error(`Erro ao criar reembolso: ${res.error.message}`);
+    }
+
+    const data = res.data as {
+      id?: string;
+      status?: string;
+      amount?: number;
+      error?: string;
+    } | null;
+
+    if (data?.error) {
+      Logger.error("[PaymentBroker] Stripe Error (refund):", data.error);
+      throw new Error(data.error);
+    }
+
+    if (!data?.id || !data?.status) {
+      throw new Error("Core não retornou id ou status do reembolso");
+    }
+
+    return {
+      refundId: data.id,
+      status: data.status,
+      amount: data.amount ?? params.amount ?? 0,
     };
   }
 

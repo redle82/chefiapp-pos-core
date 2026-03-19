@@ -14,6 +14,7 @@
 import { useCurrency } from "@/core/currency/useCurrency";
 import { useFormatLocale } from "@/core/i18n/useFormatLocale";
 import React, { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 import {
   BEFORE_OPEN_TASK_KEYS,

@@ -1,7 +1,10 @@
 import { useCallback, useMemo, useState } from "react";
+import { ExportButtons } from "../../components/common/ExportButtons";
 import { DataModeBanner } from "../../components/DataModeBanner";
 import { useRestaurantRuntime } from "../../context/RestaurantRuntimeContext";
 import { currencyService } from "../../core/currency/CurrencyService";
+import { centsToDecimalStr } from "../../core/export/ExportService";
+import { useExportBranding } from "../../core/export/useExportBranding";
 import { centsToDecimal, exportCsv } from "../../core/reports/csvExport";
 import { useGamificationImpactReport } from "../../core/reports/hooks/useGamificationImpactReport";
 import type {
@@ -24,6 +27,7 @@ function formatCurrency(cents: number): string {
 
 export function GamificationImpactReportPage() {
   const { runtime } = useRestaurantRuntime();
+  const branding = useExportBranding();
   const now = useMemo(() => new Date(), []);
   const start = useMemo(() => {
     const d = new Date(now);
@@ -152,8 +156,38 @@ export function GamificationImpactReportPage() {
             onClick={handleExportCsv}
             className={styles.exportButton}
           >
-            ⬇ Exportar CSV
+            Exportar CSV
           </button>
+        )}
+        {hasData && data && (
+          <ExportButtons
+            title="Impacto da Gamificacao"
+            subtitle="Comparacao de pedido medio e volume antes e depois"
+            dateRange={`${toInput(dateFrom)} - ${toInput(dateTo)}`}
+            filename={`gamificacao-impacto-${toInput(dateFrom)}-${toInput(dateTo)}`}
+            branding={branding}
+            formats={["pdf", "excel"]}
+            datasets={[
+              {
+                name: "Impacto da Gamificacao",
+                columns: [
+                  { header: "Periodo" },
+                  { header: "Pedidos", align: "right", format: "number" },
+                  { header: "Ticket Medio", align: "right", format: "currency" },
+                ],
+                rows: data.points.map((p: GamificationImpactPoint) => [
+                  p.windowLabel,
+                  p.ordersCount,
+                  centsToDecimalStr(p.averageTicketCents),
+                ]),
+                summaryCards: data.points.map((p: GamificationImpactPoint) => ({
+                  label: p.windowLabel,
+                  value: `${p.ordersCount} pedidos | ${formatCurrency(p.averageTicketCents)}`,
+                  highlight: p.windowLabel === "Depois",
+                })),
+              },
+            ]}
+          />
         )}
       </div>
 

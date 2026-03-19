@@ -1,0 +1,36 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "Merchant Portal (Dev)",
+      "runtimeExecutable": "pnpm",
+      "runtimeArgs": ["--filter", "merchant-portal", "run", "dev", "--", "--port", "5177"],
+      "port": 5177,
+      "autoPort": false
+    },
+    {
+      "name": "Integration Gateway (Billing)",
+      "runtimeExecutable": "pnpm",
+      "runtimeArgs": ["run", "server:integration-gateway"],
+      "port": 4320
+    },
+    {
+      "name": "Full Stack (Gateway + Portal)",
+      "runtimeExecutable": "bash",
+      "runtimeArgs": ["scripts/start-dev-with-billing.sh"],
+      "port": 5175
+    },
+    {
+      "name": "Insforge CRM (Dev)",
+      "runtimeExecutable": "pnpm",
+      "runtimeArgs": ["--filter", "insforge-crm", "run", "dev"],
+      "port": 5173
+    },
+    {
+      "name": "Marketing Build Preview",
+      "runtimeExecutable": "pnpm",
+      "runtimeArgs": ["--filter", "merchant-portal", "run", "preview"],
+      "port": 4173
+    }
+  ]
+}

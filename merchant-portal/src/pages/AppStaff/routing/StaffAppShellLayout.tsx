@@ -1,9 +1,9 @@
 /**
- * StaffAppShellLayout — App container. Shell manda no scroll; único content scroller; sem duplicar layout.
- * Contrato: docs/architecture/APPSTAFF_APPROOT_SURFACE_CONTRACT.md (Visual Canon). Lei Final: docs/architecture/APPSTAFF_VISUAL_CANON.md.
- * TopBar fixa + área central (ÚNICO scroll) + Bottom Nav fixa. PROIBIDO: sidebar, portal/dashboard.
+ * StaffAppShellLayout — App container unificado com TPV/Admin/KDS.
  *
- * "Ser app" = abrir sem browser (PWA instalado). Quando em browser, mostramos como abrir como app.
+ * Contrato visual: header limpo (sem sobreposição), bottom nav por papel, More sheet.
+ * Identidade: mesmo dark theme, mesmos tokens, mesma marca que TPV.
+ * PROIBIDO: sidebar, billing banners, portal/dashboard.
  */
 
 import { useFormatLocale } from "@/core/i18n/useFormatLocale";
@@ -17,6 +17,7 @@ import { LocaleSwitcher } from "../../../components/LocaleSwitcher";
 import { OfflineIndicator } from "../../../ui/OfflineIndicator";
 import { RestaurantLogo } from "../../../ui/RestaurantLogo";
 import { AppStaffBootScreen } from "../AppStaffBootScreen";
+import { OfflineBanner } from "../components/OfflineBanner";
 import { useStaff } from "../context/StaffContext";
 import { getOperatorProfile } from "../data/operatorProfiles";
 import {
@@ -30,14 +31,152 @@ import {
   isFullScreenMode,
 } from "./staffModeConfig";
 
-/** Design Contract v1: mesma cor de acção (dourado) que o dashboard para "estou no mesmo sistema". */
+/** Brand gold — mesma cor do dashboard/TPV action accent. */
 const actionAccent = colors.modes.dashboard.action;
 const BOOT_SESSION_KEY = "chefiapp_staff_boot_shown";
+
+/* ── More sheet domain groups ──
+ * Agrupa os items do "Mais" por domínio operacional
+ * em vez de uma lista solta (padrão 7shifts / Toast). */
+type MoreGroup = {
+  label: string;
+  items: StaffModeId[];
+};
+
+const MORE_GROUPS: MoreGroup[] = [
+  {
+    label: "Operacao",
+    items: ["operation", "tpv", "kds", "tasks", "turn", "alerts"],
+  },
+  {
+    label: "Equipa",
+    items: ["team", "schedule", "tips"],
+  },
+  {
+    label: "Comunicacao",
+    items: ["comms", "notifications"],
+  },
+  {
+    label: "Conta",
+    items: ["profile"],
+  },
+];
+
+/* ── Core status dot ── */
+function CoreDot({ status }: { status: string }) {
+  const dotColor =
+    status === "UP"
+      ? "#4ade80"
+      : status === "DEGRADED"
+      ? "#eab308"
+      : "#f87171";
+  const label =
+    status === "UP"
+      ? "Core online"
+      : status === "DEGRADED"
+      ? "Core degradado"
+      : "Core indisponível";
+  return (
+    <span
+      title={label}
+      style={{
+        width: 7,
+        height: 7,
+        borderRadius: "50%",
+        backgroundColor: dotColor,
+        flexShrink: 0,
+        boxShadow: `0 0 6px ${dotColor}60`,
+      }}
+    />
+  );
+}
+
+/* ── Shift badge ── */
+function ShiftBadge({ state }: { state: string }) {
+  const isActive = state === "active";
+  const isClosing = state === "closing";
+  return (
+    <span
+      style={{
+        fontSize: 10,
+        padding: "3px 8px",
+        borderRadius: 999,
+        backgroundColor: isActive
+          ? "rgba(34, 197, 94, 0.12)"
+          : isClosing
+          ? "rgba(245, 158, 11, 0.12)"
+          : "rgba(148, 163, 184, 0.08)",
+        color: isActive
+          ? "#4ade80"
+          : isClosing
+          ? "#f59e0b"
+          : colors.text.tertiary,
+        fontWeight: 600,
+        textTransform: "uppercase",
+        letterSpacing: "0.06em",
+        flexShrink: 0,
+        lineHeight: 1.4,
+      }}
+    >
+      {isActive ? "ATIVO" : isClosing ? "ENCERRANDO" : "SEM TURNO"}
+    </span>
+  );
+}
+
+/* ── Header icon button ── */
+function HeaderIconBtn({
+  icon,
+  label,
+  active,
+  onClick,
+  badge,
+}: {
+  icon: string;
+  label: string;
+  active: boolean;
+  onClick: () => void;
+  badge?: number;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-label={label}
+      style={{
+        position: "relative",
+        background: active ? "rgba(201, 162, 39, 0.12)" : "transparent",
+        border: "none",
+        color: active ? actionAccent.base : colors.text.tertiary,
+        padding: "6px",
+        cursor: "pointer",
+        fontSize: 16,
+        lineHeight: 1,
+        borderRadius: 8,
+        transition: "background 0.15s",
+      }}
+    >
+      {icon}
+      {badge != null && badge > 0 && (
+        <span
+          style={{
+            position: "absolute",
+            top: 2,
+            right: 2,
+            width: 6,
+            height: 6,
+            borderRadius: "50%",
+            backgroundColor: "#ef4444",
+          }}
+        />
+      )}
+    </button>
+  );
+}
 
 export function StaffAppShellLayout({
   children,
 }: { children?: ReactNode } = {}) {
-  const { activeRole, shiftState, activeLocation, specDrifts, tasks } =
+  const { activeRole, shiftState, activeLocation, specDrifts, tasks, activeWorkerId } =
     useStaff();
   const { identity } = useRestaurantIdentity();
   const { status: coreStatus } = useCoreHealth();
@@ -59,16 +198,20 @@ export function StaffAppShellLayout({
     setShowBoot(false);
   }, []);
 
+  // isLauncher = any home path (root launcher or role-specific home)
   const isLauncher =
     pathname === "/app/staff/home" ||
     pathname === "/app/staff" ||
-    pathname === "/app/staff/";
+    pathname === "/app/staff/" ||
+    /^\/app\/staff\/home\/(owner|manager|waiter|kitchen|cleaning|worker|delivery)/.test(
+      pathname,
+    );
   const currentMode = getModeByPath(pathname);
   const fullScreen = isFullScreenMode(pathname);
   const [moreOpen, setMoreOpen] = React.useState(false);
   const profile = getOperatorProfile(activeRole ?? undefined);
 
-  // Bottom nav: mapa explícito por papel + modos visíveis fora do rodapé ("Mais")
+  // Bottom nav: role-based mapping
   const hasMappedBottomNavRole =
     typeof activeRole === "string" && activeRole in BOTTOM_NAV_BY_ROLE;
   const navRole = hasMappedBottomNavRole ? activeRole : "manager";
@@ -83,6 +226,10 @@ export function StaffAppShellLayout({
     "turn",
     "team",
     "alerts",
+    "comms",
+    "notifications",
+    "schedule",
+    "tips",
     "profile",
   ];
   const maisItems = _allModeIds.filter(
@@ -91,22 +238,7 @@ export function StaffAppShellLayout({
       !(bottomNavItems as readonly string[]).includes(id),
   );
 
-  // PWA standalone detection removed — BrowserBlockGuard enforces device-only access.
-  // See docs/architecture/SYSTEM_RULE_DEVICE_ONLY.md
-
-  const operationalLabel = React.useMemo(() => {
-    const alertCount = specDrifts.length;
-    const taskCount = tasks.length;
-    if (coreStatus !== "UP") return "—";
-    if (taskCount === 0 && alertCount === 0) return "OK";
-    const parts: string[] = [];
-    if (taskCount > 0)
-      parts.push(`${taskCount} tarefa${taskCount !== 1 ? "s" : ""}`);
-    if (alertCount > 0)
-      parts.push(`${alertCount} alerta${alertCount !== 1 ? "s" : ""}`);
-    return parts.join(" · ");
-  }, [coreStatus, tasks.length, specDrifts.length]);
-
+  // Time display
   const [now, setNow] = useState(() => new Date());
   useEffect(() => {
     const t = setInterval(() => setNow(new Date()), 60_000);
@@ -116,7 +248,15 @@ export function StaffAppShellLayout({
     hour: "2-digit",
     minute: "2-digit",
   });
-  const dayStr = now.toLocaleDateString(locale, { weekday: "short" });
+
+  // Page title
+  const pageTitle = isLauncher
+    ? profile?.roleLabel ?? "Início"
+    : currentMode?.label ?? "Staff";
+
+  // Restaurant name
+  const restaurantName =
+    identity.name || activeLocation?.name || "Restaurante";
 
   if (showBoot) {
     return (
@@ -151,158 +291,204 @@ export function StaffAppShellLayout({
         paddingTop: "env(safe-area-inset-top)",
       }}
     >
-      {/* TopBar mínima — contextual, não menu */}
+      {/* ── Header — unified with TPV visual language ── */}
       <header
         style={{
           flexShrink: 0,
-          height: 48,
-          display: "flex",
-          alignItems: "center",
-          padding: "0 12px",
-          backgroundColor: colors.surface.layer1,
-          borderBottom: `1px solid ${colors.border.subtle}`,
-          columnGap: 8,
+          backgroundColor: "#1a1a1a",
+          borderBottom: "1px solid rgba(255,255,255,0.06)",
         }}
       >
-        {/* Esquerda: navegação + modo atual */}
+        {/* Row 1: Restaurant identity + time + core status */}
         <div
           style={{
-            flex: 1,
+            height: 44,
             display: "flex",
             alignItems: "center",
-            gap: 8,
-            minWidth: 0,
+            padding: "0 16px",
+            gap: 10,
           }}
         >
-          {!isLauncher && (
-            <button
-              type="button"
-              onClick={() => navigate("/app/staff/home")}
-              aria-label="Voltar ao início"
+          {/* Left: back + logo + restaurant name */}
+          <div
+            style={{
+              flex: 1,
+              display: "flex",
+              alignItems: "center",
+              gap: 8,
+              minWidth: 0,
+            }}
+          >
+            {!isLauncher && (
+              <button
+                type="button"
+                onClick={() => navigate("/app/staff/home")}
+                aria-label="Voltar ao início"
+                style={{
+                  background: "none",
+                  border: "none",
+                  color: colors.text.secondary,
+                  padding: "4px",
+                  cursor: "pointer",
+                  fontSize: 16,
+                  lineHeight: 1,
+                  flexShrink: 0,
+                }}
+              >
+                ←
+              </button>
+            )}
+            <RestaurantLogo
+              logoUrl={identity.logoUrl}
+              name={restaurantName}
+              size={28}
               style={{
-                background: "none",
-                border: "none",
-                color: colors.text.secondary,
-                padding: 6,
-                cursor: "pointer",
-                fontSize: 18,
-                lineHeight: 1,
+                borderRadius: "50%",
+                border: "1.5px solid rgba(255,255,255,0.1)",
+                flexShrink: 0,
+              }}
+            />
+            <span
+              style={{
+                fontWeight: 700,
+                fontSize: 14,
+                color: "#fafafa",
+                lineHeight: 1.2,
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+                whiteSpace: "nowrap",
               }}
             >
-              ←
-            </button>
-          )}
-          <RestaurantLogo
-            logoUrl={identity.logoUrl}
-            name={(identity.name || activeLocation?.name) ?? "Restaurante"}
-            size={28}
-          />
-          <span
-            style={{
-              fontWeight: 700,
-              fontSize: 15,
-              letterSpacing: "0.04em",
-              textTransform: "uppercase",
-              whiteSpace: "nowrap",
-              overflow: "hidden",
-              textOverflow: "ellipsis",
-            }}
-          >
-            {activeLocation?.name ?? "Restaurante"} —{" "}
-            {isLauncher
-              ? profile?.roleLabel ?? "Staff"
-              : currentMode?.label ?? "Staff"}
-          </span>
-        </div>
+              {restaurantName}
+            </span>
+            <CoreDot status={coreStatus} />
+          </div>
 
-        {/* Centro: restaurante + hora */}
-        <div
-          style={{
-            flex: 1,
-            display: "flex",
-            justifyContent: "center",
-            alignItems: "center",
-            pointerEvents: "none",
-            minWidth: 0,
-            gap: 6,
-          }}
-        >
-          <span
+          {/* Right: time + shift + locale */}
+          <div
             style={{
-              fontSize: 12,
-              color: colors.text.secondary,
-              maxWidth: 180,
-              overflow: "hidden",
-              textOverflow: "ellipsis",
-              whiteSpace: "nowrap",
-              textAlign: "center",
-            }}
-          >
-            {activeLocation?.name ?? "Restaurante"} • {dayStr} {timeStr}
-          </span>
-        </div>
-
-        {/* Direita: idioma + estado do turno + estado operacional + dropdown ⋯ */}
-        <div
-          style={{
-            flex: 1,
-            display: "flex",
-            justifyContent: "flex-end",
-            alignItems: "center",
-            gap: 6,
-            flexWrap: "nowrap",
-            minWidth: 0,
-            position: "relative",
-          }}
-        >
-          <LocaleSwitcher />
-          <span
-            style={{
-              fontSize: 11,
-              padding: "4px 8px",
-              borderRadius: 999,
-              backgroundColor:
-                shiftState === "active"
-                  ? "rgba(34, 197, 94, 0.14)"
-                  : colors.surface.layer2,
-              color:
-                shiftState === "active"
-                  ? colors.success.base
-                  : colors.text.tertiary,
-              fontWeight: 600,
-              textTransform: "uppercase",
-              letterSpacing: "0.08em",
+              display: "flex",
+              alignItems: "center",
+              gap: 8,
               flexShrink: 0,
             }}
           >
-            {shiftState === "active"
-              ? "TURNO ATIVO"
-              : shiftState === "closing"
-              ? "A ENCERRAR"
-              : "SEM TURNO"}
-          </span>
-          {isLauncher && (
             <span
               style={{
-                fontSize: 11,
+                fontSize: 12,
                 color: colors.text.tertiary,
-                whiteSpace: "nowrap",
-                overflow: "hidden",
-                textOverflow: "ellipsis",
-                maxWidth: 140,
+                fontVariantNumeric: "tabular-nums",
               }}
             >
-              {operationalLabel}
+              {timeStr}
             </span>
-          )}
+            <ShiftBadge state={shiftState} />
+            <LocaleSwitcher />
+          </div>
         </div>
+
+        {/* Row 2: Role badge + page title + quick actions */}
+        {!fullScreen && (
+          <div
+            style={{
+              height: 36,
+              display: "flex",
+              alignItems: "center",
+              padding: "0 16px",
+              gap: 8,
+              borderTop: "1px solid rgba(255,255,255,0.03)",
+            }}
+          >
+            {/* Role label + Worker name */}
+            {profile && (
+              <span
+                style={{
+                  fontSize: 11,
+                  fontWeight: 600,
+                  color: actionAccent.base,
+                  letterSpacing: "0.02em",
+                  flexShrink: 0,
+                }}
+              >
+                {profile.roleLabel}
+              </span>
+            )}
+            {profile && (
+              <span
+                style={{
+                  width: 1,
+                  height: 14,
+                  backgroundColor: "rgba(255,255,255,0.1)",
+                  flexShrink: 0,
+                }}
+              />
+            )}
+            {/* Worker name (who's logged in) */}
+            {activeWorkerId && (
+              <>
+                <span
+                  style={{
+                    fontSize: 12,
+                    fontWeight: 600,
+                    color: "#fafafa",
+                    letterSpacing: "0.01em",
+                    flexShrink: 0,
+                    maxWidth: 120,
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                    whiteSpace: "nowrap",
+                  }}
+                >
+                  {activeWorkerId.startsWith("dev-")
+                    ? profile?.name ?? activeWorkerId
+                    : activeWorkerId}
+                </span>
+                <span
+                  style={{
+                    width: 1,
+                    height: 14,
+                    backgroundColor: "rgba(255,255,255,0.1)",
+                    flexShrink: 0,
+                  }}
+                />
+              </>
+            )}
+            <span
+              style={{
+                flex: 1,
+                fontSize: 13,
+                fontWeight: 600,
+                color: colors.text.secondary,
+                letterSpacing: "0.02em",
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+                whiteSpace: "nowrap",
+              }}
+            >
+              {pageTitle}
+            </span>
+
+            <HeaderIconBtn
+              icon="💬"
+              label="Chat da equipa"
+              active={pathname.startsWith("/app/staff/home/comms")}
+              onClick={() => navigate("/app/staff/home/comms")}
+            />
+            <HeaderIconBtn
+              icon="🔔"
+              label="Notificacoes"
+              active={pathname.startsWith("/app/staff/home/notifications")}
+              onClick={() => navigate("/app/staff/home/notifications")}
+              badge={tasks.filter((t) => t.status === "pending" && t.priority === "critical").length}
+            />
+          </div>
+        )}
       </header>
 
       <OfflineIndicator />
+      <OfflineBanner />
 
-      {/* Browser access blocked by BrowserBlockGuard — no PWA install banner needed */}
-
-      {/* Área central — Shell manda no scroll. Único content scroller. Fundo contínuo (surface.base) em toda a largura para não haver faixa lateral. */}
+      {/* ── Content area — single scroller ── */}
       <main
         style={{
           flex: 1,
@@ -328,15 +514,15 @@ export function StaffAppShellLayout({
             overflow: isLauncher ? "hidden" : "auto",
             paddingLeft: fullScreen || isLauncher ? 0 : 16,
             paddingRight: fullScreen || isLauncher ? 0 : 16,
-            paddingTop: fullScreen || isLauncher ? 0 : 16,
-            paddingBottom: fullScreen || isLauncher ? 0 : 96,
+            paddingTop: fullScreen || isLauncher ? 0 : 12,
+            paddingBottom: fullScreen || isLauncher ? 0 : 80,
           }}
         >
           {children ?? <Outlet />}
         </div>
       </main>
 
-      {/* Bottom Bar — painel de ação imediata por papel (BOTTOM_NAV_BY_ROLE) */}
+      {/* ── Bottom Nav — role-based action bar ── */}
       <nav
         style={{
           position: "fixed",
@@ -344,42 +530,43 @@ export function StaffAppShellLayout({
           left: 0,
           right: 0,
           zIndex: 50,
-          minHeight: 56,
-          height: 64,
+          height: 60,
           display: "flex",
           alignItems: "center",
           justifyContent: "space-around",
-          padding: "0 8px",
+          padding: "0 4px",
           paddingBottom: "env(safe-area-inset-bottom)",
-          backgroundColor: colors.surface.layer1,
-          borderTop: `1px solid ${colors.border.subtle}`,
+          backgroundColor: "#1a1a1a",
+          borderTop: "1px solid rgba(255,255,255,0.06)",
         }}
       >
         {bottomNavItems.map((item) => {
           if (item === "home") {
+            const isHome =
+              pathname.startsWith("/app/staff/home/") || isLauncher;
             return (
               <Link
                 key="home"
                 to={`/app/staff/home/${navRole}`}
-                className="staff-bottom-nav-link"
                 style={{
                   display: "flex",
                   flexDirection: "column",
                   alignItems: "center",
                   justifyContent: "center",
-                  gap: 4,
-                  padding: "8px 12px",
-                  borderRadius: 10,
+                  gap: 2,
+                  padding: "6px 14px",
+                  borderRadius: 12,
                   textDecoration: "none",
-                  color: isLauncher ? actionAccent.text : colors.text.secondary,
-                  backgroundColor: isLauncher
-                    ? actionAccent.base
+                  color: isHome ? actionAccent.base : colors.text.tertiary,
+                  backgroundColor: isHome
+                    ? "rgba(201, 162, 39, 0.1)"
                     : "transparent",
-                  fontSize: 11,
-                  fontWeight: 600,
+                  fontSize: 10,
+                  fontWeight: isHome ? 700 : 500,
+                  transition: "all 0.15s",
                 }}
               >
-                <span style={{ fontSize: 24 }}>🏠</span>
+                <span style={{ fontSize: 20, lineHeight: 1 }}>🏠</span>
                 Início
               </Link>
             );
@@ -391,63 +578,66 @@ export function StaffAppShellLayout({
             <Link
               key={item}
               to={mode.path}
-              className="staff-bottom-nav-link"
               style={{
                 display: "flex",
                 flexDirection: "column",
                 alignItems: "center",
                 justifyContent: "center",
-                gap: 4,
-                padding: "8px 10px",
-                borderRadius: 10,
+                gap: 2,
+                padding: "6px 14px",
+                borderRadius: 12,
                 textDecoration: "none",
-                color: isActive ? actionAccent.text : colors.text.secondary,
-                backgroundColor: isActive ? actionAccent.base : "transparent",
-                fontSize: 11,
-                fontWeight: 600,
+                color: isActive ? actionAccent.base : colors.text.tertiary,
+                backgroundColor: isActive
+                  ? "rgba(201, 162, 39, 0.1)"
+                  : "transparent",
+                fontSize: 10,
+                fontWeight: isActive ? 700 : 500,
+                transition: "all 0.15s",
               }}
             >
-              <span style={{ fontSize: 24 }}>{mode.icon}</span>
+              <span style={{ fontSize: 20, lineHeight: 1 }}>{mode.icon}</span>
               {mode.shortLabel ?? mode.label}
             </Link>
           );
         })}
-        {/* Mais — só quando há modos visíveis fora do rodapé */}
         {maisItems.length > 0 && (
           <button
             type="button"
-            className="staff-bottom-nav-link"
             onClick={() => setMoreOpen(true)}
             style={{
               display: "flex",
               flexDirection: "column",
               alignItems: "center",
               justifyContent: "center",
-              gap: 4,
-              padding: "8px 10px",
-              borderRadius: 10,
+              gap: 2,
+              padding: "6px 14px",
+              borderRadius: 12,
               border: "none",
-              backgroundColor: moreOpen ? colors.surface.layer2 : "transparent",
-              color: colors.text.secondary,
-              fontSize: 11,
-              fontWeight: 600,
+              backgroundColor: moreOpen
+                ? "rgba(201, 162, 39, 0.1)"
+                : "transparent",
+              color: moreOpen ? actionAccent.base : colors.text.tertiary,
+              fontSize: 10,
+              fontWeight: 500,
               cursor: "pointer",
+              transition: "all 0.15s",
             }}
           >
-            <span style={{ fontSize: 24 }}>⋯</span>
+            <span style={{ fontSize: 20, lineHeight: 1 }}>⋯</span>
             Mais
           </button>
         )}
       </nav>
 
-      {/* Sheet "Mais" — modos visíveis que não estão no rodapé */}
+      {/* ── More sheet ── */}
       {moreOpen && (
         <div
           style={{
             position: "fixed",
             inset: 0,
-            zIndex: 40,
-            backgroundColor: "rgba(0,0,0,0.5)",
+            zIndex: 60,
+            backgroundColor: "rgba(0,0,0,0.6)",
             display: "flex",
             alignItems: "flex-end",
             justifyContent: "center",
@@ -458,89 +648,135 @@ export function StaffAppShellLayout({
             style={{
               width: "100%",
               maxWidth: 480,
-              backgroundColor: colors.surface.layer1,
-              borderTopLeftRadius: 18,
-              borderTopRightRadius: 18,
-              padding: 16,
-              boxShadow: "0 -12px 40px rgba(0,0,0,0.5)",
+              backgroundColor: "#1a1a1a",
+              borderTopLeftRadius: 20,
+              borderTopRightRadius: 20,
+              padding: "12px 16px 24px",
+              boxShadow: "0 -16px 48px rgba(0,0,0,0.6)",
             }}
             onClick={(e) => e.stopPropagation()}
           >
+            {/* Handle */}
             <div
               style={{
                 width: 36,
                 height: 4,
                 borderRadius: 999,
-                backgroundColor: colors.surface.layer2,
-                margin: "0 auto 12px",
+                backgroundColor: "rgba(255,255,255,0.12)",
+                margin: "0 auto 16px",
               }}
             />
+
+            {/* Grouped mode list (agrupado por domínio operacional) */}
             <div
               style={{
                 display: "flex",
                 flexDirection: "column",
-                gap: 8,
+                gap: 4,
+                maxHeight: "60vh",
+                overflow: "auto",
               }}
             >
-              {maisItems.map((id) => {
-                const mode = getModeById(id);
+              {MORE_GROUPS.map((group) => {
+                const groupItems = group.items.filter((id) =>
+                  maisItems.includes(id),
+                );
+                if (groupItems.length === 0) return null;
                 return (
-                  <button
-                    key={id}
-                    type="button"
-                    onClick={() => {
-                      setMoreOpen(false);
-                      navigate(mode.path);
-                    }}
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "space-between",
-                      width: "100%",
-                      padding: "10px 4px",
-                      border: "none",
-                      background: "none",
-                      color:
-                        id === "alerts" && specDrifts.length > 0
-                          ? colors.destructive.base
-                          : colors.text.primary,
-                      cursor: "pointer",
-                    }}
-                  >
+                  <div key={group.label}>
                     <div
                       style={{
-                        display: "flex",
-                        alignItems: "center",
-                        gap: 10,
+                        fontSize: 10,
+                        fontWeight: 700,
+                        color: colors.text.tertiary,
+                        letterSpacing: "0.06em",
+                        textTransform: "uppercase",
+                        padding: "10px 8px 4px",
                       }}
                     >
-                      <span style={{ fontSize: 20 }}>{mode.icon}</span>
-                      <span
-                        style={{
-                          fontSize: 14,
-                          fontWeight:
-                            id === "alerts" && specDrifts.length > 0
-                              ? 600
-                              : 500,
-                        }}
-                      >
-                        {id === "alerts" && specDrifts.length > 0
-                          ? `${mode.label} (${specDrifts.length})`
-                          : mode.label}
-                      </span>
+                      {group.label}
                     </div>
-                    <span style={{ fontSize: 16, color: colors.text.tertiary }}>
-                      →
-                    </span>
-                  </button>
+                    {groupItems.map((id) => {
+                      const mode = getModeById(id);
+                      const isActive =
+                        pathname === mode.path ||
+                        pathname.startsWith(mode.path + "/");
+                      const isAlert =
+                        id === "alerts" && specDrifts.length > 0;
+                      return (
+                        <button
+                          key={id}
+                          type="button"
+                          onClick={() => {
+                            setMoreOpen(false);
+                            navigate(mode.path);
+                          }}
+                          style={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: 12,
+                            width: "100%",
+                            padding: "11px 8px",
+                            border: "none",
+                            borderRadius: 10,
+                            background: isActive
+                              ? "rgba(201, 162, 39, 0.08)"
+                              : "transparent",
+                            color: isAlert
+                              ? colors.destructive.base
+                              : isActive
+                                ? actionAccent.base
+                                : colors.text.primary,
+                            cursor: "pointer",
+                            transition: "background 0.15s",
+                          }}
+                        >
+                          <span
+                            style={{
+                              fontSize: 18,
+                              width: 28,
+                              textAlign: "center",
+                            }}
+                          >
+                            {mode.icon}
+                          </span>
+                          <span
+                            style={{
+                              flex: 1,
+                              fontSize: 14,
+                              fontWeight:
+                                isAlert || isActive ? 600 : 400,
+                              textAlign: "left",
+                            }}
+                          >
+                            {mode.label}
+                            {isAlert
+                              ? ` (${specDrifts.length})`
+                              : ""}
+                          </span>
+                          <span
+                            style={{
+                              fontSize: 14,
+                              color: colors.text.tertiary,
+                              opacity: 0.5,
+                            }}
+                          >
+                            →
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
                 );
               })}
             </div>
+
+            {/* Footer */}
             <div
               style={{
                 marginTop: 16,
                 paddingTop: 12,
-                borderTop: `1px solid ${colors.border.subtle}`,
+                borderTop: "1px solid rgba(255,255,255,0.06)",
                 display: "flex",
                 flexDirection: "column",
                 alignItems: "center",
@@ -551,8 +787,8 @@ export function StaffAppShellLayout({
                 to="/app/help"
                 onClick={() => setMoreOpen(false)}
                 style={{
-                  fontSize: 14,
-                  color: colors.text.secondary,
+                  fontSize: 13,
+                  color: colors.text.tertiary,
                   textDecoration: "none",
                 }}
               >

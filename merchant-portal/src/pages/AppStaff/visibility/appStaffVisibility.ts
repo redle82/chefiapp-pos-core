@@ -12,7 +12,11 @@ export type AppStaffModeId =
   | "tasks"
   | "alerts"
   | "scanner"
-  | "profile";
+  | "profile"
+  | "comms"
+  | "notifications"
+  | "schedule"
+  | "tips";
 
 const APPSTAFF_VISIBILITY: Record<
   StaffRole,
@@ -28,6 +32,10 @@ const APPSTAFF_VISIBILITY: Record<
     alerts: true,
     scanner: true,
     profile: true,
+    comms: true,
+    notifications: true,
+    schedule: true,
+    tips: true,
   },
   manager: {
     operation: true,
@@ -39,6 +47,10 @@ const APPSTAFF_VISIBILITY: Record<
     alerts: true,
     scanner: true,
     profile: true,
+    comms: true,
+    notifications: true,
+    schedule: true,
+    tips: true,
   },
   waiter: {
     operation: false,
@@ -50,6 +62,10 @@ const APPSTAFF_VISIBILITY: Record<
     alerts: true,
     scanner: false,
     profile: true,
+    comms: true,
+    notifications: true,
+    schedule: false,
+    tips: true,
   },
   kitchen: {
     operation: false,
@@ -61,6 +77,10 @@ const APPSTAFF_VISIBILITY: Record<
     alerts: false,
     scanner: false,
     profile: true,
+    comms: true,
+    notifications: true,
+    schedule: false,
+    tips: false,
   },
   cleaning: {
     operation: false,
@@ -72,6 +92,10 @@ const APPSTAFF_VISIBILITY: Record<
     alerts: false,
     scanner: false,
     profile: true,
+    comms: true,
+    notifications: true,
+    schedule: false,
+    tips: false,
   },
   worker: {
     operation: true,
@@ -83,6 +107,25 @@ const APPSTAFF_VISIBILITY: Record<
     alerts: false,
     scanner: false,
     profile: true,
+    comms: true,
+    notifications: true,
+    schedule: false,
+    tips: false,
+  },
+  delivery: {
+    operation: false,
+    turn: true,
+    team: false,
+    tpv: false,
+    kds: false,
+    tasks: true,
+    alerts: true,
+    scanner: false,
+    profile: true,
+    comms: true,
+    notifications: true,
+    schedule: true,
+    tips: true,
   },
 };
 
@@ -97,17 +140,28 @@ export function canSeeMode(
 }
 
 // ---------------------------------------------------------------------------
-// Rodapé por papel — painel de ação imediata, max 4-5 itens.
-// "home" = link para a home do papel. Os demais são StaffModeId.
-// "Mais" aparece automaticamente se houver modos visíveis fora desta lista.
+// Bottom nav por papel — inspirado nos padrões de mercado (7shifts, Toast, Square):
+//   • 4 tabs fixos + "Mais" automático
+//   • Tab 1 = Home/ferramenta primária do role
+//   • Tab 2 = Ferramenta principal de trabalho
+//   • Tab 3 = Chat (comunicação é fundamental — padrão HotSchedules/7shifts)
+//   • Tab 4 = Mais (acesso a todas as outras ferramentas)
 // ---------------------------------------------------------------------------
 export type BottomNavItem = StaffModeId | "home";
 
 export const BOTTOM_NAV_BY_ROLE: Record<StaffRole, readonly BottomNavItem[]> = {
-  owner: ["home", "operation", "alerts"],
-  manager: ["home", "operation", "team", "alerts"],
-  waiter: ["home", "tpv", "tasks", "turn"],
-  kitchen: ["kds", "tasks", "turn"],
-  cleaning: ["home", "tasks", "turn", "profile"],
-  worker: ["home", "tpv", "tasks", "turn"],
+  // Dono: Dashboard → Operação → Chat → Mais
+  owner: ["home", "operation", "comms"],
+  // Gerente: Dashboard → Operação → Chat → Mais
+  manager: ["home", "operation", "comms"],
+  // Garçom: Início → TPV (ferramenta principal) → Chat → Mais
+  waiter: ["home", "tpv", "comms"],
+  // Cozinha: KDS (ferramenta principal) → Tarefas → Chat → Mais
+  kitchen: ["kds", "tasks", "comms"],
+  // Limpeza: Início → Tarefas (ferramenta principal) → Chat → Mais
+  cleaning: ["home", "tasks", "comms"],
+  // Trabalhador: Início → Tarefas (ferramenta principal) → Chat → Mais
+  worker: ["home", "tasks", "comms"],
+  // Delivery: Início (painel Shipday) → Tarefas → Chat → Mais
+  delivery: ["home", "tasks", "comms"],
 };

@@ -1,0 +1,265 @@
+/* ── Tips Analytics Page — Uses design-system tokens ──────────── */
+
+.root {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: var(--surface-base, #0a0a0a);
+  color: var(--text-primary, #e5e5e5);
+  overflow-y: auto;
+  padding: 0 16px 24px;
+}
+
+.header {
+  padding: 12px 0;
+  flex-shrink: 0;
+}
+
+.title {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text-primary, #fff);
+  margin: 0;
+}
+
+/* ── Summary cards ───────────────────────────────────────────── */
+
+.summaryGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.summaryCard {
+  background: var(--surface-overlay, rgba(255, 255, 255, 0.04));
+  border: 1px solid var(--surface-border, rgba(255, 255, 255, 0.06));
+  border-radius: 12px;
+  padding: 12px;
+  text-align: center;
+}
+
+.summaryLabel {
+  font-size: 11px;
+  color: var(--text-muted, rgba(255, 255, 255, 0.4));
+  text-transform: uppercase;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+}
+
+.summaryValue {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--text-primary, #fff);
+  margin-top: 4px;
+}
+
+.summaryValueGreen {
+  composes: summaryValue;
+  color: var(--color-success, #4ade80);
+}
+
+/* ── Chart ────────────────────────────────────────────────────── */
+
+.section {
+  margin-bottom: 20px;
+}
+
+.sectionTitle {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-secondary, rgba(255, 255, 255, 0.7));
+  margin: 0 0 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.chartContainer {
+  background: var(--surface-overlay, rgba(255, 255, 255, 0.03));
+  border: 1px solid var(--surface-border, rgba(255, 255, 255, 0.05));
+  border-radius: 12px;
+  padding: 16px 12px 8px;
+}
+
+.barChart {
+  display: flex;
+  align-items: flex-end;
+  gap: 6px;
+  height: 120px;
+}
+
+.barCol {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  height: 100%;
+  justify-content: flex-end;
+}
+
+.bar {
+  width: 100%;
+  border-radius: 4px 4px 0 0;
+  background: linear-gradient(to top, rgba(201, 162, 39, 0.4), rgba(201, 162, 39, 0.8));
+  min-height: 2px;
+  transition: height 0.3s ease;
+}
+
+.barLabel {
+  font-size: 10px;
+  color: var(--text-muted, rgba(255, 255, 255, 0.4));
+  font-weight: 600;
+}
+
+.barValue {
+  font-size: 9px;
+  color: var(--text-muted, rgba(255, 255, 255, 0.5));
+  font-weight: 500;
+}
+
+/* ── Leaderboard ─────────────────────────────────────────────── */
+
+.leaderboard {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.leaderRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  background: var(--surface-overlay, rgba(255, 255, 255, 0.03));
+  border: 1px solid var(--surface-border, rgba(255, 255, 255, 0.04));
+  border-radius: 10px;
+}
+
+.leaderRank {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text-muted, rgba(255, 255, 255, 0.3));
+  width: 24px;
+  text-align: center;
+  flex-shrink: 0;
+}
+
+.leaderRankGold {
+  composes: leaderRank;
+  color: var(--color-brand-gold, #c9a227);
+}
+
+.leaderRankSilver {
+  composes: leaderRank;
+  color: #9ca3af;
+}
+
+.leaderRankBronze {
+  composes: leaderRank;
+  color: #d97706;
+}
+
+.leaderInfo {
+  flex: 1;
+  min-width: 0;
+}
+
+.leaderName {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary, #fff);
+}
+
+.leaderRole {
+  font-size: 11px;
+  color: var(--text-muted, rgba(255, 255, 255, 0.35));
+  text-transform: capitalize;
+}
+
+.leaderAmount {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--color-success, #4ade80);
+  flex-shrink: 0;
+}
+
+.leaderPercent {
+  font-size: 11px;
+  color: var(--text-muted, rgba(255, 255, 255, 0.3));
+  flex-shrink: 0;
+  width: 36px;
+  text-align: right;
+}
+
+/* ── Performance cards ───────────────────────────────────────── */
+
+.perfGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.perfCard {
+  background: var(--surface-overlay, rgba(255, 255, 255, 0.03));
+  border: 1px solid var(--surface-border, rgba(255, 255, 255, 0.05));
+  border-radius: 10px;
+  padding: 12px;
+}
+
+.perfLabel {
+  font-size: 11px;
+  color: var(--text-muted, rgba(255, 255, 255, 0.35));
+  margin-bottom: 4px;
+}
+
+.perfValue {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text-primary, #fff);
+}
+
+.perfSub {
+  font-size: 11px;
+  color: var(--text-muted, rgba(255, 255, 255, 0.3));
+  margin-top: 2px;
+}
+
+/* ── Top performer banner ────────────────────────────────────── */
+
+.topBanner {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px;
+  background: linear-gradient(135deg, rgba(201, 162, 39, 0.1), rgba(184, 146, 42, 0.05));
+  border: 1px solid rgba(201, 162, 39, 0.2);
+  border-radius: 12px;
+  margin-bottom: 16px;
+}
+
+.topIcon {
+  font-size: 32px;
+}
+
+.topInfo {
+  flex: 1;
+}
+
+.topLabel {
+  font-size: 11px;
+  color: rgba(201, 162, 39, 0.7);
+  text-transform: uppercase;
+  font-weight: 600;
+}
+
+.topName {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--color-brand-gold, #c9a227);
+}
+
+.topStat {
+  font-size: 12px;
+  color: var(--text-muted, rgba(255, 255, 255, 0.5));
+}

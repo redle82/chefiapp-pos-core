@@ -7,7 +7,7 @@ import { AdminPageHeader } from "../../../dashboard/components/AdminPageHeader";
 
 export function IntegrationsOtherPage() {
   return (
-    <div className="page-enter admin-content-page">
+    <>
       <AdminPageHeader
         title="Outros sistemas"
         subtitle="ERP, fiscal, BI, analytics."
@@ -24,6 +24,6 @@ export function IntegrationsOtherPage() {
           Em breve: stubs ou links para configuração de integrações com ERP, sistemas fiscais e analytics.
         </p>
       </div>
-    </div>
+    </>
   );
 }

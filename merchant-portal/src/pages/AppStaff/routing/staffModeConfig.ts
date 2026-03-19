@@ -13,7 +13,11 @@ export type StaffModeId =
   | "tasks"
   | "alerts"
   | "scanner"
-  | "profile";
+  | "profile"
+  | "comms"
+  | "notifications"
+  | "schedule"
+  | "tips";
 
 export interface StaffMode {
   id: StaffModeId;
@@ -76,6 +80,35 @@ export const STAFF_MODES: StaffMode[] = [
   },
   // Perfil é rota de topo: /app/staff/profile
   { id: "profile", path: `${BASE}/profile`, label: "Perfil", icon: "👤" },
+  // ── Ferramentas internas (acessíveis via header/homes) ──
+  {
+    id: "comms",
+    path: `${BASE}/home/comms`,
+    label: "Comunicação",
+    shortLabel: "Chat",
+    icon: "💬",
+  },
+  {
+    id: "notifications",
+    path: `${BASE}/home/notifications`,
+    label: "Notificações",
+    shortLabel: "Avisos",
+    icon: "🔔",
+  },
+  {
+    id: "schedule",
+    path: `${BASE}/home/schedule`,
+    label: "Escalas",
+    shortLabel: "Escalas",
+    icon: "📋",
+  },
+  {
+    id: "tips",
+    path: `${BASE}/home/tips`,
+    label: "Gorjetas",
+    shortLabel: "Gorjetas",
+    icon: "💰",
+  },
 ];
 
 // Launcher canónico: /app/staff/home

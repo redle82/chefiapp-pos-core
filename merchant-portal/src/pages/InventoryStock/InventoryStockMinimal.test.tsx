@@ -4,6 +4,51 @@ import { describe, expect, it, vi } from "vitest";
 import * as InventoryStockReader from "../../infra/readers/InventoryStockReader";
 import { InventoryStockMinimal } from "./InventoryStockMinimal";
 
+// ── i18n mock: return pt-PT translations for operational.inventory.* ────
+const PT_INVENTORY: Record<string, string> = {
+  "inventory.tab.locations": "Locais",
+  "inventory.tab.equipment": "Equipamentos",
+  "inventory.tab.ingredients": "Ingredientes",
+  "inventory.tab.stock": "Estoque",
+  "inventory.tab.recipes": "Receitas",
+  "inventory.tab.movements": "Movimentos",
+  "inventory.tab.scan": "Scan",
+  "inventory.movement.IN": "Entrada",
+  "inventory.movement.OUT": "Saída",
+  "inventory.movement.ADJUST": "Ajuste",
+  "inventory.movement.TRANSFER": "Transferência",
+  "inventory.unit.unit": "Unidade",
+  "common:saving": "A guardar...",
+  "common:save": "Guardar",
+  "common:cancel": "Cancelar",
+  "common:create": "Criar",
+};
+
+vi.mock("react-i18next", () => ({
+  useTranslation: () => ({
+    t: (key: string, fallbackOrOpts?: string | Record<string, unknown>) => {
+      const template = PT_INVENTORY[key];
+      if (!template) {
+        return typeof fallbackOrOpts === "string" ? fallbackOrOpts : key;
+      }
+      if (typeof fallbackOrOpts === "object" && fallbackOrOpts !== null) {
+        return template.replace(/\{\{(\w+)\}\}/g, (_, varName) =>
+          String((fallbackOrOpts as Record<string, unknown>)[varName] ?? `{{${varName}}}`),
+        );
+      }
+      return template;
+    },
+    i18n: { language: "pt-PT", changeLanguage: vi.fn() },
+  }),
+  Trans: ({ children }: { children: React.ReactNode }) => children,
+  initReactI18next: { type: "3rdParty", init: vi.fn() },
+}));
+
+// Mock useCurrency
+vi.mock("../../core/currency/useCurrency", () => ({
+  useCurrency: () => ({ symbol: "€", code: "EUR", setCurrency: vi.fn() }),
+}));
+
 const mockNavigate = vi.fn();
 
 vi.mock("react-router-dom", async (importOriginal) => {

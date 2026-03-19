@@ -4,11 +4,9 @@
  * Usa useOnboarding(): create_onboarding_context, update_onboarding_step, get_onboarding_state.
  * Barra de progresso (progress_percent). No fim redireciona para /app/staff/home.
  * Ref: IMPLEMENTATION_CHECKLIST.md Day 3, docs/contracts/FUNIL_VIDA_CLIENTE.md
- *
- * v1.1 — Added: field validation, draft persistence (localStorage), verification summary
  */
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 import { useOnboarding } from "../../hooks/useOnboarding";
@@ -25,85 +23,6 @@ const STEPS_ORDER = [
   "verification",
   "complete",
 ] as const;
-
-const DRAFT_KEY = "chefiapp_onboarding_draft";
-
-/** Load draft from localStorage (returns defaults if none). */
-function loadDraft(): Record<string, unknown> {
-  const defaults: Record<string, unknown> = {
-    pais: "ES",
-    tipo: "Restaurante",
-    numMesas: "",
-    usaImpressora: false,
-    usaKDS: false,
-    numUsuarios: "",
-    ownerName: "",
-    ownerEmail: "",
-    menuProducts: "",
-    staffCount: "",
-    paymentMethod: "card",
-  };
-  try {
-    const raw = localStorage.getItem(DRAFT_KEY);
-    if (raw) {
-      const parsed = JSON.parse(raw);
-      return { ...defaults, ...parsed };
-    }
-  } catch {
-    /* ignore corrupt data */
-  }
-  return defaults;
-}
-
-/** Persist draft to localStorage. */
-function saveDraft(data: Record<string, unknown>): void {
-  try {
-    localStorage.setItem(DRAFT_KEY, JSON.stringify(data));
-  } catch {
-    /* quota exceeded — non-critical */
-  }
-}
-
-/** Clear draft after successful completion. */
-function clearDraft(): void {
-  try {
-    localStorage.removeItem(DRAFT_KEY);
-  } catch {
-    /* ignore */
-  }
-}
-
-/** Validation helpers. */
-type FieldErrors = Record<string, string>;
-
-function validateRestaurantSetup(data: Record<string, unknown>): FieldErrors {
-  const errors: FieldErrors = {};
-  const numMesas = Number(data.numMesas);
-  if (!data.numMesas || isNaN(numMesas) || numMesas < 1) {
-    errors.numMesas = "Indica pelo menos 1 mesa";
-  }
-  if (!data.pais) errors.pais = "Seleciona o país";
-  if (!data.tipo) errors.tipo = "Seleciona o tipo";
-  return errors;
-}
-
-function validateLegalInfo(data: Record<string, unknown>): FieldErrors {
-  const errors: FieldErrors = {};
-  const email = String(data.ownerEmail ?? "").trim();
-  if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-    errors.ownerEmail = "Email inválido";
-  }
-  return errors;
-}
-
-function validateStaff(data: Record<string, unknown>): FieldErrors {
-  const errors: FieldErrors = {};
-  const n = Number(data.numUsuarios);
-  if (!data.numUsuarios || isNaN(n) || n < 1) {
-    errors.numUsuarios = "Indica pelo menos 1 colaborador";
-  }
-  return errors;
-}
 
 const styles = {
   page: {
@@ -156,16 +75,6 @@ const styles = {
     backgroundColor: "#141414",
     color: "#fafafa",
   },
-  inputError: {
-    width: "100%",
-    boxSizing: "border-box" as const,
-    padding: "12px 14px",
-    fontSize: 15,
-    border: "1px solid #f87171",
-    borderRadius: 8,
-    backgroundColor: "#141414",
-    color: "#fafafa",
-  },
   select: {
     width: "100%",
     padding: "12px 14px",
@@ -203,15 +112,6 @@ const styles = {
     color: "#a3a3a3",
   },
   error: { color: "#f87171", fontSize: 13, marginTop: 8 },
-  fieldError: { color: "#f87171", fontSize: 12, marginTop: 4 },
-  summaryCard: {
-    backgroundColor: "#1a1a1a",
-    borderRadius: 10,
-    padding: 16,
-    marginBottom: 12,
-  },
-  summaryLabel: { fontSize: 12, color: "#888", marginBottom: 2 },
-  summaryValue: { fontSize: 15, color: "#fafafa", fontWeight: 600 as const },
 };
 
 const PAISES = [
@@ -240,22 +140,21 @@ export function OnboardingAssistantPage() {
   const [restaurantName, setRestaurantName] = useState("");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
 
-  // Form data for multi-step — restored from localStorage draft
-  const [setupData, setSetupDataRaw] = useState<Record<string, unknown>>(loadDraft);
-
-  // Wrap setSetupData to auto-persist draft
-  const setSetupData: typeof setSetupDataRaw = useCallback(
-    (updater) => {
-      setSetupDataRaw((prev) => {
-        const next = typeof updater === "function" ? updater(prev) : updater;
-        saveDraft(next);
-        return next;
-      });
-    },
-    [],
-  );
+  // Form data for multi-step (persisted in step payloads)
+  const [setupData, setSetupData] = useState<Record<string, unknown>>({
+    pais: "PT",
+    tipo: "Restaurante",
+    numMesas: "",
+    usaImpressora: false,
+    usaKDS: false,
+    numUsuarios: "",
+    ownerName: "",
+    ownerEmail: "",
+    menuProducts: "",
+    staffCount: "",
+    paymentMethod: "card",
+  });
 
   const currentStep = state?.current_step ?? "welcome";
   const currentIndex = STEPS_ORDER.indexOf(
@@ -303,27 +202,11 @@ export function OnboardingAssistantPage() {
   const handleNextStep = async (
     step: string,
     data: Record<string, unknown> = {},
-    validate?: () => FieldErrors,
   ) => {
     setError(null);
-    setFieldErrors({});
-
-    // Run validation if provided
-    if (validate) {
-      const errs = validate();
-      if (Object.keys(errs).length > 0) {
-        setFieldErrors(errs);
-        return;
-      }
-    }
-
     setSaving(true);
     try {
       await completeStep(step, data);
-      // On final step, clear draft
-      if (step === "complete") {
-        clearDraft();
-      }
     } catch (err) {
       setError(
         err instanceof Error ? err.message : "Erro ao guardar este passo",
@@ -417,15 +300,11 @@ export function OnboardingAssistantPage() {
           style={styles.form}
           onSubmit={(e) => {
             e.preventDefault();
-            handleNextStep(
-              "legal_info",
-              {
-                pais: setupData.pais,
-                tipo: setupData.tipo,
-                numMesas: setupData.numMesas,
-              },
-              () => validateRestaurantSetup(setupData),
-            );
+            handleNextStep("legal_info", {
+              pais: setupData.pais,
+              tipo: setupData.tipo,
+              numMesas: setupData.numMesas,
+            });
           }}
         >
           <div>
@@ -443,7 +322,6 @@ export function OnboardingAssistantPage() {
                 </option>
               ))}
             </select>
-            {fieldErrors.pais && <p style={styles.fieldError}>{fieldErrors.pais}</p>}
           </div>
           <div>
             <label style={styles.label}>Tipo de estabelecimento</label>
@@ -460,21 +338,19 @@ export function OnboardingAssistantPage() {
                 </option>
               ))}
             </select>
-            {fieldErrors.tipo && <p style={styles.fieldError}>{fieldErrors.tipo}</p>}
           </div>
           <div>
             <label style={styles.label}>Número de mesas (estimativa)</label>
             <input
               type="number"
-              min={1}
+              min={0}
               value={String(setupData.numMesas)}
               onChange={(e) =>
                 setSetupData((s) => ({ ...s, numMesas: e.target.value }))
               }
               placeholder="Ex: 10"
-              style={fieldErrors.numMesas ? styles.inputError : styles.input}
+              style={styles.input}
             />
-            {fieldErrors.numMesas && <p style={styles.fieldError}>{fieldErrors.numMesas}</p>}
           </div>
           {error && <p style={styles.error}>{error}</p>}
           <button type="submit" style={styles.button} disabled={saving}>
@@ -488,14 +364,10 @@ export function OnboardingAssistantPage() {
           style={styles.form}
           onSubmit={(e) => {
             e.preventDefault();
-            handleNextStep(
-              "menu",
-              {
-                ownerName: setupData.ownerName,
-                ownerEmail: setupData.ownerEmail,
-              },
-              () => validateLegalInfo(setupData),
-            );
+            handleNextStep("menu", {
+              ownerName: setupData.ownerName,
+              ownerEmail: setupData.ownerEmail,
+            });
           }}
         >
           <div>
@@ -517,9 +389,8 @@ export function OnboardingAssistantPage() {
               onChange={(e) =>
                 setSetupData((s) => ({ ...s, ownerEmail: e.target.value }))
               }
-              style={fieldErrors.ownerEmail ? styles.inputError : styles.input}
+              style={styles.input}
             />
-            {fieldErrors.ownerEmail && <p style={styles.fieldError}>{fieldErrors.ownerEmail}</p>}
           </div>
           {error && <p style={styles.error}>{error}</p>}
           <button type="submit" style={styles.button} disabled={saving}>
@@ -565,11 +436,9 @@ export function OnboardingAssistantPage() {
           style={styles.form}
           onSubmit={(e) => {
             e.preventDefault();
-            handleNextStep(
-              "payment",
-              { staffCount: setupData.numUsuarios },
-              () => validateStaff(setupData),
-            );
+            handleNextStep("payment", {
+              staffCount: setupData.numUsuarios,
+            });
           }}
         >
           <div>
@@ -584,9 +453,8 @@ export function OnboardingAssistantPage() {
                 setSetupData((s) => ({ ...s, numUsuarios: e.target.value }))
               }
               placeholder="Ex: 3"
-              style={fieldErrors.numUsuarios ? styles.inputError : styles.input}
+              style={styles.input}
             />
-            {fieldErrors.numUsuarios && <p style={styles.fieldError}>{fieldErrors.numUsuarios}</p>}
           </div>
           {error && <p style={styles.error}>{error}</p>}
           <button type="submit" style={styles.button} disabled={saving}>
@@ -682,49 +550,6 @@ export function OnboardingAssistantPage() {
             Confirma os dados e clica em &quot;Concluir&quot; para ativar o teu
             restaurante.
           </p>
-          <div style={{ marginTop: 16 }}>
-            <div style={styles.summaryCard}>
-              <div style={styles.summaryLabel}>Restaurante</div>
-              <div style={styles.summaryValue}>{state.restaurant_name}</div>
-            </div>
-            <div style={styles.summaryCard}>
-              <div style={styles.summaryLabel}>País / Tipo</div>
-              <div style={styles.summaryValue}>
-                {PAISES.find((p) => p.value === setupData.pais)?.label ?? setupData.pais}{" / "}
-                {String(setupData.tipo)}
-              </div>
-            </div>
-            <div style={styles.summaryCard}>
-              <div style={styles.summaryLabel}>Mesas</div>
-              <div style={styles.summaryValue}>{String(setupData.numMesas || "—")}</div>
-            </div>
-            {(setupData.ownerName || setupData.ownerEmail) && (
-              <div style={styles.summaryCard}>
-                <div style={styles.summaryLabel}>Responsável</div>
-                <div style={styles.summaryValue}>
-                  {String(setupData.ownerName || "—")}
-                  {setupData.ownerEmail ? ` (${setupData.ownerEmail})` : ""}
-                </div>
-              </div>
-            )}
-            <div style={styles.summaryCard}>
-              <div style={styles.summaryLabel}>Equipa / Pagamento</div>
-              <div style={styles.summaryValue}>
-                {String(setupData.numUsuarios || "—")} colaboradores · {String(setupData.paymentMethod)}
-              </div>
-            </div>
-            <div style={styles.summaryCard}>
-              <div style={styles.summaryLabel}>Dispositivos</div>
-              <div style={styles.summaryValue}>
-                {[
-                  setupData.usaImpressora ? "Impressora" : null,
-                  setupData.usaKDS ? "KDS" : null,
-                ]
-                  .filter(Boolean)
-                  .join(", ") || "Nenhum selecionado"}
-              </div>
-            </div>
-          </div>
           {error && <p style={styles.error}>{error}</p>}
           <button
             type="button"

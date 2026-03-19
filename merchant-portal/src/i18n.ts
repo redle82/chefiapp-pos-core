@@ -38,6 +38,18 @@ import ptPTOperational from "./locales/pt-PT/operational.json";
 import ptPTWaiter from "./locales/pt-PT/waiter.json";
 // Sidebar
 import ptPTSidebar from "./locales/pt-PT/sidebar.json";
+// Customer Menu
+import ptPTCustomerMenu from "./locales/pt-PT/customer-menu.json";
+// Tips
+import ptPTTips from "./locales/pt-PT/tips.json";
+// Tables
+import ptPTTables from "./locales/pt-PT/tables.json";
+// Customers CRM
+import ptPTCustomers from "./locales/pt-PT/customers.json";
+// Privacy
+import ptPTPrivacy from "./locales/pt-PT/privacy.json";
+// Analytics
+import ptPTAnalytics from "./locales/pt-PT/analytics.json";
 
 // ── pt-BR ───────────────────────────────────────────────────────────────────
 import ptBRCommon from "./locales/pt-BR/common.json";
@@ -53,6 +65,12 @@ import ptBRShift from "./locales/pt-BR/shift.json";
 import ptBRSidebar from "./locales/pt-BR/sidebar.json";
 import ptBRTpv from "./locales/pt-BR/tpv.json";
 import ptBRWaiter from "./locales/pt-BR/waiter.json";
+import ptBRCustomerMenu from "./locales/pt-BR/customer-menu.json";
+import ptBRTips from "./locales/pt-BR/tips.json";
+import ptBRTables from "./locales/pt-BR/tables.json";
+import ptBRCustomers from "./locales/pt-BR/customers.json";
+import ptBRPrivacy from "./locales/pt-BR/privacy.json";
+import ptBRAnalytics from "./locales/pt-BR/analytics.json";
 
 // ── en ──────────────────────────────────────────────────────────────────────
 import enCommon from "./locales/en/common.json";
@@ -68,6 +86,12 @@ import enShift from "./locales/en/shift.json";
 import enSidebar from "./locales/en/sidebar.json";
 import enTpv from "./locales/en/tpv.json";
 import enWaiter from "./locales/en/waiter.json";
+import enCustomerMenu from "./locales/en/customer-menu.json";
+import enTips from "./locales/en/tips.json";
+import enTables from "./locales/en/tables.json";
+import enCustomers from "./locales/en/customers.json";
+import enPrivacy from "./locales/en/privacy.json";
+import enAnalytics from "./locales/en/analytics.json";
 
 // ── es ──────────────────────────────────────────────────────────────────────
 import {
@@ -87,6 +111,12 @@ import esShift from "./locales/es/shift.json";
 import esSidebar from "./locales/es/sidebar.json";
 import esTpv from "./locales/es/tpv.json";
 import esWaiter from "./locales/es/waiter.json";
+import esCustomerMenu from "./locales/es/customer-menu.json";
+import esTips from "./locales/es/tips.json";
+import esTables from "./locales/es/tables.json";
+import esCustomers from "./locales/es/customers.json";
+import esPrivacy from "./locales/es/privacy.json";
+import esAnalytics from "./locales/es/analytics.json";
 
 const DEFAULT_LANG = "pt-BR";
 
@@ -107,6 +137,12 @@ const ALL_NS = [
   "operational",
   "waiter",
   "sidebar",
+  "customer-menu",
+  "tips",
+  "tables",
+  "customers",
+  "privacy",
+  "analytics",
 ] as const;
 
 // Respect stored locale (LocaleSwitcher) ou derivar de país/região ou browser.
@@ -158,6 +194,12 @@ void i18n.use(initReactI18next).init({
       operational: ptPTOperational,
       waiter: ptPTWaiter,
       sidebar: ptPTSidebar,
+      "customer-menu": ptPTCustomerMenu,
+      tips: ptPTTips,
+      tables: ptPTTables,
+      customers: ptPTCustomers,
+      privacy: ptPTPrivacy,
+      analytics: ptPTAnalytics,
       legal: {
         /* kept inline — stable legal text */
         dataPrivacyTitle: "Dados e privacidade",
@@ -267,6 +309,12 @@ void i18n.use(initReactI18next).init({
       operational: ptBROperational,
       waiter: ptBRWaiter,
       sidebar: ptBRSidebar,
+      "customer-menu": ptBRCustomerMenu,
+      tips: ptBRTips,
+      tables: ptBRTables,
+      customers: ptBRCustomers,
+      privacy: ptBRPrivacy,
+      analytics: ptBRAnalytics,
       legal: {
         /* kept inline — stable legal text */
         dataPrivacyTitle: "Dados e privacidade",
@@ -376,6 +424,12 @@ void i18n.use(initReactI18next).init({
       operational: enOperational,
       waiter: enWaiter,
       sidebar: enSidebar,
+      "customer-menu": enCustomerMenu,
+      tips: enTips,
+      tables: enTables,
+      customers: enCustomers,
+      privacy: enPrivacy,
+      analytics: enAnalytics,
       legal: {
         /* kept inline — stable legal text */
         dataPrivacyTitle: "Data and privacy",
@@ -482,6 +536,12 @@ void i18n.use(initReactI18next).init({
       operational: esOperational,
       waiter: esWaiter,
       sidebar: esSidebar,
+      "customer-menu": esCustomerMenu,
+      tips: esTips,
+      tables: esTables,
+      customers: esCustomers,
+      privacy: esPrivacy,
+      analytics: esAnalytics,
       legal: {
         /* kept inline — stable legal text */
         dataPrivacyTitle: "Datos y privacidad",

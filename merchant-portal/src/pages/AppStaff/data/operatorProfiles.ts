@@ -50,6 +50,12 @@ export const OPERATOR_PROFILES: Record<StaffRole, OperatorProfile> = {
     roleLabel: "Staff",
     shortDescription: "Tarefas e apoio operacional.",
   },
+  delivery: {
+    role: "delivery",
+    name: "Carlos Lima",
+    roleLabel: "Entregador",
+    shortDescription: "Entregas, rotas e condutores.",
+  },
 };
 
 export function getOperatorProfile(
@@ -70,4 +76,5 @@ export const TRIAL_GUIDE_CODES: Record<StaffRole, string> = {
   kitchen: "CHEF-KIT-MOCK",
   cleaning: "CHEF-CLEA-MOCK",
   worker: "CHEF-STFF-MOCK",
+  delivery: "CHEF-DLVR-MOCK",
 };

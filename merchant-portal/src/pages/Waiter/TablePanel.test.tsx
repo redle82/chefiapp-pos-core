@@ -107,6 +107,7 @@ vi.mock("react-i18next", () => ({
         sendOrder: "Enviar Pedido",
         processing: "Processando...",
         print: "Imprimir",
+        title: "Pagamento",
       };
       return map[k] ?? key;
     },

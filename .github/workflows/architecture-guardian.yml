@@ -31,8 +31,8 @@ jobs:
             echo "❌ SYSTEM_TRUTH_CODEX.md missing"
             exit 1
           fi
-          if [ ! -f "PARTE_3_REGRAS_DO_CORE.md" ] && [ ! -f "docs/archive/PARTE_3_REGRAS_DO_CORE.md" ]; then
-            echo "❌ PARTE_3_REGRAS_DO_CORE.md missing (expected at repo root or docs/archive/)"
+          if [ ! -f "PARTE_3_REGRAS_DO_CORE.md" ]; then
+            echo "❌ PARTE_3_REGRAS_DO_CORE.md missing"
             exit 1
           fi
           echo "✅ Kernel Layer validated"
@@ -48,8 +48,8 @@ jobs:
             echo "❌ TenantResolver.ts missing"
             exit 1
           fi
-          if [ ! -f "TENANT_RESOLUTION_CONTRACT.md" ] && [ ! -f "docs/archive/TENANT_RESOLUTION_CONTRACT.md" ]; then
-            echo "❌ TENANT_RESOLUTION_CONTRACT.md missing (expected at repo root or docs/archive/)"
+          if [ ! -f "TENANT_RESOLUTION_CONTRACT.md" ]; then
+            echo "❌ TENANT_RESOLUTION_CONTRACT.md missing"
             exit 1
           fi
           echo "✅ Gates Layer validated"
@@ -90,13 +90,16 @@ jobs:
         run: |
           echo "🔍 Validating Tenant Sovereignty..."
           
-          # Accept current sovereignty implementations:
-          # - tenant sealing check
-          # - active tenant resolution/guards
-          if ! grep -q "isTenantSealed" merchant-portal/src/core/flow/FlowGate.tsx && \
-             ! grep -q "getActiveTenant" merchant-portal/src/core/flow/FlowGate.tsx; then
-            echo "❌ VIOLATION: FlowGate missing tenant sovereignty guard"
-            echo "Expected tenant seal and/or active tenant guard in FlowGate."
+          # Check if FlowGate has sovereignty check
+          if ! grep -q "SOVEREIGNTY CHECK" merchant-portal/src/core/flow/FlowGate.tsx; then
+            echo "❌ VIOLATION: FlowGate missing sovereignty check"
+            echo "Tenant ACTIVE should not be re-resolved."
+            exit 1
+          fi
+          
+          # Check if sovereignty check is correct
+          if ! grep -q "tenantStatus === 'ACTIVE'" merchant-portal/src/core/flow/FlowGate.tsx; then
+            echo "❌ VIOLATION: Sovereignty check not checking ACTIVE status"
             exit 1
           fi
           

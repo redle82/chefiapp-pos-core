@@ -28,9 +28,10 @@
  * - useOperationalReadiness("KDS"), useShift, useBootstrapState, useRestaurantRuntime (coreReachable para loadOrders).
  */
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { Link, Navigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
+import { useScreenHeartbeat } from "../../core/tpv/useScreenHeartbeat";
 import { getTabIsolated } from "../../core/storage/TabIsolatedStorage";
 import { DevicePairingView } from "../../features/auth/connectByCode/DevicePairingView";
 // FASE 3.5: Migrado para OrderReader (usa dockerCoreClient)
@@ -63,18 +64,19 @@ import {
 } from "../../infra/readers/OrderReader";
 import { readOpenTasks } from "../../infra/readers/TaskReader";
 import { markItemReady } from "../../infra/writers/OrderWriter";
+import { markTableReadyToServe } from "../../infra/writers/TableWriter";
 import { GlobalLoadingView } from "../../ui/design-system/components";
 import { toUserMessage } from "../../ui/errors";
 import { RestaurantLogo } from "../../ui/RestaurantLogo";
 import { TPVStateDisplay } from "../TPV/components/TPVStateDisplay";
 import { ItemTimer } from "./ItemTimer";
+import { useKdsAlerts } from "./useKdsAlerts";
 import {
   calculateOrderStatus,
   type OrderStatusResult,
 } from "./OrderStatusCalculator";
 import { OriginBadge } from "./OriginBadge";
 import { TaskPanel } from "./TaskPanel";
-import { KDSItemCard } from "./components/KDSItemCard";
 
 /** Seed do Core Docker (06-seed-enterprise). Usar literal para não depender de isDockerBackend() no load do módulo. */
 const SEED_RESTAURANT_ID = "00000000-0000-0000-0000-000000000100";
@@ -143,7 +145,13 @@ function filterOrdersByStation<T extends { items: CoreOrderItem[] }>(
     .filter((order) => order.items.length > 0);
 }
 
-export function KDSMinimal() {
+interface KDSMinimalProps {
+  /** When set, locks the station filter (e.g. "KITCHEN" or "BAR") and hides tabs. */
+  defaultStation?: "ALL" | "BAR" | "KITCHEN";
+}
+
+export function KDSMinimal({ defaultStation }: KDSMinimalProps = {}) {
+  useScreenHeartbeat("kds", "Kitchen Display");
   const { t } = useTranslation("kds");
   const { identity } = useRestaurantIdentity();
   const readiness = useOperationalReadiness("KDS");
@@ -183,25 +191,19 @@ export function KDSMinimal() {
   const [updating, setUpdating] = useState<string | null>(null);
   const [markingItem, setMarkingItem] = useState<string | null>(null);
   const [realtimeStatus, setRealtimeStatus] = useState<string>("DISCONNECTED");
-  const [stationFilter, setStationFilterRaw] = useState<"ALL" | "BAR" | "KITCHEN">(
-    () => {
-      const saved = localStorage.getItem("chefiapp_kds_station");
-      return saved === "BAR" || saved === "KITCHEN" ? saved : "ALL";
-    },
+  const lockedStation = defaultStation && defaultStation !== "ALL" ? defaultStation : null;
+  const [stationFilter, setStationFilter] = useState<"ALL" | "BAR" | "KITCHEN">(
+    defaultStation ?? "ALL",
   );
-  const setStationFilter = (v: "ALL" | "BAR" | "KITCHEN") => {
-    setStationFilterRaw(v);
-    localStorage.setItem("chefiapp_kds_station", v);
-  };
-  const [activeTab, setActiveTab] = useState<"ALL" | "BAR" | "KITCHEN">(
-    () => {
-      const saved = localStorage.getItem("chefiapp_kds_station");
-      return saved === "BAR" || saved === "KITCHEN" ? saved : "ALL";
-    },
-  );
+  const [activeTab, setActiveTab] = useState<"ALL" | "BAR" | "KITCHEN">(defaultStation ?? "ALL");
   const [tasks, setTasks] = useState<CoreTask[]>([]);
   const fetchDebounceRef = useRef<NodeJS.Timeout | null>(null);
   const ordersRef = useRef<number>(0);
+
+  // Audio alerts for new orders
+  const { audioEnabled, toggleAudio } = useKdsAlerts({
+    orderCount: orders.length,
+  });
 
   // Em localhost + Docker: SEMPRE seed (TPV e KDS no mesmo restaurante; evita 1a35f047/cache).
   const installedKdsRestaurantId = getKdsRestaurantId();
@@ -383,6 +385,14 @@ export function KDSMinimal() {
       await loadOrders(true);
       if (result.all_items_ready) {
         console.log("✅ Todos os itens prontos! Pedido marcado como READY.");
+        // Bridge: mesa → ready_to_serve
+        const parentOrder = orders.find((o) =>
+          o.items.some((i) => i.id === itemId),
+        );
+        const tId = (parentOrder as any)?.table_id;
+        if (tId && rid) {
+          markTableReadyToServe(tId, rid).catch(() => {});
+        }
       }
     } catch (err) {
       console.error("Erro ao marcar item como pronto:", err);
@@ -476,7 +486,7 @@ export function KDSMinimal() {
               textDecoration: "underline",
             }}
           >
-            Ou instalar KDS no portal
+            {t("installFromPortal")}
           </Link>
         </div>
       </>
@@ -651,21 +661,57 @@ export function KDSMinimal() {
                 : t("pageTitle")}
             </h1>
           </div>
-          {/* B4: sem ruído técnico (Docker/Supabase/realtime); mostrar apenas um estado de ligação simples */}
-          <div
-            style={{
-              fontSize: VPC.fontSizeBase,
-              color:
-                realtimeStatus === "SUBSCRIBED" ? VPC.accent : VPC.textMuted,
-            }}
-          >
-            {realtimeStatus === "SUBSCRIBED"
-              ? "🟢 Atualização em tempo real"
-              : "Atualização periódica"}
+          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+            {/* Audio toggle button */}
+            <button
+              type="button"
+              data-testid="kds-audio-toggle"
+              onClick={toggleAudio}
+              title={audioEnabled ? t("audioOn") : t("audioOff")}
+              style={{
+                position: "relative",
+                background: "none",
+                border: `1px solid ${VPC.border}`,
+                borderRadius: VPC.radius,
+                padding: "8px 12px",
+                cursor: "pointer",
+                fontSize: "20px",
+                lineHeight: 1,
+                color: VPC.text,
+              }}
+            >
+              {audioEnabled ? "\uD83D\uDD14" : "\uD83D\uDD15"}
+              {audioEnabled && (
+                <span
+                  style={{
+                    position: "absolute",
+                    top: 6,
+                    right: 6,
+                    width: 8,
+                    height: 8,
+                    borderRadius: "50%",
+                    backgroundColor: "#22c55e",
+                  }}
+                />
+              )}
+            </button>
+            {/* B4: sem ruído técnico (Docker/Supabase/realtime); mostrar apenas um estado de ligação simples */}
+            <div
+              style={{
+                fontSize: VPC.fontSizeBase,
+                color:
+                  realtimeStatus === "SUBSCRIBED" ? VPC.accent : VPC.textMuted,
+              }}
+            >
+              {realtimeStatus === "SUBSCRIBED"
+                ? t("realtimeActive")
+                : t("pollingActive")}
+            </div>
           </div>
         </div>
 
-        {/* Tabs por Estação */}
+        {/* Tabs por Estação — hidden when locked to a specific station */}
+        {!lockedStation && (
         <div
           style={{
             display: "flex",
@@ -746,6 +792,7 @@ export function KDSMinimal() {
             🍺 {t("tabBar")}
           </button>
         </div>
+        )}
       </div>
 
       {/* TASK ENGINE: Painel de Tarefas Automáticas */}
@@ -771,7 +818,7 @@ export function KDSMinimal() {
             flexShrink: 0,
           }}
         >
-          Nenhum pedido em preparação (todos prontos ou fechados).
+          {t("allOrdersReadyOrClosed")}
         </p>
       )}
       {/* KDS_LAYOUT_UX_CONTRACT §2: área lista — flex:1 minHeight:0 overflowY:auto (único scroll; sem barra preta) */}
@@ -807,8 +854,7 @@ export function KDSMinimal() {
             >
               <div>
                 <strong style={{ color: VPC.text }}>
-                  Pedido #
-                  {order.number || order.short_id || order.id.slice(0, 8)}
+                  {t("orderNumber", { id: order.number || order.short_id || order.id.slice(0, 8) })}
                 </strong>
                 <OriginBadge
                   origin={order.sync_metadata?.origin as string | undefined}
@@ -827,25 +873,25 @@ export function KDSMinimal() {
                     }}
                   >
                     🔴{" "}
-                    {orderStatus.dominantStation === "BAR" ? "BAR" : "COZINHA"}{" "}
-                    Atrasado
+                    {orderStatus.dominantStation === "BAR" ? t("station.bar") : t("station.kitchen")}{" "}
+                    {t("statusDelay")}
                   </span>
                 )}
                 {orderStatus.state === "attention" && (
                   <span style={{ color: "#eab308", marginLeft: "8px" }}>
                     🟡{" "}
-                    {orderStatus.dominantStation === "BAR" ? "BAR" : "COZINHA"}{" "}
-                    Atenção
+                    {orderStatus.dominantStation === "BAR" ? t("station.bar") : t("station.kitchen")}{" "}
+                    {t("statusAttention")}
                   </span>
                 )}
                 {orderStatus.state === "normal" && (
                   <span style={{ color: "#22c55e", marginLeft: "8px" }}>
-                    🟢 No prazo
+                    🟢 {t("statusOnTime")}
                   </span>
                 )}
               </div>
               <div>
-                Status: {order.status ?? "—"}
+                {t("statusLabel")}: {order.status ?? "—"}
                 {(order as any)._unknownStatus && (
                   <span
                     style={{
@@ -853,13 +899,13 @@ export function KDSMinimal() {
                       color: "#eab308",
                       fontWeight: 600,
                     }}
-                    title="Status desconhecido (ORDER_STATUS_CONTRACT_v1)"
+                    title={t("unknownStatusTooltip")}
                   >
-                    ⚠️ Status desconhecido
+                    ⚠️ {t("unknownStatus")}
                   </span>
                 )}
               </div>
-              {order.table_number && <div>Mesa: {order.table_number}</div>}
+              {order.table_number && <div>{t("tableLabel")}: {order.table_number}</div>}
               {/* MENU_DERIVATIONS: KDS não exibe preço (apenas product_id + nome). */}
               {/* FASE 6: Ação única - botão para iniciar preparo */}
               {String(order.status ?? "")
@@ -885,14 +931,14 @@ export function KDSMinimal() {
                     }}
                   >
                     {updating === order.id
-                      ? "A processar..."
-                      : "Iniciar preparo"}
+                      ? t("processingAction")
+                      : t("startPreparation")}
                   </button>
                 </div>
               )}
               {/* Itens agrupados por estação — sempre mostrar Cozinha e Bar para divisão clara */}
               <div>
-                <strong>Itens:</strong>
+                <strong>{t("itemsLabel")}:</strong>
 
                 {(() => {
                   const itemsByStation = order.items.reduce((acc, item) => {
@@ -922,21 +968,272 @@ export function KDSMinimal() {
                             borderBottom: `1px solid ${VPC.border}`,
                           }}
                         >
-                          🍳 COZINHA ({kitchenItems.length} item
-                          {kitchenItems.length !== 1 ? "s" : ""})
+                          🍳 {t("station.kitchen")} ({t("itemCount", { count: kitchenItems.length })})
                         </div>
                         <ul style={{ listStyle: "none", padding: 0 }}>
-                          {kitchenItems.map((item) => (
-                            <KDSItemCard
-                              key={item.id}
-                              item={item}
-                              orderStatus={order.status}
-                              restaurantId={restaurantId}
-                              tasks={tasks}
-                              markingItem={markingItem}
-                              onMarkReady={handleMarkItemReady}
-                            />
-                          ))}
+                          {kitchenItems.map((item) => {
+                            const itemCreated = new Date(item.created_at || new Date().toISOString());
+                            const now = new Date();
+                            const prepTimeSeconds =
+                              item.prep_time_seconds || 300;
+                            const expectedReadyAt = new Date(
+                              itemCreated.getTime() + prepTimeSeconds * 1000,
+                            );
+                            const delaySeconds =
+                              (now.getTime() - expectedReadyAt.getTime()) /
+                              1000;
+                            const delayRatio =
+                              prepTimeSeconds > 0
+                                ? delaySeconds / prepTimeSeconds
+                                : 0;
+
+                            // Item já está pronto?
+                            const isItemReady = item.ready_at !== null;
+
+                            // Calcular tempo real vs esperado (métrica)
+                            const actualTimeSeconds =
+                              isItemReady && item.ready_at
+                                ? Math.floor(
+                                    (new Date(item.ready_at).getTime() -
+                                      itemCreated.getTime()) /
+                                      1000,
+                                  )
+                                : Math.floor(
+                                    (now.getTime() - itemCreated.getTime()) /
+                                      1000,
+                                  );
+                            const timeDifference =
+                              actualTimeSeconds - prepTimeSeconds;
+                            const timeDifferenceMinutes = Math.floor(
+                              Math.abs(timeDifference) / 60,
+                            );
+
+                            // Status do item individual
+                            let itemStatus:
+                              | "ready"
+                              | "normal"
+                              | "attention"
+                              | "delay" = "normal";
+                            if (isItemReady) {
+                              itemStatus = "ready";
+                            } else if (delayRatio < 0.1) {
+                              itemStatus = "normal";
+                            } else if (delayRatio < 0.25) {
+                              itemStatus = "attention";
+                            } else {
+                              itemStatus = "delay";
+                            }
+
+                            const itemColors = {
+                              ready: "#6b7280",
+                              normal: "#22c55e",
+                              attention: "#eab308",
+                              delay: "#ef4444",
+                            };
+
+                            // Verificar se item tem tarefa aberta
+                            const itemTask = tasks.find(
+                              (t) =>
+                                t.order_item_id === item.id &&
+                                t.status === "OPEN",
+                            );
+                            const hasTask = !!itemTask;
+
+                            return (
+                              <li
+                                key={item.id}
+                                style={{
+                                  marginBottom: "8px",
+                                  padding: "12px",
+                                  backgroundColor: isItemReady
+                                    ? "rgba(34,197,94,0.1)"
+                                    : hasTask
+                                    ? "rgba(220,38,38,0.1)"
+                                    : VPC.surface,
+                                  borderRadius: "4px",
+                                  border: isItemReady
+                                    ? "1px solid #22c55e"
+                                    : hasTask
+                                    ? "2px solid #dc2626"
+                                    : `1px solid ${VPC.border}`,
+                                  boxShadow: hasTask
+                                    ? "0 0 0 2px rgba(220, 38, 38, 0.2)"
+                                    : "none",
+                                }}
+                              >
+                                <div
+                                  style={{
+                                    display: "flex",
+                                    alignItems: "center",
+                                    gap: "8px",
+                                    marginBottom: "4px",
+                                  }}
+                                >
+                                  <span
+                                    style={{
+                                      color: itemColors[itemStatus],
+                                      fontSize: "16px",
+                                    }}
+                                  >
+                                    {isItemReady
+                                      ? "✅"
+                                      : itemStatus === "delay"
+                                      ? "🔴"
+                                      : itemStatus === "attention"
+                                      ? "🟡"
+                                      : "🟢"}
+                                  </span>
+                                  {hasTask && (
+                                    <span
+                                      style={{
+                                        fontSize: "12px",
+                                        fontWeight: "bold",
+                                        color: "#dc2626",
+                                        backgroundColor: "rgba(220,38,38,0.15)",
+                                        padding: "2px 6px",
+                                        borderRadius: "4px",
+                                      }}
+                                    >
+                                      🧠 {t("taskBadge")}
+                                    </span>
+                                  )}
+                                  {/* Product thumbnail */}
+                                  <span
+                                    style={{
+                                      width: 32,
+                                      height: 32,
+                                      borderRadius: 6,
+                                      backgroundColor: "#27272a",
+                                      display: "flex",
+                                      alignItems: "center",
+                                      justifyContent: "center",
+                                      flexShrink: 0,
+                                      fontSize: "16px",
+                                      overflow: "hidden",
+                                    }}
+                                  >
+                                    {(item as any).image_url ? (
+                                      <img
+                                        src={(item as any).image_url}
+                                        alt=""
+                                        style={{
+                                          width: 32,
+                                          height: 32,
+                                          objectFit: "cover",
+                                          borderRadius: 6,
+                                        }}
+                                      />
+                                    ) : (
+                                      "\uD83C\uDF73"
+                                    )}
+                                  </span>
+                                  <span style={{ flex: 1, fontWeight: "500" }}>
+                                    {item.name_snapshot} x{item.quantity}
+                                  </span>
+                                  {!isItemReady && <ItemTimer item={item} />}
+                                  {isItemReady && (
+                                    <span
+                                      style={{
+                                        color: "#22c55e",
+                                        fontSize: "12px",
+                                        fontWeight: "bold",
+                                      }}
+                                    >
+                                      ✅ {t("itemReady")}
+                                    </span>
+                                  )}
+                                  {/* MENU_DERIVATIONS: KDS não exibe preço por item. */}
+                                </div>
+                                {/* Modifier badges */}
+                                {Array.isArray(item.modifiers) && item.modifiers.length > 0 && (
+                                  <div style={{ display: "flex", flexWrap: "wrap", gap: "4px", marginTop: "3px", paddingLeft: "4px" }}>
+                                    {(item.modifiers as Array<{ name?: string }>).map((mod, idx) => (
+                                      <span
+                                        key={idx}
+                                        style={{
+                                          fontSize: "11px",
+                                          color: "#d4d4d8",
+                                          backgroundColor: "rgba(255,255,255,0.08)",
+                                          padding: "1px 6px",
+                                          borderRadius: "4px",
+                                        }}
+                                      >
+                                        {mod.name ?? String(mod)}
+                                      </span>
+                                    ))}
+                                  </div>
+                                )}
+
+                                {/* Métrica: Tempo real vs esperado */}
+                                {isItemReady && (
+                                  <div
+                                    style={{
+                                      fontSize: "11px",
+                                      color: VPC.textDim,
+                                      marginTop: "4px",
+                                    }}
+                                  >
+                                    {timeDifference >= 0
+                                      ? `⏱️ ${t("timeAboveExpected", { diff: timeDifferenceMinutes, actual: Math.floor(actualTimeSeconds / 60), expected: Math.floor(prepTimeSeconds / 60) })}`
+                                      : `⏱️ ${t("timeBelowExpected", { diff: timeDifferenceMinutes, actual: Math.floor(actualTimeSeconds / 60), expected: Math.floor(prepTimeSeconds / 60) })}`}
+                                  </div>
+                                )}
+
+                                {/* Botão "Item Pronto" — só permitido quando o pedido já está IN_PREP/PREPARING (evita OPEN→READY rejeitado pelo Core) */}
+                                {!isItemReady && (
+                                  <div style={{ marginTop: "8px" }}>
+                                    <button
+                                      type="button"
+                                      data-testid="kds-item-ready"
+                                      onClick={() =>
+                                        handleMarkItemReady(
+                                          item.id,
+                                          restaurantId,
+                                        )
+                                      }
+                                      disabled={
+                                        markingItem === item.id ||
+                                        (order.status !== "IN_PREP" &&
+                                          order.status !== "PREPARING")
+                                      }
+                                      title={
+                                        order.status === "OPEN"
+                                          ? t("startPrepFirst")
+                                          : undefined
+                                      }
+                                      style={{
+                                        minHeight: 40,
+                                        padding: "8px 16px",
+                                        fontSize: VPC.fontSizeBase,
+                                        fontWeight: 600,
+                                        backgroundColor:
+                                          markingItem === item.id ||
+                                          (order.status !== "IN_PREP" &&
+                                            order.status !== "PREPARING")
+                                            ? VPC.textMuted
+                                            : VPC.accent,
+                                        color: "#fff",
+                                        border: "none",
+                                        borderRadius: VPC.radius,
+                                        cursor:
+                                          markingItem === item.id ||
+                                          (order.status !== "IN_PREP" &&
+                                            order.status !== "PREPARING")
+                                            ? "wait"
+                                            : "pointer",
+                                      }}
+                                    >
+                                      {markingItem === item.id
+                                        ? t("markingItem")
+                                        : order.status === "OPEN"
+                                        ? `⏳ ${t("startPrepFirst")}`
+                                        : `✅ ${t("markItemReady")}`}
+                                    </button>
+                                  </div>
+                                )}
+                              </li>
+                            );
+                          })}
                         </ul>
                       </div>
                       <div key="BAR" style={{ marginTop: "16px" }}>
@@ -950,21 +1247,253 @@ export function KDSMinimal() {
                             borderBottom: `1px solid ${VPC.border}`,
                           }}
                         >
-                          🍺 BAR ({barItems.length} item
-                          {barItems.length !== 1 ? "s" : ""})
+                          🍺 {t("station.bar")} ({t("itemCount", { count: barItems.length })})
                         </div>
                         <ul style={{ listStyle: "none", padding: 0 }}>
-                          {barItems.map((item) => (
-                            <KDSItemCard
-                              key={item.id}
-                              item={item}
-                              orderStatus={order.status}
-                              restaurantId={restaurantId}
-                              tasks={tasks}
-                              markingItem={markingItem}
-                              onMarkReady={handleMarkItemReady}
-                            />
-                          ))}
+                          {barItems.map((item) => {
+                            const itemCreated = new Date(item.created_at || new Date().toISOString());
+                            const now = new Date();
+                            const prepTimeSeconds =
+                              item.prep_time_seconds || 300;
+                            const expectedReadyAt = new Date(
+                              itemCreated.getTime() + prepTimeSeconds * 1000,
+                            );
+                            const delaySeconds =
+                              (now.getTime() - expectedReadyAt.getTime()) /
+                              1000;
+                            const delayRatio =
+                              prepTimeSeconds > 0
+                                ? delaySeconds / prepTimeSeconds
+                                : 0;
+                            const isItemReady = item.ready_at !== null;
+                            const actualTimeSeconds =
+                              isItemReady && item.ready_at
+                                ? Math.floor(
+                                    (new Date(item.ready_at).getTime() -
+                                      itemCreated.getTime()) /
+                                      1000,
+                                  )
+                                : Math.floor(
+                                    (now.getTime() - itemCreated.getTime()) /
+                                      1000,
+                                  );
+                            const timeDifference =
+                              actualTimeSeconds - prepTimeSeconds;
+                            const timeDifferenceMinutes = Math.floor(
+                              Math.abs(timeDifference) / 60,
+                            );
+                            let itemStatus:
+                              | "ready"
+                              | "normal"
+                              | "attention"
+                              | "delay" = "normal";
+                            if (isItemReady) itemStatus = "ready";
+                            else if (delayRatio < 0.1) itemStatus = "normal";
+                            else if (delayRatio < 0.25)
+                              itemStatus = "attention";
+                            else itemStatus = "delay";
+                            const itemColors = {
+                              ready: "#6b7280",
+                              normal: "#22c55e",
+                              attention: "#eab308",
+                              delay: "#ef4444",
+                            };
+                            const itemTask = tasks.find(
+                              (t) =>
+                                t.order_item_id === item.id &&
+                                t.status === "OPEN",
+                            );
+                            const hasTask = !!itemTask;
+                            return (
+                              <li
+                                key={item.id}
+                                style={{
+                                  marginBottom: "8px",
+                                  padding: "12px",
+                                  backgroundColor: isItemReady
+                                    ? "rgba(34,197,94,0.1)"
+                                    : hasTask
+                                    ? "rgba(220,38,38,0.1)"
+                                    : VPC.surface,
+                                  borderRadius: "4px",
+                                  border: isItemReady
+                                    ? "1px solid #22c55e"
+                                    : hasTask
+                                    ? "2px solid #dc2626"
+                                    : `1px solid ${VPC.border}`,
+                                  boxShadow: hasTask
+                                    ? "0 0 0 2px rgba(220, 38, 38, 0.2)"
+                                    : "none",
+                                }}
+                              >
+                                <div
+                                  style={{
+                                    display: "flex",
+                                    alignItems: "center",
+                                    gap: "8px",
+                                    marginBottom: "4px",
+                                  }}
+                                >
+                                  <span
+                                    style={{
+                                      color: itemColors[itemStatus],
+                                      fontSize: "16px",
+                                    }}
+                                  >
+                                    {isItemReady
+                                      ? "✅"
+                                      : itemStatus === "delay"
+                                      ? "🔴"
+                                      : itemStatus === "attention"
+                                      ? "🟡"
+                                      : "🟢"}
+                                  </span>
+                                  {hasTask && (
+                                    <span
+                                      style={{
+                                        fontSize: "12px",
+                                        fontWeight: "bold",
+                                        color: "#dc2626",
+                                        backgroundColor: "rgba(220,38,38,0.15)",
+                                        padding: "2px 6px",
+                                        borderRadius: "4px",
+                                      }}
+                                    >
+                                      🧠 {t("taskBadge")}
+                                    </span>
+                                  )}
+                                  {/* Product thumbnail */}
+                                  <span
+                                    style={{
+                                      width: 32,
+                                      height: 32,
+                                      borderRadius: 6,
+                                      backgroundColor: "#27272a",
+                                      display: "flex",
+                                      alignItems: "center",
+                                      justifyContent: "center",
+                                      flexShrink: 0,
+                                      fontSize: "16px",
+                                      overflow: "hidden",
+                                    }}
+                                  >
+                                    {(item as any).image_url ? (
+                                      <img
+                                        src={(item as any).image_url}
+                                        alt=""
+                                        style={{
+                                          width: 32,
+                                          height: 32,
+                                          objectFit: "cover",
+                                          borderRadius: 6,
+                                        }}
+                                      />
+                                    ) : (
+                                      "\uD83C\uDF7A"
+                                    )}
+                                  </span>
+                                  <span style={{ flex: 1, fontWeight: "500" }}>
+                                    {item.name_snapshot} x{item.quantity}
+                                  </span>
+                                  {!isItemReady && <ItemTimer item={item} />}
+                                  {isItemReady && (
+                                    <span
+                                      style={{
+                                        color: "#22c55e",
+                                        fontSize: "12px",
+                                        fontWeight: "bold",
+                                      }}
+                                    >
+                                      ✅ {t("itemReady")}
+                                    </span>
+                                  )}
+                                </div>
+                                {/* Modifier badges (compact view) */}
+                                {Array.isArray(item.modifiers) && item.modifiers.length > 0 && (
+                                  <div style={{ display: "flex", flexWrap: "wrap", gap: "4px", marginTop: "3px", paddingLeft: "4px" }}>
+                                    {(item.modifiers as Array<{ name?: string }>).map((mod, idx) => (
+                                      <span
+                                        key={idx}
+                                        style={{
+                                          fontSize: "11px",
+                                          color: "#d4d4d8",
+                                          backgroundColor: "rgba(255,255,255,0.08)",
+                                          padding: "1px 6px",
+                                          borderRadius: "4px",
+                                        }}
+                                      >
+                                        {mod.name ?? String(mod)}
+                                      </span>
+                                    ))}
+                                  </div>
+                                )}
+                                {isItemReady && (
+                                  <div
+                                    style={{
+                                      fontSize: "11px",
+                                      color: VPC.textDim,
+                                      marginTop: "4px",
+                                    }}
+                                  >
+                                    {timeDifference >= 0
+                                      ? `⏱️ ${t("timeAboveExpectedShort", { diff: timeDifferenceMinutes })}`
+                                      : `⏱️ ${t("timeBelowExpectedShort", { diff: timeDifferenceMinutes })}`}
+                                  </div>
+                                )}
+                                {!isItemReady && (
+                                  <div style={{ marginTop: "8px" }}>
+                                    <button
+                                      type="button"
+                                      data-testid="kds-item-ready"
+                                      onClick={() =>
+                                        handleMarkItemReady(
+                                          item.id,
+                                          restaurantId,
+                                        )
+                                      }
+                                      disabled={
+                                        markingItem === item.id ||
+                                        (order.status !== "IN_PREP" &&
+                                          order.status !== "PREPARING")
+                                      }
+                                      title={
+                                        order.status === "OPEN"
+                                          ? t("startPrepFirst")
+                                          : undefined
+                                      }
+                                      style={{
+                                        minHeight: 40,
+                                        padding: "8px 16px",
+                                        fontSize: VPC.fontSizeBase,
+                                        fontWeight: 600,
+                                        backgroundColor:
+                                          markingItem === item.id ||
+                                          (order.status !== "IN_PREP" &&
+                                            order.status !== "PREPARING")
+                                            ? VPC.textMuted
+                                            : VPC.accent,
+                                        color: "#fff",
+                                        border: "none",
+                                        borderRadius: VPC.radius,
+                                        cursor:
+                                          markingItem === item.id ||
+                                          (order.status !== "IN_PREP" &&
+                                            order.status !== "PREPARING")
+                                            ? "wait"
+                                            : "pointer",
+                                      }}
+                                    >
+                                      {markingItem === item.id
+                                        ? t("markingItem")
+                                        : order.status === "OPEN"
+                                        ? `⏳ ${t("startPrepFirst")}`
+                                        : `✅ ${t("markItemReady")}`}
+                                    </button>
+                                  </div>
+                                )}
+                              </li>
+                            );
+                          })}
                         </ul>
                       </div>
                     </>

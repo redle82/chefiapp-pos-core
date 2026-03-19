@@ -13,6 +13,7 @@ export function useOfflineQueue(): OfflineQueueState {
   const [state, setState] = useState<SyncEngineState>({
     isProcessing: false,
     networkStatus: SyncEngine.getNetworkStatus(),
+    connectivity: SyncEngine.getConnectivity(),
     pendingCount: 0,
   });
 
@@ -21,6 +22,7 @@ export function useOfflineQueue(): OfflineQueueState {
       setState({
         isProcessing: next.isProcessing,
         networkStatus: next.networkStatus,
+        connectivity: next.connectivity,
         pendingCount: next.pendingCount,
       });
     });

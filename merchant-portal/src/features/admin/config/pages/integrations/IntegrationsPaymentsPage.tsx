@@ -77,7 +77,7 @@ export function IntegrationsPaymentsPage() {
   };
 
   return (
-    <div className="page-enter admin-content-page">
+    <>
       <AdminPageHeader
         title="Pagamentos"
         subtitle="Stripe e outros; config, status, logs."
@@ -194,6 +194,6 @@ export function IntegrationsPaymentsPage() {
           </p>
         </div>
       )}
-    </div>
+    </>
   );
 }

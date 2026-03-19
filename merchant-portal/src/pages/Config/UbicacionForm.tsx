@@ -28,7 +28,15 @@ const CURRENCIES = [
 const TIMEZONES = [
   { value: "Europe/Madrid", label: "Europe/Madrid" },
   { value: "Europe/Lisbon", label: "Europe/Lisbon" },
+  { value: "Europe/London", label: "Europe/London" },
+  { value: "Europe/Rome", label: "Europe/Rome" },
+  { value: "Europe/Paris", label: "Europe/Paris" },
+  { value: "Europe/Berlin", label: "Europe/Berlin" },
   { value: "America/Sao_Paulo", label: "America/Sao_Paulo" },
+  { value: "America/New_York", label: "America/New_York" },
+  { value: "America/Mexico_City", label: "America/Mexico_City" },
+  { value: "America/Toronto", label: "America/Toronto" },
+  { value: "Australia/Sydney", label: "Australia/Sydney" },
   { value: "UTC", label: "UTC" },
 ];
 

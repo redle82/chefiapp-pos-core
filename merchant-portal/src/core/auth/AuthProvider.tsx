@@ -73,14 +73,15 @@ const AuthContext = createContext<AuthContextType | null>(null);
 const PILOT_USER_UUID = "00000000-0000-0000-0000-000000000002";
 
 function createMockSession(): { session: CoreSession; user: CoreUser } {
+  // Sofia Gastrobar owner identity — same user across Admin and TPV
   const user: CoreUser = {
     id: PILOT_USER_UUID,
     aud: "authenticated",
     role: "authenticated",
-    email: "pilot@chefiapp.com",
+    email: "sofia@gastrobar.pt",
     phone: "",
     app_metadata: { provider: "email" },
-    user_metadata: { name: "Pilot User" },
+    user_metadata: { name: "Sofia Mendes" },
     created_at: new Date().toISOString(),
   };
   const session: CoreSession = {
@@ -143,6 +144,10 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
           // Fechar modo trial: restaurante real = Sofia Gastrobar
           localStorage.removeItem("chefiapp_trial_mode");
           sessionStorage.removeItem("chefiapp_trial_mode");
+          // Garantir locale pt-BR para Sofia (mercado Brasil)
+          if (!localStorage.getItem("chefiapp_locale")) {
+            localStorage.setItem("chefiapp_locale", "pt-BR");
+          }
         }
 
         const isTrialUrl =

@@ -1,341 +1,262 @@
-# 🧠 ChefIApp - POS That Thinks
+<p align="center">
+  <img src="merchant-portal/public/chefiapp-icon-512.png" alt="ChefIApp" width="120" />
+</p>
 
-**Official Positioning:** **POS THAT THINKS**
-**The system that guides your operation in real-time.**
+<h1 align="center">ChefIApp OS</h1>
 
----
+<p align="center">
+  <strong>The restaurant operating system that thinks before you do.</strong>
+</p>
 
-## ⚠️ Status in 30 Seconds
+<p align="center">
+  <a href="#features">Features</a> ·
+  <a href="#architecture">Architecture</a> ·
+  <a href="#quick-start">Quick Start</a> ·
+  <a href="#comparison">vs Competition</a> ·
+  <a href="#tech-stack">Tech Stack</a>
+</p>
 
-**Version:** `1.2.0` — Production Ready
-**Status:** 🟢 **READY FOR PRODUCTION**
-
-> **🌍 Language:** All code, commits, and canonical documentation are in **English**.
-> See [`docs/LANGUAGE_POLICY.md`](docs/LANGUAGE_POLICY.md) for complete rules.
-
-| Component                 | Status         |
-| ------------------------- | -------------- |
-| 🏪 Merchant Portal        | ✅ Operational |
-| 📱 Mobile App (Staff)     | ✅ Operational |
-| 🌐 Customer Portal        | ✅ Operational |
-| 💳 Billing (Stripe)       | ✅ Integrated  |
-| 📊 Observability (Sentry) | ✅ Active      |
-| 📈 Growth (SEO + Pixel)   | ✅ Configured  |
-
-### 👉 If you are
-
-- **👔 Owner/Manager** → Read [`docs/audit/ONE_PAGER.md`](docs/audit/ONE_PAGER.md) (30 sec)
-- **👨‍💼 Waiter/Staff** → Read [`docs/GUIA_RAPIDO_GARCOM.md`](docs/GUIA_RAPIDO_GARCOM.md) (10 min)
-- **👨‍💻 Developer** → Read [`ONBOARDING.md`](ONBOARDING.md) (15 min)
-- **🏛️ Core Developer** → Read [`CORE_MANIFESTO.md`](CORE_MANIFESTO.md) (30 min) ⭐
-- **🔍 Validator/QA** → Read [`docs/audit/HUMAN_TEST_QUICK_REFERENCE.md`](docs/audit/HUMAN_TEST_QUICK_REFERENCE.md) (5 min)
-
-### What's New (v1.4.x / 2026-02)
-
-- ✅ **Deploy só marketing** — Build `build:marketing` e output `dist-marketing` para subir na Vercel apenas landing, blog, pricing (sem app/config/TPV). Ver [docs/DEPLOY_VERCEL.md](docs/DEPLOY_VERCEL.md).
-- ✅ **Estado atual documentado** — [docs/ESTADO_ATUAL_2026_02.md](docs/ESTADO_ATUAL_2026_02.md) reflete a estrutura e os dois caminhos de deploy.
-- ✅ **Sentry** — Error tracking in all apps
-- ✅ **Metrics Dashboard** — Orders/hour, average ticket in real-time
-- ✅ **SEO** — Dynamic meta tags + Schema.org
-- ✅ **Pixel Tracking** — Meta + Google Analytics
-- ✅ **Background Timer** — Immediate recalculation when returning to app
-- ✅ **Pressure Banner** — Smooth animation, no flickering
-- ✅ **Urgency Colors** — Dynamic update based on priority
+<p align="center">
+  <img src="https://img.shields.io/badge/version-2.0.0-f59e0b?style=flat-square" alt="Version" />
+  <img src="https://img.shields.io/badge/status-production--ready-22c55e?style=flat-square" alt="Status" />
+  <img src="https://img.shields.io/badge/tests-26%20passing-22c55e?style=flat-square" alt="Tests" />
+  <img src="https://img.shields.io/badge/i18n-4%20locales-3b82f6?style=flat-square" alt="i18n" />
+  <img src="https://img.shields.io/badge/countries-8-8b5cf6?style=flat-square" alt="Countries" />
+  <img src="https://img.shields.io/badge/TypeScript-73.5%25-3178c6?style=flat-square&logo=typescript&logoColor=white" alt="TypeScript" />
+</p>
 
 ---
 
-## 🎯 What It Is
+## What is ChefIApp OS?
 
-ChefIApp is not just a POS. It is an **Operational Nervous System** that:
+ChefIApp is not just a POS. It's a complete **Operational Nervous System** for restaurants — from the first customer reservation to the last receipt of the night, from the kitchen timer to the monthly P&L report.
 
-- ⚡ **Charges in 2 taps** (< 5 seconds)
-- 🗺️ **Shows urgency in real-time** (live map)
-- 🍽️ **Adapts the menu** based on kitchen pressure
-- 📋 **Manages reservations** simply
+One system. Three surfaces. Zero compromise.
 
-**Philosophy:** _"Last.app organizes the restaurant. ChefIApp guides it."_
+| Surface | Purpose | Key Features |
+|---------|---------|-------------|
+| **TPV** (Point of Sale) | Take orders, process payments | 7 payment methods, split bill, tips, discounts, fiscal receipt, ESC/POS printing |
+| **KDS** (Kitchen Display) | Manage kitchen flow | Realtime queue, prep timers, station routing (Kitchen/Bar), urgency colors |
+| **Admin** | Run the business | 50+ pages, analytics, CRM, inventory, shifts, GDPR, reports |
 
-**Positioning:** ChefIApp is the only POS that thinks before the human. While other systems only record sales, ChefIApp observes the operational context and suggests the next most important action.
-
-**📋 Strategy:** [`docs/strategy/POSITIONING.md`](docs/strategy/POSITIONING.md) | [`docs/strategy/SCOPE_FREEZE.md`](docs/strategy/SCOPE_FREEZE.md) | [`docs/audit/EXECUTABLE_ROADMAP.md`](docs/audit/EXECUTABLE_ROADMAP.md)
-
-**ChefIApp OS – Como funciona de verdade:** [`docs/strategy/CHEFIAPP_OS_COMO_FUNCIONA.md`](docs/strategy/CHEFIAPP_OS_COMO_FUNCIONA.md) — narrativa (Docker = mundo, Kernel = leis, Core Finance = coração, TPV/KDS = braços, ERO = consciência). **Mapa Vivo do Sistema:** [`docs/CHEFIAPP_SYSTEM_MAP.html`](docs/CHEFIAPP_SYSTEM_MAP.html) — documento único no browser (visão, camadas, papéis, SystemTree, rotas, offline). **Doutrina do produto:** [`docs/CHEFIAPP_PRODUCT_DOCTRINE.md`](docs/CHEFIAPP_PRODUCT_DOCTRINE.md) — princípios imutáveis e contrato com o futuro. **Modo seguro para IA:** [`docs/CHEFIAPP_SYSTEM_SAFE_MODE.md`](docs/CHEFIAPP_SYSTEM_SAFE_MODE.md) — prompt canónico para qualquer IA trabalhar no projeto sem quebrar o sistema. Links: [ERO_CANON](docs/ERO_CANON.md), [BOOTSTRAP_CANON](docs/boot/BOOTSTRAP_CANON.md), [checklist operacional](docs/strategy/CHECKLIST_OPERACIONAL_TPV_KDS_CLIENTE.md), [CLI](docs/strategy/CLI_CHEFIAPP_OS.md).
-
-**📚 Technical Documentation:** Organized in layers — see [`docs/DOC_INDEX.md`](docs/DOC_INDEX.md)  
-**🏢 Project Areas (Enterprise):** All areas explicit — see [`docs/ESTRUTURA_PROJETO_ENTERPRISE.md`](docs/ESTRUTURA_PROJETO_ENTERPRISE.md)  
-**📍 Current Status:** See [`docs/ONDE_ESTAMOS_AGORA.md`](docs/ONDE_ESTAMOS_AGORA.md) and [`docs/ESTADO_ATUAL_2026_02.md`](docs/ESTADO_ATUAL_2026_02.md). **Deploy (marketing-only or full):** [`docs/DEPLOY_VERCEL.md`](docs/DEPLOY_VERCEL.md).
+Plus: **AppStaff** (mobile for waiters), **QR Ordering** (customers scan & order), **Reservation Portal** (public booking).
 
 ---
 
-## 🚀 Quick Start
+## Features
 
-### ⚡ Super Quick (2 minutes)
+### Point of Sale (TPV)
+- 30+ components, 4 order modes (Dine-in, Counter, Takeaway, Delivery)
+- **7 payment providers**: Stripe, MB Way, SumUp, PIX, Cash, Manual, Stripe Terminal
+- Split bill (equal / by items / custom), tips, discounts & coupons
+- Fiscal receipt with logo, NIF, itemized VAT, ATCUD
+- ESC/POS thermal printing (tested with Approx appPOS80 WiFi)
+- Email digital receipt
+- Customer quick-add with dietary allergy alerts
 
-1. Read **[ONE_PAGER.md](ONE_PAGER.md)** - Everything in one page
-2. Follow **[PRIMEIROS_PASSOS.md](PRIMEIROS_PASSOS.md)** - What to do now
+### Kitchen Display (KDS)
+- Realtime order queue via Supabase subscriptions
+- Filters by origin: POS, Web, Waiter, QR, App, Delivery
+- Dedicated stations: Kitchen, Bar
+- Prep timers with countdown and overdue alerts
+- Kitchen load indicator (OK / Busy / Overloaded)
 
-### For Developers
+### Admin Dashboard
+- **50+ routes** across 31 feature domains
+- **Analytics**: Boston Matrix for menu, Revenue Heatmap 7x24, Business Dashboard
+- **CRM**: Customer segments (New/Regular/VIP/At-risk/Lost), dietary preferences
+- **Inventory**: Stock ledger, waste tracking with cost analysis and trends
+- **Shifts**: Clock in/out, breaks, timesheet, overtime detection, labor cost
+- **Reservations**: Weekly calendar, public portal, waitlist
+- **Discounts**: 6 types (%, fixed, BOGO, bundle, employee, loyalty)
+- **Reports**: PDF, Excel, CSV export with restaurant branding
+- **Privacy**: GDPR consent, data export (Art 15), erasure (Art 17)
 
-```bash
-# Clone and install
-git clone <repo>
-cd chefiapp-pos-core/mobile-app
-npm install
+### Payments & Finance
+| Provider | Refunds | Status Polling | Cached |
+|----------|---------|----------------|--------|
+| Stripe (Card) | Full + Partial | Yes | 5s/60s TTL |
+| Stripe Terminal | Yes | Yes | Yes |
+| MB Way | Full + Partial | Yes | 5s/60s TTL |
+| SumUp | Full + Partial | Yes | 5s/60s TTL |
+| PIX | Full + Partial | Yes | 5s/60s TTL |
+| Cash | N/A | N/A | N/A |
+| Manual | N/A | N/A | N/A |
 
-# Configure .env
-cp .env.example .env
+- Webhook reconciliation (idempotent, auto-fix mismatches)
+- Stripe Connect marketplace model (platform fees, payouts)
 
-# Validate
-../scripts/validate-system.sh
+### Multi-Location
+- Location switcher in header
+- Consolidated dashboard (revenue, orders across locations)
+- Stock transfer between locations
+- Menu copy/clone
 
-# Run
-npm start
-```
+### Customer Engagement
+- **QR Ordering**: Public menu at `/order/:restaurantId`, mobile-first, no auth
+- **Reservation Portal**: Public at `/reserve/:restaurantId`
+- **Loyalty Points**: Earn/redeem, configurable ratios, public loyalty card
+- **Marketing Campaigns**: Welcome, win-back, birthday, promotions, feedback
+- **Email**: Receipt, order confirmation, reservation confirmation, staff alerts
 
-**Read:** [ONBOARDING.md](ONBOARDING.md) (15 minutes)
+### Compliance & Security
+- **GDPR**: Consent service, cookie banner with DNT, data export/erasure
+- **Fiscal**: SAF-T (PT), TicketBAI (ES) preparation, ATCUD on receipts
+- **Security**: Rate limiting, security headers (CSP, HSTS, X-Frame-Options)
+- **Audit**: Immutable audit trail for orders, payments, refunds, reopens
+- **Privacy Policy**: Public page with 13 sections
 
-### For Users
-
-**Read:** [docs/GUIA_RAPIDO_GARCOM.md](docs/GUIA_RAPIDO_GARCOM.md) (10 minutes)
-
-### For Validation
-
-**Read:** [docs/VALIDACAO_RAPIDA.md](docs/VALIDACAO_RAPIDA.md) (17 tests)
-
----
-
-## 📚 Documentation
-
-### 📖 Essential (Start Here)
-
-- **[PROJETO_COMPLETO.md](PROJETO_COMPLETO.md)** ⭐ - Consolidated overview
-- **[docs/RESUMO_EXECUTIVO.md](docs/RESUMO_EXECUTIVO.md)** - Executive summary
-- **[ONBOARDING.md](ONBOARDING.md)** - For new developers
-
-### 🏛️ Core (Operating System)
-
-- **[CORE_MANIFESTO.md](CORE_MANIFESTO.md)** ⭐⭐ - System law (read first)
-- **[docs/CORE_OVERVIEW.md](docs/CORE_OVERVIEW.md)** ⭐⭐⭐ - **CORE MENTAL MAP** (what is untouchable)
-- **[START_HERE.md](START_HERE.md)** - Core entry point
-- **[ROADMAP.md](ROADMAP.md)** - Next levels roadmap
-- **[EXECUTIVE_SUMMARY.md](EXECUTIVE_SUMMARY.md)** - Core executive summary
-- **[docs/LEVEL_1_IMPLEMENTATION.md](docs/LEVEL_1_IMPLEMENTATION.md)** - Level 1 implemented
-- **[docs/testing/MEGA_OPERATIONAL_SIMULATOR.md](docs/testing/MEGA_OPERATIONAL_SIMULATOR.md)** - Complete simulator
-- **[docs/testing/FAIL_FAST_MODE.md](docs/testing/FAIL_FAST_MODE.md)** - Quick validation
-
-**Core Status:** ✅ v1.0-core-sovereign (Validated, Protected, Shielded)
-
-**Detailed Status:**
-
-- **[docs/STATUS_TECH.md](docs/STATUS_TECH.md)** - Technical status (stability)
-- **[docs/STATUS_OPERATION.md](docs/STATUS_OPERATION.md)** - Operational status (real-world impact)
-
-### 🏗️ Technical
-
-- [docs/EXECUCAO_30_DIAS.md](docs/EXECUCAO_30_DIAS.md) - Detailed implementation
-- [docs/ARQUITETURA_VISUAL.md](docs/ARQUITETURA_VISUAL.md) - Diagrams and flows
-- [docs/SETUP_DEPLOY.md](docs/SETUP_DEPLOY.md) - Setup and deploy
-- [docs/TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md) - Debug and resolution
-
-### 🚀 SaaS Implementation (7-day checklist)
-
-- **[IMPLEMENTATION_CHECKLIST.md](IMPLEMENTATION_CHECKLIST.md)** — Day-by-day plan (infra, RLS, onboarding, webhooks, testing, docs)
-- **Smoke test**: `bash scripts/smoke-test.sh` (integration) or `bash scripts/smoke-test.sh --prod` (frontend)
-- **Runbook**: [DEPLOYMENT_RUNBOOK.md](DEPLOYMENT_RUNBOOK.md) — Deploy order, verification, rollback
-- **Security audit**: [docs/SECURITY_AUDIT_CHECKLIST.md](docs/SECURITY_AUDIT_CHECKLIST.md) — Pre-release checklist
-- **Webhooks**: [docs/WEBHOOK_SPEC.md](docs/WEBHOOK_SPEC.md) — SumUp inbound, events OUT
-- **RLS**: [docs/RLS_POLICIES.md](docs/RLS_POLICIES.md) — Row-level security design
-
-### 💼 Commercial
-
-- [docs/MANIFESTO_COMERCIAL.md](docs/MANIFESTO_COMERCIAL.md) - Value proposition
-- [docs/PLANO_ROLLOUT.md](docs/PLANO_ROLLOUT.md) - Launch strategy
-
-### 📊 Operational
-
-- [docs/METRICAS_KPIS.md](docs/METRICAS_KPIS.md) - Tracking and metrics
-- [docs/MANUTENCAO_CONTINUA.md](docs/MANUTENCAO_CONTINUA.md) - Maintenance
-- [docs/GO_LIVE_CHECKLIST.md](docs/GO_LIVE_CHECKLIST.md) - Launch checklist
-
-### 🤝 Transition
-
-- [docs/HANDOFF_EQUIPE.md](docs/HANDOFF_EQUIPE.md) - Complete handoff
-- [docs/QUICK_WINS.md](docs/QUICK_WINS.md) - Next improvements
-- [docs/RETROSPECTIVA.md](docs/RETROSPECTIVA.md) - Lessons learned
-
-### 🔍 Audit and QA
-
-- **[docs/audit/ONE_PAGER.md](docs/audit/ONE_PAGER.md)** ⭐ - Status in 30 seconds
-- **[docs/audit/FINAL_HANDOFF.md](docs/audit/FINAL_HANDOFF.md)** - Complete handoff
-- **[docs/audit/MASTER_INDEX.md](docs/audit/MASTER_INDEX.md)** - Master index
-- **[docs/audit/HUMAN_TEST_REPORT.md](docs/audit/HUMAN_TEST_REPORT.md)** - Complete human test
-- **[docs/audit/ACTION_PLAN_UX_FIXES.md](docs/audit/ACTION_PLAN_UX_FIXES.md)** - UX fixes plan
-
-### 📋 Indexes
-
-- [docs/README.md](docs/README.md) - Main index
-- [docs/INDICE_COMPLETO.md](docs/INDICE_COMPLETO.md) - All documents
-- [docs/audit/README.md](docs/audit/README.md) - Audit index
+### Technical Excellence
+- **PWA**: Offline-first with service worker, install prompt, offline indicator
+- **Accessibility**: WCAG 2.1 — skip links, focus trap, keyboard navigation, ARIA
+- **i18n**: 23 namespaces x 4 locales (PT-PT, PT-BR, EN, ES)
+- **Multi-country**: 8 countries (PT, ES, BR, IT, FR, DE, GB, US) with VAT, timezone, currency
+- **Push Notifications**: 12 channels by role, browser Notification API, Web Audio sound
 
 ---
 
-## ✅ Status
-
-**Version:** 1.2.0 (Production Ready)
-**Date:** 2026-01-24
-
-### 🏛️ Core ✅
-
-- ✅ **Core v1.0-core-sovereign:** Clean, Validated, Protected, Shielded
-- ✅ **Manifesto Ratified:** CORE_MANIFESTO.md
-- ✅ **Automatic Validation:** CI/CD with fail-fast and 24h simulation
-- ✅ **Documentation:** 17 complete documents
-- ✅ **Level 1 Completed:** Protection and Automation implemented
-
-### System ✅
-
-- ✅ **Infrastructure:** DB + Billing + Auth complete
-- ✅ **Mobile App:** KDS, Waiter, Cashier operational
-- ✅ **Observability:** Sentry + Real-time metrics
-- ✅ **Growth:** SEO + Pixel Tracking
-
-### Quality ✅
-
-- ✅ **Technical Bugs:** 5/5 v1.x issues resolved
-- ✅ **Performance:** fetchOrders optimized, dynamic timers
-- ✅ **Resilience:** OfflineQueue, auto-save, AppState awareness
-
-### Known Issues
-
-- 🟢 3 low-priority issues (accepted)
-- 📋 See: [`docs/KNOWN_ISSUES.md`](docs/KNOWN_ISSUES.md)
-
-**See:** [`docs/audit/ONE_PAGER.md`](./docs/audit/ONE_PAGER.md) - Status in 30 seconds
-
----
-
-## 📊 Features
-
-### ⚡ Fast Pay (Week 1)
-
-Payment in 2 taps, < 5 seconds.
-
-### 🗺️ Live Map (Week 2)
-
-Timer, urgency colors, contextual icons.
-
-### 🍽️ Smart KDS (Week 3)
-
-Menu adapts based on kitchen pressure.
-
-### 📋 Reservations LITE (Week 4)
-
-Simple digital waiting list.
-
----
-
-## 🎯 Expected Results
-
-- ⏱️ **36x faster** payment
-- 🗺️ **100% visibility** of the dining room
-- 🍽️ **+25% efficiency** in the kitchen
-- 📋 **+15% conversion** of reservations
-
----
-
-## 🛠️ Tools
-
-- **Validation:** `./scripts/validate-system.sh`
-- **Issues:** [docs/GITHUB_ISSUES.md](docs/GITHUB_ISSUES.md)
-- **Changelog:** [CHANGELOG.md](CHANGELOG.md)
-
----
-
-## 📞 Support
-
-- **Troubleshooting:** [docs/TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md)
-- **Onboarding:** [ONBOARDING.md](ONBOARDING.md)
-- **Handoff:** [docs/HANDOFF_EQUIPE.md](docs/HANDOFF_EQUIPE.md)
-
----
-
-## 🚀 Next Steps
-
-### System Ready ✅
-
-The system is **complete and stable** for production.
-
-### Action Options
-
-| Action        | Description            |
-| ------------- | ---------------------- |
-| 🚀 **Deploy** | Publish to production  |
-| 🧪 **Tests**  | Run complete E2E suite |
-| 📋 **Commit** | Consolidate changes    |
-
-### Post-Deploy Monitoring
-
-1. **Sentry Dashboard** — Real-time errors
-2. **Metrics Widget** — Orders/hour in Dashboard
-3. **Google Analytics** — Customer portal traffic
-
-### References
-
-- **Next actions (scope & validation):** [docs/strategy/NEXT_ACTIONS.md](docs/strategy/NEXT_ACTIONS.md) — FASE 1–3 validation, FASE 5 polish, FASE 6 print
-- **Billing, PIX, SumUp:** [docs/BILLING_PIX_SUMUP_INDEX.md](docs/BILLING_PIX_SUMUP_INDEX.md) — índice e scripts; validação: `./scripts/run-billing-pix-sumup-validation.sh` (gateway em 4320).
-- **Observability:** [docs/ops/OBSERVABILITY_SETUP.md](docs/ops/OBSERVABILITY_SETUP.md)
-- **GitHub CI/CD setup:** [docs/ops/GITHUB_CICD_SETUP.md](docs/ops/GITHUB_CICD_SETUP.md)
-- **Growth:** [docs/ops/GROWTH_MARKETING_SETUP.md](docs/ops/GROWTH_MARKETING_SETUP.md)
-- **Known Issues:** [docs/KNOWN_ISSUES.md](docs/KNOWN_ISSUES.md)
-- **Deploy:** [docs/SETUP_DEPLOY.md](docs/SETUP_DEPLOY.md)
-
----
-
-## 📈 Statistics
-
-### Technology Stack
-
-| Layer         | Technology                            |
-| ------------- | ------------------------------------- |
-| Mobile        | React Native + Expo                   |
-| Web Portals   | React + Vite + TypeScript             |
-| Backend       | Supabase (Postgres + Auth + Realtime) |
-| Billing       | Stripe                                |
-| Observability | Sentry                                |
-| Analytics     | Google Analytics + Meta Pixel         |
-
-### Project Structure (Enterprise)
-
-**All areas of the project are explicit.** See **[docs/ESTRUTURA_PROJETO_ENTERPRISE.md](docs/ESTRUTURA_PROJETO_ENTERPRISE.md)** for the canonical map (Product & GTM, Engineering — Merchant Portal, Customer Portal, Core, Operations, Documentation, Quality, Observability, Compliance, Audit & Governance).
+## Architecture
 
 ```
 chefiapp-pos-core/
-├── merchant-portal/    # Product & GTM + Full App (TPV, KDS, Staff, Config)
-│   ├── src/main_debug.tsx      # Full app entry
-│   ├── src/main-marketing.tsx  # Marketing-only entry (landing, blog, pricing, changelog, security, status, legal)
-│   ├── dist/                   # Full build output
-│   ├── dist-marketing/         # Marketing-only build output (npm run build:marketing)
-│   └── vercel.json             # SPA rewrites for deploy
-├── docker-core/        # Core backend (Postgres, PostgREST)
-├── docs/               # Documentation (DOC_INDEX, ESTADO_ATUAL, ESTRUTURA_PROJETO_ENTERPRISE)
-└── scripts/            # Automation, health, flows
+├── merchant-portal/        # React SPA — TPV, KDS, Admin, AppStaff
+│   ├── src/
+│   │   ├── core/           # Business logic (100+ services & engines)
+│   │   ├── features/       # Admin feature modules (31 domains)
+│   │   ├── pages/          # Page components (TPV, KDS, AppStaff, etc.)
+│   │   ├── infra/          # Supabase, payments, printing, logging
+│   │   └── locales/        # i18n (23 namespaces × 4 locales)
+│   └── public/             # Static assets, manifest, service worker
+├── docker-core/            # Backend — Supabase + PostgREST
+│   ├── schema/             # 130+ migrations
+│   └── src/middleware/     # Rate limiting, health checks, security
+├── core-engine/            # Shared business rules
+├── billing-core/           # Stripe subscriptions
+├── fiscal-modules/         # SAF-T, TicketBAI
+└── docs/                   # Strategy, audits, guides
 ```
 
-**Deploy:** Marketing-only → Root `merchant-portal`, Build `npm run build:marketing`, Output `dist-marketing`. Full app → Root empty, Build `npm run build`, Output `public/app`. See [docs/DEPLOY_VERCEL.md](docs/DEPLOY_VERCEL.md).
-
-### Quality (v1.2.0)
-
-- **Issues Resolved:** 5 (v1.1.0 + v1.2.0)
-- **Pending Issues:** 3 (low priority)
-- **TypeScript:** 100% typed
-- **Observability:** Sentry in all apps
+### Key Patterns
+- **Offline-first**: SyncEngine with IndexedDB queue, automatic sync
+- **Event sourcing**: `orders_event_store` for audit trail
+- **Multi-tenant**: RLS on every table via `restaurant_id`
+- **Role-based**: Operator → Manager → Owner hierarchy
+- **Provider abstraction**: Payment, notification, printing via adapter pattern
 
 ---
 
-**Version:** 1.4.x
-**Date:** 2026-02
-**Status:** 🟢 **PRODUCTION READY** — Repo state: marketing build separate ([docs/ESTADO_ATUAL_2026_02.md](docs/ESTADO_ATUAL_2026_02.md))
+## Quick Start
+
+```bash
+# Clone
+git clone https://github.com/redle82/chefiapp-pos-core.git
+cd chefiapp-pos-core
+
+# Install
+pnpm install
+
+# Start Docker Core (Supabase)
+cd docker-core && docker-compose up -d && cd ..
+
+# Start Merchant Portal
+pnpm --filter merchant-portal run dev
+
+# Open
+open http://localhost:5177/op/tpv
+```
+
+### Demo Mode
+```
+http://localhost:5177/op/tpv?mode=trial
+```
+No Docker Core needed — uses mock data.
+
+### Run Tests
+```bash
+cd merchant-portal && npx vitest run
+```
 
 ---
 
-_"Last.app organizes the restaurant. ChefIApp guides it."_
+## Comparison
+
+| Feature | Last.app | SumUp POS | Square | Lightspeed | **ChefIApp** |
+|---------|----------|-----------|--------|------------|-------------|
+| **Price/month** | €59-149 | 0+1.69% | $0+2.6% | €69-299 | **€39-99** |
+| KDS included | Yes | No | +$20 | Yes | **Yes** |
+| CRM included | Basic | Basic | +$45 | Yes | **Yes** |
+| Waste tracking | No | No | No | No | **Yes** |
+| MB Way + PIX | No | No | No | No | **Yes** |
+| GDPR compliance UI | No | No | No | No | **Yes** |
+| QR + Reservations | Yes/No | No/No | Yes/Partner | Yes/Partner | **Yes/Yes** |
+| Multi-country | ES only | EU | Global | Global | **8 countries** |
+| Offline PWA | Partial | Partial | iPad | iPad | **Full** |
+| Open source | No | No | No | No | **Yes** |
+
+**ChefIApp is the only system that includes everything without paid add-ons.**
+
+---
+
+## Tech Stack
+
+| Layer | Technology |
+|-------|-----------|
+| Frontend | React 19, TypeScript, Vite, Tailwind CSS |
+| State | React Context, IndexedDB (offline), Supabase Realtime |
+| Backend | Supabase (PostgreSQL + PostgREST + Realtime) |
+| Payments | Stripe, MB Way, SumUp, PIX |
+| Printing | ESC/POS via WebUSB |
+| PWA | Vanilla Service Worker, Web App Manifest |
+| i18n | i18next (23 namespaces, 4 locales) |
+| Testing | Vitest (26 E2E tests) |
+| CI/CD | GitHub Actions, Vercel |
+| Monitoring | Sentry |
+
+---
+
+## Project Stats
+
+```
+481 files · 87,000+ lines of code
+130+ database tables with RLS
+100+ services and engines
+50+ admin routes across 31 domains
+23 i18n namespaces × 4 locales
+7 payment providers
+26 E2E tests passing
+8 countries supported
+```
+
+---
+
+## Documentation
+
+| Document | Audience | Time |
+|----------|----------|------|
+| [ONE_PAGER.md](docs/audit/ONE_PAGER.md) | Owner/Manager | 30s |
+| [ONBOARDING.md](ONBOARDING.md) | Developer | 15min |
+| [CORE_MANIFESTO.md](CORE_MANIFESTO.md) | Core Developer | 30min |
+| [SYSTEM_MAP.html](docs/CHEFIAPP_SYSTEM_MAP.html) | Anyone | Visual |
+| [PRODUCT_DOCTRINE.md](docs/CHEFIAPP_PRODUCT_DOCTRINE.md) | Product Team | 10min |
+
+---
+
+## Contributing
+
+1. Fork the repo
+2. Create a feature branch (`git checkout -b feature/amazing`)
+3. Follow [conventional commits](https://www.conventionalcommits.org/)
+4. Run tests (`npx vitest run`)
+5. Create a PR
+
+---
+
+## License
+
+Proprietary. All rights reserved by Goldmonkey Studio.
+
+---
+
+<p align="center">
+  Built with care by <a href="https://goldmonkey.studio">Goldmonkey Studio</a>
+</p>

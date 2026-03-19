@@ -15,7 +15,7 @@ export type EstablishmentType =
   | "other";
 
 /** País suportado */
-export type Country = "BR" | "ES" | "PT" | "US" | "GB" | "MX" | "CA" | "AU";
+export type Country = "BR" | "ES" | "PT" | "US" | "GB" | "MX" | "CA" | "AU" | "IT" | "FR" | "DE";
 
 /** Fuso horário suportado */
 export type Timezone =
@@ -26,7 +26,10 @@ export type Timezone =
   | "Europe/London"
   | "America/Mexico_City"
   | "America/Toronto"
-  | "Australia/Sydney";
+  | "Australia/Sydney"
+  | "Europe/Rome"
+  | "Europe/Paris"
+  | "Europe/Berlin";
 
 /** Moeda suportada */
 export type Currency = "BRL" | "EUR" | "USD" | "GBP" | "MXN" | "CAD" | "AUD";
@@ -40,7 +43,10 @@ export type Locale =
   | "en-GB"
   | "es-MX"
   | "en-CA"
-  | "en-AU";
+  | "en-AU"
+  | "it-IT"
+  | "fr-FR"
+  | "de-DE";
 
 /** Dados do formulário de identidade */
 export interface IdentityFormData {

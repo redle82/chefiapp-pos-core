@@ -3,13 +3,18 @@
  * Ref: white pill on selected, border outline on unselected.
  */
 
-export type OrderMode = "take_away" | "dine_in" | "delivery";
+import { useTranslation } from "react-i18next";
 
-const MODES: { id: OrderMode; label: string }[] = [
-  { id: "take_away", label: "Take away" },
-  { id: "dine_in", label: "Dine in" },
-  { id: "delivery", label: "Delivery" },
-];
+export type OrderMode = "dine_in" | "counter" | "take_away" | "delivery";
+
+const MODE_IDS: OrderMode[] = ["dine_in", "counter", "take_away", "delivery"];
+
+const MODE_KEYS: Record<OrderMode, string> = {
+  dine_in: "orderMode.dineIn",
+  counter: "orderMode.counter",
+  take_away: "orderMode.takeAway",
+  delivery: "orderMode.delivery",
+};
 
 interface OrderModeSelectorProps {
   value: OrderMode;
@@ -17,6 +22,8 @@ interface OrderModeSelectorProps {
 }
 
 export function OrderModeSelector({ value, onChange }: OrderModeSelectorProps) {
+  const { t } = useTranslation("tpv");
+
   return (
     <div
       style={{
@@ -27,7 +34,7 @@ export function OrderModeSelector({ value, onChange }: OrderModeSelectorProps) {
         backgroundColor: "#1a1a1a",
       }}
     >
-      {MODES.map(({ id, label }) => {
+      {MODE_IDS.map((id) => {
         const active = value === id;
         return (
           <button
@@ -47,7 +54,7 @@ export function OrderModeSelector({ value, onChange }: OrderModeSelectorProps) {
               transition: "all 0.15s ease",
             }}
           >
-            {label}
+            {t(MODE_KEYS[id])}
           </button>
         );
       })}

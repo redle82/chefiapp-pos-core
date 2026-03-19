@@ -1,3 +1,11 @@
 {
-  "addToScreen": "Adicionar ao ecrã"
+  "addToScreen": "Adicionar ao ecra",
+  "installBanner": "Instale o ChefIApp para acesso mais rapido",
+  "installButton": "Instalar",
+  "installLater": "Mais tarde",
+  "offlineBanner": "Sem ligacao -- as alteracoes serao sincronizadas quando voltar",
+  "pendingChanges": "pendentes",
+  "dismiss": "Fechar",
+  "updateAvailable": "Nova versao disponivel",
+  "updateNow": "Atualizar agora"
 }

@@ -17,7 +17,6 @@ export function ModulePlaceholderPage({
 }: ModulePlaceholderPageProps) {
   return (
     <div
-      className="page-enter admin-content-page"
       style={{ width: "100%", maxWidth: 560, margin: "2rem auto", padding: 24 }}
     >
       <AdminPageHeader

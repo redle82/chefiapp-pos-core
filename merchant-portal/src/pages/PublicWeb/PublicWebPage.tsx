@@ -12,19 +12,24 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { Navigate, useParams } from "react-router-dom";
+import { PublicWebRenderer } from "../../components/public-web/PublicWebRenderer";
 import { useRestaurantRuntime } from "../../context/RestaurantRuntimeContext";
 import { useCurrency } from "../../core/currency/useCurrency";
 import { useFormatLocale } from "../../core/i18n/useFormatLocale";
 import { MENU_NOT_LIVE_WEB_MESSAGE } from "../../core/menu/MenuState";
 import { resolveProductImageUrl } from "../../core/products/resolveProductImageUrl";
 import { BlockingScreen, useOperationalReadiness } from "../../core/readiness";
+import type { WebsiteQuickConfig } from "../../core/website/websiteConfigService";
+import { fetchWebsiteConfig } from "../../core/website/websiteConfigService";
 import {
   readMenu,
   readRestaurantById,
   readRestaurantBySlug,
+  readTableByNumber,
   type CoreMenuCategory,
   type CoreProduct,
   type CoreRestaurant,
+  type CoreTable,
 } from "../../infra/readers/RestaurantReader";
 import {
   createOrder,
@@ -86,11 +91,12 @@ const MOCK_REVIEWS = [
 
 export function PublicWebPage() {
   const readiness = useOperationalReadiness("WEB");
-  const { slug } = useParams<{ slug: string }>();
+  const { slug, number } = useParams<{ slug: string; number?: string }>();
   const { runtime } = useRestaurantRuntime();
   const locale = useFormatLocale();
   const { formatAmount } = useCurrency();
   const [restaurant, setRestaurant] = useState<CoreRestaurant | null>(null);
+  const [table, setTable] = useState<CoreTable | null>(null);
   const [menuNotLive, setMenuNotLive] = useState(false);
   const [categories, setCategories] = useState<CoreMenuCategory[]>([]);
   const [products, setProducts] = useState<CoreProduct[]>([]);
@@ -105,6 +111,12 @@ export function PublicWebPage() {
     null,
   );
   const [reviewIndex, setReviewIndex] = useState(0);
+  const [websiteConfig, setWebsiteConfig] =
+    useState<WebsiteQuickConfig | null>(null);
+
+  // Mesa mode: /public/:slug/mesa/:number → QR_MESA origin
+  const tableNumber = number ? parseInt(number, 10) : null;
+  const isTableMode = tableNumber != null && !isNaN(tableNumber);
 
   useEffect(() => {
     async function loadData() {
@@ -118,7 +130,8 @@ export function PublicWebPage() {
         setError(null);
         let restaurantData: (CoreRestaurant & { status?: string }) | null =
           await readRestaurantBySlug(slug);
-        if (!restaurantData && slug === "trial-restaurant") {
+        if (!restaurantData) {
+          // Fallback: slug não encontrado no DB — tentar runtime (dev/trial)
           if (runtime?.loading) {
             setLoading(true);
             return;
@@ -133,10 +146,23 @@ export function PublicWebPage() {
           return;
         }
         setRestaurant(restaurantData);
+        // Fetch website_config.published (best-effort, non-blocking)
+        fetchWebsiteConfig(restaurantData.id)
+          .then((doc) => {
+            if (doc?.published) setWebsiteConfig(doc.published);
+          })
+          .catch(() => {
+            /* website_config not available — fallback to legacy layout */
+          });
         if (restaurantData.status !== "active") {
           setMenuNotLive(true);
           setLoading(false);
           return;
+        }
+        // Load table data if in mesa mode
+        if (isTableMode && tableNumber != null) {
+          const tableData = await readTableByNumber(restaurantData.id, tableNumber);
+          setTable(tableData);
         }
         const menu = await readMenu(restaurantData.id);
         setCategories(menu.categories);
@@ -148,7 +174,7 @@ export function PublicWebPage() {
       }
     }
     loadData();
-  }, [slug, runtime?.restaurant_id, runtime?.loading]);
+  }, [slug, number, runtime?.restaurant_id, runtime?.loading, isTableMode, tableNumber]);
 
   const addToCart = (product: CoreProduct) => {
     setCart((prev) => {
@@ -193,11 +219,17 @@ export function PublicWebPage() {
         quantity: i.quantity,
         unit_price: i.product.price_cents,
       }));
+      const origin = isTableMode ? "QR_MESA" : "WEB_PUBLIC";
+      const tableInfo = isTableMode && table
+        ? { tableId: table.id, tableNumber: table.number }
+        : undefined;
       const result = await createOrder(
         restaurant.id,
         orderItems,
-        "WEB_PUBLIC",
+        origin,
         "cash",
+        isTableMode ? { origin } : undefined,
+        tableInfo,
       );
       setOrderSuccess(`Pedido criado! ID: ${result.id.slice(0, 8)}...`);
       setCart([]);
@@ -383,6 +415,20 @@ export function PublicWebPage() {
           >
             {restaurant.name}
           </span>
+          {isTableMode && (
+            <span
+              style={{
+                fontSize: 13,
+                fontWeight: 700,
+                padding: "4px 10px",
+                borderRadius: 6,
+                background: THEME.accent,
+                color: "#fff",
+              }}
+            >
+              Mesa {tableNumber}
+            </span>
+          )}
         </div>
         <nav
           style={{
@@ -495,7 +541,24 @@ export function PublicWebPage() {
         </div>
       </header>
 
-      {/* Hero */}
+      {/* Institutional sections from website_config (if published) */}
+      {websiteConfig && (
+        <div
+          style={{
+            maxWidth: 1200,
+            margin: "0 auto",
+            padding: "32px 24px",
+          }}
+        >
+          <PublicWebRenderer
+            config={websiteConfig}
+            restaurantName={restaurant.name}
+          />
+        </div>
+      )}
+
+      {/* Legacy Hero (fallback when website_config not published) */}
+      {!websiteConfig && (
       <section
         style={{
           position: "relative",
@@ -672,6 +735,7 @@ export function PublicWebPage() {
           </div>
         </div>
       </section>
+      )}
 
       {/* Alerts */}
       {orderSuccess && (

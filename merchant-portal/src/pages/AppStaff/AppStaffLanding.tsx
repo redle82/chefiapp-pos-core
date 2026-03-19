@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 import { isDebugMode } from "../../core/debugMode";
 import { RUNTIME } from "../../core/runtime/RuntimeContext";
@@ -17,32 +18,32 @@ import { STAFF_LAUNCHER_PATH } from "./routing/staffModeConfig";
 
 /* ── Distribution section (mock placeholders) ── */
 const DistributionSection: React.FC = () => {
+  const { t } = useTranslation("common");
   const [showQR, setShowQR] = useState(false);
   return (
     <div className={styles.distributionSection}>
       <Text size="xs" color="tertiary" className={styles.distributionTitle}>
-        Disponível para sua equipe
+        {t("staffLanding.availableForTeam")}
       </Text>
       <div className={styles.storeButtons}>
         <button className={styles.storeButton} disabled>
           <span className={styles.storeIcon}>▶</span>
           <span className={styles.storeLabel}>Google Play</span>
-          <span className={styles.storeBadge}>Em breve</span>
+          <span className={styles.storeBadge}>{t("staffLanding.comingSoon")}</span>
         </button>
         <button className={styles.storeButton} disabled>
           <span className={styles.storeIcon}></span>
           <span className={styles.storeLabel}>App Store</span>
-          <span className={styles.storeBadge}>Em breve</span>
+          <span className={styles.storeBadge}>{t("staffLanding.comingSoon")}</span>
         </button>
       </div>
       <button className={styles.qrButton} onClick={() => setShowQR((v) => !v)}>
-        📲 Instalar via QR Direto
+        {t("staffLanding.installViaQR")}
       </button>
       {showQR && (
         <div className={styles.qrPanel}>
           <Text size="xs" color="tertiary" className={styles.qrText}>
-            Abra a câmara do telemóvel e aponte para o QR gerado em Admin →
-            Sistema → Dispositivos.
+            {t("staffLanding.qrInstructions")}
           </Text>
         </div>
       )}
@@ -50,15 +51,16 @@ const DistributionSection: React.FC = () => {
   );
 };
 
-const DEV_QUICK_ROLES: { label: string; role: StaffRole; emoji: string }[] = [
-  { label: "Dono", role: "owner", emoji: "👑" },
-  { label: "Gerente", role: "manager", emoji: "🧠" },
-  { label: "Garçom", role: "waiter", emoji: "🍽️" },
-  { label: "Cozinha", role: "kitchen", emoji: "🔥" },
-  { label: "Limpeza", role: "cleaning", emoji: "🧹" },
+const DEV_QUICK_ROLE_KEYS: { labelKey: string; role: StaffRole; emoji: string }[] = [
+  { labelKey: "staffLanding.roles.owner", role: "owner", emoji: "👑" },
+  { labelKey: "staffLanding.roles.manager", role: "manager", emoji: "🧠" },
+  { labelKey: "staffLanding.roles.waiter", role: "waiter", emoji: "🍽️" },
+  { labelKey: "staffLanding.roles.kitchen", role: "kitchen", emoji: "🔥" },
+  { labelKey: "staffLanding.roles.cleaning", role: "cleaning", emoji: "🧹" },
 ];
 
 export const AppStaffLanding: React.FC = () => {
+  const { t } = useTranslation("common");
   const {
     createLocalContract,
     restaurantId,
@@ -93,7 +95,7 @@ export const AppStaffLanding: React.FC = () => {
             <span className={styles.brandRed}>OS</span>
           </div>
           <Text size="xs" color="tertiary" className={styles.tagline}>
-            Seu Sistema Operacional
+            {t("staffLanding.tagline")}
           </Text>
         </div>
 
@@ -105,10 +107,10 @@ export const AppStaffLanding: React.FC = () => {
               className={styles.cardFill}
             >
               <Text size="lg" weight="bold" color="primary">
-                Entrar com Código da Equipe
+                {t("staffLanding.enterWithCode")}
               </Text>
               <Text size="xs" color="tertiary" className={styles.subtitle}>
-                Usar código ou escanear QR do restaurante
+                {t("staffLanding.enterWithCodeDesc")}
               </Text>
             </div>
           </Card>
@@ -125,10 +127,10 @@ export const AppStaffLanding: React.FC = () => {
                 className={styles.cardFill}
               >
                 <Text size="lg" weight="bold" color="primary">
-                  Entrar como Funcionário
+                  {t("staffLanding.enterAsEmployee")}
                 </Text>
                 <Text size="xs" color="tertiary" className={styles.subtitle}>
-                  Selecionar perfil individual (modo teste)
+                  {t("staffLanding.enterAsEmployeeDesc")}
                 </Text>
               </div>
             </Card>
@@ -143,7 +145,7 @@ export const AppStaffLanding: React.FC = () => {
             onClick={() => setStep("select_type")}
             className={styles.centerButton}
           >
-            Operação local
+            {t("staffLanding.localOperation")}
           </Button>
 
           {/* DEV/TRIAL: Staff Switcher — entrada rápida por perfil (instrumento de validação) */}
@@ -158,10 +160,10 @@ export const AppStaffLanding: React.FC = () => {
                 color="primary"
                 className={styles.devLabel}
               >
-                Entrar como:
+                {t("staffLanding.enterAs")}
               </Text>
               <div className={styles.devRoles}>
-                {DEV_QUICK_ROLES.map(({ label, role, emoji }) => (
+                {DEV_QUICK_ROLE_KEYS.map(({ labelKey, role, emoji }) => (
                   <Button
                     key={role}
                     tone="secondary"
@@ -172,7 +174,7 @@ export const AppStaffLanding: React.FC = () => {
                       navigate(STAFF_LAUNCHER_PATH);
                     }}
                   >
-                    {emoji} {label}
+                    {emoji} {t(labelKey)}
                   </Button>
                 ))}
               </div>
@@ -214,7 +216,7 @@ export const AppStaffLanding: React.FC = () => {
     <Wrapper>
       <div className={styles.sectionHeader}>
         <Text size="lg" weight="bold" color="primary">
-          O que vamos operar?
+          {t("staffLanding.whatToOperate")}
         </Text>
       </div>
 
@@ -232,10 +234,10 @@ export const AppStaffLanding: React.FC = () => {
             >
               <Text size="lg" weight="bold" color="primary">
                 {type === "cafe"
-                  ? "☕ Café"
+                  ? `☕ ${t("bootstrap.restaurantTypes.cafe")}`
                   : type === "bar"
-                  ? "🍸 Bar"
-                  : "🍽️ Restaurante"}
+                  ? `🍸 ${t("bootstrap.restaurantTypes.bar")}`
+                  : `🍽️ ${t("bootstrap.restaurantTypes.restaurant")}`}
               </Text>
               <Text size="lg" color="tertiary">
                 →
@@ -253,7 +255,7 @@ export const AppStaffLanding: React.FC = () => {
           size="sm"
           onClick={() => setStep("initial")}
         >
-          Voltar
+          {t("back")}
         </Button>
       </div>
     </Wrapper>
@@ -262,6 +264,7 @@ export const AppStaffLanding: React.FC = () => {
 
 // 🔌 THE BRIDGE UI
 const ConnectCodeView: React.FC<{ onBack: () => void }> = ({ onBack }) => {
+  const { t } = useTranslation("common");
   const { joinRemoteOperation } = useStaff();
   const [code, setCode] = useState("");
   const [loading, setLoading] = useState(false);
@@ -274,7 +277,7 @@ const ConnectCodeView: React.FC<{ onBack: () => void }> = ({ onBack }) => {
 
     const result = await joinRemoteOperation(code);
     if (!result.success) {
-      setError(result.message || "Erro desconhecido");
+      setError(result.message || t("staffLanding.unknownError"));
       setLoading(false);
     }
   };
@@ -283,10 +286,10 @@ const ConnectCodeView: React.FC<{ onBack: () => void }> = ({ onBack }) => {
     <div className={styles.connectFullWidth}>
       <div className={styles.sectionHeader}>
         <Text size="lg" weight="bold" color="primary">
-          Inserir Código
+          {t("staffLanding.insertCode")}
         </Text>
         <Text size="xs" color="tertiary" className={styles.subtitle}>
-          Código do Painel
+          {t("staffLanding.panelCode")}
         </Text>
       </div>
 
@@ -315,7 +318,7 @@ const ConnectCodeView: React.FC<{ onBack: () => void }> = ({ onBack }) => {
           disabled={loading || code.length < 5}
           className={styles.centerButton}
         >
-          {loading ? "A verificar..." : "Conectar"}
+          {loading ? t("staffLanding.verifying") : t("staffLanding.connect")}
         </Button>
       </form>
 
@@ -327,39 +330,39 @@ const ConnectCodeView: React.FC<{ onBack: () => void }> = ({ onBack }) => {
             color="secondary"
             className={styles.debugLabel}
           >
-            Códigos Demo Guide (com ?debug=1 na URL)
+            {t("staffLanding.demoGuideCodesLabel")}
           </Text>
           <ul className={styles.debugList}>
             <li>
-              Dono:{" "}
+              {t("staffLanding.roles.owner")}:{" "}
               <code className={styles.codeText}>{TRIAL_GUIDE_CODES.owner}</code>
             </li>
             <li>
-              Gerente:{" "}
+              {t("staffLanding.roles.manager")}:{" "}
               <code className={styles.codeText}>
                 {TRIAL_GUIDE_CODES.manager}
               </code>
             </li>
             <li>
-              Garçom:{" "}
+              {t("staffLanding.roles.waiter")}:{" "}
               <code className={styles.codeText}>
                 {TRIAL_GUIDE_CODES.waiter}
               </code>
             </li>
             <li>
-              Cozinheiro:{" "}
+              {t("staffLanding.roles.cook")}:{" "}
               <code className={styles.codeText}>
                 {TRIAL_GUIDE_CODES.kitchen}
               </code>
             </li>
             <li>
-              Limpeza:{" "}
+              {t("staffLanding.roles.cleaning")}:{" "}
               <code className={styles.codeText}>
                 {TRIAL_GUIDE_CODES.cleaning}
               </code>
             </li>
             <li>
-              Staff:{" "}
+              {t("staffLanding.roles.staff")}:{" "}
               <code className={styles.codeText}>
                 {TRIAL_GUIDE_CODES.worker}
               </code>
@@ -370,7 +373,7 @@ const ConnectCodeView: React.FC<{ onBack: () => void }> = ({ onBack }) => {
 
       <div className={styles.backSection}>
         <Button tone="neutral" variant="ghost" fullWidth onClick={onBack}>
-          Voltar
+          {t("back")}
         </Button>
       </div>
     </div>
@@ -385,6 +388,7 @@ const SelectPersonView: React.FC<{
   ) => Promise<{ success: boolean; message?: string }>;
   onBack: () => void;
 }> = ({ restaurantId, onSelect, onBack }) => {
+  const { t } = useTranslation("common");
   const [people, setPeople] = React.useState<CoreRestaurantPerson[]>([]);
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
@@ -401,7 +405,7 @@ const SelectPersonView: React.FC<{
       .catch((e) => {
         if (!cancelled)
           setError(
-            e instanceof Error ? e.message : "Erro ao carregar pessoas.",
+            e instanceof Error ? e.message : t("staffLanding.errorLoadPeople"),
           );
       })
       .finally(() => {
@@ -417,7 +421,7 @@ const SelectPersonView: React.FC<{
     setError(null);
     try {
       const result = await onSelect(person);
-      if (!result.success) setError(result.message ?? "Erro ao entrar.");
+      if (!result.success) setError(result.message ?? t("staffLanding.errorJoining"));
     } finally {
       setJoiningId(null);
     }
@@ -427,16 +431,16 @@ const SelectPersonView: React.FC<{
     <div className={styles.connectFullWidth}>
       <div className={styles.selectHeader}>
         <Text size="xl" weight="bold" color="primary">
-          Entrar como funcionário
+          {t("staffLanding.enterAsEmployee")}
         </Text>
         <Text size="sm" color="tertiary" className={styles.selectSubtitle}>
-          Escolha a pessoa para entrar no AppStaff com o papel dela.
+          {t("staffLanding.choosePersonDesc")}
         </Text>
       </div>
 
       {loading && (
         <Text size="sm" color="tertiary" className={styles.loadingText}>
-          A carregar pessoas…
+          {t("staffLanding.loadingPeople")}
         </Text>
       )}
       {error && (
@@ -448,7 +452,7 @@ const SelectPersonView: React.FC<{
       )}
       {!loading && people.length === 0 && (
         <Text size="sm" color="tertiary" className={styles.loadingText}>
-          Nenhuma pessoa configurada. Crie pessoas em Configuração → Empleados.
+          {t("staffLanding.noPeopleConfigured")}
         </Text>
       )}
       {!loading && people.length > 0 && (
@@ -479,11 +483,11 @@ const SelectPersonView: React.FC<{
                     color="tertiary"
                     className={styles.personRole}
                   >
-                    {person.role === "manager" ? "Gerente" : "Funcionário"}
+                    {person.role === "manager" ? t("staffLanding.roles.manager") : t("staffLanding.roles.employee")}
                   </Text>
                 </div>
                 <Text size="sm" color="action">
-                  {joiningId === person.id ? "A entrar…" : "Entrar como →"}
+                  {joiningId === person.id ? t("staffLanding.joining") : t("staffLanding.enterAs")}
                 </Text>
               </div>
             </Card>
@@ -492,7 +496,7 @@ const SelectPersonView: React.FC<{
       )}
 
       <Button tone="neutral" variant="ghost" fullWidth onClick={onBack}>
-        Voltar
+        {t("back")}
       </Button>
     </div>
   );

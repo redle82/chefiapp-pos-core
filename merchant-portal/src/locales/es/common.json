@@ -247,6 +247,56 @@
     "noShiftDesc": "No tiene un turno abierto. Entre en modo Turno u Operación para empezar.",
     "startShift": "Abrir turno"
   },
+  "tenant": {
+    "selectRestaurant": "Seleccionar restaurante",
+    "role": {
+      "owner": "Dueño",
+      "manager": "Gerente",
+      "staff": "Staff",
+      "waiter": "Camarero",
+      "kitchen": "Cocina"
+    },
+    "yourRestaurants": "Sus Restaurantes",
+    "selectToOperate": "Seleccione el restaurante para operar",
+    "singleTenant": "Un único restaurante asociado. Redirigiendo…"
+  },
+  "security": {
+    "metaTitle": "Seguridad y Datos — ChefIApp",
+    "metaDescription": "Cómo ChefIApp trata sus datos: sesiones, infraestructura, privacidad y transparencia.",
+    "tryFree": "Probar gratis",
+    "badge": "Seguridad y Datos",
+    "heading": "Cómo tratamos sus datos",
+    "intro": "Transparencia sobre sesiones, almacenamiento y prácticas de privacidad de ChefIApp.",
+    "sessionAccessTitle": "Acceso por sesión",
+    "sessionAccessBody": "ChefIApp usa sesiones autenticadas para cada usuario. No compartimos credenciales entre restaurantes y cada sesión está aislada.",
+    "noDataSaleTitle": "No vendemos datos",
+    "noDataSaleBody": "Los datos de su restaurante le pertenecen. No vendemos, compartimos ni monetizamos datos de clientes u operaciones.",
+    "infrastructureTitle": "Infraestructura",
+    "infrastructureBody": "Los datos se almacenan en servidores seguros vía Supabase (infraestructura AWS). Usamos cifrado en tránsito (TLS) y en reposo.",
+    "privacyTitle": "Privacidad",
+    "privacyBodyPrefix": "Consulte nuestra",
+    "privacyPolicyLink": "Política de Privacidad",
+    "privacyBodySuffix": "Para detalles completos sobre recopilación, uso y derechos sobre sus datos.",
+    "disclaimerTitle": "Aviso",
+    "disclaimerBody": "Esta página describe prácticas actuales. ChefIApp se reserva el derecho de actualizar estas prácticas, notificando a los usuarios según lo exija la ley.",
+    "navPrivacy": "Privacidad",
+    "navTerms": "Términos",
+    "navDpa": "DPA",
+    "navBackToLanding": "Volver a la landing"
+  },
+  "installApps": {
+    "subtitle": "Elija la tienda compatible con su dispositivo para descargar ChefIApp Staff.",
+    "availableIn": "Disponible en",
+    "comingSoon": "Próximamente",
+    "differenceTitle": "¿Cuál es la diferencia?",
+    "appleDesc": "Para iPhone y iPad. Descargue desde la App Store de Apple.",
+    "androidDesc": "Para dispositivos Android. Descargue desde Google Play.",
+    "howItWorksTitle": "Cómo funciona",
+    "step1": "Descargue la app desde la tienda de su dispositivo.",
+    "step2": "Abra la app e inicie sesión con la cuenta del restaurante.",
+    "step3": "¡Listo! Puede empezar a recibir pedidos y gestionar mesas.",
+    "backToDevices": "Volver a Dispositivos"
+  },
   "fiscal": {
     "pendingAriaLabel": "{{count}} pedidos fiscales pendientes",
     "pendingBadge_one": "{{count}} Fiscal Pendiente",
@@ -259,5 +309,41 @@
     "toastFailed_other": "{{count}} pedidos fallaron tras múltiples intentos.",
     "viewDetails": "Ver Detalles",
     "closeAlert": "Cerrar alerta"
+  },
+  "staffLanding": {
+    "tagline": "Gestión de equipo inteligente",
+    "availableForTeam": "Disponible para su equipo",
+    "comingSoon": "Próximamente",
+    "installViaQR": "Instale vía código QR",
+    "qrInstructions": "Escanee el código QR con su teléfono para instalar la app Staff",
+    "enterWithCode": "Entrar con código",
+    "enterWithCodeDesc": "Introduzca el código proporcionado por el gerente",
+    "enterAsEmployee": "Entrar como empleado",
+    "enterAsEmployeeDesc": "Seleccione su perfil de la lista",
+    "localOperation": "Operación local",
+    "enterAs": "Entrar como",
+    "whatToOperate": "¿Qué quiere operar?",
+    "insertCode": "Insertar código",
+    "panelCode": "Código del panel de administración",
+    "verifying": "Verificando…",
+    "connect": "Conectar",
+    "unknownError": "Error desconocido",
+    "demoGuideCodesLabel": "Códigos de prueba",
+    "loadingPeople": "Cargando empleados…",
+    "noPeopleConfigured": "Ningún empleado configurado",
+    "choosePersonDesc": "Elija su perfil para continuar",
+    "joining": "Entrando…",
+    "errorLoadPeople": "Error al cargar empleados",
+    "errorJoining": "Error al entrar",
+    "roles": {
+      "owner": "Dueño",
+      "manager": "Gerente",
+      "waiter": "Camarero",
+      "kitchen": "Cocinero",
+      "cook": "Cocinero",
+      "cleaning": "Limpieza",
+      "staff": "Staff",
+      "employee": "Empleado"
+    }
   }
 }

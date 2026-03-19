@@ -350,6 +350,26 @@ const TeamSectorDashboard = lazy(() =>
     default: m.TeamSectorDashboard,
   })),
 );
+const StaffSchedulePage = lazy(() =>
+  import("../pages/AppStaff/pages/SchedulePage").then((m) => ({
+    default: m.SchedulePage,
+  })),
+);
+const StaffCommsPage = lazy(() =>
+  import("../pages/AppStaff/pages/CommsPage").then((m) => ({
+    default: m.CommsPage,
+  })),
+);
+const StaffNotificationsPage = lazy(() =>
+  import("../pages/AppStaff/pages/NotificationsPage").then((m) => ({
+    default: m.NotificationsPage,
+  })),
+);
+const StaffTipsAnalyticsPage = lazy(() =>
+  import("../pages/AppStaff/pages/TipsAnalyticsPage").then((m) => ({
+    default: m.TipsAnalyticsPage,
+  })),
+);
 const CleaningHome = lazy(() =>
   import("../pages/AppStaff/homes/CleaningHome").then((m) => ({
     default: m.CleaningHome,
@@ -368,6 +388,16 @@ const ManagerHome = lazy(() =>
 const WorkerHome = lazy(() =>
   import("../pages/AppStaff/homes/WorkerHome").then((m) => ({
     default: m.WorkerHome,
+  })),
+);
+const WaiterHome = lazy(() =>
+  import("../pages/AppStaff/homes/WaiterHome").then((m) => ({
+    default: m.WaiterHome,
+  })),
+);
+const DeliveryHome = lazy(() =>
+  import("../pages/AppStaff/homes/DeliveryHome").then((m) => ({
+    default: m.DeliveryHome,
   })),
 );
 const ConfigDesktopOnlyPage = lazy(() =>
@@ -455,11 +485,7 @@ const InventoryStockMinimal = lazy(() =>
     default: m.InventoryStockMinimal,
   })),
 );
-const KDSMinimal = lazy(() =>
-  import("../pages/KDSMinimal/KDSMinimal").then((m) => ({
-    default: m.KDSMinimal,
-  })),
-);
+// KDSMinimal standalone removed — KDS now lives inside TPV at /op/tpv/kitchen
 
 // pages — Manager
 const ManagerAnalysisPage = lazy(() =>
@@ -573,6 +599,11 @@ const TablePage = lazy(() =>
     default: m.TablePage,
   })),
 );
+const TrackOrderPage = lazy(() =>
+  import("../pages/PublicWeb/TrackOrderPage").then((m) => ({
+    default: m.TrackOrderPage,
+  })),
+);
 
 // pages — Publish / Purchases / Reports
 const PublishPage = lazy(() =>
@@ -667,6 +698,31 @@ const TPVSettingsPage = lazy(() =>
     default: m.TPVSettingsPage,
   })),
 );
+const TPVWebEditorPage = lazy(() =>
+  import("../pages/TPVMinimal/TPVWebEditorPage").then((m) => ({
+    default: m.TPVWebEditorPage,
+  })),
+);
+const TPVScreensPage = lazy(() =>
+  import("../pages/TPVMinimal/TPVScreensPage").then((m) => ({
+    default: m.TPVScreensPage,
+  })),
+);
+const TPVExpoPage = lazy(() =>
+  import("../pages/TPVMinimal/TPVExpoPage").then((m) => ({
+    default: m.TPVExpoPage,
+  })),
+);
+const TPVCustomerDisplayPage = lazy(() =>
+  import("../pages/TPVMinimal/TPVCustomerDisplayPage").then((m) => ({
+    default: m.TPVCustomerDisplayPage,
+  })),
+);
+const TPVDeliveryPage = lazy(() =>
+  import("../pages/TPVMinimal/TPVDeliveryPage").then((m) => ({
+    default: m.TPVDeliveryPage,
+  })),
+);
 const TPVShiftPage = lazy(() =>
   import("../pages/TPVMinimal/TPVShiftPage").then((m) => ({
     default: m.TPVShiftPage,
@@ -682,8 +738,55 @@ const TPVTasksPage = lazy(() =>
     default: m.TPVTasksPage,
   })),
 );
+const TPVPrintersPage = lazy(() =>
+  import("../pages/TPVMinimal/PrintersPage").then((m) => ({
+    default: m.PrintersPage,
+  })),
+);
+const TPVDashboardPage = lazy(() =>
+  import("../pages/TPVMinimal/DashboardPage").then((m) => ({
+    default: m.DashboardPage,
+  })),
+);
+const TPVTableQRCodesPage = lazy(() =>
+  import("../pages/TPVMinimal/TableQRCodesPage").then((m) => ({
+    default: m.TableQRCodesPage,
+  })),
+);
+const CustomerMenuPage = lazy(() =>
+  import("../pages/CustomerMenu/CustomerMenuPage").then((m) => ({
+    default: m.CustomerMenuPage,
+  })),
+);
 const TPVReadyPage = lazy(() =>
   import("../pages/TPVReadyPage").then((m) => ({ default: m.TPVReadyPage })),
+);
+
+// pages — Dedicated Screens (isolated from TPV shell)
+const ScreenKitchenPage = lazy(() =>
+  import("../pages/TPVMinimal/screens/ScreenKitchenPage").then((m) => ({
+    default: m.ScreenKitchenPage,
+  })),
+);
+const ScreenBarPage = lazy(() =>
+  import("../pages/TPVMinimal/screens/ScreenBarPage").then((m) => ({
+    default: m.ScreenBarPage,
+  })),
+);
+const ScreenExpoPage = lazy(() =>
+  import("../pages/TPVMinimal/screens/ScreenExpoPage").then((m) => ({
+    default: m.ScreenExpoPage,
+  })),
+);
+const ScreenDeliveryPage = lazy(() =>
+  import("../pages/TPVMinimal/screens/ScreenDeliveryPage").then((m) => ({
+    default: m.ScreenDeliveryPage,
+  })),
+);
+const ScreenCustomerDisplayPage = lazy(() =>
+  import("../pages/TPVMinimal/screens/ScreenCustomerDisplayPage").then((m) => ({
+    default: m.ScreenCustomerDisplayPage,
+  })),
 );
 
 // pages — Tasks
@@ -731,12 +834,15 @@ export const OperationalRoutesFragment = (
   <Fragment>
     <Route path="/electron/setup" element={<ElectronSetupPage />} />
     <Route path="/public/:slug" element={<PublicWebPage />} />
-    <Route path="/public/:slug/mesa/:number" element={<TablePage />} />
+    <Route path="/public/:slug/mesa/:number" element={<PublicWebPage />} />
     <Route
       path="/public/:slug/order/:orderId"
       element={<CustomerOrderStatusView />}
     />
     <Route path="/public/:slug/kds" element={<PublicKDS />} />
+    <Route path="/public/:slug/menu" element={<CustomerMenuPage />} />
+    <Route path="/order/:restaurantId" element={<CustomerMenuPage />} />
+    <Route path="/track/:orderId" element={<TrackOrderPage />} />
 
     <Route path="/welcome" element={<WelcomePage />} />
     <Route path="/onboarding" element={<OnboardingAssistantPage />} />
@@ -796,37 +902,29 @@ export const OperationalRoutesFragment = (
           <Route path="tasks" element={<TPVTasksPage />} />
           <Route path="reservations" element={<TPVReservationsPage />} />
           <Route path="settings" element={<TPVSettingsPage />} />
+          <Route path="expo" element={<TPVExpoPage />} />
+          <Route path="customer-display" element={<TPVCustomerDisplayPage />} />
+          <Route path="delivery" element={<TPVDeliveryPage />} />
+          <Route path="web-editor" element={<TPVWebEditorPage />} />
+          <Route path="screens" element={<TPVScreensPage />} />
+          <Route path="printers" element={<TPVPrintersPage />} />
+          <Route path="dashboard" element={<TPVDashboardPage />} />
+          <Route path="qr-codes" element={<TPVTableQRCodesPage />} />
         </Route>
       </Route>
-      {/* ── BrowserBlockGuard: KDS (desktop only) ── */}
-      <Route
-        element={
-          <BrowserBlockGuard requiredPlatform="desktop" moduleLabel="KDS" />
-        }
-      >
-        <Route
-          path="/op/kds"
-          element={
-            <ErrorBoundary
-              context="KDS"
-              fallback={
-                <GlobalBlockedView
-                  title="KDS indisponível"
-                  description="O módulo de cozinha encontrou um erro. Recarregue a tela para continuar o preparo."
-                  action={{
-                    label: "Recarregar",
-                    onClick: () => window.location.reload(),
-                  }}
-                />
-              }
-            >
-              <OperationalFullscreenWrapper>
-                <KDSMinimal />
-              </OperationalFullscreenWrapper>
-            </ErrorBoundary>
-          }
-        />
-      </Route>
+      {/* KDS lives inside TPV — redirect standalone route */}
+      <Route path="/op/kds" element={<Navigate to="/op/tpv/kitchen" replace />} />
+
+      {/* ── Dedicated Screen Routes (/screen/*) ──────────────────────────
+           Isolated surfaces launched from TPV Screens Hub.
+           No TPV sidebar/header — ScreenLayout provides minimal chrome.
+      */}
+      <Route path="/screen/kitchen" element={<ScreenKitchenPage />} />
+      <Route path="/screen/bar" element={<ScreenBarPage />} />
+      <Route path="/screen/expo" element={<ScreenExpoPage />} />
+      <Route path="/screen/delivery" element={<ScreenDeliveryPage />} />
+      <Route path="/screen/customer-display" element={<ScreenCustomerDisplayPage />} />
+
       <Route path="/op/cash" element={<Navigate to="/op/tpv" replace />} />
       <Route path="/op/pos" element={<Navigate to="/op/tpv" replace />} />
       <Route path="/op/pos/*" element={<Navigate to="/op/tpv" replace />} />
@@ -836,8 +934,8 @@ export const OperationalRoutesFragment = (
         element={<Navigate to="/app/staff/home/owner" replace />}
       />
       <Route path="/tpv" element={<Navigate to="/op/tpv" replace />} />
-      <Route path="/kds-minimal" element={<Navigate to="/op/kds" replace />} />
-      <Route path="/kds" element={<Navigate to="/op/kds" replace />} />
+      <Route path="/kds-minimal" element={<Navigate to="/op/tpv/kitchen" replace />} />
+      <Route path="/kds" element={<Navigate to="/op/tpv/kitchen" replace />} />
       <Route path="/tpv-minimal" element={<Navigate to="/op/tpv" replace />} />
 
       <Route
@@ -930,7 +1028,23 @@ export const OperationalRoutesFragment = (
           <BrowserBlockGuard requiredPlatform="mobile" moduleLabel="AppStaff" />
         }
       >
-        <Route path="/app/staff" element={<AppStaffWrapper />}>
+        <Route path="/app/staff" element={
+            <ErrorBoundary
+              context="AppStaff"
+              fallback={
+                <GlobalBlockedView
+                  title="App Staff indisponível"
+                  description="O módulo Staff encontrou um erro. Recarregue a aplicação para continuar."
+                  action={{
+                    label: "Recarregar",
+                    onClick: () => window.location.reload(),
+                  }}
+                />
+              }
+            >
+              <AppStaffWrapper />
+            </ErrorBoundary>
+          }>
           <Route index element={<StaffIndexRedirect />} />
           <Route
             path="home"
@@ -945,10 +1059,15 @@ export const OperationalRoutesFragment = (
             <Route index element={<StaffHomeRedirect />} />
             <Route path="owner" element={<OwnerGlobalDashboard />} />
             <Route path="manager" element={<ManagerHome />} />
-            <Route path="waiter" element={<AppStaffHome />} />
+            <Route path="waiter" element={<WaiterHome />} />
             <Route path="kitchen" element={<KitchenHome />} />
             <Route path="cleaning" element={<CleaningHome />} />
             <Route path="worker" element={<WorkerHome />} />
+            <Route path="delivery" element={<DeliveryHome />} />
+            <Route path="delivery/orders" element={<DeliveryHome />} />
+            <Route path="delivery/map" element={<DeliveryHome />} />
+            <Route path="delivery/drivers" element={<DeliveryHome />} />
+            <Route path="delivery/reviews" element={<DeliveryHome />} />
             {/* Dashboards de Setor (nível 2): OwnerHome → Sector → Ferramenta */}
             <Route
               path="sector/operation"
@@ -956,6 +1075,10 @@ export const OperationalRoutesFragment = (
             />
             <Route path="sector/tasks" element={<TasksSectorDashboard />} />
             <Route path="sector/team" element={<TeamSectorDashboard />} />
+            <Route path="schedule" element={<StaffSchedulePage />} />
+            <Route path="comms" element={<StaffCommsPage />} />
+            <Route path="notifications" element={<StaffNotificationsPage />} />
+            <Route path="tips" element={<StaffTipsAnalyticsPage />} />
             <Route path="sector/kitchen" element={<KitchenSectorDashboard />} />
             <Route
               path="sector/cleaning"
@@ -1127,7 +1250,7 @@ export const OperationalRoutesFragment = (
       />
       <Route
         path="/app/setup/kds"
-        element={<Navigate to="/op/kds" replace />}
+        element={<Navigate to="/op/tpv/kitchen" replace />}
       />
       <Route
         path="/app/setup/estoque"
@@ -1556,6 +1679,10 @@ export const OperationalRoutesFragment = (
       <Route
         path="integrations"
         element={<Navigate to="/admin/config/integrations" replace />}
+      />
+      <Route
+        path="desktop"
+        element={<Navigate to="/admin/devices/tpv" replace />}
       />
       <Route
         path="legal"

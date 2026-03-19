@@ -11,6 +11,9 @@
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { NavLink, useLocation } from "react-router-dom";
+import { SyncStatusIndicator } from "../../../../components/common/SyncStatusIndicator";
+import { useRestaurantIdentity } from "../../../../core/identity/useRestaurantIdentity";
+import { RestaurantLogo } from "../../../../ui/RestaurantLogo";
 import { OSSignature } from "../../../../ui/design-system/sovereign/OSSignature";
 import styles from "./AdminSidebar.module.css";
 
@@ -50,7 +53,8 @@ const NAV_GROUPS: SidebarGroup[] = [
       { labelKey: "adminNav.itemCardapio", to: "/admin/catalog" },
       { labelKey: "adminNav.itemPedidos", to: "/admin/orders" },
       { labelKey: "adminNav.itemMesas", to: "/admin/tables" },
-      { labelKey: "adminNav.itemReservas", to: "/admin/reservations", status: "planned" },
+      { labelKey: "adminNav.itemReservas", to: "/admin/reservations" },
+      { labelKey: "adminNav.itemDesperdicio", to: "/admin/inventory/waste" },
     ],
   },
   {
@@ -59,7 +63,13 @@ const NAV_GROUPS: SidebarGroup[] = [
     items: [
       { labelKey: "adminNav.itemTransacoes", to: "/admin/payments" },
       { labelKey: "adminNav.itemFechamentos", to: "/admin/closures" },
+      { labelKey: "adminNav.itemRecibos", to: "/admin/receipts" },
+      { labelKey: "adminNav.itemTurnos", to: "/admin/shifts" },
+      { labelKey: "adminNav.itemGorjetas", to: "/admin/tips" },
       { labelKey: "adminNav.itemRelatorios", to: "/admin/reports" },
+      { labelKey: "adminNav.itemAnalytics", to: "/admin/analytics" },
+      { labelKey: "adminNav.itemMenuPerformance", to: "/admin/analytics/menu" },
+      { labelKey: "adminNav.itemHeatmap", to: "/admin/analytics/heatmap" },
     ],
   },
   {
@@ -71,6 +81,7 @@ const NAV_GROUPS: SidebarGroup[] = [
       { labelKey: "adminNav.itemAppStaff", to: "/admin/devices" },
       { labelKey: "adminNav.itemModulos", to: "/admin/modules" },
       { labelKey: "adminNav.itemObservabilidade", to: "/admin/observability" },
+      { labelKey: "adminNav.itemPrivacidade", to: "/admin/privacy" },
     ],
   },
   {
@@ -78,6 +89,7 @@ const NAV_GROUPS: SidebarGroup[] = [
     titleKey: "adminNav.groupConectar",
     items: [
       { labelKey: "adminNav.itemClientes", to: "/admin/customers" },
+      { labelKey: "adminNav.itemDescontos", to: "/admin/discounts" },
       { labelKey: "adminNav.itemPromocoes", to: "/admin/promotions" },
       {
         labelKey: "adminNav.itemIntegracoes",
@@ -108,6 +120,7 @@ function findActiveGroup(pathname: string): string | null {
 export function AdminSidebar() {
   const { t } = useTranslation("sidebar");
   const location = useLocation();
+  const { identity } = useRestaurantIdentity();
 
   // Exclusive accordion: only 1 group open at a time
   const [openGroup, setOpenGroup] = useState<string | null>(() =>
@@ -127,9 +140,24 @@ export function AdminSidebar() {
   return (
     <aside className={`${styles.sidebar} admin-sidebar-shell`}>
       <div className={styles.sidebarInner}>
-        {/* Brand: ChefIApp™ OS */}
+        {/* Restaurant identity + ChefIApp™ OS */}
         <div className={styles.brandSection}>
+          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 8, width: "100%" }}>
+            <RestaurantLogo
+              logoUrl={identity.logoUrl}
+              name={identity.name}
+              size={48}
+            />
+            <span style={{ fontSize: 13, fontWeight: 700, color: "#e5e5e5", textAlign: "center", lineHeight: 1.2 }}>
+              {identity.name || "Restaurante"}
+            </span>
+          </div>
           <OSSignature state="ember" size="md" />
+        </div>
+
+        {/* Sync status */}
+        <div style={{ padding: "8px 16px" }}>
+          <SyncStatusIndicator />
         </div>
 
         {/* Navigation groups — exclusive accordion */}

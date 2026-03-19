@@ -1,4 +1,4 @@
-export type StaffRole = 'manager' | 'waiter' | 'kitchen' | 'cleaning' | 'worker' | 'owner';
+export type StaffRole = 'manager' | 'waiter' | 'kitchen' | 'cleaning' | 'worker' | 'owner' | 'delivery';
 
 // Logical apps por papel (OperatorApp)
 export type OperatorAppId = 'owner' | 'manager' | 'waiter' | 'kitchen' | 'cleaning';
@@ -57,6 +57,13 @@ export interface Task {
         source?: string;
         channel?: string;
         alertType?: string;
+        // Template metadata (populated for shift checklist tasks)
+        templateKey?: string;
+        templateCategory?: string;
+        templateIcon?: string;
+        templateMandatory?: boolean;
+        requiredEvidence?: "TEMP_LOG" | "TEXT" | "PHOTO";
+        estimatedMinutes?: number;
         [key: string]: unknown;
     };
 
@@ -174,7 +181,7 @@ export interface SpecDriftAlert {
 export interface Employee {
     id: string;
     role: StaffRole;
-    position: 'kitchen' | 'waiter' | 'cleaning' | 'cashier' | 'manager';
+    position: 'kitchen' | 'waiter' | 'cleaning' | 'cashier' | 'manager' | 'delivery';
     name: string;
     user_id?: string | null;
     email?: string | null;

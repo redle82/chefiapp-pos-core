@@ -1,10 +1,15 @@
 /**
  * Card 1 — Identidade do Restaurante (Configuração > Geral).
  * Ref: CONFIG_GENERAL_WIREFRAME.md. Guardar local só para este card.
+ *
+ * Logo upload: aceita ficheiro de imagem (PNG/JPG/SVG/WebP) ou URL.
+ * Ficheiros são convertidos para data URL e guardados em gm_restaurants.logo_url.
+ * O logo aparece em: TPV header/sidebar, KDS, AppStaff, QR mesa, página web pública.
  */
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { LogoUpload } from "../../../../components/common/LogoUpload";
 import { useRestaurantRuntime } from "../../../../context/RestaurantRuntimeContext";
 import {
   BackendType,
@@ -47,6 +52,10 @@ export function GeneralCardIdentity() {
   const [loaded, setLoaded] = useState(false);
 
   const restaurantId = runtime.restaurant_id ?? null;
+
+  const handleLogoChange = useCallback((dataUrl: string) => {
+    setForm((p) => ({ ...p, logoUrl: dataUrl }));
+  }, []);
 
   useEffect(() => {
     if (!restaurantId) {
@@ -303,34 +312,19 @@ export function GeneralCardIdentity() {
               style={inputStyle}
             />
           </div>
+          {/* Logo upload area */}
           <div>
-            <label style={labelStyle}>URL do logo</label>
-            <input
-              type="url"
-              value={form.logoUrl}
-              onChange={(e) =>
-                setForm((p) => ({ ...p, logoUrl: e.target.value }))
-              }
-              placeholder="https://… (imagem do logo)"
-              style={inputStyle}
+            <label style={labelStyle}>Logo do restaurante</label>
+            <p style={{ margin: "0 0 8px", fontSize: 11, color: "var(--text-secondary)", opacity: 0.7 }}>
+              Aparece no TPV, KDS, app staff, QR das mesas e pagina web.
+            </p>
+            <LogoUpload
+              logoUrl={form.logoUrl || null}
+              name={form.name || "R"}
+              onChange={handleLogoChange}
+              size={72}
+              disabled={saving}
             />
-            {form.logoUrl && (
-              <div style={{ marginTop: 6 }}>
-                <img
-                  src={form.logoUrl}
-                  alt="Logo"
-                  style={{
-                    maxWidth: 64,
-                    maxHeight: 64,
-                    objectFit: "contain",
-                    borderRadius: 8,
-                  }}
-                  onError={(e) => {
-                    (e.target as HTMLImageElement).style.display = "none";
-                  }}
-                />
-              </div>
-            )}
           </div>
           <div>
             <button

@@ -46,6 +46,8 @@ export interface OperationalCurrentOrderState {
   mode?: string | null;
   /** Número / nome da mesa, quando aplicável. */
   tableNumber?: string | null;
+  /** UUID da mesa (gm_tables.id), para ocupação automática. */
+  tableId?: string | null;
 }
 
 export interface OperationalKitchenState {
@@ -125,6 +127,7 @@ const initialCurrentOrder: OperationalCurrentOrderState = {
   paidAt: null,
   mode: null,
   tableNumber: null,
+  tableId: null,
 };
 
 export const useOperationalStore = create<OperationalState>((set, get) => ({

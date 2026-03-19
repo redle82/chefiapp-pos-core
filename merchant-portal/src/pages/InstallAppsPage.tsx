@@ -8,21 +8,24 @@
  * Rota: /install/apps
  */
 
+import { useTranslation } from "react-i18next";
 import styles from "./InstallPage.module.css";
 
 export function InstallAppsPage() {
+  const { t } = useTranslation("common");
+
   return (
     <div className={styles.page}>
       <div className={styles.center}>
         <div className={styles.icon}>📱</div>
         <h1 className={styles.heading}>ChefIApp Staff</h1>
         <p className={styles.subtitle}>
-          Escolha a loja compatível com o seu dispositivo
+          {t("installApps.subtitle")}
         </p>
       </div>
 
       <div className={styles.card}>
-        <h2 className={styles.cardHeading}>Disponível em</h2>
+        <h2 className={styles.cardHeading}>{t("installApps.availableIn")}</h2>
         <div className={styles.storesGrid}>
           {/* iOS / Apple App Store */}
           <div className={styles.storeOption}>
@@ -30,7 +33,7 @@ export function InstallAppsPage() {
             <h3 className={styles.storeName}>App Store</h3>
             <p className={styles.storeDesc}>iPhone & iPad</p>
             <button type="button" disabled className={styles.storeBtn}>
-              <span className={styles.comingSoon}>Em breve</span>
+              <span className={styles.comingSoon}>{t("installApps.comingSoon")}</span>
             </button>
           </div>
 
@@ -40,39 +43,37 @@ export function InstallAppsPage() {
             <h3 className={styles.storeName}>Google Play</h3>
             <p className={styles.storeDesc}>Android</p>
             <button type="button" disabled className={styles.storeBtn}>
-              <span className={styles.comingSoon}>Em breve</span>
+              <span className={styles.comingSoon}>{t("installApps.comingSoon")}</span>
             </button>
           </div>
         </div>
 
         {/* Install Information */}
         <div className={styles.infoBox}>
-          <h4 className={styles.infoTitle}>💡 Qual é a diferença?</h4>
+          <h4 className={styles.infoTitle}>{t("installApps.differenceTitle")}</h4>
           <ul className={styles.infoList}>
             <li>
-              <strong>App Store (Apple):</strong> Para iPhone e iPad. Faça login
-              com Apple ID ou e-mail da sua conta.
+              <strong>App Store (Apple):</strong> {t("installApps.appleDesc")}
             </li>
             <li>
-              <strong>Google Play (Android):</strong> Para telemóveis e tablets
-              com Android. Faça login com conta Google.
+              <strong>Google Play (Android):</strong> {t("installApps.androidDesc")}
             </li>
           </ul>
         </div>
 
         {/* How It Works */}
         <div className={styles.infoBox + " " + styles.infoBoxAlt}>
-          <h4 className={styles.infoTitle}>✓ Como funciona</h4>
+          <h4 className={styles.infoTitle}>{t("installApps.howItWorksTitle")}</h4>
           <ol className={styles.infoListOrdered}>
-            <li>Descarregue a app da sua loja</li>
-            <li>Abra a app e faça login com a sua conta</li>
-            <li>O seu dispositivo será reconhecido automaticamente</li>
+            <li>{t("installApps.step1")}</li>
+            <li>{t("installApps.step2")}</li>
+            <li>{t("installApps.step3")}</li>
           </ol>
         </div>
       </div>
 
       <a href="/admin/devices" className={styles.linkGold}>
-        ← Voltar a Dispositivos
+        {t("installApps.backToDevices")}
       </a>
     </div>
   );

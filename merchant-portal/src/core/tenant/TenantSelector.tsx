@@ -1,11 +1,12 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useTenant, type TenantMembership } from './TenantContext';
 
 /**
- * 🏢 TenantSelector — Multi-Restaurant Selector UI (Phase 4)
- * 
+ * TenantSelector — Multi-Restaurant Selector UI (Phase 4)
+ *
  * UI para usuários que operam múltiplos restaurantes.
- * 
+ *
  * Exibição:
  * - Se isMultiTenant=false: Não renderiza nada
  * - Se isMultiTenant=true: Dropdown com lista de restaurantes
@@ -18,16 +19,25 @@ interface TenantSelectorProps {
     className?: string;
 }
 
+const ROLE_COLORS: Record<string, string> = {
+    owner: '#32d74b',
+    manager: '#0a84ff',
+    staff: '#ff9f0a',
+    waiter: '#bf5af2',
+    kitchen: '#ff453a',
+};
+
 export function TenantSelector({ compact = false, className = '' }: TenantSelectorProps) {
-    const { 
-        tenantId, 
-        memberships, 
-        isMultiTenant, 
-        switchTenant, 
+    const { t } = useTranslation('common');
+    const {
+        tenantId,
+        memberships,
+        isMultiTenant,
+        switchTenant,
         getCurrentTenantName,
-        isLoading 
+        isLoading
     } = useTenant();
-    
+
     const [isOpen, setIsOpen] = useState(false);
 
     // Don't render if single tenant
@@ -35,17 +45,12 @@ export function TenantSelector({ compact = false, className = '' }: TenantSelect
         return null;
     }
 
-    const currentName = getCurrentTenantName() || 'Selecionar restaurante';
+    const currentName = getCurrentTenantName() || t('tenant.selectRestaurant');
 
     const getRoleBadge = (role: TenantMembership['role']) => {
-        const badges: Record<string, { label: string; color: string }> = {
-            owner: { label: 'Dono', color: '#32d74b' },
-            manager: { label: 'Gerente', color: '#0a84ff' },
-            staff: { label: 'Staff', color: '#ff9f0a' },
-            waiter: { label: 'Garçom', color: '#bf5af2' },
-            kitchen: { label: 'Cozinha', color: '#ff453a' },
-        };
-        return badges[role] || { label: role, color: '#8e8e93' };
+        const color = ROLE_COLORS[role] || '#8e8e93';
+        const label = t(`tenant.role.${role}`, { defaultValue: role });
+        return { label, color };
     };
 
     const handleSelect = (restaurantId: string) => {
@@ -71,11 +76,11 @@ export function TenantSelector({ compact = false, className = '' }: TenantSelect
                         gap: 6,
                     }}
                 >
-                    <span style={{ 
-                        width: 8, 
-                        height: 8, 
-                        borderRadius: '50%', 
-                        background: '#32d74b' 
+                    <span style={{
+                        width: 8,
+                        height: 8,
+                        borderRadius: '50%',
+                        background: '#32d74b'
                     }} />
                     <span style={{ maxWidth: 150, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                         {currentName}
@@ -101,7 +106,7 @@ export function TenantSelector({ compact = false, className = '' }: TenantSelect
                         {memberships.map((m) => {
                             const badge = getRoleBadge(m.role);
                             const isActive = m.restaurant_id === tenantId;
-                            
+
                             return (
                                 <button
                                     key={m.restaurant_id}
@@ -121,10 +126,10 @@ export function TenantSelector({ compact = false, className = '' }: TenantSelect
                                     }}
                                 >
                                     <span style={{ fontSize: 13 }}>{m.restaurant_name}</span>
-                                    <span 
-                                        style={{ 
-                                            fontSize: 10, 
-                                            padding: '2px 6px', 
+                                    <span
+                                        style={{
+                                            fontSize: 10,
+                                            padding: '2px 6px',
                                             borderRadius: 4,
                                             background: `${badge.color}22`,
                                             color: badge.color,
@@ -145,14 +150,14 @@ export function TenantSelector({ compact = false, className = '' }: TenantSelect
     return (
         <div className={`tenant-selector ${className}`} style={{ padding: 20 }}>
             <h2 style={{ color: '#fff', marginBottom: 16, fontSize: 18 }}>
-                Seus Restaurantes
+                {t('tenant.yourRestaurants')}
             </h2>
-            
+
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                 {memberships.map((m) => {
                     const badge = getRoleBadge(m.role);
                     const isActive = m.restaurant_id === tenantId;
-                    
+
                     return (
                         <button
                             key={m.restaurant_id}
@@ -177,12 +182,12 @@ export function TenantSelector({ compact = false, className = '' }: TenantSelect
                                     ID: {m.restaurant_id.slice(0, 8)}...
                                 </div>
                             </div>
-                            
+
                             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                                <span 
-                                    style={{ 
-                                        fontSize: 11, 
-                                        padding: '4px 8px', 
+                                <span
+                                    style={{
+                                        fontSize: 11,
+                                        padding: '4px 8px',
                                         borderRadius: 6,
                                         background: `${badge.color}22`,
                                         color: badge.color,
@@ -191,7 +196,7 @@ export function TenantSelector({ compact = false, className = '' }: TenantSelect
                                 >
                                     {badge.label}
                                 </span>
-                                
+
                                 {isActive && (
                                     <span style={{ color: '#32d74b', fontSize: 16 }}>✓</span>
                                 )}
@@ -213,6 +218,7 @@ export function TenantSelector({ compact = false, className = '' }: TenantSelect
  * Nunca ecrã vazio: loading ou single-tenant mostram estado visual.
  */
 export function TenantSelectorPage() {
+    const { t } = useTranslation('common');
     const { isMultiTenant, isLoading } = useTenant();
 
     return (
@@ -239,7 +245,7 @@ export function TenantSelectorPage() {
                         ChefIApp POS
                     </h1>
                     <p style={{ color: '#8e8e93', fontSize: 14 }}>
-                        Selecione o restaurante para operar
+                        {t('tenant.selectToOperate')}
                     </p>
                 </div>
 
@@ -250,7 +256,7 @@ export function TenantSelectorPage() {
                         color: '#8e8e93',
                         fontSize: 14,
                     }}>
-                        A carregar…
+                        {t('loading')}
                     </div>
                 ) : !isMultiTenant ? (
                     <div style={{
@@ -262,7 +268,7 @@ export function TenantSelectorPage() {
                         fontSize: 14,
                         textAlign: 'center',
                     }}>
-                        Um único restaurante associado à sua conta. Pode continuar para o dashboard.
+                        {t('tenant.singleTenant')}
                     </div>
                 ) : (
                     <TenantSelector />

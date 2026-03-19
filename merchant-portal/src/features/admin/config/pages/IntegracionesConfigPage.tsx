@@ -8,7 +8,7 @@ import { AdminPageHeader } from "../../dashboard/components/AdminPageHeader";
 
 export function IntegracionesConfigPage() {
   return (
-    <div className="page-enter admin-content-page" style={{ maxWidth: 820 }}>
+    <div style={{ maxWidth: 820 }}>
       <AdminPageHeader
         title="Integrações"
         subtitle="Pagamentos, delivery, APIs externas."

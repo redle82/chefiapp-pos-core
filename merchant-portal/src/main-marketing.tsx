@@ -9,9 +9,15 @@ import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import "./index.css";
+import { BlogComoEscolherPOSPage } from "./pages/Blog/BlogComoEscolherPOSPage";
+import { BlogComparacaoPage } from "./pages/Blog/BlogComparacaoPage";
+import { BlogComplianceFiscalPage } from "./pages/Blog/BlogComplianceFiscalPage";
+import { BlogGestaoKDSPage } from "./pages/Blog/BlogGestaoKDSPage";
+import { BlogIndexPage } from "./pages/Blog/BlogIndexPage";
 import { BlogQuandoAbrirFecharCaixaPage } from "./pages/Blog/BlogQuandoAbrirFecharCaixaPage";
 import { BlogTPVRestaurantesPage } from "./pages/Blog/BlogTPVRestaurantesPage";
 import { BlogTPVVsPOSFiscalPage } from "./pages/Blog/BlogTPVVsPOSFiscalPage";
+import { ContactPage } from "./pages/Contact/ContactPage";
 import { ChangelogPage } from "./pages/Changelog/ChangelogPage";
 import { FeaturesPage } from "./pages/Landing/FeaturesPage";
 import { PricingPage } from "./pages/Landing/PricingPage";
@@ -95,19 +101,15 @@ function MarketingApp() {
       <Route path="/app/trial-tpv" element={<ProductFirstLandingPage />} />
       <Route path="/pricing" element={<PricingPage />} />
       <Route path="/features" element={<FeaturesPage />} />
-      <Route path="/blog" element={<BlogTPVRestaurantesPage />} />
-      <Route
-        path="/blog/tpv-restaurantes"
-        element={<BlogTPVRestaurantesPage />}
-      />
-      <Route
-        path="/blog/tpv-vs-pos-fiscal"
-        element={<BlogTPVVsPOSFiscalPage />}
-      />
-      <Route
-        path="/blog/quando-abrir-fechar-caixa"
-        element={<BlogQuandoAbrirFecharCaixaPage />}
-      />
+      <Route path="/blog" element={<BlogIndexPage />} />
+      <Route path="/blog/tpv-restaurantes" element={<BlogTPVRestaurantesPage />} />
+      <Route path="/blog/tpv-vs-pos-fiscal" element={<BlogTPVVsPOSFiscalPage />} />
+      <Route path="/blog/quando-abrir-fechar-caixa" element={<BlogQuandoAbrirFecharCaixaPage />} />
+      <Route path="/blog/chefiapp-vs-concorrencia" element={<BlogComparacaoPage />} />
+      <Route path="/blog/como-escolher-pos" element={<BlogComoEscolherPOSPage />} />
+      <Route path="/blog/gestao-cozinha-kds" element={<BlogGestaoKDSPage />} />
+      <Route path="/blog/compliance-fiscal-pt-es" element={<BlogComplianceFiscalPage />} />
+      <Route path="/contact" element={<ContactPage />} />
       <Route path="/changelog" element={<ChangelogPage />} />
       <Route path="/security" element={<SecurityPage />} />
       <Route path="/status" element={<StatusPage />} />

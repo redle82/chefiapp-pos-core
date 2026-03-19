@@ -16,6 +16,7 @@ import { usePulseOptional } from "../../../core/pulse";
 import { useDailyMetrics } from "../../../hooks/useDailyMetrics";
 import { useShiftHistory } from "../../../hooks/useShiftHistory";
 import { colors } from "../../../ui/design-system/tokens/colors";
+import { ShiftTaskSummary } from "../components/ShiftTaskSummary";
 import { useStaff } from "../context/StaffContext";
 import { useStockAlerts } from "../hooks/useStockAlerts";
 import {
@@ -172,9 +173,9 @@ export function OwnerGlobalDashboard() {
 
   const operationStatus =
     currentRiskLevel >= 70
-      ? "Critico"
+      ? "Crítico"
       : currentRiskLevel >= 40
-      ? "Atencao"
+      ? "Atenção"
       : "Normal";
 
   const operationGaps = getOperationGaps({
@@ -216,12 +217,12 @@ export function OwnerGlobalDashboard() {
   const cleaningPending = cleaningTasks.filter((t) => t.status !== "done");
 
   const financialSubtitle = dailyLoading
-    ? "Carregando dados financeiros"
+    ? "Atualizando..."
     : hasDailyMetrics
-    ? "Fonte: pedidos (Core)"
+    ? "Dados em tempo real · Core"
     : hasShiftHistory
-    ? "Fonte: turnos (Core)"
-    : "Sem dados financeiros no Core";
+    ? "Baseado em turnos · Core"
+    : "Conecte ao Core para dados em tempo real";
   const financialAlertItems = hasShiftHistory
     ? financialAlerts.length
       ? financialAlerts
@@ -289,140 +290,134 @@ export function OwnerGlobalDashboard() {
         flexDirection: "column",
         flex: 1,
         minHeight: 0,
-        gap: 24,
+        gap: 20,
         width: "100%",
         paddingBottom: 100,
       }}
     >
+      {/* ── Status strip — compact operational overview ── */}
       <div
         style={{
-          position: "sticky",
-          top: 0,
-          zIndex: 10,
-          backgroundColor: theme.surface.base,
-          padding: "12px 0 16px",
-          borderBottom: `1px solid ${theme.border.subtle}`,
+          display: "flex",
+          flexDirection: "column",
+          gap: 12,
+          padding: "12px 0 0",
         }}
       >
+        {/* Date + status badges */}
         <div
           style={{
             display: "flex",
-            flexDirection: "column",
-            gap: 10,
+            flexWrap: "wrap",
+            alignItems: "center",
+            gap: 8,
+            fontSize: 12,
           }}
         >
-          <div
+          <span style={{ color: theme.text.secondary, fontWeight: 500 }}>
+            {nowDate} • {nowTime}
+          </span>
+          <span
             style={{
-              fontSize: 20,
-              fontWeight: 700,
-              color: theme.text.primary,
+              padding: "3px 8px",
+              borderRadius: 999,
+              background: systemStatus.bg,
+              color: systemStatus.color,
+              fontWeight: 600,
+              fontSize: 10,
+              letterSpacing: "0.04em",
             }}
           >
-            {restaurantName}
-          </div>
-          <div
-            style={{
-              display: "flex",
-              flexWrap: "wrap",
-              gap: 12,
-              fontSize: 12,
-              color: theme.text.secondary,
-            }}
-          >
-            <span>
-              {nowDate} • {nowTime}
-            </span>
+            {systemStatus.label}
+          </span>
+          {pulseSnapshot && (
             <span
               style={{
-                padding: "4px 8px",
-                borderRadius: 999,
-                background: systemStatus.bg,
-                color: systemStatus.color,
-                fontWeight: 600,
-                letterSpacing: "0.05em",
-              }}
-            >
-              {systemStatus.label}
-            </span>
-            <span
-              style={{
-                padding: "4px 8px",
-                borderRadius: 999,
-                background: "rgba(148, 163, 184, 0.12)",
-                color: theme.text.secondary,
-                fontWeight: 600,
-              }}
-            >
-              Turno {shiftLabel}
-            </span>
-            <span
-              style={{
-                padding: "4px 8px",
+                padding: "3px 8px",
                 borderRadius: 999,
                 background: pulseTone.bg,
                 color: pulseTone.color,
                 fontWeight: 600,
+                fontSize: 10,
               }}
             >
               {pulseLabel}
-              {pulseHint ? ` • ${pulseHint}` : ""}
+              {pulseHint ? ` · ${pulseHint}` : ""}
             </span>
-          </div>
+          )}
+        </div>
+
+        {/* Operational status — prominent */}
+        <div
+          style={{
+            padding: "14px 16px",
+            borderRadius: 12,
+            backgroundColor: `${operationalStatusTone.color}08`,
+            border: `1px solid ${operationalStatusTone.color}18`,
+            display: "flex",
+            alignItems: "center",
+            gap: 10,
+          }}
+        >
+          <span style={{ fontSize: 22 }}>{operationalStatusTone.icon}</span>
+          <span
+            style={{
+              fontSize: 15,
+              fontWeight: 600,
+              color: operationalStatusTone.color,
+            }}
+          >
+            {operationalStatusTone.label}
+          </span>
         </div>
       </div>
 
-      {/* Operational Status Badge */}
-      <div
-        style={{
-          padding: "12px 20px",
-          borderRadius: 12,
-          backgroundColor: `${operationalStatusTone.color}10`,
-          display: "flex",
-          alignItems: "center",
-          gap: 12,
-        }}
-      >
-        <span style={{ fontSize: 28 }}>{operationalStatusTone.icon}</span>
-        <span
-          style={{
-            fontSize: 16,
-            fontWeight: 600,
-            color: operationalStatusTone.color,
-          }}
-        >
-          {operationalStatusTone.label}
-        </span>
-      </div>
-
-      <Section title="Resumo financeiro" subtitle={financialSubtitle}>
+      <Section title="Financeiro" subtitle={financialSubtitle}>
         {/* Financial Hero Block */}
         <div
           style={{
-            padding: "20px 24px",
+            padding: "20px",
             borderRadius: 14,
             backgroundColor: theme.surface.layer1,
-            border: `2px solid ${theme.action.base}20`,
-            marginBottom: 16,
+            border: `1px solid ${theme.action.base}15`,
+            marginBottom: 12,
           }}
         >
           <div
             style={{
-              fontSize: 13,
-              fontWeight: 600,
-              color: theme.text.secondary,
-              marginBottom: 8,
-              letterSpacing: "0.05em",
-              textTransform: "uppercase",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              marginBottom: 12,
             }}
           >
-            Hoje
+            <span
+              style={{
+                fontSize: 11,
+                fontWeight: 600,
+                color: theme.text.tertiary,
+                letterSpacing: "0.06em",
+                textTransform: "uppercase",
+              }}
+            >
+              Vendas hoje
+            </span>
+            <span
+              style={{
+                fontSize: 11,
+                color: theme.text.tertiary,
+              }}
+            >
+              {cashStatus}
+            </span>
           </div>
           <div
             style={{
-              fontSize: 36,
+              fontSize: 32,
               fontWeight: 700,
               color: theme.text.primary,
-              marginBottom: 12,
+              marginBottom: 8,
+              fontVariantNumeric: "tabular-nums",
             }}
           >
             {dailyLoading
@@ -430,26 +425,26 @@ export function OwnerGlobalDashboard() {
               : hasDailyMetrics
               ? formatCurrency(todayCents / 100)
               : coreRestaurantId
-              ? "—"
-              : "0"}
+              ? "R$ —"
+              : "R$ 0"}
           </div>
-          <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+          <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
             {!dailyLoading && !hasDailyMetrics && coreRestaurantId && (
-              <span style={{ fontSize: 14, color: theme.text.secondary }}>
-                Conecte ao Core para ver métricas em tempo real.
+              <span style={{ fontSize: 13, color: theme.text.secondary }}>
+                Aguardando dados do Core
               </span>
             )}
             {!dailyLoading && hasDailyMetrics && todayCents === 0 && (
-              <span style={{ fontSize: 14, color: theme.text.secondary }}>
-                Nenhuma venda fechada hoje.
+              <span style={{ fontSize: 13, color: theme.text.secondary }}>
+                Nenhuma venda registada
               </span>
             )}
             {hasDailyMetrics && todayCents > 0 && (
               <>
-                <span style={{ fontSize: 14, color: theme.text.secondary }}>
+                <span style={{ fontSize: 13, color: theme.text.secondary }}>
                   {financialNarrative.vs7dPhrase}
                 </span>
-                <span style={{ fontSize: 14, color: theme.text.secondary }}>
+                <span style={{ fontSize: 13, color: theme.text.secondary }}>
                   {financialNarrative.vsYesterdayPhrase}
                 </span>
               </>
@@ -480,7 +475,7 @@ export function OwnerGlobalDashboard() {
             hint="pagos"
           />
           <MetricCard
-            label="Ticket medio"
+            label="Ticket médio"
             value={
               dailyLoading
                 ? "…"
@@ -495,13 +490,13 @@ export function OwnerGlobalDashboard() {
             hint="dia"
           />
           <MetricCard
-            label="Media 7 dias"
+            label="Média 7 dias"
             value={
               hasShiftHistory
                 ? formatCurrency(financialSnapshot.avg7dCents / 100)
                 : "—"
             }
-            hint="referencia"
+            hint="referência"
           />
           <MetricCard
             label="Caixa"
@@ -589,13 +584,13 @@ export function OwnerGlobalDashboard() {
       </Section>
 
       {/* Executive Alerts Section */}
-      <Section title="Atenções hoje" subtitle="Leitura rápida">
-        <AlertList title="Alertas executivos" items={executiveAlerts} />
+      <Section title="Atenção" subtitle="Leitura rápida do turno">
+        <AlertList title="Alertas" items={executiveAlerts} />
       </Section>
 
       <Section
-        title="Operacao em tempo real"
-        subtitle="O que esta acontecendo agora"
+        title="Operação em tempo real"
+        subtitle="Estado actual da cozinha e salão"
       >
         <div
           style={{
@@ -611,7 +606,7 @@ export function OwnerGlobalDashboard() {
             onClick={() => navigate("/app/staff/home/sector/kitchen")}
           />
           <ClickableCard
-            label="Tempo medio de preparo"
+            label="Tempo médio de preparo"
             value={prepAvgMinutes ? `${prepAvgMinutes} min` : "-"}
             hint="estimado"
             onClick={() => navigate("/app/staff/home/sector/kitchen")}
@@ -623,7 +618,7 @@ export function OwnerGlobalDashboard() {
             onClick={() => navigate("/app/staff/home/sector/kitchen")}
           />
           <ClickableCard
-            label="Estado da operacao"
+            label="Estado da operação"
             value={operationStatus}
             hint={`Risco ${currentRiskLevel}`}
             onClick={() => navigate("/app/staff/home/sector/operation")}
@@ -637,7 +632,10 @@ export function OwnerGlobalDashboard() {
         />
       </Section>
 
-      <Section title="Pessoas e trabalho" subtitle="Equipe + tarefas">
+      {/* ── Owner verification checklist ── */}
+      <ShiftTaskSummary compact maxVisible={3} title="Verificações do Dia" />
+
+      <Section title="Equipa e tarefas" subtitle="Produtividade do turno">
         <div
           style={{
             display: "grid",
@@ -646,20 +644,20 @@ export function OwnerGlobalDashboard() {
           }}
         >
           <ClickableCard
-            label="Funcionarios ativos"
+            label="Funcionários ativos"
             value={activeStaffCount.toString()}
             hint={`${activeEmployees} cadastrados`}
             onClick={() => navigate("/app/staff/home/sector/team")}
           />
           <MetricCard
-            label="Tarefas concluidas"
+            label="Tarefas concluídas"
             value={tasksTodayDone.toString()}
             hint="hoje"
           />
           <ClickableCard
             label="Pendentes"
             value={tasksPending.toString()}
-            hint={`${tasksCritical} criticas`}
+            hint={`${tasksCritical} críticas`}
             onClick={() => navigate("/app/staff/home/sector/tasks")}
           />
           <MetricCard
@@ -668,7 +666,7 @@ export function OwnerGlobalDashboard() {
             hint="estimado"
           />
         </div>
-        <CardBlock title="Funcoes em operacao">
+        <CardBlock title="Funções em operação">
           {rolesInAction.length ? (
             <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
               {rolesInAction.map((role) => (
@@ -688,13 +686,13 @@ export function OwnerGlobalDashboard() {
             </div>
           ) : (
             <span style={{ fontSize: 13, color: theme.text.secondary }}>
-              Nenhuma funcao ativa identificada
+              Nenhuma função ativa identificada
             </span>
           )}
         </CardBlock>
       </Section>
 
-      <Section title="Limpeza e manutencao" subtitle="Estado do ambiente">
+      <Section title="Limpeza e manutenção" subtitle="Estado do ambiente">
         <div
           style={{
             display: "grid",
@@ -706,25 +704,25 @@ export function OwnerGlobalDashboard() {
             label="Previstas hoje"
             value={cleaningTasks.length.toString()}
           />
-          <MetricCard label="Concluidas" value={cleaningDone.toString()} />
+          <MetricCard label="Concluídas" value={cleaningDone.toString()} />
           <MetricCard
-            label="Pendencias"
+            label="Pendências"
             value={cleaningPending.length.toString()}
             hint={cleaningPending.length > 0 ? "acompanhar" : "em dia"}
           />
           <MetricCard
-            label="Ultima limpeza"
+            label="Última limpeza"
             value={cleaningDone > 0 ? formatLastCleaning(cleaningTasks) : "—"}
-            hint="Salao"
+            hint="Salão"
           />
         </div>
         <TextMuted>
-          Monitoramento baseado nas tarefas de manutencao/limpeza.
+          Monitoramento baseado nas tarefas de manutenção/limpeza.
         </TextMuted>
       </Section>
 
-      <Section title="Estoque e insumos" subtitle="Visao gerencial">
-        <CardBlock title="Itens criticos">
+      <Section title="Estoque e insumos" subtitle="Visão gerencial">
+        <CardBlock title="Itens críticos">
           <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
             {stockLoading ? (
               <TextMuted>Carregando alertas de estoque...</TextMuted>
@@ -756,7 +754,7 @@ export function OwnerGlobalDashboard() {
         <TextMuted>Fonte: Inventory Lite (Core).</TextMuted>
       </Section>
 
-      <Section title="Pulso e riscos" subtitle="Leitura de gestao">
+      <Section title="Pulso e riscos" subtitle="Indicadores de gestão">
         <div
           style={{
             display: "grid",
@@ -772,17 +770,52 @@ export function OwnerGlobalDashboard() {
           <MetricCard
             label="Risco operacional"
             value={operationStatus}
-            hint={`Nivel ${currentRiskLevel}`}
+            hint={`Nível ${currentRiskLevel}`}
           />
           <MetricCard
-            label="Excecoes ativas"
+            label="Exceções ativas"
             value={specDrifts.length.toString()}
             hint="sinais de desvio"
           />
           <MetricCard
             label="Eventos do turno"
             value={tasksTodayDone.toString()}
-            hint="tarefas concluidas"
+            hint="tarefas concluídas"
+          />
+        </div>
+      </Section>
+
+      <Section title="Ferramentas" subtitle="Acesso rápido">
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))",
+            gap: 10,
+          }}
+        >
+          <ClickableCard
+            label="📋 Escalas"
+            value="Semana"
+            hint="Gerir turnos"
+            onClick={() => navigate("/app/staff/home/schedule")}
+          />
+          <ClickableCard
+            label="💬 Comunicação"
+            value="Chat"
+            hint="Anúncios e equipa"
+            onClick={() => navigate("/app/staff/home/comms")}
+          />
+          <ClickableCard
+            label="🔔 Notificações"
+            value="Alertas"
+            hint="Centro de avisos"
+            onClick={() => navigate("/app/staff/home/notifications")}
+          />
+          <ClickableCard
+            label="💰 Gorjetas"
+            value="Analytics"
+            hint="Performance"
+            onClick={() => navigate("/app/staff/home/tips")}
           />
         </div>
       </Section>
@@ -987,7 +1020,7 @@ function roleLabel(role: string | undefined) {
     case "manager":
       return "Gerente";
     case "waiter":
-      return "Salao";
+      return "Salão";
     case "kitchen":
       return "Cozinha";
     case "cleaning":
@@ -1038,7 +1071,7 @@ function getPulseTone(zone: string) {
   switch (zone) {
     case "critical":
       return {
-        label: "Pulso critico",
+        label: "Pulso crítico",
         color: theme.destructive.base,
         bg: "rgba(239, 68, 68, 0.12)",
       };
@@ -1081,9 +1114,9 @@ function getOperationGaps({
   ordersCount: number;
 }) {
   const gaps: string[] = [];
-  if (specDriftsCount > 0) gaps.push("Excecoes operacionais ativas");
+  if (specDriftsCount > 0) gaps.push("Exceções operacionais ativas");
   if (shiftLoad === "red") gaps.push("Carga humana elevada");
-  if (coreStatus !== "UP") gaps.push("Core indisponivel");
+  if (coreStatus !== "UP") gaps.push("Core indisponível");
   if (ordersCount >= 6) gaps.push("Fila de cozinha alta");
   return gaps.slice(0, 3);
 }

@@ -67,12 +67,8 @@ const METHOD_OPTIONS: MethodOption[] = [
     descKey: "payment.method.cardDesc",
     icon: "💳",
   },
-  {
-    id: "mbway",
-    labelKey: "payment.method.mbwayLabel",
-    descKey: "payment.method.mbwayDesc",
-    icon: "📱",
-  },
+  // MB Way removido: sem provider implementado. Reativar quando provider existir.
+  // { id: "mbway", labelKey: "payment.method.mbwayLabel", descKey: "payment.method.mbwayDesc", icon: "📱" },
   {
     id: "pix",
     labelKey: "payment.method.pixLabel",
@@ -219,7 +215,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
         setCardStep("ready");
       })
       .catch((err: any) => {
-        setErrorMsg(err?.message || "Erro ao preparar pagamento com cartao");
+        setErrorMsg(err?.message || t("payment.error.cardPrepare"));
         setCardStep("idle");
         intentCreatedRef.current = false;
       });
@@ -284,9 +280,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
           orderId,
           amount: grandTotal,
           restaurantId,
-          description: `Pedido ${orderId.slice(-6)} - Total ${formatAmount(
-            grandTotal,
-          )}`,
+          description: t("payment.pixDescription", { id: orderId.slice(-6), total: formatAmount(grandTotal) }),
         });
 
         setPixCheckoutId(pixResult.checkout_id);
@@ -309,13 +303,11 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
           amount: grandTotal,
           restaurantId,
           currency,
-          description: `Pedido ${orderId.slice(-6)} - Total ${formatAmount(
-            grandTotal,
-          )}`,
+          description: t("payment.pixDescription", { id: orderId.slice(-6), total: formatAmount(grandTotal) }),
         });
 
         if (!sumupResult.success || !sumupResult.checkout) {
-          throw new Error("Falha ao criar checkout SumUp");
+          throw new Error(t("payment.error.sumupCheckoutFailed"));
         }
 
         setSumUpCheckoutId(sumupResult.checkout.id);
@@ -339,7 +331,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
       const backendMethod = method === "mbway" ? "card" : method;
       await onPay(backendMethod, undefined, tipCents || undefined);
     } catch (err: any) {
-      setErrorMsg(err?.message || "Erro ao processar pagamento");
+      setErrorMsg(err?.message || t("payment.error.process"));
       if (method === "pix") {
         setPixStep("idle");
       }
@@ -368,7 +360,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
       try {
         await onPay("card", paymentIntentId, tipCents || undefined);
       } catch (err: any) {
-        setErrorMsg(err?.message || "Erro ao finalizar pagamento");
+        setErrorMsg(err?.message || t("payment.error.finalize"));
       } finally {
         setProcessing(false);
       }
@@ -384,7 +376,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
       setPixTimeRemaining((prev) => {
         if (prev <= 1) {
           setPixStep("expired");
-          setErrorMsg("QR Code expirou. Por favor, tente novamente.");
+          setErrorMsg(t("payment.pixExpired"));
           return 0;
         }
         return prev - 1;
@@ -414,9 +406,9 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
         } else if (status.status === "FAILED" || status.status === "CANCELED") {
           setPixStep("expired");
           setErrorMsg(
-            `Pagamento ${
-              status.status === "FAILED" ? "falhou" : "cancelado"
-            }. Tente novamente.`,
+            status.status === "FAILED"
+              ? t("payment.pixFailed")
+              : t("payment.pixCanceled"),
           );
           clearInterval(pollInterval);
         }
@@ -437,7 +429,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
       setSumUpTimeRemaining((prev) => {
         if (prev <= 1) {
           setSumUpStep("failed");
-          setErrorMsg("Checkout expirou. Por favor, tente novamente.");
+          setErrorMsg(t("payment.sumupExpired"));
           return 0;
         }
         return prev - 1;
@@ -472,9 +464,9 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
         ) {
           setSumUpStep("failed");
           setErrorMsg(
-            `Pagamento ${
-              status.checkout.status === "FAILED" ? "falhou" : "expirou"
-            }. Tente novamente.`,
+            status.checkout.status === "FAILED"
+              ? t("payment.sumupFailed")
+              : t("payment.sumupExpired"),
           );
           clearInterval(pollInterval);
         }
@@ -492,8 +484,8 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
       <div style={styles.modal}>
         <div style={styles.header}>
           <div>
-            <h2 style={styles.title}>Pagamento</h2>
-            <span style={styles.orderId}>Pedido #{orderId.slice(-6)}</span>
+            <h2 style={styles.title}>{t("payment.title")}</h2>
+            <span style={styles.orderId}>{t("payment.orderId", { id: orderId.slice(-6) })}</span>
           </div>
           <button
             onClick={onCancel}
@@ -506,11 +498,11 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
         </div>
 
         <div style={styles.totalSection}>
-          <span style={styles.totalLabel}>TOTAL A PAGAR</span>
+          <span style={styles.totalLabel}>{t("payment.totalToPay")}</span>
           <span style={styles.totalValue}>{formatAmount(grandTotal)}</span>
           {tipCents > 0 && (
             <span style={{ color: "#a1a1aa", fontSize: 13 }}>
-              Subtotal {formatAmount(orderTotal)} + Gorjeta{" "}
+              {t("payment.subtotal")} {formatAmount(orderTotal)} + {t("payment.tip")}{" "}
               {formatAmount(tipCents)}
             </span>
           )}
@@ -519,7 +511,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
 
         {/* Tip / Gorjeta */}
         <div style={styles.section}>
-          <span style={styles.sectionTitle}>Gorjeta (opcional)</span>
+          <span style={styles.sectionTitle}>{t("payment.tipOptional")}</span>
           <div style={{ display: "flex", gap: 8 }}>
             {[0, 5, 10, 15].map((pct) => (
               <button
@@ -544,7 +536,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
                   cursor: "pointer",
                 }}
               >
-                {pct === 0 ? "Sem" : `${pct}%`}
+                {pct === 0 ? t("payment.noTip") : `${pct}%`}
               </button>
             ))}
           </div>
@@ -556,7 +548,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
               marginTop: 4,
             }}
           >
-            <span style={{ color: "#71717a", fontSize: 13 }}>Outro:</span>
+            <span style={{ color: "#71717a", fontSize: 13 }}>{t("payment.other")}</span>
             <div style={{ ...styles.cashInputRow, flex: 1 }}>
               <span style={styles.cashPrefix}>{currencySymbol}</span>
               <input
@@ -577,7 +569,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
         </div>
 
         <div style={styles.section}>
-          <span style={styles.sectionTitle}>Forma de Pagamento</span>
+          <span style={styles.sectionTitle}>{t("payment.paymentMethod")}</span>
           <div style={styles.methodGrid}>
             {methodsToShow.map((m) => (
               <button
@@ -600,7 +592,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
 
         {method === "cash" && (
           <div style={styles.section}>
-            <span style={styles.sectionTitle}>Valor Entregue</span>
+            <span style={styles.sectionTitle}>{t("payment.cashTendered")}</span>
             <div style={styles.cashInputRow}>
               <span style={styles.cashPrefix}>{currencySymbol}</span>
               <input
@@ -620,7 +612,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
                 onClick={() => setCashTendered((orderTotal / 100).toFixed(2))}
                 style={styles.quickCashBtn}
               >
-                Exato
+                {t("payment.exact")}
               </button>
               {QUICK_CASH.map((c) => (
                 <button
@@ -640,11 +632,11 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
                   color: changeCents >= 0 ? GREEN : DANGER,
                 }}
               >
-                <span>Troco</span>
+                <span>{t("payment.change")}</span>
                 <span style={{ fontWeight: 700, fontSize: 22 }}>
                   {changeCents >= 0
                     ? formatAmount(changeCents)
-                    : `Faltam ${formatAmount(Math.abs(changeCents))}`}
+                    : t("payment.shortBy", { amount: formatAmount(Math.abs(changeCents)) })}
                 </span>
               </div>
             )}
@@ -657,22 +649,21 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
               <div style={styles.terminalWaiting}>
                 <span style={{ fontSize: 36 }}>💳</span>
                 <span style={{ color: "#a1a1aa", fontSize: 14 }}>
-                  Simulated Environment (Trial Infrastructure): pagamento
-                  simulado
+                  {t("payment.trialSimulated")}
                 </span>
               </div>
             ) : !STRIPE_KEY ? (
               <div style={styles.terminalWaiting}>
                 <span style={{ fontSize: 36 }}>⚠️</span>
                 <span style={{ color: "#fbbf24", fontSize: 14 }}>
-                  Stripe nao configurado — defina VITE_STRIPE_PUBLISHABLE_KEY
+                  {t("payment.stripeNotConfigured")}
                 </span>
               </div>
             ) : cardStep === "creating-intent" ? (
               <div style={styles.terminalWaiting}>
                 <span style={{ fontSize: 36 }}>⏳</span>
                 <span style={{ color: "#a1a1aa", fontSize: 14 }}>
-                  A preparar pagamento...
+                  {t("payment.preparing")}
                 </span>
               </div>
             ) : cardStep === "ready" && stripeClientSecret && stripeInstance ? (
@@ -695,7 +686,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
               <div style={styles.terminalWaiting}>
                 <span style={{ fontSize: 36 }}>💳</span>
                 <span style={{ color: "#a1a1aa", fontSize: 14 }}>
-                  Selecione cartao para iniciar
+                  {t("payment.selectCard")}
                 </span>
               </div>
             )}
@@ -704,7 +695,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
 
         {method === "mbway" && (
           <div style={styles.section}>
-            <span style={styles.sectionTitle}>Numero de Telemovel</span>
+            <span style={styles.sectionTitle}>{t("payment.phoneNumber")}</span>
             <div style={styles.cashInputRow}>
               <span style={styles.cashPrefix}>+351</span>
               <input
@@ -729,7 +720,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
               <div style={styles.terminalWaiting}>
                 <span style={{ fontSize: 36 }}>⚡</span>
                 <span style={{ color: "#a1a1aa", fontSize: 14 }}>
-                  Clique em Confirmar para gerar QR Code Pix
+                  {t("payment.pixIdle")}
                 </span>
               </div>
             )}
@@ -737,7 +728,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
               <div style={styles.terminalWaiting}>
                 <span style={{ fontSize: 36 }}>⏳</span>
                 <span style={{ color: "#a1a1aa", fontSize: 14 }}>
-                  Gerando QR Code Pix...
+                  {t("payment.pixCreating")}
                 </span>
               </div>
             )}
@@ -752,7 +743,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
                         color: "#d4d4d8",
                       }}
                     >
-                      Escaneie o QR Code com seu app bancário
+                      {t("payment.pixScanQr")}
                     </span>
                     <div style={styles.pixTimer}>
                       <span style={{ fontSize: 20, fontWeight: 700 }}>
@@ -760,14 +751,14 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
                         {String(pixTimeRemaining % 60).padStart(2, "0")}
                       </span>
                       <span style={{ fontSize: 12, color: "#71717a" }}>
-                        restantes
+                        {t("payment.timeRemaining")}
                       </span>
                     </div>
                   </div>
                   <div style={styles.pixQrBox}>
                     <img
                       src={pixQrCodeUrl}
-                      alt="QR Code Pix"
+                      alt={t("payment.pixQrAlt")}
                       style={styles.pixQrImage}
                       onError={(e) => {
                         // Fallback: show checkout ID as text if QR image fails
@@ -799,7 +790,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
                   <div style={styles.pixInstructions}>
                     <span style={{ fontSize: 13, color: "#a1a1aa" }}>⚡</span>
                     <span style={{ fontSize: 13, color: "#a1a1aa" }}>
-                      Aguardando confirmação do pagamento...
+                      {t("payment.awaitingConfirmation")}
                     </span>
                   </div>
                 </div>
@@ -808,7 +799,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
               <div style={styles.terminalWaiting}>
                 <span style={{ fontSize: 36 }}>✅</span>
                 <span style={{ color: GREEN, fontSize: 16, fontWeight: 600 }}>
-                  Pagamento Pix confirmado!
+                  {t("payment.pixConfirmed")}
                 </span>
               </div>
             )}
@@ -816,7 +807,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
               <div style={styles.terminalWaiting}>
                 <span style={{ fontSize: 36 }}>⏱️</span>
                 <span style={{ color: DANGER, fontSize: 14 }}>
-                  QR Code expirado. Clique em Confirmar para gerar novo código.
+                  {t("payment.pixExpiredRetry")}
                 </span>
               </div>
             )}
@@ -829,7 +820,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
               <div style={styles.terminalWaiting}>
                 <span style={{ fontSize: 36 }}>🇪🇺</span>
                 <span style={{ color: "#a1a1aa", fontSize: 14 }}>
-                  Clique em Confirmar para abrir página de pagamento SumUp
+                  {t("payment.sumupIdle")}
                 </span>
               </div>
             )}
@@ -837,7 +828,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
               <div style={styles.terminalWaiting}>
                 <span style={{ fontSize: 36 }}>⏳</span>
                 <span style={{ color: "#a1a1aa", fontSize: 14 }}>
-                  Criando checkout SumUp...
+                  {t("payment.sumupCreating")}
                 </span>
               </div>
             )}
@@ -851,7 +842,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
                       color: "#d4d4d8",
                     }}
                   >
-                    Complete o pagamento na janela aberta
+                    {t("payment.sumupCompleteInWindow")}
                   </span>
                   <div style={styles.pixTimer}>
                     <span style={{ fontSize: 20, fontWeight: 700 }}>
@@ -859,7 +850,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
                       {String(sumupTimeRemaining % 60).padStart(2, "0")}
                     </span>
                     <span style={{ fontSize: 12, color: "#71717a" }}>
-                      restantes
+                      {t("payment.timeRemaining")}
                     </span>
                   </div>
                 </div>
@@ -882,7 +873,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
                       textAlign: "center",
                     }}
                   >
-                    Insira os dados do cartão na página SumUp
+                    {t("payment.sumupEnterCard")}
                   </span>
                   {sumupCheckoutUrl && (
                     <button
@@ -904,7 +895,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
                         cursor: "pointer",
                       }}
                     >
-                      Reabrir Página de Pagamento
+                      {t("payment.sumupReopenPage")}
                     </button>
                   )}
                   <div
@@ -930,7 +921,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
                 <div style={styles.pixInstructions}>
                   <span style={{ fontSize: 13, color: "#a1a1aa" }}>⏳</span>
                   <span style={{ fontSize: 13, color: "#a1a1aa" }}>
-                    Aguardando confirmação do pagamento...
+                    {t("payment.awaitingConfirmation")}
                   </span>
                 </div>
               </div>
@@ -939,7 +930,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
               <div style={styles.terminalWaiting}>
                 <span style={{ fontSize: 36 }}>✅</span>
                 <span style={{ color: GREEN, fontSize: 16, fontWeight: 600 }}>
-                  Pagamento SumUp confirmado!
+                  {t("payment.sumupConfirmed")}
                 </span>
               </div>
             )}
@@ -947,8 +938,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
               <div style={styles.terminalWaiting}>
                 <span style={{ fontSize: 36 }}>❌</span>
                 <span style={{ color: DANGER, fontSize: 14 }}>
-                  Pagamento falhou ou expirou. Clique em Confirmar para tentar
-                  novamente.
+                  {t("payment.sumupFailedRetry")}
                 </span>
               </div>
             )}
@@ -985,12 +975,12 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
           }}
         >
           {processing
-            ? "A processar..."
+            ? t("payment.processing")
             : method === "pix" && pixStep === "expired"
-            ? "Gerar Novo QR Code"
+            ? t("payment.generateNewQr")
             : method === "sumup_eur" && sumupStep === "failed"
-            ? "Tentar Novamente"
-            : `Confirmar ${formatAmount(grandTotal)}`}
+            ? t("payment.tryAgain")
+            : t("payment.confirm", { amount: formatAmount(grandTotal) })}
         </button>
       </div>
     </div>
@@ -1002,6 +992,7 @@ const InlineCardForm: React.FC<{
   onSuccess: (paymentIntentId: string) => void;
   disabled?: boolean;
 }> = ({ onSuccess, disabled }) => {
+  const { t } = useTranslation("tpv");
   const stripe = useStripe();
   const elements = useElements();
   const [error, setError] = useState<string | null>(null);
@@ -1021,13 +1012,13 @@ const InlineCardForm: React.FC<{
     });
 
     if (confirmError) {
-      setError(confirmError.message || "Erro ao processar cartao");
+      setError(confirmError.message || t("payment.error.cardPrepare"));
       setSubmitting(false);
     } else if (paymentIntent?.status === "succeeded") {
       onSuccess(paymentIntent.id);
     } else {
       setError(
-        "Estado inesperado: " + (paymentIntent?.status || "desconhecido"),
+        t("payment.cardUnexpectedState", { state: paymentIntent?.status || "unknown" }),
       );
       setSubmitting(false);
     }
@@ -1062,7 +1053,7 @@ const InlineCardForm: React.FC<{
           cursor: !stripe || submitting || disabled ? "not-allowed" : "pointer",
         }}
       >
-        {submitting ? "A processar..." : "Pagar com Cartao"}
+        {submitting ? t("payment.processing") : t("payment.payWithCard")}
       </button>
     </form>
   );

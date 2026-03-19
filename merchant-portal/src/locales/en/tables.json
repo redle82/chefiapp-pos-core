@@ -1,0 +1,53 @@
+{
+  "page": {
+    "title": "Floor Plan",
+    "subtitle": "Drag tables to arrange your floor plan. Click a table to edit its properties.",
+    "loading": "Loading tables..."
+  },
+  "editor": {
+    "dragToAdd": "Drag to add",
+    "shapeRound": "Round",
+    "shapeSquare": "Square",
+    "shapeRectangle": "Rectangle",
+    "shapeBar": "Bar stool",
+    "emptyCanvas": "Drag a table shape here to start building your floor plan",
+    "hint": "Drag tables to reposition. Drag corner handle to resize. Click to select."
+  },
+  "view": {
+    "free": "free",
+    "noTables": "No tables in this zone"
+  },
+  "status": {
+    "free": "Free",
+    "occupied": "Occupied",
+    "reserved": "Reserved",
+    "inPrep": "In prep",
+    "readyToServe": "Ready",
+    "billRequested": "Bill",
+    "cleaning": "Cleaning",
+    "blocked": "Blocked"
+  },
+  "properties": {
+    "title": "Table {{n}}",
+    "number": "Number",
+    "seats": "Seats",
+    "shape": "Shape",
+    "status": "Status",
+    "delete": "Delete table"
+  },
+  "zones": {
+    "title": "Manage Zones",
+    "defaultName": "Main",
+    "newPlaceholder": "New zone name...",
+    "add": "Add",
+    "save": "Save",
+    "rename": "Rename",
+    "delete": "Delete",
+    "close": "Close"
+  },
+  "bulk": {
+    "setAllFree": "Set all free",
+    "manageZones": "Manage zones",
+    "tables": "tables"
+  }
+}

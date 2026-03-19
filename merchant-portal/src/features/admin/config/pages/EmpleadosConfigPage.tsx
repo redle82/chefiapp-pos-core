@@ -19,7 +19,7 @@ export function EmpleadosConfigPage() {
   const isRolesTab = location.pathname === `${BASE}/roles`;
 
   return (
-    <div className="page-enter admin-content-page" style={{ maxWidth: 820 }}>
+    <div style={{ maxWidth: 820 }}>
       <AdminPageHeader
         title="Empleados"
         subtitle="Funcionários, papéis e escalas."

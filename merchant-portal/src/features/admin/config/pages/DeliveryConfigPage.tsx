@@ -21,7 +21,7 @@ export function DeliveryConfigPage() {
   const isQR = path === `${BASE}/qr`;
 
   return (
-    <div className="page-enter admin-content-page" style={{ maxWidth: 820 }}>
+    <div style={{ maxWidth: 820 }}>
       <AdminPageHeader
         title="Delivery"
         subtitle="Plano de mesas, horários e QR."

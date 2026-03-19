@@ -15,9 +15,11 @@ import { AboutPage } from "../pages/About/AboutPage";
 import { PhoneLoginPage } from "../pages/AuthPhone/PhoneLoginPage";
 import { VerifyCodePage } from "../pages/AuthPhone/VerifyCodePage";
 import { BillingSuccessPage } from "../pages/Billing/BillingSuccessPage";
+import { BlogIndexPage } from "../pages/Blog/BlogIndexPage";
 import { BlogQuandoAbrirFecharCaixaPage } from "../pages/Blog/BlogQuandoAbrirFecharCaixaPage";
 import { BlogTPVRestaurantesPage } from "../pages/Blog/BlogTPVRestaurantesPage";
 import { BlogTPVVsPOSFiscalPage } from "../pages/Blog/BlogTPVVsPOSFiscalPage";
+import { BlogComparacaoPage } from "../pages/Blog/BlogComparacaoPage";
 import { BootstrapPage } from "../pages/BootstrapPage";
 import { ChangelogPage } from "../pages/Changelog/ChangelogPage";
 import { HelpStartLocalPage } from "../pages/HelpStartLocalPage";
@@ -31,6 +33,8 @@ import { OfficialLandingPage } from "../pages/LandingV2/LandingV2Page";
 import { LegalDPAPage } from "../pages/Legal/LegalDPAPage";
 import { LegalPrivacyPage } from "../pages/Legal/LegalPrivacyPage";
 import { LegalTermsPage } from "../pages/Legal/LegalTermsPage";
+import { PrivacyPolicyPage } from "../pages/Legal/PrivacyPolicyPage";
+import { ReservationPortal } from "../pages/CustomerMenu/ReservationPortal";
 import { MenuCatalogPage } from "../pages/MenuCatalog/MenuCatalogPage";
 import { MenuCatalogPageV2 } from "../pages/MenuCatalog/MenuCatalogPageV2";
 import { SecurityPage } from "../pages/Security/SecurityPage";
@@ -82,7 +86,7 @@ export const MarketingRoutesFragment = (
     <Route path="/compare" element={<MarketComparisonPage />} />
     <Route path="/comparativo" element={<MarketComparisonPage />} />
     <Route path="/features" element={<FeaturesPage />} />
-    <Route path="/blog" element={<BlogTPVRestaurantesPage />} />
+    <Route path="/blog" element={<BlogIndexPage />} />
     <Route
       path="/blog/tpv-restaurantes"
       element={<BlogTPVRestaurantesPage />}
@@ -95,6 +99,10 @@ export const MarketingRoutesFragment = (
       path="/blog/quando-abrir-fechar-caixa"
       element={<BlogQuandoAbrirFecharCaixaPage />}
     />
+    <Route
+      path="/blog/chefiapp-vs-concorrencia"
+      element={<BlogComparacaoPage />}
+    />
     <Route path="/changelog" element={<ChangelogPage />} />
     <Route path="/security" element={<SecurityPage />} />
     <Route path="/about" element={<AboutPage />} />
@@ -102,6 +110,7 @@ export const MarketingRoutesFragment = (
     <Route path="/legal/terms" element={<LegalTermsPage />} />
     <Route path="/legal/privacy" element={<LegalPrivacyPage />} />
     <Route path="/legal/dpa" element={<LegalDPAPage />} />
+    <Route path="/privacy" element={<PrivacyPolicyPage />} />
     {/* Demo Guide: entrada pública para o TPV em modo Free Trial */}
     <Route
       path="/trial"
@@ -136,6 +145,8 @@ export const MarketingRoutesFragment = (
     {/* Menu: catálogo visual de decisão (spec MENU_CATALOG_VISUAL_SPEC) */}
     <Route path="/menu" element={<MenuCatalogPage />} />
     <Route path="/menu-v2" element={<MenuCatalogPageV2 />} />
+    {/* Online Reservation Portal — public, no auth */}
+    <Route path="/reserve/:restaurantId" element={<ReservationPortal />} />
     {/* Mentoria — acessível sem auth para dev/teste */}
     <Route path="/mentor" element={<MentorPage />} />
   </Fragment>

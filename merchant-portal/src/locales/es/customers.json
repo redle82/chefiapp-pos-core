@@ -1,0 +1,125 @@
+{
+  "pageTitle": "Clientes",
+  "pageSubtitle": "Consulta perfiles de clientes, patrones de consumo y preferencias.",
+  "createNew": "Nuevo Cliente",
+  "search": "Buscar por nombre, teléfono o email...",
+  "loading": "Cargando clientes...",
+  "empty": "No se encontraron clientes.",
+  "emptyCreate": "Aún no hay clientes. Crea tu primer cliente para empezar.",
+  "totalCustomers": "{{count}} cliente(s) en total",
+  "perPage": "{{n}} / página",
+
+  "columns": {
+    "name": "Nombre",
+    "phone": "Teléfono",
+    "email": "Email",
+    "visits": "Visitas",
+    "totalSpent": "Gasto Total",
+    "lastVisit": "Última Visita",
+    "segment": "Segmento",
+    "source": "Origen"
+  },
+
+  "segments": {
+    "all": "Todos",
+    "new": "Nuevo",
+    "regular": "Regular",
+    "vip": "VIP",
+    "at_risk": "En Riesgo",
+    "lost": "Perdido"
+  },
+
+  "detail": {
+    "backToList": "Volver a clientes",
+    "contactInfo": "Información de Contacto",
+    "stats": "Estadísticas",
+    "totalVisits": "Total Visitas",
+    "totalSpent": "Gasto Total",
+    "avgTicket": "Ticket Medio",
+    "firstVisit": "Primera Visita",
+    "lastVisit": "Última Visita",
+    "points": "Puntos",
+    "dietary": "Preferencias Alimentarias",
+    "noDietary": "Sin preferencias alimentarias.",
+    "addDietary": "Añadir preferencia",
+    "orderHistory": "Historial de Pedidos",
+    "noOrders": "No se encontraron pedidos.",
+    "staffNotes": "Notas del Personal",
+    "noNotes": "Sin notas aún.",
+    "addNote": "Añadir nota",
+    "addNotePlaceholder": "Escribe una nota sobre este cliente...",
+    "actions": "Acciones",
+    "edit": "Editar",
+    "merge": "Fusionar",
+    "exportData": "Exportar Datos (RGPD)",
+    "delete": "Eliminar",
+    "never": "Nunca"
+  },
+
+  "form": {
+    "createTitle": "Nuevo Cliente",
+    "editTitle": "Editar Cliente",
+    "name": "Nombre",
+    "namePlaceholder": "Nombre completo",
+    "phone": "Teléfono",
+    "phonePlaceholder": "+34 612 345 678",
+    "email": "Email",
+    "emailPlaceholder": "email@ejemplo.com",
+    "notes": "Notas",
+    "notesPlaceholder": "Notas del personal...",
+    "dietary": "Preferencias Alimentarias",
+    "dietaryPlaceholder": "Ej: vegano, sin gluten, alergia a mariscos",
+    "cancel": "Cancelar",
+    "save": "Guardar",
+    "saving": "Guardando...",
+    "errorNameRequired": "El nombre es obligatorio",
+    "errorPhoneRequired": "El teléfono es obligatorio"
+  },
+
+  "quickAdd": {
+    "title": "Cliente",
+    "searchPlaceholder": "Buscar o añadir cliente...",
+    "addNew": "Añadir nuevo cliente",
+    "linked": "Cliente vinculado",
+    "visits": "{{count}} visitas",
+    "unlink": "Desvincular",
+    "dietaryAlert": "Alerta alimentaria"
+  },
+
+  "merge": {
+    "title": "Fusionar Clientes",
+    "description": "Selecciona un cliente duplicado para fusionarlo con este. El duplicado será eliminado.",
+    "searchDuplicate": "Buscar duplicado...",
+    "confirm": "Fusionar",
+    "cancel": "Cancelar",
+    "success": "Clientes fusionados correctamente.",
+    "error": "Error al fusionar clientes."
+  },
+
+  "delete": {
+    "title": "Eliminar Cliente",
+    "description": "Esta acción no se puede deshacer. Todos los datos del cliente se eliminarán permanentemente.",
+    "confirm": "Eliminar",
+    "cancel": "Cancelar",
+    "success": "Cliente eliminado.",
+    "error": "Error al eliminar cliente."
+  },
+
+  "kpi": {
+    "totalCustomers": "Total Clientes",
+    "avgVisits": "Media Visitas",
+    "avgSpend": "Media Gasto",
+    "avgTicket": "Ticket Medio"
+  },
+
+  "dietary_options": {
+    "vegan": "Vegano",
+    "vegetarian": "Vegetariano",
+    "gluten_free": "Sin Gluten",
+    "lactose_free": "Sin Lactosa",
+    "nut_allergy": "Alergia a Frutos Secos",
+    "shellfish_allergy": "Alergia a Mariscos",
+    "halal": "Halal",
+    "kosher": "Kosher"
+  }
+}

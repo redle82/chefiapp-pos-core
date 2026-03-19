@@ -1,4 +1,5 @@
 import { render, screen } from "@testing-library/react";
+import { MemoryRouter } from "react-router-dom";
 import { describe, expect, it, vi } from "vitest";
 import { TPVTablesPage } from "./TPVTablesPage";
 
@@ -11,6 +12,18 @@ vi.mock("./hooks/useTPVRestaurantId", () => ({
 vi.mock("../TPV/context/TableContext", () => ({
   TableProvider: ({ children }: { children: React.ReactNode }) => children,
   useTables: () => useTables(),
+}));
+
+vi.mock("react-i18next", () => ({
+  useTranslation: () => ({
+    t: (key: string) => key,
+    i18n: { language: "pt-PT" },
+  }),
+}));
+
+vi.mock("../../core/operational/tableStates", () => ({
+  TABLE_STATE_COLORS: {},
+  TABLE_STATUS_LABELS: {},
 }));
 
 vi.mock("../../ui/design-system/domain/TableMapPanel", () => ({
@@ -32,9 +45,13 @@ describe("TPVTablesPage", () => {
       updateTablePosition: vi.fn(),
     });
 
-    render(<TPVTablesPage />);
+    render(
+      <MemoryRouter>
+        <TPVTablesPage />
+      </MemoryRouter>,
+    );
 
-    expect(screen.getByText(/Mapa de Mesas/i)).toBeTruthy();
+    expect(screen.getByText(/tables\.mapTitle/i)).toBeTruthy();
     expect(screen.getByTestId("table-map").textContent).toContain("2");
   });
 });

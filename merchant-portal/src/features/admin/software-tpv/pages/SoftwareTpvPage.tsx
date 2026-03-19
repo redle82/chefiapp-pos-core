@@ -21,6 +21,9 @@ const LOCALES = [
   { value: "es-ES", labelKey: "softwareTpv.localeEsES" },
   { value: "en-US", labelKey: "softwareTpv.localeEnUS" },
   { value: "pt-PT", labelKey: "softwareTpv.localePtPT" },
+  { value: "it-IT", labelKey: "softwareTpv.localeItIT" },
+  { value: "fr-FR", labelKey: "softwareTpv.localeFrFR" },
+  { value: "de-DE", labelKey: "softwareTpv.localeDeDE" },
 ] as const;
 
 const TIMEZONES = [
@@ -34,6 +37,9 @@ const TIMEZONES = [
   { value: "America/Mexico_City", label: "America/Mexico_City (México)" },
   { value: "America/Toronto", label: "America/Toronto (Canada)" },
   { value: "Australia/Sydney", label: "Australia/Sydney" },
+  { value: "Europe/Rome", label: "Europe/Rome (Italia)" },
+  { value: "Europe/Paris", label: "Europe/Paris (France)" },
+  { value: "Europe/Berlin", label: "Europe/Berlin (Deutschland)" },
 ] as const;
 
 const CURRENCIES = [

@@ -5,20 +5,16 @@
  * - Buscar pedido ativo por mesa
  * - Validação de mesa ocupada
  * - Gestão de estado de mesas
- *
- * FIX: mock target migrado de supabase → coreClient (OrderEngine usa coreClient desde Docker Core).
  */
 
-import { coreClient } from "../../../merchant-portal/src/core/infra/coreClient";
+import { supabase } from "../../../merchant-portal/src/core/supabase";
 import { OrderEngine } from "../../../merchant-portal/src/core/tpv/OrderEngine";
 
-// Mock coreClient (OrderEngine imports this, not supabase)
-jest.mock("../../../merchant-portal/src/core/infra/coreClient", () => ({
-  coreClient: {
+// Mock Supabase
+jest.mock("../../../merchant-portal/src/core/supabase", () => ({
+  supabase: {
     from: jest.fn(),
   },
-  getCoreClient: jest.fn(() => ({ from: jest.fn() })),
-  checkCoreHealth: jest.fn(() => Promise.resolve(true)),
 }));
 
 const buildOrderQueryChain = (data: unknown, error: unknown) => {
@@ -38,8 +34,8 @@ describe("🪑 TableManagement - Testes Unitários", () => {
   const mockTableNumber = 5;
 
   beforeEach(() => {
-    (coreClient.from as jest.Mock).mockReset();
-    (coreClient.from as jest.Mock).mockImplementation(() =>
+    (supabase.from as jest.Mock).mockReset();
+    (supabase.from as jest.Mock).mockImplementation(() =>
       buildOrderQueryChain(null, null),
     );
   });
@@ -47,7 +43,7 @@ describe("🪑 TableManagement - Testes Unitários", () => {
   describe("1. Buscar Pedido Ativo por Mesa", () => {
     it("1.1 - Deve retornar pedido ativo se mesa tiver pedido", async () => {
       // Mock: buscar pedido ativo
-      (coreClient.from as jest.Mock).mockReturnValueOnce(
+      (supabase.from as jest.Mock).mockReturnValueOnce(
         buildOrderQueryChain(
           {
             id: "ORDER-123",
@@ -65,7 +61,7 @@ describe("🪑 TableManagement - Testes Unitários", () => {
       );
 
       // Mock: buscar itens
-      (coreClient.from as jest.Mock).mockReturnValueOnce({
+      (supabase.from as jest.Mock).mockReturnValueOnce({
         select: jest.fn(() => ({
           eq: jest.fn(() => ({
             data: [
@@ -99,7 +95,7 @@ describe("🪑 TableManagement - Testes Unitários", () => {
 
     it("1.2 - Deve retornar null se mesa não tiver pedido ativo", async () => {
       // Mock: mesa sem pedido ativo
-      (coreClient.from as jest.Mock).mockReturnValueOnce(
+      (supabase.from as jest.Mock).mockReturnValueOnce(
         buildOrderQueryChain(null, null),
       );
 
@@ -113,7 +109,7 @@ describe("🪑 TableManagement - Testes Unitários", () => {
 
     it("1.3 - Deve buscar apenas pedidos com status ativo", async () => {
       // Mock: buscar pedido ativo (status: pending, preparing, ready)
-      (coreClient.from as jest.Mock).mockReturnValueOnce(
+      (supabase.from as jest.Mock).mockReturnValueOnce(
         buildOrderQueryChain(
           {
             id: "ORDER-123",
@@ -136,7 +132,7 @@ describe("🪑 TableManagement - Testes Unitários", () => {
 
     it("1.4 - Não deve retornar pedidos com status delivered ou canceled", async () => {
       // Mock: buscar pedido (mas status é delivered - não deve aparecer)
-      (coreClient.from as jest.Mock).mockReturnValueOnce(
+      (supabase.from as jest.Mock).mockReturnValueOnce(
         buildOrderQueryChain(null, null),
       );
 
@@ -152,7 +148,7 @@ describe("🪑 TableManagement - Testes Unitários", () => {
   describe("2. Validação de Mesa Ocupada", () => {
     it("2.1 - Deve validar que mesa não pode ter múltiplos pedidos ativos", async () => {
       // Mock: mesa com pedido ativo
-      (coreClient.from as jest.Mock).mockReturnValueOnce(
+      (supabase.from as jest.Mock).mockReturnValueOnce(
         buildOrderQueryChain(
           {
             id: "ORDER-EXISTING",
@@ -175,7 +171,7 @@ describe("🪑 TableManagement - Testes Unitários", () => {
 
     it("2.2 - Deve permitir criar pedido se mesa não tem pedido ativo", async () => {
       // Mock: mesa sem pedido ativo
-      (coreClient.from as jest.Mock).mockReturnValueOnce(
+      (supabase.from as jest.Mock).mockReturnValueOnce(
         buildOrderQueryChain(null, null),
       );
 
@@ -191,7 +187,7 @@ describe("🪑 TableManagement - Testes Unitários", () => {
   describe("3. Gestão de Estado de Mesas", () => {
     it("3.1 - Deve buscar pedido por tableId", async () => {
       // Mock: buscar pedido por tableId
-      (coreClient.from as jest.Mock).mockReturnValueOnce(
+      (supabase.from as jest.Mock).mockReturnValueOnce(
         buildOrderQueryChain(
           {
             id: "ORDER-123",
@@ -214,7 +210,7 @@ describe("🪑 TableManagement - Testes Unitários", () => {
 
     it("3.2 - Deve buscar pedido por tableNumber", async () => {
       // Mock: buscar pedido por tableNumber
-      (coreClient.from as jest.Mock).mockReturnValueOnce(
+      (supabase.from as jest.Mock).mockReturnValueOnce(
         buildOrderQueryChain(
           {
             id: "ORDER-123",
@@ -243,7 +239,7 @@ describe("🪑 TableManagement - Testes Unitários", () => {
       // A validação real acontece em OrderEngine.createOrder()
 
       // Mock: mesa sem pedido ativo
-      (coreClient.from as jest.Mock).mockReturnValueOnce(
+      (supabase.from as jest.Mock).mockReturnValueOnce(
         buildOrderQueryChain(null, null),
       );
 

@@ -2,6 +2,54 @@ import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { PaymentModal } from "./PaymentModal";
 
+vi.mock("react-i18next", () => ({
+  useTranslation: () => ({
+    t: (key: string, opts?: Record<string, unknown>) => {
+      const texts: Record<string, string> = {
+        "payment.title": "Pagamento",
+        "payment.orderId": "Pedido #{{id}}",
+        "payment.totalToPay": "TOTAL A PAGAR",
+        "payment.subtotal": "Subtotal",
+        "payment.tip": "Gorjeta",
+        "payment.tipOptional": "Gorjeta (opcional)",
+        "payment.noTip": "Sem",
+        "payment.other": "Outro:",
+        "payment.paymentMethod": "Forma de Pagamento",
+        "payment.cashTendered": "Valor Entregue",
+        "payment.exact": "Exato",
+        "payment.change": "Troco",
+        "payment.shortBy": "Faltam {{amount}}",
+        "payment.confirm": "Confirmar {{amount}}",
+        "payment.trialSimulated":
+          "Ambiente Simulado (Trial): pagamento simulado",
+        "payment.preparing": "A preparar pagamento...",
+        "payment.processing": "A processar...",
+        "payment.method.cashLabel": "Dinheiro",
+        "payment.method.cashDesc": "Pagamento em espécie",
+        "payment.method.cardLabel": "Cartão",
+        "payment.method.cardDesc": "Terminal MB / Visa / MC",
+        "payment.method.mbwayLabel": "MB WAY",
+        "payment.method.mbwayDesc": "Pagamento por telemóvel",
+        "payment.method.pixLabel": "PIX",
+        "payment.method.pixDesc": "Transferência instantânea",
+        "payment.method.sumup_eurLabel": "Cartão EUR",
+        "payment.method.sumup_eurDesc": "SumUp (ES/PT/DE)",
+        "payment.method.otherLabel": "Outro",
+        "common:close": "Close",
+      };
+      let result = texts[key] || key;
+      if (opts && typeof opts === "object") {
+        Object.entries(opts).forEach(([k, v]) => {
+          result = result.replace(`{{${k}}}`, String(v));
+        });
+      }
+      return result;
+    },
+    i18n: { changeLanguage: vi.fn() },
+  }),
+  initReactI18next: { type: "3rdParty", init: vi.fn() },
+}));
+
 vi.mock("../../../core/currency/useCurrency", () => ({
   useCurrency: () => ({
     formatAmount: (cents: number) => `$${(cents / 100).toFixed(2)}`,
@@ -119,38 +167,8 @@ describe("PaymentModal", () => {
     expect(Number(cashInput.value)).toBeGreaterThanOrEqual(25);
   });
 
-  it("maps MB WAY to card for backend payment", () => {
-    const onPay = vi.fn();
-
-    render(<PaymentModal {...defaultProps} orderTotal={1200} onPay={onPay} />);
-
-    fireEvent.click(screen.getByTestId("payment-method-mbway"));
-
-    const phoneInput = screen.getByPlaceholderText("9XX XXX XXX");
-    fireEvent.change(phoneInput, { target: { value: "912345678" } });
-
-    const confirm = screen.getByRole("button", {
-      name: "Confirmar $12.00",
-    }) as HTMLButtonElement;
-    expect(confirm.disabled).toBe(false);
-
-    fireEvent.click(confirm);
-    expect(onPay).toHaveBeenCalledWith("card", undefined, undefined);
-  });
-
-  it("rejects invalid MB WAY phone numbers", () => {
-    render(<PaymentModal {...defaultProps} />);
-
-    fireEvent.click(screen.getByTestId("payment-method-mbway"));
-
-    const phoneInput = screen.getByPlaceholderText("9XX XXX XXX");
-    fireEvent.change(phoneInput, { target: { value: "123456789" } });
-
-    const confirm = screen.getByRole("button", {
-      name: "Confirmar $25.00",
-    }) as HTMLButtonElement;
-    expect(confirm.disabled).toBe(true);
-  });
+  // MB WAY tests removed — mbway was removed from METHOD_OPTIONS
+  // and is no longer rendered as a standalone payment method.
 
   it("includes tip in grand total when tip percent is selected", () => {
     render(<PaymentModal {...defaultProps} />);

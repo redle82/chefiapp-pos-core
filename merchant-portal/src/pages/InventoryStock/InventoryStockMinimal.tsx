@@ -15,7 +15,10 @@
 import { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
+import { WasteLogModal } from "./components/WasteLogModal";
+import { ExportButtons } from "../../components/common/ExportButtons";
 import { useCurrency } from "../../core/currency/useCurrency";
+import { useExportBranding } from "../../core/export/useExportBranding";
 import { useRestaurantIdentity } from "../../core/identity/useRestaurantIdentity";
 import { dockerCoreClient } from "../../infra/docker-core/connection";
 import {
@@ -73,36 +76,26 @@ type TabType =
 
 type StockMovementAction = "IN" | "OUT" | "ADJUST" | "TRANSFER";
 
-const TAB_LABELS: Record<TabType, { icon: string; label: string }> = {
-  locations: { icon: "📍", label: "Locais" },
-  equipment: { icon: "🔧", label: "Equipamentos" },
-  ingredients: { icon: "🥘", label: "Ingredientes" },
-  stock: { icon: "📊", label: "Estoque" },
-  recipes: { icon: "📝", label: "Receitas" },
-  movements: { icon: "🔁", label: "Movimentos" },
-  scan: { icon: "📷", label: "Scan" },
+const TAB_ICONS: Record<TabType, string> = {
+  locations: "📍",
+  equipment: "🔧",
+  ingredients: "🥘",
+  stock: "📊",
+  recipes: "📝",
+  movements: "🔁",
+  scan: "📷",
 };
 
-const MOVEMENT_ACTIONS: { value: StockMovementAction; label: string }[] = [
-  { value: "IN", label: "Entrada" },
-  { value: "OUT", label: "Saida" },
-  { value: "ADJUST", label: "Ajuste" },
-  { value: "TRANSFER", label: "Transferencia" },
-];
+const MOVEMENT_ACTION_KEYS: StockMovementAction[] = ["IN", "OUT", "ADJUST", "TRANSFER"];
 
-const UNIT_OPTIONS = [
-  { value: "unit", label: "Unidade" },
-  { value: "g", label: "g" },
-  { value: "kg", label: "kg" },
-  { value: "ml", label: "ml" },
-  { value: "l", label: "l" },
-];
+const UNIT_OPTION_KEYS = ["unit", "g", "kg", "ml", "l"] as const;
 
 export function InventoryStockMinimal() {
-  const { t } = useTranslation();
+  const { t } = useTranslation("operational");
   const navigate = useNavigate();
   const { symbol: currencySymbol } = useCurrency();
   const { identity } = useRestaurantIdentity();
+  const exportBranding = useExportBranding();
   const restaurantId =
     identity?.restaurantId || "00000000-0000-0000-0000-000000000100";
 
@@ -195,6 +188,9 @@ export function InventoryStockMinimal() {
   const [availablePacks, setAvailablePacks] = useState<PresetPack[]>([]);
   const [importingPack, setImportingPack] = useState(false);
   const [importPackMessage, setImportPackMessage] = useState("");
+
+  // Waste modal state
+  const [showWasteModal, setShowWasteModal] = useState(false);
 
   useEffect(() => {
     loadAllData();
@@ -690,7 +686,30 @@ export function InventoryStockMinimal() {
           ← Voltar
         </Button>
         <h1 className={styles.pageTitle}>📦 Inventário e Estoque</h1>
+        <div style={{ display: "flex", gap: 8, marginLeft: "auto" }}>
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={() => setShowWasteModal(true)}
+          >
+            {t("waste.logWaste", { defaultValue: "Log Waste" })}
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => navigate("/admin/inventory/waste")}
+          >
+            {t("waste.viewReport", { defaultValue: "Waste Report" })}
+          </Button>
+        </div>
       </header>
+
+      {/* Waste Log Modal */}
+      <WasteLogModal
+        open={showWasteModal}
+        onClose={() => setShowWasteModal(false)}
+        onSuccess={() => loadAllData()}
+      />
 
       {/* Error banner */}
       {error && (
@@ -701,7 +720,7 @@ export function InventoryStockMinimal() {
 
       {/* Tabs */}
       <nav className={styles.tabs}>
-        {(Object.keys(TAB_LABELS) as TabType[]).map((tab) => (
+        {(Object.keys(TAB_ICONS) as TabType[]).map((tab) => (
           <button
             key={tab}
             type="button"
@@ -710,8 +729,8 @@ export function InventoryStockMinimal() {
               activeTab === tab ? styles.tabActive : ""
             } ${tab === "scan" ? styles.tabScan : ""}`}
           >
-            <span className={styles.tabIcon}>{TAB_LABELS[tab].icon}</span>
-            <span className={styles.tabLabel}>{TAB_LABELS[tab].label}</span>
+            <span className={styles.tabIcon}>{TAB_ICONS[tab]}</span>
+            <span className={styles.tabLabel}>{t(`inventory.tab.${tab}`)}</span>
           </button>
         ))}
       </nav>
@@ -1374,7 +1393,7 @@ export function InventoryStockMinimal() {
                         e.target.value as CoreIngredient["unit"],
                       )
                     }
-                    options={UNIT_OPTIONS}
+                    options={UNIT_OPTION_KEYS.map((k) => ({ value: k, label: k === "unit" ? t("inventory.unit.unit") : k }))}
                   />
                 </div>
                 <div className={styles.formActions}>
@@ -1456,6 +1475,44 @@ export function InventoryStockMinimal() {
         <section>
           <div className={styles.sectionHeader}>
             <h2 className={styles.sectionTitle}>Estoque</h2>
+            {stockLevels.length > 0 && (
+              <ExportButtons
+                title="Relatorio de Estoque"
+                subtitle="Niveis de estoque atuais"
+                filename={`estoque-${new Date().toISOString().slice(0, 10)}`}
+                branding={exportBranding}
+                formats={["pdf", "excel", "csv"]}
+                datasets={[
+                  {
+                    name: "Estoque",
+                    columns: [
+                      { header: "Ingrediente" },
+                      { header: "Local" },
+                      { header: "Quantidade Atual", align: "right", format: "number" },
+                      { header: "Unidade" },
+                      { header: "Minimo", align: "right", format: "number" },
+                      { header: "Status" },
+                    ],
+                    rows: stockLevels.map((s: any) => [
+                      s.ingredient?.name || "N/A",
+                      s.location?.name || "N/A",
+                      s.qty,
+                      s.ingredient?.unit || "",
+                      s.min_qty,
+                      s.qty <= s.min_qty ? "BAIXO" : "OK",
+                    ]),
+                    summaryCards: [
+                      { label: "Total itens", value: String(stockLevels.length) },
+                      {
+                        label: "Estoque baixo",
+                        value: String(stockLevels.filter((s: any) => s.qty <= s.min_qty).length),
+                        highlight: stockLevels.some((s: any) => s.qty <= s.min_qty),
+                      },
+                    ],
+                  },
+                ]}
+              />
+            )}
           </div>
 
           {stockLevels.length === 0 ? (
@@ -1545,7 +1602,7 @@ export function InventoryStockMinimal() {
                       }
                     }}
                     aria-label="Tipo de movimento"
-                    options={MOVEMENT_ACTIONS}
+                    options={MOVEMENT_ACTION_KEYS.map((k) => ({ value: k, label: t(`inventory.movement.${k}`) }))}
                   />
 
                   <Select

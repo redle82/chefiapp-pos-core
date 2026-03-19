@@ -13,6 +13,8 @@ import {
   useNavigate,
   useSearchParams,
 } from "react-router-dom";
+import { InstallPrompt } from "./components/common/InstallPrompt";
+import { OfflineIndicatorEnhanced } from "./components/common/OfflineIndicator";
 import { CookieConsentBanner } from "./components/CookieConsentBanner";
 import {
   GlobalUIStateProvider,
@@ -184,6 +186,8 @@ function App() {
           <SentryTagsSync />
           <SignupIntentRedirect />
           <CookieConsentBanner />
+          <InstallPrompt />
+          <OfflineIndicatorEnhanced />
           {/* <PublicLifecycleSync /> */}
           <BillingsPreloader />
           <Suspense fallback={<LoadingState variant="spinner" />}>
@@ -250,8 +254,9 @@ function AppContentWithBilling() {
   }, [location.pathname]);
 
   const isBillingManagement = location.pathname.startsWith("/app/billing");
+  const isPublicPage = location.pathname.startsWith("/public");
 
-  if (isTrialExpired && !isBillingManagement) {
+  if (isTrialExpired && !isBillingManagement && !isPublicPage) {
     return (
       <GlobalBlockedView
         title="Período de trial terminado"
@@ -261,7 +266,7 @@ function AppContentWithBilling() {
     );
   }
 
-  if (isBillingBlocked && !isBillingManagement) {
+  if (isBillingBlocked && !isBillingManagement && !isPublicPage) {
     return <BillingBlockedView />;
   }
 
@@ -285,11 +290,10 @@ function AppContentWithBilling() {
   const isOperationalSurface =
     location.pathname.startsWith("/op/tpv") ||
     location.pathname.startsWith("/op/kds");
-  const isStaffLauncher =
-    location.pathname === "/app/staff/home" ||
-    location.pathname.startsWith("/app/staff/home/");
-  const isStaffMore = location.pathname.startsWith("/app/staff/profile");
-  const shouldShowBillingBanner = isStaffLauncher || isStaffMore;
+  // AppStaff is an operational surface — billing banner never shown here.
+  // Billing management lives in /admin, not in the operational terminal.
+  const isStaffPath = location.pathname.startsWith("/app/staff");
+  const shouldShowBillingBanner = !isStaffPath;
   return (
     <>
       <EventMonitorBootstrap />

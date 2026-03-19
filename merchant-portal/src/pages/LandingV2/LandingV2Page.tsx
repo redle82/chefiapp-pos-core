@@ -28,6 +28,7 @@ import { HardwareV2 } from "./sections/HardwareV2";
 import { HeroV2 } from "./sections/HeroV2";
 import { HotelMirrorV2 } from "./sections/HotelMirrorV2";
 import { InsideSystemV2 } from "./sections/InsideSystemV2";
+import { ProductShowcaseV2 } from "./sections/ProductShowcaseV2";
 import { ManifestoV2 } from "./sections/ManifestoV2";
 import { MetricsStripV2 } from "./sections/MetricsStripV2";
 import { MoneyLeaksV2 } from "./sections/MoneyLeaksV2";
@@ -117,6 +118,9 @@ function LandingV2Content() {
       </FadeIn>
       <FadeIn>
         <InsideSystemV2 />
+      </FadeIn>
+      <FadeIn>
+        <ProductShowcaseV2 />
       </FadeIn>
       <FadeIn>
         <NearMissStoryV2 />

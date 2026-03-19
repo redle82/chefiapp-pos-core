@@ -1,6 +1,8 @@
 import { useCallback, useMemo, useState } from "react";
+import { ExportButtons } from "../../components/common/ExportButtons";
 import { DataModeBanner } from "../../components/DataModeBanner";
 import { useRestaurantRuntime } from "../../context/RestaurantRuntimeContext";
+import { useExportBranding } from "../../core/export/useExportBranding";
 import { exportCsv } from "../../core/reports/csvExport";
 import { useOperationalActivityReport } from "../../core/reports/hooks/useOperationalActivityReport";
 import type {
@@ -19,6 +21,7 @@ function dateRangeToTimeRange(from: Date, to: Date): TimeRange {
 
 export function OperationalActivityReportPage() {
   const { runtime } = useRestaurantRuntime();
+  const branding = useExportBranding();
   const now = useMemo(() => new Date(), []);
   const start = useMemo(() => {
     const d = new Date(now);
@@ -112,8 +115,39 @@ export function OperationalActivityReportPage() {
             onClick={handleExportCsv}
             className={styles.exportButton}
           >
-            ⬇ Exportar CSV
+            Exportar CSV
           </button>
+        )}
+        {hasData && data && (
+          <ExportButtons
+            title="Atividade da Operacao"
+            subtitle="Contas abertas, fechadas e canceladas por hora"
+            dateRange={toInput(dateFrom)}
+            filename={`atividade-operacional-${toInput(dateFrom)}`}
+            branding={branding}
+            formats={["pdf", "excel"]}
+            datasets={[
+              {
+                name: "Atividade por hora",
+                columns: [
+                  { header: "Hora" },
+                  { header: "Abertas", align: "right", format: "number" },
+                  { header: "Fechadas", align: "right", format: "number" },
+                  { header: "Canceladas", align: "right", format: "number" },
+                  { header: "Duracao media (min)", align: "right", format: "number" },
+                ],
+                rows: data.buckets.map((b: OperationalActivityBucket) => [
+                  b.bucketLabel,
+                  b.ordersOpened,
+                  b.ordersClosed,
+                  b.ordersCancelled,
+                  b.averageDurationSeconds != null
+                    ? (b.averageDurationSeconds / 60).toFixed(1)
+                    : "",
+                ]),
+              },
+            ]}
+          />
         )}
       </div>
 

@@ -1,0 +1,89 @@
+{
+  "pageTitle": "Analítica",
+  "pageSubtitle": "Inteligência de negócio avançada e insights de desempenho.",
+  "loading": "Carregando analítica...",
+  "noData": "Nenhum dado disponível para o período selecionado.",
+  "exportFilename": "relatorio-analitica",
+  "period": {
+    "today": "Hoje",
+    "thisWeek": "Esta semana",
+    "lastWeek": "Semana passada",
+    "thisMonth": "Este mês",
+    "lastMonth": "Mês passado",
+    "last30Days": "Últimos 30 dias",
+    "last90Days": "Últimos 90 dias",
+    "custom": "Personalizado"
+  },
+  "dashboard": {
+    "title": "Painel de Negócio",
+    "subtitle": "Resumo executivo com indicadores-chave de desempenho.",
+    "revenueToday": "Faturação hoje",
+    "revenueWeek": "Faturação esta semana",
+    "revenueMonth": "Faturação este mês",
+    "ordersToday": "Pedidos hoje",
+    "avgTicket": "Ticket médio",
+    "customerCount": "Clientes",
+    "revenueTrend": "Tendência de faturação (7 dias)",
+    "paymentBreakdown": "Métodos de pagamento",
+    "topProducts": "Top 5 produtos",
+    "busiestHours": "Horas de pico hoje",
+    "weekComparison": "Esta semana vs semana passada",
+    "vsLastWeek": "vs semana passada",
+    "noRevenue": "Nenhuma faturação registrada ainda."
+  },
+  "menu": {
+    "title": "Desempenho do Cardápio",
+    "subtitle": "Análise com Matriz Boston e ranking de produtos.",
+    "bostonMatrix": "Matriz Boston",
+    "stars": "Estrelas",
+    "starsDesc": "Altas vendas, alta margem",
+    "cashCows": "Vacas leiteiras",
+    "cashCowsDesc": "Altas vendas, baixa margem",
+    "questionMarks": "Interrogações",
+    "questionMarksDesc": "Baixas vendas, alta margem",
+    "dogs": "Abacaxis",
+    "dogsDesc": "Baixas vendas, baixa margem",
+    "productRanking": "Ranking de produtos",
+    "colName": "Produto",
+    "colCategory": "Categoria",
+    "colSold": "Vendidos",
+    "colRevenue": "Faturação",
+    "colCost": "Custo",
+    "colMargin": "Margem %",
+    "colTrend": "Tendência",
+    "filterCategory": "Filtrar por categoria",
+    "allCategories": "Todas as categorias",
+    "sortBy": "Ordenar por",
+    "tipRemoveDogs": "Considere remover itens com baixas vendas e baixa margem.",
+    "tipPromoteQuestions": "Promova itens com alta margem mas pouca visibilidade.",
+    "noProducts": "Nenhum dado de produto disponível."
+  },
+  "heatmap": {
+    "title": "Mapa de Calor de Faturação",
+    "subtitle": "Distribuição de faturação por dia da semana e hora.",
+    "days": {
+      "mon": "Seg",
+      "tue": "Ter",
+      "wed": "Qua",
+      "thu": "Qui",
+      "fri": "Sex",
+      "sat": "Sáb",
+      "sun": "Dom"
+    },
+    "peakTimes": "Horários de pico",
+    "staffingSuggestion": "Sugestão de equipa",
+    "staffHint": "Considere aumentar a equipa nos horários de pico: {{hours}}.",
+    "noHeatmapData": "Dados insuficientes para gerar um mapa de calor."
+  },
+  "sidebar": {
+    "analytics": "Analítica",
+    "dashboard": "Painel",
+    "menuPerformance": "Desempenho do Cardápio",
+    "heatmap": "Mapa de Calor"
+  },
+  "kpi": {
+    "up": "sobe",
+    "down": "desce",
+    "noChange": "sem alteração"
+  }
+}

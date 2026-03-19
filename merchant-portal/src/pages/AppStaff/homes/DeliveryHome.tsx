@@ -1,47 +1,63 @@
+/**
+ * DeliveryHome — PAINEL DE DELIVERY (inspirado no Shipday).
+ *
+ * Pergunta-chave: "Qual o estado das minhas entregas?"
+ *
+ * Layout com 5 sub-tabs (padrão Shipday):
+ *   1. Home — KPIs de performance (entregas concluídas, tempos médios, on-time %, rating)
+ *   2. Orders — Lista com badges UNASSIGNED/STARTED/PICKED UP + botão Assign
+ *   3. Map — Radar de zonas + posições de condutores (placeholder para mapa real)
+ *   4. Drivers — Lista de condutores com avatar, status dot, veículo
+ *   5. Reviews — Avaliações + distribuição de estrelas + AI Insights
+ *
+ * Navegação: sub-tabs internas (não polui o bottom nav do AppStaff).
+ */
+
 import { useMemo, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { colors } from "../../../ui/design-system/tokens/colors";
+import { ShiftTaskSummary } from "../components/ShiftTaskSummary";
 import { useStaff } from "../context/StaffContext";
 
+const theme = colors.modes.dashboard;
+
 type DeliveryTab = "home" | "orders" | "map" | "drivers" | "reviews";
-type OrderFilter = "all" | "pending" | "active" | "completed";
+type OrderFilter = "all" | "unassigned" | "active" | "completed";
 
 type DeliveryOrder = {
   id: string;
-  status: "pending" | "active" | "completed";
-  priorityTone: "critical" | "warning" | "stable";
-  priorityLabel: string;
+  status: "unassigned" | "started" | "picked_up" | "completed";
   orderNumber: string;
   customerName: string;
   address: string;
-  distanceLabel: string;
-  deadlineLabel: string;
-  amountLabel: string;
+  distanceKm: number;
+  timestamp: string;
+  amount: string;
   driverName?: string;
   driverInitials?: string;
-  zoneLabel?: string;
 };
 
-type DriverStatus = {
+type Driver = {
   id: string;
   name: string;
   initials: string;
-  state: "available" | "delivering" | "offline";
+  status: "online" | "busy" | "offline";
+  vehicle: "car" | "bike" | "scooter";
   activeOrders: number;
-  zoneLabel: string;
+  lastSeen: string;
 };
 
 const DELIVERY_HOME_BASE = "/app/staff/home/delivery";
 
-const TABS: Array<{ id: DeliveryTab; label: string }> = [
-  { id: "home", label: "Painel" },
-  { id: "orders", label: "Entregas" },
-  { id: "map", label: "Mapa" },
-  { id: "drivers", label: "Condutores" },
-  { id: "reviews", label: "Avaliações" },
+const TABS: Array<{ id: DeliveryTab; label: string; icon: string }> = [
+  { id: "home", label: "Home", icon: "🏠" },
+  { id: "orders", label: "Orders", icon: "📦" },
+  { id: "map", label: "Map", icon: "🗺️" },
+  { id: "drivers", label: "Drivers", icon: "🚗" },
+  { id: "reviews", label: "Reviews", icon: "⭐" },
 ];
 
-function resolveDeliveryTabFromPath(pathname: string): DeliveryTab {
+function resolveTab(pathname: string): DeliveryTab {
   if (pathname.endsWith("/orders")) return "orders";
   if (pathname.endsWith("/map")) return "map";
   if (pathname.endsWith("/drivers")) return "drivers";
@@ -49,899 +65,1120 @@ function resolveDeliveryTabFromPath(pathname: string): DeliveryTab {
   return "home";
 }
 
-function getDeliveryTabPath(tab: DeliveryTab): string {
+function tabPath(tab: DeliveryTab): string {
   return tab === "home" ? DELIVERY_HOME_BASE : `${DELIVERY_HOME_BASE}/${tab}`;
 }
 
-function panelStyle() {
-  return {
-    backgroundColor: colors.surface.layer1,
-    border: `1px solid ${colors.border.subtle}`,
-    borderRadius: 18,
-    padding: 16,
-  } as const;
-}
+// ── STATUS BADGES (padrão Shipday) ──
+const ORDER_BADGES: Record<
+  DeliveryOrder["status"],
+  { label: string; bg: string; color: string }
+> = {
+  unassigned: {
+    label: "UNASSIGNED",
+    bg: "rgba(239, 68, 68, 0.12)",
+    color: "#ef4444",
+  },
+  started: {
+    label: "STARTED",
+    bg: "rgba(59, 130, 246, 0.12)",
+    color: "#3b82f6",
+  },
+  picked_up: {
+    label: "PICKED UP",
+    bg: "rgba(245, 158, 11, 0.12)",
+    color: "#f59e0b",
+  },
+  completed: {
+    label: "COMPLETED",
+    bg: "rgba(34, 197, 94, 0.12)",
+    color: "#22c55e",
+  },
+};
 
-function metricCardStyle() {
-  return {
-    ...panelStyle(),
-    minHeight: 112,
-    display: "flex",
-    flexDirection: "column",
-    justifyContent: "space-between",
-  } as const;
-}
+const DRIVER_STATUS: Record<
+  Driver["status"],
+  { label: string; color: string }
+> = {
+  online: { label: "Online", color: "#22c55e" },
+  busy: { label: "Em rota", color: "#f59e0b" },
+  offline: { label: "Offline", color: theme.text.tertiary },
+};
 
-function pillStyle(selected: boolean) {
-  return {
-    border: "none",
-    borderRadius: 999,
-    padding: "10px 14px",
-    backgroundColor: selected ? colors.action.base : colors.surface.layer1,
-    color: selected ? colors.action.text : colors.text.secondary,
-    fontSize: 13,
-    fontWeight: 600,
-    cursor: "pointer",
-  } as const;
-}
-
-function statusTone(status: DeliveryOrder["status"]) {
-  if (status === "completed") {
-    return {
-      label: "Concluída",
-      background: "rgba(34, 197, 94, 0.12)",
-      color: colors.success.base,
-    };
-  }
-  if (status === "active") {
-    return {
-      label: "Em rota",
-      background: "rgba(245, 158, 11, 0.14)",
-      color: "#f59e0b",
-    };
-  }
-  return {
-    label: "Atribuir",
-    background: "rgba(59, 130, 246, 0.14)",
-    color: "#60a5fa",
-  };
-}
-
-function driverTone(state: DriverStatus["state"]) {
-  if (state === "delivering") {
-    return { label: "Em rota", color: "#f59e0b" };
-  }
-  if (state === "offline") {
-    return { label: "Offline", color: colors.text.tertiary };
-  }
-  return { label: "Disponível", color: colors.success.base };
-}
-
-function SectionLabel({ text }: { text: string }) {
-  return (
-    <div
-      style={{
-        fontSize: 12,
-        fontWeight: 700,
-        color: colors.text.tertiary,
-        letterSpacing: "0.06em",
-        textTransform: "uppercase",
-      }}
-    >
-      {text}
-    </div>
-  );
-}
+const VEHICLE_ICON: Record<Driver["vehicle"], string> = {
+  car: "🚗",
+  bike: "🚲",
+  scooter: "🛵",
+};
 
 export function DeliveryHome() {
-  const { tasks, activeLocation } = useStaff();
+  const { tasks } = useStaff();
   const { pathname } = useLocation();
   const navigate = useNavigate();
   const [orderFilter, setOrderFilter] = useState<OrderFilter>("all");
-  const activeTab = resolveDeliveryTabFromPath(pathname);
+  const [reviewTab, setReviewTab] = useState<"reviews" | "insights">(
+    "reviews",
+  );
+  const activeTab = resolveTab(pathname);
 
+  // ── DADOS DE ENTREGAS (derivados das tasks) ──
   const deliveryOrders = useMemo<DeliveryOrder[]>(() => {
     const relevant = tasks.filter(
-      (task) =>
-        task.assigneeRole === "delivery" ||
-        task.type === "delivery" ||
-        task.metadata?.channel === "delivery",
+      (t) =>
+        t.assigneeRole === "delivery" ||
+        t.type === "delivery" ||
+        t.metadata?.channel === "delivery",
     );
 
-    return relevant.map((task, index) => {
-      const metadata = (task.metadata ?? {}) as Record<string, unknown>;
+    return relevant.map((task, i) => {
+      const md = (task.metadata ?? {}) as Record<string, unknown>;
       const status: DeliveryOrder["status"] =
         task.status === "done"
           ? "completed"
-          : task.status === "focused" || metadata.started === true
-          ? "active"
-          : "pending";
-      const priorityTone: DeliveryOrder["priorityTone"] =
-        task.priority === "urgent"
-          ? "critical"
-          : task.priority === "attention"
-          ? "warning"
-          : "stable";
-      const priorityLabel =
-        priorityTone === "critical"
-          ? "Pressão alta"
-          : priorityTone === "warning"
-          ? "Atenção"
-          : "No prazo";
-      const zoneLabel =
-        typeof metadata.zoneLabel === "string" && metadata.zoneLabel.trim()
-          ? metadata.zoneLabel.trim()
-          : index % 2 === 0
-          ? "Zona Ibiza Centro"
-          : "Zona Sant Antoni";
+          : task.status === "focused" || md.started === true
+            ? md.pickedUp === true
+              ? "picked_up"
+              : "started"
+            : "unassigned";
+
       const driverName =
-        typeof metadata.driverName === "string" && metadata.driverName.trim()
-          ? metadata.driverName.trim()
-          : status === "pending"
-          ? undefined
-          : index % 2 === 0
-          ? "Carlos Lima"
-          : "Sofia Gastrobar";
-      const driverInitials = driverName
-        ? driverName
-            .split(/\s+/)
-            .filter(Boolean)
-            .slice(0, 2)
-            .map((part) => part[0]?.toUpperCase() ?? "")
-            .join("")
-        : "--";
+        typeof md.driverName === "string" && md.driverName.trim()
+          ? md.driverName.trim()
+          : status !== "unassigned"
+            ? i % 3 === 0
+              ? "Carlos Lima"
+              : i % 3 === 1
+                ? "Sofia Reis"
+                : "Miguel Costa"
+            : undefined;
 
       return {
         id: task.id,
         status,
-        priorityTone,
-        priorityLabel,
         orderNumber:
-          typeof metadata.orderNumber === "string" &&
-          metadata.orderNumber.trim()
-            ? metadata.orderNumber.trim()
-            : `${index + 1}`.padStart(5, "0"),
-        customerName: task.title,
-        address: task.description,
-        distanceLabel:
-          typeof metadata.distanceKm === "number"
-            ? `${metadata.distanceKm.toFixed(1)} km`
-            : "12.4 km",
-        deadlineLabel:
-          typeof metadata.deadlineLabel === "string" &&
-          metadata.deadlineLabel.trim()
-            ? metadata.deadlineLabel.trim()
-            : "03:34 PM",
-        amountLabel:
-          typeof metadata.amountLabel === "string" &&
-          metadata.amountLabel.trim()
-            ? metadata.amountLabel.trim()
-            : "EUR 0.00",
+          typeof md.orderNumber === "string" && md.orderNumber.trim()
+            ? md.orderNumber.trim()
+            : `${1000 + i}`,
+        customerName: task.title || `Cliente ${i + 1}`,
+        address: task.description || "Morada pendente",
+        distanceKm:
+          typeof md.distanceKm === "number" ? md.distanceKm : 2.5 + i * 1.3,
+        timestamp:
+          typeof md.timestamp === "string" ? md.timestamp : "14:30 PM",
+        amount:
+          typeof md.amountLabel === "string" && md.amountLabel.trim()
+            ? md.amountLabel.trim()
+            : `EUR ${(12 + i * 3.5).toFixed(2)}`,
         driverName,
-        driverInitials,
-        zoneLabel,
+        driverInitials: driverName
+          ? driverName
+              .split(/\s+/)
+              .slice(0, 2)
+              .map((w) => w[0]?.toUpperCase() ?? "")
+              .join("")
+          : undefined,
       };
     });
   }, [tasks]);
 
-  const drivers = useMemo<DriverStatus[]>(() => {
-    const entries = new Map<string, DriverStatus>();
-
-    deliveryOrders.forEach((order, index) => {
-      const name =
-        order.driverName ??
-        (index % 2 === 0 ? "Carlos Lima" : "Sofia Gastrobar");
-      const state: DriverStatus["state"] =
-        order.status === "active"
-          ? "delivering"
-          : order.status === "pending"
-          ? "available"
-          : "offline";
-      const current = entries.get(name);
-      if (current) {
-        current.activeOrders += order.status === "active" ? 1 : 0;
-        if (current.state !== "delivering" && state === "delivering") {
-          current.state = state;
-        }
+  // ── CONDUTORES (derivados de entregas) ──
+  const drivers = useMemo<Driver[]>(() => {
+    const map = new Map<string, Driver>();
+    deliveryOrders.forEach((o, i) => {
+      const name = o.driverName ?? `Condutor ${i + 1}`;
+      const existing = map.get(name);
+      if (existing) {
+        if (o.status === "started" || o.status === "picked_up")
+          existing.activeOrders++;
         return;
       }
-      entries.set(name, {
-        id: `${index}-${name}`,
+      map.set(name, {
+        id: `d-${i}`,
         name,
         initials:
-          order.driverInitials ||
+          o.driverInitials ??
           name
             .split(/\s+/)
-            .filter(Boolean)
             .slice(0, 2)
-            .map((part) => part[0]?.toUpperCase() ?? "")
+            .map((w) => w[0]?.toUpperCase() ?? "")
             .join(""),
-        state,
-        activeOrders: order.status === "active" ? 1 : 0,
-        zoneLabel: order.zoneLabel ?? "Cobertura geral",
+        status:
+          o.status === "started" || o.status === "picked_up"
+            ? "busy"
+            : o.status === "unassigned"
+              ? "online"
+              : "offline",
+        vehicle: (["car", "bike", "scooter"] as const)[i % 3],
+        activeOrders:
+          o.status === "started" || o.status === "picked_up" ? 1 : 0,
+        lastSeen: "agora",
       });
     });
-
-    if (entries.size === 0) {
-      entries.set("Carlos Lima", {
-        id: "fallback-driver",
+    if (map.size === 0) {
+      map.set("Carlos Lima", {
+        id: "d-fallback",
         name: "Carlos Lima",
         initials: "CL",
-        state: "available",
+        status: "online",
+        vehicle: "car",
         activeOrders: 0,
-        zoneLabel: "Cobertura geral",
+        lastSeen: "agora",
       });
     }
-
-    return Array.from(entries.values());
+    return Array.from(map.values());
   }, [deliveryOrders]);
 
-  const pendingOrders = deliveryOrders.filter(
-    (order) => order.status === "pending",
-  );
-  const activeOrders = deliveryOrders.filter(
-    (order) => order.status === "active",
-  );
-  const completedOrders = deliveryOrders.filter(
-    (order) => order.status === "completed",
-  );
-  const delayedOrders = deliveryOrders.filter(
-    (order) => order.status !== "completed" && order.priorityTone !== "stable",
-  );
-  const filteredOrders = deliveryOrders.filter((order) => {
-    if (orderFilter === "pending") return order.status === "pending";
-    if (orderFilter === "active") return order.status === "active";
-    if (orderFilter === "completed") return order.status === "completed";
+  // ── MÉTRICAS ──
+  const unassigned = deliveryOrders.filter(
+    (o) => o.status === "unassigned",
+  ).length;
+  const active = deliveryOrders.filter(
+    (o) => o.status === "started" || o.status === "picked_up",
+  ).length;
+  const completed = deliveryOrders.filter(
+    (o) => o.status === "completed",
+  ).length;
+  const total = deliveryOrders.length;
+  const onTimeRate = total > 0 ? Math.round(((total - unassigned) / total) * 100) : 100;
+  const avgDistance =
+    total > 0
+      ? (
+          deliveryOrders.reduce((s, o) => s + o.distanceKm, 0) / total
+        ).toFixed(1)
+      : "0.0";
+  const onlineDrivers = drivers.filter((d) => d.status !== "offline").length;
+
+  // ── FILTRAGEM DE PEDIDOS ──
+  const filteredOrders = deliveryOrders.filter((o) => {
+    if (orderFilter === "unassigned") return o.status === "unassigned";
+    if (orderFilter === "active")
+      return o.status === "started" || o.status === "picked_up";
+    if (orderFilter === "completed") return o.status === "completed";
     return true;
   });
-  const nextOrder =
-    pendingOrders[0] ?? activeOrders[0] ?? deliveryOrders[0] ?? null;
-  const activeDrivers = drivers.filter(
-    (driver) => driver.state !== "offline",
-  ).length;
-  const readyDrivers = drivers.filter(
-    (driver) => driver.state === "available",
-  ).length;
-  const avgDistance =
-    deliveryOrders.length === 0
-      ? "0 km"
-      : `${(
-          deliveryOrders.reduce((sum, order) => {
-            const numeric = Number(order.distanceLabel.replace(/[^0-9.]/g, ""));
-            return sum + (Number.isFinite(numeric) ? numeric : 0);
-          }, 0) / deliveryOrders.length
-        ).toFixed(1)} km`;
-  const locationName = activeLocation?.name ?? "Operação em mobilidade";
-  const hotspots = Array.from(
-    deliveryOrders.reduce((acc, order) => {
-      const key = order.zoneLabel ?? "Cobertura geral";
-      acc.set(key, (acc.get(key) ?? 0) + 1);
-      return acc;
-    }, new Map<string, number>()),
-  )
-    .sort((left, right) => right[1] - left[1])
-    .slice(0, 2);
 
-  const renderOverview = () => (
-    <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-      <div
-        style={{
-          ...panelStyle(),
-          display: "grid",
-          gap: 14,
-          background:
-            delayedOrders.length > 0
-              ? "linear-gradient(135deg, rgba(245, 158, 11, 0.18), rgba(20, 20, 20, 0.92))"
-              : "linear-gradient(135deg, rgba(34, 197, 94, 0.16), rgba(20, 20, 20, 0.92))",
-        }}
-      >
-        <div>
-          <div
-            style={{
-              fontSize: 12,
-              fontWeight: 700,
-              color: colors.text.tertiary,
-              letterSpacing: "0.06em",
-              textTransform: "uppercase",
-            }}
-          >
-            Painel de despacho
-          </div>
-          <div
-            style={{
-              marginTop: 8,
-              fontSize: 24,
-              fontWeight: 700,
-              color: colors.text.primary,
-              lineHeight: 1.1,
-            }}
-          >
-            {pendingOrders.length > 0
-              ? `${pendingOrders.length} entrega${
-                  pendingOrders.length !== 1 ? "s" : ""
-                } a pedir despacho`
-              : activeOrders.length > 0
-              ? `${activeOrders.length} entrega${
-                  activeOrders.length !== 1 ? "s" : ""
-                } em campo`
-              : "Operação pronta para novo despacho"}
-          </div>
-          <div
-            style={{
-              marginTop: 8,
-              fontSize: 14,
-              color: colors.text.secondary,
-              lineHeight: 1.5,
-            }}
-          >
-            {locationName} · {readyDrivers} condutor
-            {readyDrivers !== 1 ? "es" : ""} pronto
-            {readyDrivers !== 1 ? "s" : ""} · {delayedOrders.length} entrega
-            {delayedOrders.length !== 1 ? "s" : ""} sob pressão
-          </div>
-        </div>
-
-        <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-          <button
-            type="button"
-            style={pillStyle(true)}
-            onClick={() => navigate(getDeliveryTabPath("orders"))}
-          >
-            Atribuir agora
-          </button>
-          <button
-            type="button"
-            style={pillStyle(false)}
-            onClick={() => navigate(getDeliveryTabPath("map"))}
-          >
-            Abrir cobertura
-          </button>
-        </div>
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  // TAB: HOME (Shipday Dashboard pattern)
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  const renderHome = () => (
+    <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+      {/* Date filter pill */}
+      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+        <span
+          style={{
+            fontSize: 12,
+            fontWeight: 600,
+            color: theme.text.secondary,
+            padding: "6px 12px",
+            borderRadius: 999,
+            backgroundColor: theme.surface.layer1,
+            border: `1px solid ${colors.border.subtle}`,
+          }}
+        >
+          Esta semana
+        </span>
       </div>
 
+      {/* KPI Cards (padrão Shipday: 5 métricas em grid) */}
       <div
         style={{
           display: "grid",
-          gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
-          gap: 12,
+          gridTemplateColumns: "1fr 1fr",
+          gap: 10,
         }}
       >
-        {[
-          { label: "Por atribuir", value: pendingOrders.length },
-          { label: "Em rota", value: activeOrders.length },
-          { label: "Sob pressão", value: delayedOrders.length },
-          { label: "Condutores prontos", value: readyDrivers },
-        ].map((item) => (
-          <div key={item.label} style={metricCardStyle()}>
-            <div
-              style={{
-                fontSize: 28,
-                fontWeight: 700,
-                color: colors.text.primary,
-              }}
-            >
-              {item.value}
-            </div>
-            <div
-              style={{
-                fontSize: 12,
-                fontWeight: 600,
-                color: colors.text.tertiary,
-              }}
-            >
-              {item.label}
-            </div>
-          </div>
-        ))}
+        <KPICard
+          value={completed.toString()}
+          label="Entregas concluidas"
+          trend={completed > 0 ? "+12%" : undefined}
+          trendPositive
+        />
+        <KPICard
+          value="28min"
+          label="Tempo medio pedido-entrega"
+          trend="-3min"
+          trendPositive
+        />
+        <KPICard
+          value="18min"
+          label="Tempo medio recolha-entrega"
+          trend="-1min"
+          trendPositive
+        />
+        <KPICard
+          value={`${onTimeRate}%`}
+          label="Entregas no prazo"
+          trend={onTimeRate >= 90 ? undefined : "-5%"}
+          trendPositive={onTimeRate >= 90}
+        />
+        <KPICard
+          value="4.7"
+          label="Avaliacao media"
+          icon="⭐"
+          fullWidth
+        />
       </div>
 
-      <div style={panelStyle()}>
-        <SectionLabel text="Fila crítica" />
-        <div style={{ display: "grid", gap: 10, marginTop: 12 }}>
-          {(pendingOrders.length > 0 ? pendingOrders : delayedOrders)
-            .slice(0, 3)
-            .map((order) => (
-              <div
-                key={order.id}
-                style={{
-                  display: "grid",
-                  gap: 6,
-                  padding: "12px 14px",
-                  borderRadius: 14,
-                  backgroundColor: colors.surface.base,
-                }}
-              >
-                <div
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "space-between",
-                    gap: 12,
-                  }}
-                >
-                  <span style={{ fontSize: 14, fontWeight: 700 }}>
-                    #{order.orderNumber} · {order.customerName}
-                  </span>
-                  <span
-                    style={{
-                      fontSize: 12,
-                      fontWeight: 700,
-                      color:
-                        order.priorityTone === "critical"
-                          ? colors.destructive.base
-                          : order.priorityTone === "warning"
-                          ? "#f59e0b"
-                          : colors.success.base,
-                    }}
-                  >
-                    {order.priorityLabel}
-                  </span>
-                </div>
-                <div style={{ fontSize: 13, color: colors.text.secondary }}>
-                  {order.zoneLabel} · {order.distanceLabel} ·{" "}
-                  {order.deadlineLabel}
-                </div>
-              </div>
-            ))}
+      {/* ── CHECKLIST ── */}
+      <ShiftTaskSummary compact maxVisible={4} />
+
+      {/* Quick Actions */}
+      <div
+        style={{
+          padding: "14px 16px",
+          borderRadius: 14,
+          backgroundColor: theme.surface.layer1,
+          display: "flex",
+          flexDirection: "column",
+          gap: 10,
+        }}
+      >
+        <span
+          style={{
+            fontSize: 10,
+            fontWeight: 700,
+            color: theme.text.tertiary,
+            letterSpacing: "0.06em",
+            textTransform: "uppercase",
+          }}
+        >
+          Resumo rapido
+        </span>
+        <div style={{ display: "flex", gap: 16 }}>
+          <QuickStat value={unassigned} label="Por atribuir" alert={unassigned > 0} />
+          <QuickStat value={active} label="Em rota" />
+          <QuickStat value={onlineDrivers} label="Condutores" />
+          <QuickStat value={`${avgDistance} km`} label="Dist. media" />
         </div>
       </div>
 
-      <div style={panelStyle()}>
-        <SectionLabel text="Próxima decisão" />
-        {nextOrder ? (
-          <div
-            style={{
-              display: "flex",
-              flexDirection: "column",
-              gap: 10,
-              marginTop: 12,
-            }}
-          >
-            <div
-              style={{
-                fontSize: 20,
-                fontWeight: 700,
-                color: colors.text.primary,
-              }}
-            >
-              {nextOrder.customerName}
-            </div>
-            <div style={{ fontSize: 14, color: colors.text.secondary }}>
-              #{nextOrder.orderNumber} · {nextOrder.zoneLabel} ·{" "}
-              {nextOrder.amountLabel}
-            </div>
-            <div style={{ fontSize: 14, color: colors.text.secondary }}>
-              {nextOrder.address}
-            </div>
-            <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-              <button
-                type="button"
-                style={pillStyle(true)}
-                onClick={() => navigate(getDeliveryTabPath("orders"))}
-              >
-                Atribuir agora
-              </button>
-              <button
-                type="button"
-                style={pillStyle(false)}
-                onClick={() => navigate(getDeliveryTabPath("map"))}
-              >
-                Abrir mapa
-              </button>
-              <button
-                type="button"
-                style={pillStyle(false)}
-                onClick={() => navigate(getDeliveryTabPath("drivers"))}
-              >
-                Ver condutores
-              </button>
-            </div>
-          </div>
-        ) : (
-          <div
-            style={{
-              marginTop: 12,
-              fontSize: 14,
-              color: colors.text.secondary,
-            }}
-          >
-            Sem entregas na fila neste momento.
-          </div>
-        )}
-      </div>
-
-      <div style={panelStyle()}>
-        <SectionLabel text="Pulso operacional" />
-        <div style={{ display: "grid", gap: 10, marginTop: 12 }}>
-          <div
-            style={{
-              fontSize: 18,
-              fontWeight: 700,
-              color: colors.text.primary,
-            }}
-          >
-            {hotspots.length === 0
-              ? "Cobertura sem hotspots"
-              : `${
-                  hotspots[0]?.[0] ?? "Cobertura geral"
-                } lidera a pressão do turno`}
-          </div>
-          <div style={{ fontSize: 14, color: colors.text.secondary }}>
-            {activeDrivers} condutor
-            {activeDrivers !== 1 ? "es" : ""} monitorizado
-            {activeDrivers !== 1 ? "s" : ""} · distância média {avgDistance} ·{" "}
-            {completedOrders.length} concluída
-            {completedOrders.length !== 1 ? "s" : ""} neste ciclo.
-          </div>
-        </div>
-      </div>
+      {/* Urgent orders (if any unassigned) */}
+      {unassigned > 0 && (
+        <button
+          type="button"
+          onClick={() => {
+            setOrderFilter("unassigned");
+            navigate(tabPath("orders"));
+          }}
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 10,
+            padding: "12px 16px",
+            borderRadius: 12,
+            border: `1px solid ${theme.destructive.base}30`,
+            background: `${theme.destructive.base}08`,
+            color: theme.text.primary,
+            fontSize: 13,
+            fontWeight: 600,
+            cursor: "pointer",
+          }}
+        >
+          🚨 {unassigned} entrega{unassigned !== 1 ? "s" : ""} sem condutor
+          atribuido
+        </button>
+      )}
     </div>
   );
 
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  // TAB: ORDERS (Shipday Order List pattern)
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   const renderOrders = () => (
-    <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-      <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-        {[
-          { id: "all", label: `Todas (${deliveryOrders.length})` },
-          { id: "pending", label: `Por atribuir (${pendingOrders.length})` },
-          { id: "active", label: `Em rota (${activeOrders.length})` },
-          { id: "completed", label: `Concluídas (${completedOrders.length})` },
-        ].map((filter) => (
+    <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+      {/* Filter pills */}
+      <div style={{ display: "flex", gap: 8, overflowX: "auto" }}>
+        {(
+          [
+            { id: "all", label: `Todas (${total})` },
+            { id: "unassigned", label: `Sem condutor (${unassigned})` },
+            { id: "active", label: `Em rota (${active})` },
+            { id: "completed", label: `Concluidas (${completed})` },
+          ] as const
+        ).map((f) => (
           <button
-            key={filter.id}
+            key={f.id}
             type="button"
-            onClick={() => setOrderFilter(filter.id as OrderFilter)}
-            style={pillStyle(orderFilter === filter.id)}
+            onClick={() => setOrderFilter(f.id)}
+            style={{
+              border: "none",
+              borderRadius: 999,
+              padding: "8px 14px",
+              backgroundColor:
+                orderFilter === f.id
+                  ? theme.action.base
+                  : theme.surface.layer1,
+              color:
+                orderFilter === f.id
+                  ? colors.action.text
+                  : theme.text.secondary,
+              fontSize: 12,
+              fontWeight: 600,
+              cursor: "pointer",
+              whiteSpace: "nowrap",
+            }}
           >
-            {filter.label}
+            {f.label}
           </button>
         ))}
       </div>
 
+      {/* Order cards (Shipday pattern: badge + name + address + distance + timestamp + assign) */}
       {filteredOrders.length === 0 ? (
-        <div style={{ ...panelStyle(), textAlign: "center", padding: 32 }}>
-          <div style={{ fontSize: 18, fontWeight: 700 }}>Fila limpa</div>
-          <div
-            style={{ marginTop: 8, fontSize: 14, color: colors.text.secondary }}
-          >
-            Nenhuma entrega nesta aba.
-          </div>
+        <div
+          style={{
+            padding: "40px 16px",
+            textAlign: "center",
+            color: theme.text.tertiary,
+            fontSize: 14,
+          }}
+        >
+          Nenhuma entrega nesta categoria
         </div>
       ) : (
         filteredOrders.map((order) => {
-          const tone = statusTone(order.status);
+          const badge = ORDER_BADGES[order.status];
           return (
-            <article
+            <div
               key={order.id}
-              style={{ ...panelStyle(), display: "grid", gap: 12 }}
+              style={{
+                padding: "14px 16px",
+                borderRadius: 14,
+                backgroundColor: theme.surface.layer1,
+                display: "flex",
+                flexDirection: "column",
+                gap: 10,
+              }}
             >
+              {/* Row 1: Badge + Order # */}
               <div
                 style={{
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "space-between",
-                  gap: 12,
                 }}
               >
                 <span
                   style={{
-                    display: "inline-flex",
-                    alignItems: "center",
-                    borderRadius: 999,
-                    padding: "8px 12px",
-                    backgroundColor: tone.background,
-                    color: tone.color,
-                    fontSize: 12,
+                    fontSize: 10,
                     fontWeight: 700,
-                    textTransform: "uppercase",
                     letterSpacing: "0.04em",
+                    padding: "4px 10px",
+                    borderRadius: 999,
+                    backgroundColor: badge.bg,
+                    color: badge.color,
                   }}
                 >
-                  {tone.label}
+                  {badge.label}
                 </span>
-                <span style={{ fontSize: 13, color: colors.text.tertiary }}>
-                  {order.distanceLabel} · {order.deadlineLabel}
+                <span
+                  style={{
+                    fontSize: 12,
+                    color: theme.text.tertiary,
+                    fontVariantNumeric: "tabular-nums",
+                  }}
+                >
+                  #{order.orderNumber}
                 </span>
               </div>
-              <div style={{ fontSize: 18, fontWeight: 700 }}>
-                #{order.orderNumber} · {order.customerName}
-              </div>
-              <div style={{ fontSize: 14, color: colors.text.secondary }}>
-                {order.address}
-              </div>
+
+              {/* Row 2: Customer + Amount */}
               <div
                 style={{
                   display: "flex",
-                  gap: 12,
-                  flexWrap: "wrap",
-                  fontSize: 13,
-                  color: colors.text.secondary,
+                  alignItems: "center",
+                  justifyContent: "space-between",
                 }}
               >
-                <span>{order.zoneLabel}</span>
-                <span>{order.amountLabel}</span>
-                <span>
-                  {order.driverName
-                    ? `Condutor: ${order.driverName}`
-                    : "Aguardando atribuição"}
+                <span
+                  style={{
+                    fontSize: 15,
+                    fontWeight: 700,
+                    color: theme.text.primary,
+                  }}
+                >
+                  {order.customerName}
+                </span>
+                <span
+                  style={{
+                    fontSize: 13,
+                    fontWeight: 600,
+                    color: theme.text.secondary,
+                  }}
+                >
+                  {order.amount}
                 </span>
               </div>
-              <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-                <button
-                  type="button"
-                  style={pillStyle(order.status === "pending")}
-                >
-                  {order.status === "pending"
-                    ? "Atribuir"
-                    : order.status === "active"
-                    ? "Abrir rota"
-                    : "Rever entrega"}
-                </button>
+
+              {/* Row 3: Address */}
+              <div
+                style={{
+                  fontSize: 13,
+                  color: theme.text.secondary,
+                  lineHeight: 1.4,
+                }}
+              >
+                {order.address}
               </div>
-            </article>
+
+              {/* Row 4: Distance + Time + Assign/Driver */}
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  gap: 8,
+                }}
+              >
+                <div
+                  style={{
+                    display: "flex",
+                    gap: 12,
+                    fontSize: 12,
+                    color: theme.text.tertiary,
+                  }}
+                >
+                  <span>📍 {order.distanceKm.toFixed(1)} km</span>
+                  <span>🕐 {order.timestamp}</span>
+                </div>
+                {order.status === "unassigned" ? (
+                  <button
+                    type="button"
+                    style={{
+                      border: "none",
+                      borderRadius: 8,
+                      padding: "6px 14px",
+                      backgroundColor: theme.action.base,
+                      color: colors.action.text,
+                      fontSize: 12,
+                      fontWeight: 700,
+                      cursor: "pointer",
+                    }}
+                  >
+                    Assign
+                  </button>
+                ) : order.driverName ? (
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 6,
+                    }}
+                  >
+                    <span
+                      style={{
+                        width: 24,
+                        height: 24,
+                        borderRadius: 999,
+                        backgroundColor: theme.action.base,
+                        color: colors.action.text,
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        fontSize: 10,
+                        fontWeight: 700,
+                      }}
+                    >
+                      {order.driverInitials}
+                    </span>
+                    <span
+                      style={{
+                        fontSize: 12,
+                        color: theme.text.secondary,
+                      }}
+                    >
+                      {order.driverName}
+                    </span>
+                  </div>
+                ) : null}
+              </div>
+            </div>
           );
         })
       )}
     </div>
   );
 
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  // TAB: MAP (Shipday Map pattern — placeholder radar)
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   const renderMap = () => {
-    const zoneCounts = [
-      {
-        zone: "Ibiza Centro",
-        value: deliveryOrders.filter(
-          (order) => order.zoneLabel === "Zona Ibiza Centro",
-        ).length,
-      },
-      {
-        zone: "Sant Antoni",
-        value: deliveryOrders.filter(
-          (order) => order.zoneLabel === "Zona Sant Antoni",
-        ).length,
-      },
-      {
-        zone: "Cobertura externa",
-        value: Math.max(deliveryOrders.length - 2, 0),
-      },
-    ];
-
+    const onlineD = drivers.filter((d) => d.status !== "offline");
     return (
-      <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+      <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+        {/* Map placeholder */}
         <div
           style={{
-            ...panelStyle(),
-            minHeight: 260,
-            display: "grid",
-            placeItems: "center",
+            height: 280,
+            borderRadius: 16,
+            backgroundColor: "#1a2332",
+            border: `1px solid ${colors.border.subtle}`,
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: 12,
+            position: "relative",
+            overflow: "hidden",
           }}
         >
-          <div style={{ textAlign: "center", maxWidth: 360 }}>
-            <div style={{ marginTop: 14, fontSize: 22, fontWeight: 700 }}>
-              Cobertura operacional
-            </div>
+          {/* Simulated map grid */}
+          <div
+            style={{
+              position: "absolute",
+              inset: 0,
+              opacity: 0.08,
+              backgroundImage:
+                "linear-gradient(rgba(255,255,255,0.3) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.3) 1px, transparent 1px)",
+              backgroundSize: "40px 40px",
+            }}
+          />
+          {/* Driver pins */}
+          {onlineD.map((d, i) => (
             <div
+              key={d.id}
               style={{
-                marginTop: 8,
-                fontSize: 14,
-                color: colors.text.secondary,
-                lineHeight: 1.5,
+                position: "absolute",
+                top: `${25 + (i * 20) % 60}%`,
+                left: `${15 + (i * 30) % 70}%`,
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                gap: 2,
               }}
             >
-              O mapa entra como radar de zonas, carga e cobertura do turno, sem
-              sair da shell do AppStaff.
-            </div>
-          </div>
-        </div>
-
-        <div style={panelStyle()}>
-          <SectionLabel text="Zonas" />
-          <div style={{ display: "grid", gap: 10, marginTop: 12 }}>
-            {zoneCounts.map((zone) => (
               <div
-                key={zone.zone}
                 style={{
+                  width: 32,
+                  height: 32,
+                  borderRadius: 999,
+                  backgroundColor:
+                    d.status === "busy" ? "#f59e0b" : "#22c55e",
+                  color: "#000",
                   display: "flex",
                   alignItems: "center",
-                  justifyContent: "space-between",
-                  gap: 12,
-                  padding: "12px 14px",
-                  borderRadius: 12,
-                  backgroundColor: colors.surface.base,
+                  justifyContent: "center",
+                  fontSize: 11,
+                  fontWeight: 700,
+                  border: "2px solid rgba(255,255,255,0.9)",
+                  boxShadow: "0 2px 8px rgba(0,0,0,0.3)",
                 }}
               >
-                <span style={{ fontSize: 14, fontWeight: 600 }}>
-                  {zone.zone}
-                </span>
-                <span style={{ fontSize: 13, color: colors.text.secondary }}>
-                  {zone.value} entrega(s)
-                </span>
+                {d.initials}
               </div>
-            ))}
-          </div>
+              <span
+                style={{
+                  fontSize: 9,
+                  color: "rgba(255,255,255,0.7)",
+                  fontWeight: 600,
+                  backgroundColor: "rgba(0,0,0,0.5)",
+                  padding: "1px 6px",
+                  borderRadius: 4,
+                }}
+              >
+                {d.lastSeen}
+              </span>
+            </div>
+          ))}
+          {onlineD.length === 0 && (
+            <span style={{ fontSize: 14, color: "rgba(255,255,255,0.4)" }}>
+              Sem condutores ativos no mapa
+            </span>
+          )}
         </div>
 
-        <div style={panelStyle()}>
-          <SectionLabel text="Hotspots" />
-          <div style={{ display: "grid", gap: 10, marginTop: 12 }}>
-            {hotspots.length === 0 ? (
-              <div style={{ fontSize: 14, color: colors.text.secondary }}>
-                Sem zonas críticas neste momento.
-              </div>
-            ) : (
-              hotspots.map(([zone, count]) => (
-                <div
-                  key={zone}
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "space-between",
-                    gap: 12,
-                    padding: "12px 14px",
-                    borderRadius: 12,
-                    backgroundColor: colors.surface.base,
-                  }}
-                >
-                  <span style={{ fontSize: 14, fontWeight: 700 }}>{zone}</span>
-                  <span style={{ fontSize: 13, color: colors.text.secondary }}>
-                    {count} ordem(ns)
-                  </span>
-                </div>
-              ))
-            )}
-          </div>
+        {/* Driver summary below map */}
+        <div
+          style={{
+            padding: "14px 16px",
+            borderRadius: 14,
+            backgroundColor: theme.surface.layer1,
+            display: "flex",
+            flexDirection: "column",
+            gap: 10,
+          }}
+        >
+          <span
+            style={{
+              fontSize: 10,
+              fontWeight: 700,
+              color: theme.text.tertiary,
+              letterSpacing: "0.06em",
+              textTransform: "uppercase",
+            }}
+          >
+            Condutores no mapa
+          </span>
+          {onlineD.map((d) => (
+            <div
+              key={d.id}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 10,
+                padding: "8px 0",
+                borderBottom: `1px solid ${colors.border.subtle}`,
+              }}
+            >
+              <div
+                style={{
+                  width: 8,
+                  height: 8,
+                  borderRadius: "50%",
+                  backgroundColor: DRIVER_STATUS[d.status].color,
+                  flexShrink: 0,
+                }}
+              />
+              <span
+                style={{
+                  flex: 1,
+                  fontSize: 14,
+                  fontWeight: 600,
+                  color: theme.text.primary,
+                }}
+              >
+                {d.name}
+              </span>
+              <span style={{ fontSize: 12, color: theme.text.tertiary }}>
+                {d.activeOrders} entrega{d.activeOrders !== 1 ? "s" : ""}
+              </span>
+            </div>
+          ))}
         </div>
       </div>
     );
   };
 
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  // TAB: DRIVERS (Shipday Drivers List pattern)
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   const renderDrivers = () => (
-    <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-      {drivers.map((driver) => {
-        const tone = driverTone(driver.state);
+    <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+      {/* Header with count + add button */}
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+        }}
+      >
+        <span style={{ fontSize: 13, color: theme.text.secondary }}>
+          {drivers.length} condutor{drivers.length !== 1 ? "es" : ""} ·{" "}
+          {onlineDrivers} online
+        </span>
+        <button
+          type="button"
+          style={{
+            border: "none",
+            borderRadius: 8,
+            padding: "6px 12px",
+            backgroundColor: theme.action.base,
+            color: colors.action.text,
+            fontSize: 12,
+            fontWeight: 700,
+            cursor: "pointer",
+          }}
+        >
+          + Adicionar
+        </button>
+      </div>
+
+      {/* Driver cards (Shipday pattern: avatar + name + status dot + vehicle) */}
+      {drivers.map((d) => {
+        const st = DRIVER_STATUS[d.status];
         return (
           <div
-            key={driver.id}
+            key={d.id}
             style={{
-              ...panelStyle(),
-              display: "grid",
-              gridTemplateColumns: "48px minmax(0, 1fr) auto",
-              gap: 12,
+              display: "flex",
               alignItems: "center",
+              gap: 12,
+              padding: "14px 16px",
+              borderRadius: 14,
+              backgroundColor: theme.surface.layer1,
             }}
           >
-            <div
-              style={{
-                width: 48,
-                height: 48,
-                borderRadius: 999,
-                backgroundColor: colors.action.base,
-                color: colors.action.text,
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                fontSize: 16,
-                fontWeight: 700,
-              }}
-            >
-              {driver.initials}
-            </div>
-            <div>
-              <div style={{ fontSize: 16, fontWeight: 700 }}>{driver.name}</div>
+            {/* Avatar with status dot */}
+            <div style={{ position: "relative", flexShrink: 0 }}>
               <div
                 style={{
-                  marginTop: 4,
-                  fontSize: 13,
-                  color: colors.text.secondary,
+                  width: 44,
+                  height: 44,
+                  borderRadius: 999,
+                  backgroundColor: `${theme.action.base}20`,
+                  color: theme.action.base,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  fontSize: 15,
+                  fontWeight: 700,
                 }}
               >
-                {driver.zoneLabel} · {driver.activeOrders} entrega(s) ativa(s)
+                {d.initials}
               </div>
               <div
                 style={{
-                  marginTop: 6,
+                  position: "absolute",
+                  bottom: 0,
+                  right: 0,
+                  width: 12,
+                  height: 12,
+                  borderRadius: 999,
+                  backgroundColor: st.color,
+                  border: `2px solid ${theme.surface.layer1}`,
+                }}
+              />
+            </div>
+
+            {/* Name + status */}
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div
+                style={{
+                  fontSize: 15,
+                  fontWeight: 700,
+                  color: theme.text.primary,
+                }}
+              >
+                {d.name}
+              </div>
+              <div
+                style={{
                   fontSize: 12,
-                  color: colors.text.tertiary,
+                  color: theme.text.tertiary,
+                  marginTop: 2,
                 }}
               >
-                Último update: há poucos segundos
+                {st.label} · {d.activeOrders} entrega
+                {d.activeOrders !== 1 ? "s" : ""} · Visto {d.lastSeen}
               </div>
             </div>
-            <div style={{ display: "grid", gap: 8, justifyItems: "end" }}>
-              <div style={{ fontSize: 13, fontWeight: 700, color: tone.color }}>
-                {tone.label}
-              </div>
-              <button
-                type="button"
-                style={pillStyle(driver.state === "available")}
-              >
-                {driver.state === "available" ? "Atribuir" : "Ver rota"}
-              </button>
-            </div>
+
+            {/* Vehicle icon */}
+            <span style={{ fontSize: 20, flexShrink: 0 }}>
+              {VEHICLE_ICON[d.vehicle]}
+            </span>
           </div>
         );
       })}
     </div>
   );
 
-  const renderReviews = () => (
-    <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
-          gap: 12,
-        }}
-      >
-        <div style={metricCardStyle()}>
-          <div style={{ fontSize: 26, fontWeight: 700 }}>
-            {completedOrders.length}
-          </div>
-          <div
-            style={{
-              fontSize: 12,
-              fontWeight: 600,
-              color: colors.text.tertiary,
-            }}
-          >
-            Entregas fechadas
-          </div>
-        </div>
-        <div style={metricCardStyle()}>
-          <div style={{ fontSize: 26, fontWeight: 700 }}>
-            {delayedOrders.length}
-          </div>
-          <div
-            style={{
-              fontSize: 12,
-              fontWeight: 600,
-              color: colors.text.tertiary,
-            }}
-          >
-            Casos sob pressão
-          </div>
-        </div>
-      </div>
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  // TAB: REVIEWS (Shipday Reviews + AI Insights pattern)
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  const renderReviews = () => {
+    // Mock star distribution (Shipday pattern)
+    const starDist = [
+      { stars: 5, count: 42, pct: 65 },
+      { stars: 4, count: 15, pct: 23 },
+      { stars: 3, count: 5, pct: 8 },
+      { stars: 2, count: 2, pct: 3 },
+      { stars: 1, count: 1, pct: 1 },
+    ];
 
-      <div style={panelStyle()}>
-        <SectionLabel text="Leitura operacional" />
+    return (
+      <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+        {/* Summary cards */}
         <div
           style={{
-            marginTop: 12,
-            fontSize: 14,
-            color: colors.text.secondary,
-            lineHeight: 1.55,
+            display: "grid",
+            gridTemplateColumns: "1fr 1fr",
+            gap: 10,
           }}
         >
-          Avaliações entram como leitura de SLA e qualidade do turno. Nesta fase
-          continuam a ser contexto operacional, não um fluxo autónomo.
+          <div
+            style={{
+              padding: "16px",
+              borderRadius: 14,
+              backgroundColor: theme.surface.layer1,
+              textAlign: "center",
+            }}
+          >
+            <div
+              style={{
+                fontSize: 28,
+                fontWeight: 700,
+                color: theme.text.primary,
+              }}
+            >
+              4.7
+            </div>
+            <div style={{ fontSize: 14, color: "#f59e0b", marginTop: 2 }}>
+              ⭐⭐⭐⭐⭐
+            </div>
+            <div
+              style={{
+                fontSize: 11,
+                color: theme.text.tertiary,
+                marginTop: 4,
+              }}
+            >
+              Nota media
+            </div>
+          </div>
+          <div
+            style={{
+              padding: "16px",
+              borderRadius: 14,
+              backgroundColor: theme.surface.layer1,
+              textAlign: "center",
+            }}
+          >
+            <div
+              style={{
+                fontSize: 28,
+                fontWeight: 700,
+                color: theme.text.primary,
+              }}
+            >
+              65
+            </div>
+            <div
+              style={{
+                fontSize: 11,
+                color: theme.text.tertiary,
+                marginTop: 6,
+              }}
+            >
+              Total avaliacoes
+            </div>
+          </div>
         </div>
-      </div>
 
-      <div style={{ ...panelStyle(), textAlign: "center", padding: 32 }}>
-        <div style={{ fontSize: 18, fontWeight: 700 }}>
-          Leitura qualitativa em construção
-        </div>
+        {/* Star distribution (Shipday pattern: bar chart) */}
         <div
-          style={{ marginTop: 8, fontSize: 14, color: colors.text.secondary }}
+          style={{
+            padding: "16px",
+            borderRadius: 14,
+            backgroundColor: theme.surface.layer1,
+            display: "flex",
+            flexDirection: "column",
+            gap: 8,
+          }}
         >
-          A próxima iteração liga esta área ao SLA real do serviço em campo.
+          <span
+            style={{
+              fontSize: 10,
+              fontWeight: 700,
+              color: theme.text.tertiary,
+              letterSpacing: "0.06em",
+              textTransform: "uppercase",
+            }}
+          >
+            Distribuicao
+          </span>
+          {starDist.map((s) => (
+            <div
+              key={s.stars}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 8,
+              }}
+            >
+              <span
+                style={{
+                  fontSize: 12,
+                  fontWeight: 600,
+                  color: theme.text.secondary,
+                  width: 16,
+                  textAlign: "right",
+                }}
+              >
+                {s.stars}
+              </span>
+              <span style={{ fontSize: 12, color: "#f59e0b" }}>⭐</span>
+              <div
+                style={{
+                  flex: 1,
+                  height: 8,
+                  borderRadius: 4,
+                  backgroundColor: `${theme.text.tertiary}20`,
+                  overflow: "hidden",
+                }}
+              >
+                <div
+                  style={{
+                    height: "100%",
+                    width: `${s.pct}%`,
+                    borderRadius: 4,
+                    backgroundColor:
+                      s.stars >= 4
+                        ? "#22c55e"
+                        : s.stars === 3
+                          ? "#f59e0b"
+                          : "#ef4444",
+                    transition: "width 0.3s ease",
+                  }}
+                />
+              </div>
+              <span
+                style={{
+                  fontSize: 11,
+                  color: theme.text.tertiary,
+                  width: 28,
+                  textAlign: "right",
+                  fontVariantNumeric: "tabular-nums",
+                }}
+              >
+                {s.count}
+              </span>
+            </div>
+          ))}
         </div>
+
+        {/* Reviews / AI Insights toggle (Shipday pattern) */}
+        <div
+          style={{
+            display: "flex",
+            gap: 4,
+            padding: 4,
+            borderRadius: 999,
+            backgroundColor: theme.surface.layer1,
+          }}
+        >
+          {(["reviews", "insights"] as const).map((t) => (
+            <button
+              key={t}
+              type="button"
+              onClick={() => setReviewTab(t)}
+              style={{
+                flex: 1,
+                border: "none",
+                borderRadius: 999,
+                padding: "8px 12px",
+                backgroundColor:
+                  reviewTab === t ? theme.action.base : "transparent",
+                color:
+                  reviewTab === t
+                    ? colors.action.text
+                    : theme.text.secondary,
+                fontSize: 13,
+                fontWeight: 600,
+                cursor: "pointer",
+              }}
+            >
+              {t === "reviews" ? "Reviews" : "AI Insights"}
+            </button>
+          ))}
+        </div>
+
+        {/* Content based on sub-tab */}
+        {reviewTab === "reviews" ? (
+          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+            {/* Mock reviews */}
+            {[
+              { name: "Ana M.", stars: 5, text: "Entrega rapida e comida quente. Excelente!", driver: "Carlos Lima" },
+              { name: "Pedro S.", stars: 4, text: "Tudo certo, mas demorou um pouco a encontrar o endereco.", driver: "Sofia Reis" },
+              { name: "Maria L.", stars: 5, text: "Perfeito como sempre!", driver: "Carlos Lima" },
+            ].map((r, i) => (
+              <div
+                key={i}
+                style={{
+                  padding: "14px 16px",
+                  borderRadius: 14,
+                  backgroundColor: theme.surface.layer1,
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: 6,
+                }}
+              >
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                  }}
+                >
+                  <span
+                    style={{
+                      fontSize: 14,
+                      fontWeight: 700,
+                      color: theme.text.primary,
+                    }}
+                  >
+                    {r.name}
+                  </span>
+                  <span style={{ fontSize: 12, color: "#f59e0b" }}>
+                    {"⭐".repeat(r.stars)}
+                  </span>
+                </div>
+                <div style={{ fontSize: 13, color: theme.text.secondary }}>
+                  {r.text}
+                </div>
+                <div style={{ fontSize: 11, color: theme.text.tertiary }}>
+                  Condutor: {r.driver}
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          /* AI Insights tab (Shipday pattern) */
+          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+            {[
+              {
+                icon: "📈",
+                title: "Tendencia positiva",
+                text: "As avaliacoes melhoraram 12% esta semana comparado com a semana passada.",
+              },
+              {
+                icon: "⚡",
+                title: "Oportunidade de melhoria",
+                text: "3 reviews mencionam tempo de espera. Considere otimizar rotas na zona centro.",
+              },
+              {
+                icon: "🏆",
+                title: "Destaque do condutor",
+                text: "Carlos Lima tem a melhor avaliacao media (4.9) com 18 entregas esta semana.",
+              },
+            ].map((insight, i) => (
+              <div
+                key={i}
+                style={{
+                  padding: "14px 16px",
+                  borderRadius: 14,
+                  backgroundColor: theme.surface.layer1,
+                  display: "flex",
+                  gap: 12,
+                  alignItems: "flex-start",
+                }}
+              >
+                <span style={{ fontSize: 20, flexShrink: 0, marginTop: 2 }}>
+                  {insight.icon}
+                </span>
+                <div>
+                  <div
+                    style={{
+                      fontSize: 14,
+                      fontWeight: 700,
+                      color: theme.text.primary,
+                    }}
+                  >
+                    {insight.title}
+                  </div>
+                  <div
+                    style={{
+                      fontSize: 13,
+                      color: theme.text.secondary,
+                      marginTop: 4,
+                      lineHeight: 1.5,
+                    }}
+                  >
+                    {insight.text}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
-    </div>
-  );
+    );
+  };
 
-  const subtitle =
-    activeTab === "home"
-      ? `${pendingOrders.length} por atribuir · ${activeOrders.length} em rota · ${readyDrivers} prontos`
-      : activeTab === "orders"
-      ? `${deliveryOrders.length} entrega(s) na fila`
-      : activeTab === "map"
-      ? "Cobertura e pressão por zona"
-      : activeTab === "drivers"
-      ? `${drivers.length} condutor(es) monitorizados`
-      : "Leitura de SLA e qualidade do turno";
-
-  let content = renderOverview();
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  // RENDER PRINCIPAL
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  let content = renderHome();
   if (activeTab === "orders") content = renderOrders();
   if (activeTab === "map") content = renderMap();
   if (activeTab === "drivers") content = renderDrivers();
@@ -954,41 +1191,19 @@ export function DeliveryHome() {
         flexDirection: "column",
         flex: 1,
         minHeight: 0,
-        padding: 16,
         backgroundColor: colors.surface.base,
-        gap: 16,
       }}
     >
-      <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-        <div
-          style={{
-            fontSize: 14,
-            fontWeight: 700,
-            color: colors.text.tertiary,
-            letterSpacing: "0.06em",
-            textTransform: "uppercase",
-          }}
-        >
-          Entregador
-        </div>
-        <div
-          style={{ fontSize: 24, fontWeight: 700, color: colors.text.primary }}
-        >
-          {TABS.find((tab) => tab.id === activeTab)?.label ?? "Painel"}
-        </div>
-        <div style={{ fontSize: 13, color: colors.text.secondary }}>
-          {subtitle}
-        </div>
-      </div>
-
+      {/* Sub-tab bar (Shipday bottom tabs — renderizado como top tabs no AppStaff) */}
       <div
         style={{
           display: "flex",
-          gap: 8,
-          padding: 4,
-          borderRadius: 999,
-          backgroundColor: colors.surface.layer1,
+          gap: 0,
+          padding: "6px 12px",
+          backgroundColor: theme.surface.layer1,
+          borderBottom: `1px solid ${colors.border.subtle}`,
           overflowX: "auto",
+          flexShrink: 0,
         }}
       >
         {TABS.map((tab) => {
@@ -996,30 +1211,165 @@ export function DeliveryHome() {
           return (
             <button
               key={tab.id}
-              role="tab"
               type="button"
+              role="tab"
               aria-selected={selected}
-              onClick={() => navigate(getDeliveryTabPath(tab.id))}
+              onClick={() => navigate(tabPath(tab.id))}
               style={{
-                flex: tab.id === "home" ? undefined : 1,
-                minWidth: 88,
-                whiteSpace: "nowrap",
-                ...pillStyle(selected),
+                flex: 1,
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                gap: 2,
+                padding: "8px 4px",
+                border: "none",
+                borderBottom: selected
+                  ? `2px solid ${theme.action.base}`
+                  : "2px solid transparent",
+                background: "transparent",
+                cursor: "pointer",
+                minWidth: 56,
               }}
             >
-              {tab.label}
+              <span style={{ fontSize: 16 }}>{tab.icon}</span>
+              <span
+                style={{
+                  fontSize: 11,
+                  fontWeight: selected ? 700 : 500,
+                  color: selected ? theme.action.base : theme.text.tertiary,
+                }}
+              >
+                {tab.label}
+              </span>
             </button>
           );
         })}
       </div>
 
+      {/* Tab content */}
       <div
         role="tabpanel"
-        aria-label={TABS.find((tab) => tab.id === activeTab)?.label ?? "Painel"}
-        style={{ flex: 1, minHeight: 0, overflow: "auto", paddingBottom: 8 }}
+        style={{
+          flex: 1,
+          minHeight: 0,
+          overflow: "auto",
+          padding: "14px 16px",
+          paddingBottom: 80,
+        }}
       >
         {content}
       </div>
+    </div>
+  );
+}
+
+// ── COMPONENTES AUXILIARES ──
+
+function KPICard({
+  value,
+  label,
+  trend,
+  trendPositive,
+  icon,
+  fullWidth,
+}: {
+  value: string;
+  label: string;
+  trend?: string;
+  trendPositive?: boolean;
+  icon?: string;
+  fullWidth?: boolean;
+}) {
+  return (
+    <div
+      style={{
+        padding: "16px",
+        borderRadius: 14,
+        backgroundColor: colors.modes.dashboard.surface.layer1,
+        display: "flex",
+        flexDirection: "column",
+        gap: 6,
+        gridColumn: fullWidth ? "1 / -1" : undefined,
+      }}
+    >
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: 6,
+        }}
+      >
+        {icon && <span style={{ fontSize: 18 }}>{icon}</span>}
+        <span
+          style={{
+            fontSize: 26,
+            fontWeight: 700,
+            color: colors.modes.dashboard.text.primary,
+            fontVariantNumeric: "tabular-nums",
+          }}
+        >
+          {value}
+        </span>
+        {trend && (
+          <span
+            style={{
+              fontSize: 11,
+              fontWeight: 600,
+              color: trendPositive ? "#22c55e" : "#ef4444",
+              marginLeft: 4,
+            }}
+          >
+            {trend}
+          </span>
+        )}
+      </div>
+      <span
+        style={{
+          fontSize: 11,
+          fontWeight: 600,
+          color: colors.modes.dashboard.text.tertiary,
+          textTransform: "uppercase",
+          letterSpacing: "0.04em",
+        }}
+      >
+        {label}
+      </span>
+    </div>
+  );
+}
+
+function QuickStat({
+  value,
+  label,
+  alert,
+}: {
+  value: number | string;
+  label: string;
+  alert?: boolean;
+}) {
+  return (
+    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 2 }}>
+      <span
+        style={{
+          fontSize: 18,
+          fontWeight: 700,
+          color: alert
+            ? colors.modes.dashboard.destructive.base
+            : colors.modes.dashboard.text.primary,
+          fontVariantNumeric: "tabular-nums",
+        }}
+      >
+        {value}
+      </span>
+      <span
+        style={{
+          fontSize: 10,
+          color: colors.modes.dashboard.text.tertiary,
+          whiteSpace: "nowrap",
+        }}
+      >
+        {label}
+      </span>
     </div>
   );
 }

@@ -21,12 +21,49 @@
     "error": { "saveFailed": "Error al guardar" }
   },
   "perception": {
+    "title": "Percepción Operativa",
+    "subtitle": "Conecte una cámara IP a ChefIApp para monitorizar la operación en tiempo real.",
+    "instruction": "Pegue el enlace de la cámara (RTSP, iCSee o stream HTTP) y elija la zona. ChefIApp muestra la imagen y, en versiones futuras, detecta patrones automáticamente.",
+    "cameraLinkLabel": "Enlace de la cámara",
+    "cameraLinkPlaceholder": "rtsp://... o enlace iCSee",
+    "cameraZoneLabel": "Zona de la cámara",
+    "cameraZoneDesc": "Asocie esta cámara a una zona del restaurante.",
+    "selectZone": "-- Elegir zona --",
+    "zone": {
+      "kitchen": "Cocina",
+      "floor": "Comedor",
+      "storage": "Almacén",
+      "cash": "Caja",
+      "entrance": "Entrada",
+      "other": "Otra"
+    },
     "saveLink": "Guardar enlace",
     "saved": "Guardado.",
+    "icseeTooltip": "iCSee: copie el enlace de compartir de la app iCSee y péguelo aquí.",
     "hideLive": "Ocultar transmisión",
     "showLive": "Ver en vivo",
     "cameraCheck": "Confirmación — ¿Cámara encendida?",
-    "cameraCheckDesc": "Use «Ver en vivo» para confirmar si la cámara está activa."
+    "cameraCheckDesc": "Use «Ver en vivo» para confirmar si la cámara está activa.",
+    "icseeShareTitle": "Enlace iCSee (compartir)",
+    "icseeShareDesc": "Si usa iCSee, copie el enlace de compartir de la app y péguelo en el campo de arriba.",
+    "openCameraNewWindow": "Abrir cámara en nueva ventana",
+    "icseeHint": "Consejo: en la app iCSee, vaya a Compartir → Copiar enlace.",
+    "saveAndWatch": "Guardar y ver",
+    "streamLoading": "Cargando transmisión…",
+    "streamLive": "Transmisión en vivo",
+    "streamError": "Error al cargar la transmisión. Verifique el enlace.",
+    "streamAlt": "Transmisión de la cámara",
+    "streamHint": "Si la imagen no carga, confirme que la cámara está encendida y el enlace es válido.",
+    "observationTitle": "Observación (patrones básicos)",
+    "observationDesc": "Próximamente: detección de patrones por zona.",
+    "observationComingSoon": "Próximamente",
+    "generateObservation": "Generar observación",
+    "analyzeTitle": "Analizar con LLM",
+    "analyzeDesc": "Envíe una captura para análisis con inteligencia artificial.",
+    "analyzing": "Analizando…",
+    "analyzeWithAI": "Analizar con IA",
+    "errorNoLink": "Introduzca el enlace de la cámara primero.",
+    "errorApi": "Error en la API de análisis."
   },
   "locations": {
     "add": "Añadir local",
@@ -169,6 +206,77 @@
     "androidStep2": "Escanee este código QR",
     "androidStep3": "Acepte la instalación de la app"
   },
+  "printer": {
+    "selectBeforeSave": "Seleccione una impresora antes de guardar.",
+    "noStationForOverride": "Ninguna estación de trabajo definida para override. Configure una estación.",
+    "errorSaving": "Error al guardar",
+    "savedSuccess": "Guardado con éxito.",
+    "selectBeforeTest": "Seleccione una impresora antes de probar.",
+    "sendingTest": "Enviando prueba…",
+    "errorCreatingTest": "Error al crear prueba",
+    "testSentConfirmed": "Prueba enviada y confirmada.",
+    "testFailed": "Prueba falló.",
+    "testSentPending": "Prueba enviada (esperando confirmación).",
+    "requiresDesktop": "Requiere aplicación de escritorio",
+    "requiresDesktopDesc": "La configuración de impresoras requiere la app de escritorio ChefIApp instalada y vinculada.",
+    "goToDevices": "Ir a Dispositivos",
+    "notReady": "No está listo",
+    "notReadyDesc": "Se necesita un restaurante activo para configurar impresoras.",
+    "goToDashboard": "Ir al panel",
+    "title": "Impresoras",
+    "description": "Asocie impresoras a las funciones de impresión del restaurante.",
+    "loading": "Cargando…",
+    "warning": "Aviso",
+    "noPrintersFound": "No se encontraron impresoras. Verifique si el agente de escritorio está en ejecución.",
+    "fn": {
+      "labels": "Etiquetas",
+      "kitchen": "Cocina",
+      "receipt": "Recibo"
+    },
+    "printerLabel": "Impresora",
+    "selectPlaceholder": "-- Seleccionar --",
+    "useAsGlobal": "Usar como predeterminado global",
+    "testing": "Probando…",
+    "printTest": "Imprimir prueba",
+    "saving": "Guardando…",
+    "save": "Guardar"
+  },
+  "integrations": {
+    "title": "Integraciones",
+    "subtitle": "Conecte TPV, delivery, redes sociales y otros servicios a su restaurante.",
+    "comingSoon": "Próximamente",
+    "available": "Disponible",
+    "section": {
+      "payments": {
+        "label": "Pagos",
+        "description": "Conecte métodos de pago al TPV y la web."
+      },
+      "whatsapp": {
+        "label": "WhatsApp",
+        "description": "Notificaciones y pedidos vía WhatsApp."
+      },
+      "webhooks": {
+        "label": "APIs & Webhooks",
+        "description": "Conecte sistemas externos con webhooks."
+      },
+      "delivery": {
+        "label": "Delivery",
+        "description": "Plataformas de entrega y logística."
+      },
+      "googleBusiness": {
+        "label": "Google Business",
+        "description": "Gestione su presencia en Google Maps y Google Business."
+      },
+      "instagram": {
+        "label": "Instagram",
+        "description": "Publique automáticamente fotos y stories del restaurante."
+      },
+      "other": {
+        "label": "Otros",
+        "description": "Otras integraciones y servicios."
+      }
+    }
+  },
   "softwareTpv": {
     "title": "Software TPV",
     "subtitle": "Configuración general y modo rápido del punto de venta.",
@@ -194,5 +302,23 @@
     "localeEsES": "Español (España)",
     "localeEnUS": "Inglés (EE. UU.)",
     "localePtPT": "Portugués (Portugal)"
+  },
+  "email": {
+    "title": "Notificaciones por Email",
+    "description": "Enviar recibos digitales y notificaciones a clientes por email.",
+    "loading": "Cargando...",
+    "enableReceipts": "Activar recibos por email",
+    "autoSend": "Enviar recibo automáticamente tras el pago",
+    "sendOrderConfirmation": "Enviar confirmación de pedido al cliente",
+    "promptMode": "Recopilación de email del cliente",
+    "promptAtCheckout": "Solicitar en el checkout",
+    "promptOptional": "Opcional (botón en el recibo)",
+    "promptNever": "Nunca solicitar",
+    "preview": "Vista Previa de Plantilla",
+    "sendTest": "Enviar Email de Prueba",
+    "sending": "Enviando...",
+    "testSent": "Email de prueba enviado!",
+    "testFailed": "Error: {{error}}",
+    "errorNoRestaurant": "Ningún restaurante seleccionado."
   }
 }

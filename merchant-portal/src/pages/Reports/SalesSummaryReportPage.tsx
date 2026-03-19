@@ -1,7 +1,11 @@
 import { useCallback, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
+import { ExportButtons } from "../../components/common/ExportButtons";
 import { DataModeBanner } from "../../components/DataModeBanner";
 import { useRestaurantRuntime } from "../../context/RestaurantRuntimeContext";
 import { currencyService } from "../../core/currency/CurrencyService";
+import { centsToDecimalStr } from "../../core/export/ExportService";
+import { useExportBranding } from "../../core/export/useExportBranding";
 import { centsToDecimal, exportCsv } from "../../core/reports/csvExport";
 import { useSalesSummaryReport } from "../../core/reports/hooks/useSalesSummaryReport";
 import type { TimeRange } from "../../core/reports/reportTypes";
@@ -22,6 +26,7 @@ function formatCurrency(cents: number): string {
 export function SalesSummaryReportPage() {
   const { t } = useTranslation("operational");
   const { runtime } = useRestaurantRuntime();
+  const branding = useExportBranding();
   const now = useMemo(() => new Date(), []);
   const start = useMemo(() => {
     const d = new Date(now);
@@ -127,6 +132,39 @@ export function SalesSummaryReportPage() {
           >
             {t("salesSummary.exportCsv")}
           </button>
+        )}
+        {hasData && data && (
+          <ExportButtons
+            title={t("salesSummary.title")}
+            subtitle={t("salesSummary.subtitle")}
+            dateRange={`${toInput(dateFrom)} - ${toInput(dateTo)}`}
+            filename={`resumo-vendas-${toInput(dateFrom)}-${toInput(dateTo)}`}
+            branding={branding}
+            formats={["pdf", "excel"]}
+            datasets={[
+              {
+                name: t("salesSummary.title"),
+                columns: [
+                  { header: t("salesSummary.csv.grossSales"), align: "right", format: "currency" },
+                  { header: t("salesSummary.csv.averageTicket"), align: "right", format: "currency" },
+                  { header: t("salesSummary.csv.closedBills"), align: "right", format: "number" },
+                  { header: t("salesSummary.csv.cancellations"), align: "right", format: "number" },
+                ],
+                rows: [[
+                  centsToDecimalStr(data.grossTotalCents),
+                  centsToDecimalStr(data.averageTicketCents),
+                  data.ordersCount - data.cancelledOrdersCount,
+                  data.cancelledOrdersCount,
+                ]],
+                summaryCards: [
+                  { label: t("salesSummary.grossSales"), value: formatCurrency(data.grossTotalCents), highlight: true },
+                  { label: t("salesSummary.averageTicket"), value: formatCurrency(data.averageTicketCents) },
+                  { label: t("salesSummary.closedBills"), value: String(data.ordersCount - data.cancelledOrdersCount) },
+                  { label: t("salesSummary.cancellations"), value: String(data.cancelledOrdersCount) },
+                ],
+              },
+            ]}
+          />
         )}
       </div>
 

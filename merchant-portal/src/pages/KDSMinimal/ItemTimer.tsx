@@ -29,16 +29,38 @@ interface ItemTimerResult {
   displayText: string;
 }
 
+/** Formata tempo para leitura rápida em cozinha: "45s", "3m", "12m", "+2m", "+1h05" */
+function formatKitchenTime(totalSeconds: number, prefix = ""): string {
+  const abs = Math.abs(totalSeconds);
+  if (abs < 60) return `${prefix}${abs}s`;
+  const h = Math.floor(abs / 3600);
+  const m = Math.floor((abs % 3600) / 60);
+  if (h > 0) return `${prefix}${h}h${String(m).padStart(2, "0")}`;
+  return `${prefix}${m}m`;
+}
+
 export function ItemTimer({ item }: ItemTimerProps) {
   const [result, setResult] = useState<ItemTimerResult | null>(null);
 
   useEffect(() => {
     const calculateTimer = () => {
-      const created = new Date(item.created_at || new Date().toISOString());
+      const createdMs = item.created_at
+        ? new Date(item.created_at).getTime()
+        : NaN;
+      if (!Number.isFinite(createdMs)) {
+        setResult({
+          elapsedSeconds: 0,
+          expectedSeconds: item.prep_time_seconds || 300,
+          delaySeconds: 0,
+          delayRatio: 0,
+          state: "normal",
+          displayText: "—",
+        });
+        return;
+      }
+      const created = new Date(createdMs);
       const now = new Date();
-      // Guard: if created_at was invalid, elapsed would be NaN — fallback to 0
-      const rawElapsed = Math.floor((now.getTime() - created.getTime()) / 1000);
-      const elapsedSeconds = Number.isFinite(rawElapsed) ? rawElapsed : 0;
+      const elapsedSeconds = Math.floor((now.getTime() - created.getTime()) / 1000);
 
       // Prep time do item (snapshot no momento do pedido)
       const expectedSeconds = item.prep_time_seconds || 300; // 5 min padrão se não houver
@@ -51,23 +73,21 @@ export function ItemTimer({ item }: ItemTimerProps) {
       let displayText: string;
 
       if (delayRatio < 0) {
-        // Ainda dentro do tempo esperado
+        // Ainda dentro do tempo esperado — countdown
         state = 'normal';
-        const remainingSeconds = -delaySeconds;
-        const remainingMinutes = Math.floor(remainingSeconds / 60);
-        displayText = remainingMinutes > 0 ? `${remainingMinutes} min` : `${remainingSeconds}s`;
+        displayText = formatKitchenTime(-delaySeconds);
       } else if (delayRatio < 0.1) {
         // Até 10% atrasado (margem de tolerância)
         state = 'normal';
-        displayText = `${Math.floor(elapsedSeconds / 60)} min`;
+        displayText = formatKitchenTime(elapsedSeconds);
       } else if (delayRatio < 0.25) {
         // 10-25% atrasado (atenção)
         state = 'attention';
-        displayText = `+${Math.floor(delaySeconds / 60)} min`;
+        displayText = formatKitchenTime(delaySeconds, "+");
       } else {
         // +25% ou mais atrasado (crítico)
         state = 'delay';
-        displayText = `+${Math.floor(delaySeconds / 60)} min`;
+        displayText = formatKitchenTime(delaySeconds, "+");
       }
 
       setResult({
@@ -90,7 +110,7 @@ export function ItemTimer({ item }: ItemTimerProps) {
   }, [item.created_at, item.prep_time_seconds]);
 
   if (!result) {
-    return <span style={{ fontSize: '14px', color: '#666' }}>Calculando...</span>;
+    return <span style={{ fontSize: '18px', color: '#666' }}>…</span>;
   }
 
   // Cores baseadas no estado
@@ -104,10 +124,10 @@ export function ItemTimer({ item }: ItemTimerProps) {
   return (
     <span
       style={{
-        fontSize: '14px',
+        fontSize: '18px',
         color: stateColors[result.state],
         marginLeft: '8px',
-        fontWeight: result.state === 'delay' ? 'bold' : 'normal',
+        fontWeight: result.state === 'delay' ? 'bold' : 600,
       }}
     >
       {result.displayText}

@@ -220,7 +220,7 @@ export function IntegrationsWebhooksPage() {
 
   if (!restaurantId) {
     return (
-      <div className="page-enter admin-content-page">
+      <>
         <AdminPageHeader
           title="APIs & Webhooks"
           subtitle="Webhooks OUT (endpoint, eventos); API IN (chaves, limites)."
@@ -228,12 +228,12 @@ export function IntegrationsWebhooksPage() {
         <p style={{ color: "var(--text-secondary)", fontSize: 14 }}>
           Seleccione um restaurante.
         </p>
-      </div>
+      </>
     );
   }
 
   return (
-    <div className="page-enter admin-content-page">
+    <>
       <AdminPageHeader
         title="APIs & Webhooks"
         subtitle="Webhooks OUT (endpoint, eventos); API IN (chaves, limites)."
@@ -900,6 +900,6 @@ export function IntegrationsWebhooksPage() {
       >
         Contrato completo: docs/CHEFIAPP_PUBLIC_API_CONTRACT.md
       </p>
-    </div>
+    </>
   );
 }

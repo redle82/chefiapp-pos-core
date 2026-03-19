@@ -3,6 +3,7 @@ import { NavLink } from "react-router-dom";
 const TABS = [
   { to: "/admin/payments/transactions", label: "Transacciones procesadas" },
   { to: "/admin/payments/payouts", label: "Payouts" },
+  { to: "/admin/payments/reconciliation", label: "Reconciliation" },
 ] as const;
 
 export function PaymentsSubNav() {

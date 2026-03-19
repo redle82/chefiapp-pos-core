@@ -101,7 +101,7 @@ export function IntegrationsInstagramPage() {
   };
 
   return (
-    <div className="page-enter admin-content-page">
+    <>
       <AdminPageHeader
         title="Instagram"
         subtitle="Conecte a conta Instagram do restaurante para publicação automática e análise de engagement."
@@ -519,6 +519,6 @@ export function IntegrationsInstagramPage() {
           )}
         </section>
       )}
-    </div>
+    </>
   );
 }

@@ -7,6 +7,7 @@ import type { Scene4Input, Scene4Output } from './contracts';
 import type { Scene5Input, Scene5Output } from './contracts';
 import type { Scene6Input, Scene6Output } from './contracts';
 import { getTabIsolated, setTabIsolated } from '../core/storage/TabIsolatedStorage';
+import { getCountryConfig, inferCountry } from '../core/config/CountryConfig';
 
 /**
  * ONBOARDING ENGINE
@@ -21,7 +22,7 @@ export class OnboardingEngine {
             step: 0,
             businessType: null,
             brandGroup: null,
-            country: 'PT', // Default for MVP
+            country: (inferCountry() as any) || 'PT', // Inferred from browser; defaults to PT
             createdAt: new Date(),
             updatedAt: new Date(),
             data: {}
@@ -80,12 +81,14 @@ export class OnboardingEngine {
         // Infer Alcohol (Heuristic)
         const hasAlcohol = businessType === 'bar' || businessType === 'club' || businessType === 'restaurant';
 
+        const countryConfig = getCountryConfig(country);
+
         return {
             contractVersion: 'v1',
             merchantId: merchantId,
             country: country,
-            currency: 'EUR', // Helper: Map country to currency
-            timezone: 'Europe/Lisbon', // Helper: Map country to timezone
+            currency: countryConfig.currency,
+            timezone: countryConfig.timezone,
 
             businessType: businessType,
             name: d.identity?.name || 'Unnamed Place',

@@ -1,30 +1,182 @@
+/**
+ * TPVShiftPage — Cash register open/close within TPV.
+ *
+ * Redesigned to use the Sovereign design system (Card, Button, KpiCard, Skeleton, InlineAlert)
+ * for full visual coherence with the rest of the dark TPV theme.
+ */
+
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useCurrency } from "../../core/currency/useCurrency";
+import { getTableClient } from "../../core/infra/coreRpc";
+import { Logger } from "../../core/logger";
 import { useShift } from "../../core/shift/ShiftContext";
 import {
   CashRegisterEngine,
   type CashRegister,
 } from "../../core/tpv/CashRegister";
+import { Button } from "../../ui/design-system/Button";
+import { Card } from "../../ui/design-system/Card";
+import { InlineAlert } from "../../ui/design-system/InlineAlert";
+import { KpiCard } from "../../ui/design-system/KpiCard";
+import { Skeleton } from "../../ui/design-system/Skeleton";
+import { DenominationCounter } from "./components/DenominationCounter";
+import {
+  ShiftReport,
+  type ShiftReportPayments,
+  type ShiftReportOrderStats,
+  type ShiftReportRegister,
+} from "./components/ShiftReport";
 import { useTPVRestaurantId } from "./hooks/useTPVRestaurantId";
 
-const DEFAULT_OPERATOR = "Caixa TPV";
-const DEFAULT_REGISTER_NAME = "Caixa Principal";
+/* ── Styles ─────────────────────────────────────────────────────── */
+
+const styles = {
+  page: {
+    padding: 24,
+    maxWidth: 860,
+    margin: "0 auto",
+  } as React.CSSProperties,
+
+  header: {
+    marginBottom: 20,
+  } as React.CSSProperties,
+
+  title: {
+    color: "var(--text-primary, #fafafa)",
+    margin: "4px 0 4px",
+    fontSize: 24,
+    fontWeight: 700,
+  } as React.CSSProperties,
+
+  subtitle: {
+    color: "var(--text-secondary, #9ca3af)",
+    fontSize: 14,
+    margin: 0,
+  } as React.CSSProperties,
+
+  kpiGrid: {
+    display: "grid",
+    gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
+    gap: 12,
+    marginBottom: 20,
+  } as React.CSSProperties,
+
+  formRow: {
+    display: "flex",
+    gap: 16,
+    flexWrap: "wrap" as const,
+    marginBottom: 16,
+  } as React.CSSProperties,
+
+  formGroup: {
+    display: "flex",
+    flexDirection: "column" as const,
+    gap: 6,
+    flex: 1,
+    minWidth: 200,
+  } as React.CSSProperties,
+
+  label: {
+    fontSize: 13,
+    fontWeight: 500,
+    color: "var(--text-secondary, #9ca3af)",
+  } as React.CSSProperties,
+
+  input: {
+    background: "var(--surface-base, #0f0f0f)",
+    border: "1px solid var(--border-subtle, rgba(255,255,255,0.12))",
+    borderRadius: 8,
+    padding: "10px 14px",
+    color: "var(--text-primary, #fafafa)",
+    fontSize: 14,
+    outline: "none",
+    transition: "border-color 0.15s ease",
+  } as React.CSSProperties,
+
+  statusChip: {
+    display: "inline-flex",
+    alignItems: "center",
+    gap: 6,
+    padding: "4px 10px",
+    borderRadius: 6,
+    fontSize: 12,
+    fontWeight: 600,
+    letterSpacing: 0.5,
+  } as React.CSSProperties,
+
+  registerHeader: {
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "flex-start",
+    marginBottom: 16,
+  } as React.CSSProperties,
+
+  actions: {
+    display: "flex",
+    justifyContent: "flex-end",
+    marginTop: 8,
+  } as React.CSSProperties,
+
+  skeletonContainer: {
+    display: "flex",
+    flexDirection: "column" as const,
+    gap: 16,
+    padding: 8,
+  } as React.CSSProperties,
+
+  modeToggle: {
+    display: "inline-flex",
+    borderRadius: 8,
+    overflow: "hidden",
+    border: "1px solid var(--border-subtle, rgba(255,255,255,0.12))",
+    marginBottom: 12,
+  } as React.CSSProperties,
+
+  modeButton: {
+    padding: "6px 16px",
+    fontSize: 13,
+    fontWeight: 600,
+    border: "none",
+    cursor: "pointer",
+    transition: "background 0.15s ease, color 0.15s ease",
+    outline: "none",
+  } as React.CSSProperties,
+
+  modeButtonActive: {
+    background: "var(--brand-accent, #f97316)",
+    color: "#fff",
+  } as React.CSSProperties,
+
+  modeButtonInactive: {
+    background: "var(--surface-base, #0f0f0f)",
+    color: "var(--text-secondary, #9ca3af)",
+  } as React.CSSProperties,
+} as const;
+
+/* ── Component ──────────────────────────────────────────────────── */
 
 export function TPVShiftPage() {
   const { t } = useTranslation("shift");
   const restaurantId = useTPVRestaurantId();
   const shift = useShift();
-  const { formatAmount } = useCurrency();
+  const { formatAmount, currency } = useCurrency();
 
   const [loading, setLoading] = useState(true);
   const [register, setRegister] = useState<CashRegister | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [openingCash, setOpeningCash] = useState("0");
   const [closingCash, setClosingCash] = useState("");
-  const [operatorName, setOperatorName] = useState(DEFAULT_OPERATOR);
-  const [closingName, setClosingName] = useState(DEFAULT_OPERATOR);
+  const [operatorName, setOperatorName] = useState(t("page.defaultOperator", "Caixa TPV"));
+  const [closingName, setClosingName] = useState(t("page.defaultOperator", "Caixa TPV"));
   const [acting, setActing] = useState(false);
+  const [countMode, setCountMode] = useState<"detailed" | "quick">("detailed");
+  const [reportData, setReportData] = useState<{
+    register: ShiftReportRegister;
+    payments?: ShiftReportPayments;
+    orderStats?: ShiftReportOrderStats;
+  } | null>(null);
+  const [showReport, setShowReport] = useState(false);
 
   const expectedBalanceCents = useMemo(() => {
     if (!register) return 0;
@@ -52,7 +204,7 @@ export function TPVShiftPage() {
     } finally {
       setLoading(false);
     }
-  }, [restaurantId]);
+  }, [restaurantId, t]);
 
   useEffect(() => {
     if (!restaurantId) {
@@ -74,9 +226,9 @@ export function TPVShiftPage() {
     try {
       await CashRegisterEngine.openCashRegister({
         restaurantId,
-        name: DEFAULT_REGISTER_NAME,
+        name: t("page.defaultRegisterName", "Caixa Principal"),
         openingBalanceCents: Math.round(value * 100),
-        openedBy: operatorName || DEFAULT_OPERATOR,
+        openedBy: operatorName || t("page.defaultOperator", "Caixa TPV"),
       });
       await shift.refreshShiftStatus();
       await loadRegister();
@@ -88,6 +240,58 @@ export function TPVShiftPage() {
     }
   };
 
+  /** Fetch payment breakdown for the shift report after closing. */
+  const fetchReportData = useCallback(
+    async (closedRegister: CashRegister, declaredClosingCents: number) => {
+      const reportRegister: ShiftReportRegister = {
+        id: closedRegister.id,
+        name: closedRegister.name,
+        openedBy: closedRegister.openedBy || t("page.defaultOperator", "Caixa TPV"),
+        closedBy: closedRegister.closedBy,
+        openingBalanceCents: closedRegister.openingBalanceCents,
+        closingBalanceCents: declaredClosingCents,
+        totalSalesCents: closedRegister.totalSalesCents,
+        openedAt: closedRegister.openedAt?.toISOString() ?? "",
+        closedAt: closedRegister.closedAt?.toISOString() ?? new Date().toISOString(),
+      };
+
+      let payments: ShiftReportPayments | undefined;
+      try {
+        const client = await getTableClient();
+        const { data: paymentRows } = await client
+          .from("gm_order_payments")
+          .select("method, amount_cents")
+          .eq("restaurant_id", restaurantId)
+          .gte("created_at", closedRegister.openedAt?.toISOString() ?? "")
+          .lte("created_at", new Date().toISOString());
+
+        if (paymentRows && paymentRows.length > 0) {
+          const agg = { cash: { count: 0, totalCents: 0 }, card: { count: 0, totalCents: 0 }, pix: { count: 0, totalCents: 0 } };
+          for (const row of paymentRows as Array<{ method: string; amount_cents: number }>) {
+            const method = (row.method || "").toLowerCase();
+            if (method === "cash" || method === "dinheiro" || method === "efectivo") {
+              agg.cash.count++;
+              agg.cash.totalCents += row.amount_cents;
+            } else if (method === "card" || method === "cartão" || method === "tarjeta" || method === "cartao") {
+              agg.card.count++;
+              agg.card.totalCents += row.amount_cents;
+            } else {
+              agg.pix.count++;
+              agg.pix.totalCents += row.amount_cents;
+            }
+          }
+          payments = agg;
+        }
+      } catch (err) {
+        Logger.error("SHIFT_REPORT_PAYMENTS_FETCH", err, { registerId: closedRegister.id });
+      }
+
+      setReportData({ register: reportRegister, payments });
+      setShowReport(true);
+    },
+    [restaurantId, t],
+  );
+
   const handleClose = async () => {
     if (!register) return;
     const value = Number.parseFloat(closingCash.replace(",", "."));
@@ -98,13 +302,17 @@ export function TPVShiftPage() {
     setActing(true);
     setError(null);
     try {
-      await CashRegisterEngine.closeCashRegister({
+      const closedReg = await CashRegisterEngine.closeCashRegister({
         cashRegisterId: register.id,
         restaurantId,
         closingBalanceCents: Math.round(value * 100),
-        closedBy: closingName || DEFAULT_OPERATOR,
+        closedBy: closingName || t("page.defaultOperator", "Caixa TPV"),
       });
       await shift.refreshShiftStatus();
+
+      // Build report data before clearing state
+      await fetchReportData(closedReg, Math.round(value * 100));
+
       setRegister(null);
       setClosingCash("");
     } catch (err) {
@@ -116,241 +324,254 @@ export function TPVShiftPage() {
   };
 
   return (
-    <div style={{ padding: 16, maxWidth: 820, margin: "0 auto" }}>
-      <div style={{ marginBottom: 12 }}>
-        <h1
-          style={{
-            color: "var(--text-primary)",
-            margin: "4px 0 0",
-            fontSize: 24,
-          }}
-        >
-          {t("page.title")}
-        </h1>
+    <div style={styles.page}>
+      {/* ── Header ─────────────────────────────────────────────── */}
+      <div style={styles.header}>
+        <h1 style={styles.title}>{t("page.title")}</h1>
+        <p style={styles.subtitle}>{t("page.subtitle", "Abertura e fecho de caixa do turno actual.")}</p>
       </div>
 
+      {/* ── Error ──────────────────────────────────────────────── */}
+      {error && (
+        <div style={{ marginBottom: 16 }}>
+          <InlineAlert
+            type="error"
+            message={error}
+            onDismiss={() => setError(null)}
+          />
+        </div>
+      )}
+
+      {/* ── Loading Skeleton ───────────────────────────────────── */}
       {loading && (
-        <div style={{ color: "var(--text-secondary)", padding: 16 }}>
-          {t("page.loadingCash")}
-        </div>
+        <Card surface="layer1" padding="lg">
+          <div style={styles.skeletonContainer}>
+            <Skeleton variant="text" width="40%" height={20} />
+            <div style={styles.kpiGrid}>
+              <Skeleton variant="rectangular" height={80} />
+              <Skeleton variant="rectangular" height={80} />
+              <Skeleton variant="rectangular" height={80} />
+            </div>
+            <Skeleton variant="rectangular" height={44} width="30%" />
+          </div>
+        </Card>
       )}
 
-      {!loading && error && (
-        <div
-          style={{
-            background: "rgba(239,68,68,0.15)",
-            color: "#fecaca",
-            border: "1px solid rgba(239,68,68,0.35)",
-            borderRadius: 10,
-            padding: 12,
-            marginBottom: 16,
-          }}
-        >
-          {error}
-        </div>
-      )}
-
+      {/* ── Register OPEN — show KPIs + close form ─────────────── */}
       {!loading && register && (
-        <div
-          style={{
-            background: "var(--surface-elevated, #1a1a1a)",
-            border: "1px solid var(--border-subtle, #333)",
-            borderRadius: 12,
-            padding: 16,
-            display: "flex",
-            flexDirection: "column",
-            gap: 16,
-          }}
-        >
-          <div style={{ display: "flex", justifyContent: "space-between" }}>
+        <Card surface="layer1" padding="lg">
+          {/* Status row */}
+          <div style={styles.registerHeader}>
             <div>
-              <div style={{ fontSize: 12, color: "#9ca3af" }}>{t("page.registerOpen")}</div>
-              <div style={{ fontSize: 18, fontWeight: 700, color: "#fafafa" }}>
+              <span
+                style={{
+                  ...styles.statusChip,
+                  backgroundColor: "rgba(34,197,94,0.12)",
+                  color: "#4ade80",
+                }}
+              >
+                <span style={{ width: 8, height: 8, borderRadius: "50%", backgroundColor: "#4ade80", display: "inline-block" }} />
+                {t("page.registerOpen")}
+              </span>
+              <div style={{ fontSize: 18, fontWeight: 700, color: "var(--text-primary, #fafafa)", marginTop: 8 }}>
                 {register.name}
               </div>
             </div>
-            <div style={{ fontSize: 12, color: "#9ca3af" }}>
-              {t("page.operatorLabel")}: {register.openedBy || DEFAULT_OPERATOR}
-            </div>
-          </div>
-
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))",
-              gap: 12,
-            }}
-          >
-            <div>
-              <div style={{ fontSize: 12, color: "#9ca3af" }}>
-                {t("page.initialBalance")}
-              </div>
-              <div style={{ fontSize: 16, fontWeight: 700 }}>
-                {formatAmount(register.openingBalanceCents)}
-              </div>
-            </div>
-            <div>
-              <div style={{ fontSize: 12, color: "#9ca3af" }}>{t("page.sales")}</div>
-              <div style={{ fontSize: 16, fontWeight: 700 }}>
-                {formatAmount(register.totalSalesCents)}
-              </div>
-            </div>
-            <div>
-              <div style={{ fontSize: 12, color: "#9ca3af" }}>
-                {t("page.expectedBalance")}
-              </div>
-              <div style={{ fontSize: 16, fontWeight: 700 }}>
-                {formatAmount(expectedBalanceCents)}
-              </div>
-            </div>
-          </div>
-
-          <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
-            <label
-              style={{
-                display: "flex",
-                flexDirection: "column",
-                gap: 6,
-                flex: 1,
-                minWidth: 220,
-              }}
-            >
-              <span style={{ fontSize: 12, color: "#9ca3af" }}>
-                {t("page.closingBalanceLabel")}
+            <div style={{ fontSize: 13, color: "var(--text-secondary, #9ca3af)", textAlign: "right" }}>
+              {t("page.operatorLabel")}<br />
+              <span style={{ fontWeight: 600, color: "var(--text-primary, #fafafa)" }}>
+                {register.openedBy || t("page.defaultOperator", "Caixa TPV")}
               </span>
-              <input
-                type="text"
-                inputMode="decimal"
-                value={closingCash}
-                onChange={(e) => setClosingCash(e.target.value)}
-                style={{
-                  background: "#0a0a0a",
-                  border: "1px solid #333",
-                  borderRadius: 8,
-                  padding: "10px 12px",
-                  color: "#fafafa",
+            </div>
+          </div>
+
+          {/* KPI cards */}
+          <div style={styles.kpiGrid}>
+            <KpiCard
+              label={t("page.initialBalance")}
+              value={formatAmount(register.openingBalanceCents)}
+              icon="💰"
+              state="healthy"
+            />
+            <KpiCard
+              label={t("page.sales")}
+              value={formatAmount(register.totalSalesCents)}
+              icon="📊"
+              state={register.totalSalesCents > 0 ? "healthy" : "warning"}
+            />
+            <KpiCard
+              label={t("page.expectedBalance")}
+              value={formatAmount(expectedBalanceCents)}
+              icon="🎯"
+              state="healthy"
+            />
+          </div>
+
+          {/* Count mode toggle */}
+          <div style={styles.modeToggle}>
+            <button
+              type="button"
+              style={{
+                ...styles.modeButton,
+                ...(countMode === "detailed"
+                  ? styles.modeButtonActive
+                  : styles.modeButtonInactive),
+              }}
+              onClick={() => setCountMode("detailed")}
+            >
+              {t("denomination.modeDetailed", "Detalhado")}
+            </button>
+            <button
+              type="button"
+              style={{
+                ...styles.modeButton,
+                ...(countMode === "quick"
+                  ? styles.modeButtonActive
+                  : styles.modeButtonInactive),
+              }}
+              onClick={() => setCountMode("quick")}
+            >
+              {t("denomination.modeQuick", "Rapido")}
+            </button>
+          </div>
+
+          {/* Close form */}
+          {countMode === "detailed" ? (
+            <div style={{ marginBottom: 16 }}>
+              <DenominationCounter
+                currency={currency}
+                onChange={(totalCents) => {
+                  setClosingCash((totalCents / 100).toFixed(2));
                 }}
+                expectedCents={expectedBalanceCents}
               />
-            </label>
-            <label
-              style={{
-                display: "flex",
-                flexDirection: "column",
-                gap: 6,
-                flex: 1,
-                minWidth: 200,
-              }}
-            >
-            <span style={{ fontSize: 12, color: "#9ca3af" }}>
-                {t("page.closingNameLabel")}
-              </span>
+            </div>
+          ) : (
+            <div style={styles.formRow}>
+              <div style={styles.formGroup}>
+                <label style={styles.label}>{t("page.closingBalanceLabel")}</label>
+                <input
+                  type="text"
+                  inputMode="decimal"
+                  value={closingCash}
+                  onChange={(e) => setClosingCash(e.target.value)}
+                  style={styles.input}
+                  onFocus={(e) => { e.target.style.borderColor = "#f97316"; }}
+                  onBlur={(e) => { e.target.style.borderColor = "var(--border-subtle, rgba(255,255,255,0.12))"; }}
+                />
+              </div>
+            </div>
+          )}
+
+          {/* Closing operator name */}
+          <div style={styles.formRow}>
+            <div style={styles.formGroup}>
+              <label style={styles.label}>{t("page.closingNameLabel")}</label>
               <input
                 type="text"
                 value={closingName}
                 onChange={(e) => setClosingName(e.target.value)}
-                style={{
-                  background: "#0a0a0a",
-                  border: "1px solid #333",
-                  borderRadius: 8,
-                  padding: "10px 12px",
-                  color: "#fafafa",
-                }}
+                style={styles.input}
+                onFocus={(e) => { e.target.style.borderColor = "#f97316"; }}
+                onBlur={(e) => { e.target.style.borderColor = "var(--border-subtle, rgba(255,255,255,0.12))"; }}
               />
-            </label>
-          </div>
-
-          <button
-            onClick={handleClose}
-            disabled={acting}
-            style={{
-              alignSelf: "flex-end",
-              background: "#ef4444",
-              border: "none",
-              color: "#fff",
-              padding: "10px 16px",
-              borderRadius: 8,
-              fontWeight: 700,
-              cursor: acting ? "not-allowed" : "pointer",
-            }}
-          >
-            {t("page.closeButton")}
-          </button>
-        </div>
-      )}
-
-      {!loading && !register && (
-        <div
-          style={{
-            background: "var(--surface-elevated, #1a1a1a)",
-            border: "1px solid var(--border-subtle, #333)",
-            borderRadius: 12,
-            padding: 16,
-            display: "flex",
-            flexDirection: "column",
-            gap: 16,
-          }}
-        >
-          <div>
-            <div style={{ fontSize: 12, color: "#9ca3af" }}>{t("page.registerClosed")}</div>
-            <div style={{ fontSize: 18, fontWeight: 700, color: "#fafafa" }}>
-              {t("page.openButton")}
             </div>
           </div>
 
-          <label style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-            <span style={{ fontSize: 12, color: "#9ca3af" }}>
-              {t("page.initialBalance")}
+          <div style={styles.actions}>
+            <Button
+              variant="critical"
+              size="md"
+              onClick={handleClose}
+              disabled={acting}
+              loading={acting}
+            >
+              {t("page.closeButton")}
+            </Button>
+          </div>
+        </Card>
+      )}
+
+      {/* ── Shift Report Overlay ──────────────────────────────────── */}
+      {showReport && reportData && (
+        <ShiftReport
+          register={reportData.register}
+          payments={reportData.payments}
+          orderStats={reportData.orderStats}
+          onPrint={() => window.print()}
+          onClose={() => setShowReport(false)}
+        />
+      )}
+
+      {/* ── Register CLOSED — show open form ────────────────────── */}
+      {!loading && !register && !error && (
+        <Card surface="layer1" padding="lg">
+          <div style={{ marginBottom: 20 }}>
+            <span
+              style={{
+                ...styles.statusChip,
+                backgroundColor: "rgba(156,163,175,0.12)",
+                color: "#9ca3af",
+              }}
+            >
+              <span style={{ width: 8, height: 8, borderRadius: "50%", backgroundColor: "#6b7280", display: "inline-block" }} />
+              {t("page.registerClosed")}
             </span>
-            <input
-              type="text"
-              inputMode="decimal"
-              value={openingCash}
-              onChange={(e) => setOpeningCash(e.target.value)}
-              style={{
-                background: "#0a0a0a",
-                border: "1px solid #333",
-                borderRadius: 8,
-                padding: "10px 12px",
-                color: "#fafafa",
-                maxWidth: 240,
-              }}
-            />
-          </label>
+            <h2 style={{ fontSize: 20, fontWeight: 700, color: "var(--text-primary, #fafafa)", marginTop: 12, marginBottom: 0 }}>
+              {t("page.openTitle", "Abrir Caixa")}
+            </h2>
+            <p style={{ fontSize: 14, color: "var(--text-secondary, #9ca3af)", marginTop: 4 }}>
+              {t("page.openDescription", "Preencha o valor inicial e o nome do operador para abrir o turno.")}
+            </p>
+          </div>
 
-          <label style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-            <span style={{ fontSize: 12, color: "#9ca3af" }}>{t("page.operatorLabel")}</span>
-            <input
-              type="text"
-              value={operatorName}
-              onChange={(e) => setOperatorName(e.target.value)}
-              style={{
-                background: "#0a0a0a",
-                border: "1px solid #333",
-                borderRadius: 8,
-                padding: "10px 12px",
-                color: "#fafafa",
-                maxWidth: 320,
-              }}
-            />
-          </label>
+          <div style={styles.formRow}>
+            <div style={{ ...styles.formGroup, maxWidth: 260 }}>
+              <label style={styles.label}>{t("page.initialBalance")}</label>
+              <input
+                type="text"
+                inputMode="decimal"
+                value={openingCash}
+                onChange={(e) => setOpeningCash(e.target.value)}
+                style={styles.input}
+                onFocus={(e) => { e.target.style.borderColor = "#22c55e"; }}
+                onBlur={(e) => { e.target.style.borderColor = "var(--border-subtle, rgba(255,255,255,0.12))"; }}
+              />
+            </div>
+            <div style={{ ...styles.formGroup, maxWidth: 340 }}>
+              <label style={styles.label}>{t("page.operatorLabel")}</label>
+              <input
+                type="text"
+                value={operatorName}
+                onChange={(e) => setOperatorName(e.target.value)}
+                style={styles.input}
+                onFocus={(e) => { e.target.style.borderColor = "#22c55e"; }}
+                onBlur={(e) => { e.target.style.borderColor = "var(--border-subtle, rgba(255,255,255,0.12))"; }}
+              />
+            </div>
+          </div>
 
-          <button
-            onClick={handleOpen}
-            disabled={acting}
-            style={{
-              alignSelf: "flex-start",
-              background: "#22c55e",
-              border: "none",
-              color: "#000",
-              padding: "10px 16px",
-              borderRadius: 8,
-              fontWeight: 700,
-              cursor: acting ? "not-allowed" : "pointer",
-            }}
-          >
-            {t("page.openButton")}
-          </button>
-        </div>
+          <div style={{ display: "flex", justifyContent: "flex-start", gap: 12, marginTop: 8 }}>
+            <Button
+              variant="constructive"
+              size="md"
+              onClick={handleOpen}
+              disabled={acting}
+              loading={acting}
+            >
+              {t("page.openButton")}
+            </Button>
+            {reportData && (
+              <Button
+                variant="neutral"
+                size="md"
+                onClick={() => setShowReport(true)}
+              >
+                {t("shiftReport.viewLastReport", "View last shift report")}
+              </Button>
+            )}
+          </div>
+        </Card>
       )}
     </div>
   );

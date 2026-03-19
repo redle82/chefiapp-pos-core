@@ -26,12 +26,49 @@
     }
   },
   "perception": {
+    "title": "Operational Perception",
+    "subtitle": "Connect an IP camera to ChefIApp to monitor operations in real time.",
+    "instruction": "Paste the camera link (RTSP, iCSee or HTTP stream) and choose the zone. ChefIApp displays the image and, in future versions, detects patterns automatically.",
+    "cameraLinkLabel": "Camera link",
+    "cameraLinkPlaceholder": "rtsp://... or iCSee link",
+    "cameraZoneLabel": "Camera zone",
+    "cameraZoneDesc": "Associate this camera with a restaurant zone.",
+    "selectZone": "-- Select zone --",
+    "zone": {
+      "kitchen": "Kitchen",
+      "floor": "Dining room",
+      "storage": "Storage",
+      "cash": "Cash register",
+      "entrance": "Entrance",
+      "other": "Other"
+    },
     "saveLink": "Save link",
     "saved": "Saved.",
+    "icseeTooltip": "iCSee: copy the share link from the iCSee app and paste it here.",
     "hideLive": "Hide stream",
     "showLive": "Watch live",
     "cameraCheck": "Confirmation — Camera on?",
-    "cameraCheckDesc": "Use \"Watch live\" to confirm the camera is active."
+    "cameraCheckDesc": "Use \"Watch live\" to confirm the camera is active.",
+    "icseeShareTitle": "iCSee link (share)",
+    "icseeShareDesc": "If you use iCSee, copy the share link from the app and paste it in the field above.",
+    "openCameraNewWindow": "Open camera in new window",
+    "icseeHint": "Tip: in the iCSee app, go to Share → Copy link.",
+    "saveAndWatch": "Save and watch",
+    "streamLoading": "Loading stream…",
+    "streamLive": "Live stream",
+    "streamError": "Error loading the stream. Check the link.",
+    "streamAlt": "Camera stream",
+    "streamHint": "If the image does not load, confirm that the camera is on and the link is valid.",
+    "observationTitle": "Observation (basic patterns)",
+    "observationDesc": "Coming soon: pattern detection by zone.",
+    "observationComingSoon": "Coming soon",
+    "generateObservation": "Generate observation",
+    "analyzeTitle": "Analyse with LLM",
+    "analyzeDesc": "Send a capture for analysis with artificial intelligence.",
+    "analyzing": "Analysing…",
+    "analyzeWithAI": "Analyse with AI",
+    "errorNoLink": "Enter the camera link first.",
+    "errorApi": "Analysis API error."
   },
   "locations": {
     "add": "Add location",
@@ -174,6 +211,77 @@
     "androidStep2": "Scan this QR code",
     "androidStep3": "Accept the app installation"
   },
+  "printer": {
+    "selectBeforeSave": "Select a printer before saving.",
+    "noStationForOverride": "No workstation defined for override. Set up a station.",
+    "errorSaving": "Error saving",
+    "savedSuccess": "Saved successfully.",
+    "selectBeforeTest": "Select a printer before testing.",
+    "sendingTest": "Sending test…",
+    "errorCreatingTest": "Error creating test",
+    "testSentConfirmed": "Test sent and confirmed.",
+    "testFailed": "Test failed.",
+    "testSentPending": "Test sent (awaiting confirmation).",
+    "requiresDesktop": "Desktop app required",
+    "requiresDesktopDesc": "Printer setup requires the ChefIApp desktop app installed and linked.",
+    "goToDevices": "Go to Devices",
+    "notReady": "Not ready",
+    "notReadyDesc": "An active restaurant is required to configure printers.",
+    "goToDashboard": "Go to dashboard",
+    "title": "Printers",
+    "description": "Associate printers with the restaurant's printing functions.",
+    "loading": "Loading…",
+    "warning": "Warning",
+    "noPrintersFound": "No printers found. Check if the desktop agent is running.",
+    "fn": {
+      "labels": "Labels",
+      "kitchen": "Kitchen",
+      "receipt": "Receipt"
+    },
+    "printerLabel": "Printer",
+    "selectPlaceholder": "-- Select --",
+    "useAsGlobal": "Use as global default",
+    "testing": "Testing…",
+    "printTest": "Print test",
+    "saving": "Saving…",
+    "save": "Save"
+  },
+  "integrations": {
+    "title": "Integrations",
+    "subtitle": "Connect POS, delivery, social media and other services to your restaurant.",
+    "comingSoon": "Coming soon",
+    "available": "Available",
+    "section": {
+      "payments": {
+        "label": "Payments",
+        "description": "Connect payment methods to the POS and web."
+      },
+      "whatsapp": {
+        "label": "WhatsApp",
+        "description": "Notifications and orders via WhatsApp."
+      },
+      "webhooks": {
+        "label": "APIs & Webhooks",
+        "description": "Connect external systems with webhooks."
+      },
+      "delivery": {
+        "label": "Delivery",
+        "description": "Delivery platforms and logistics."
+      },
+      "googleBusiness": {
+        "label": "Google Business",
+        "description": "Manage your presence on Google Maps and Google Business."
+      },
+      "instagram": {
+        "label": "Instagram",
+        "description": "Automatically publish photos and stories from the restaurant."
+      },
+      "other": {
+        "label": "Other",
+        "description": "Other integrations and services."
+      }
+    }
+  },
   "softwareTpv": {
     "title": "TPV Software",
     "subtitle": "General configuration and quick mode for the point of sale.",
@@ -199,5 +307,23 @@
     "localeEsES": "Spanish (Spain)",
     "localeEnUS": "English (US)",
     "localePtPT": "Portuguese (Portugal)"
+  },
+  "email": {
+    "title": "Email Notifications",
+    "description": "Send digital receipts and notifications to customers via email.",
+    "loading": "Loading...",
+    "enableReceipts": "Enable email receipts",
+    "autoSend": "Auto-send receipt after payment",
+    "sendOrderConfirmation": "Send order confirmation to customer",
+    "promptMode": "Customer email collection",
+    "promptAtCheckout": "Prompt at checkout",
+    "promptOptional": "Optional (button on receipt)",
+    "promptNever": "Never ask",
+    "preview": "Preview Template",
+    "sendTest": "Send Test Email",
+    "sending": "Sending...",
+    "testSent": "Test email sent!",
+    "testFailed": "Failed: {{error}}",
+    "errorNoRestaurant": "No restaurant selected."
   }
 }

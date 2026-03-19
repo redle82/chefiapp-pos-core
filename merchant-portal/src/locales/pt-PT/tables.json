@@ -1,0 +1,53 @@
+{
+  "page": {
+    "title": "Plano de Sala",
+    "subtitle": "Arraste as mesas para organizar o plano de sala. Clique numa mesa para editar as propriedades.",
+    "loading": "A carregar mesas..."
+  },
+  "editor": {
+    "dragToAdd": "Arrastar para adicionar",
+    "shapeRound": "Redonda",
+    "shapeSquare": "Quadrada",
+    "shapeRectangle": "Retangular",
+    "shapeBar": "Banco bar",
+    "emptyCanvas": "Arraste uma forma de mesa para aqui para montar o seu plano de sala",
+    "hint": "Arraste mesas para reposicionar. Arraste o canto para redimensionar. Clique para selecionar."
+  },
+  "view": {
+    "free": "livres",
+    "noTables": "Sem mesas nesta zona"
+  },
+  "status": {
+    "free": "Livre",
+    "occupied": "Ocupada",
+    "reserved": "Reservada",
+    "inPrep": "Em preparo",
+    "readyToServe": "Pronta",
+    "billRequested": "Conta",
+    "cleaning": "Limpeza",
+    "blocked": "Bloqueada"
+  },
+  "properties": {
+    "title": "Mesa {{n}}",
+    "number": "Numero",
+    "seats": "Lugares",
+    "shape": "Forma",
+    "status": "Estado",
+    "delete": "Apagar mesa"
+  },
+  "zones": {
+    "title": "Gerir Zonas",
+    "defaultName": "Principal",
+    "newPlaceholder": "Nome da nova zona...",
+    "add": "Adicionar",
+    "save": "Guardar",
+    "rename": "Renomear",
+    "delete": "Apagar",
+    "close": "Fechar"
+  },
+  "bulk": {
+    "setAllFree": "Libertar todas",
+    "manageZones": "Gerir zonas",
+    "tables": "mesas"
+  }
+}

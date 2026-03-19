@@ -115,7 +115,7 @@ export function IntegrationsGoogleBusinessPage() {
   };
 
   return (
-    <div className="page-enter admin-content-page">
+    <>
       <AdminPageHeader
         title="Google Business Profile"
         subtitle="Conecte o seu perfil Google para gerir reviews, ratings e presença online."
@@ -543,6 +543,6 @@ export function IntegrationsGoogleBusinessPage() {
           )}
         </section>
       )}
-    </div>
+    </>
   );
 }

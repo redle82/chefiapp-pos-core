@@ -7,7 +7,9 @@
  */
 
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useCurrency } from "../../../core/currency/useCurrency";
+import { DiscountModal } from "./DiscountModal";
 import { OrderModeSelector, type OrderMode } from "./OrderModeSelector";
 
 const ACCENT = "#f97316";
@@ -50,14 +52,42 @@ function ArrowRightIcon() {
   );
 }
 
+/** Modifier snapshot attached to a cart item. */
+export interface CartItemModifier {
+  id: string;
+  name: string;
+  groupId: string;
+  groupName: string;
+  priceDeltaCents: number;
+}
+
 export interface OrderSummaryItem {
   product_id: string;
   name: string;
   subtitle?: string;
   quantity: number;
-  unit_price: number; // cents
+  unit_price: number; // cents (base price, before modifiers)
   image_url?: string | null;
+  /** Selected modifiers for this item (optional). */
+  modifiers?: CartItemModifier[];
 }
+
+/** Calculate total price for one cart item including modifier deltas. */
+function itemTotalCents(item: OrderSummaryItem): number {
+  const modDelta = (item.modifiers ?? []).reduce(
+    (sum, m) => sum + m.priceDeltaCents,
+    0,
+  );
+  return (item.unit_price + modDelta) * item.quantity;
+}
+
+/** Emoji + accent per order mode for context badge. */
+const MODE_BADGE: Record<string, { emoji: string; color: string }> = {
+  dine_in: { emoji: "🍽", color: "#f97316" },
+  counter: { emoji: "🏪", color: "#22c55e" },
+  take_away: { emoji: "📦", color: "#3b82f6" },
+  delivery: { emoji: "🛵", color: "#8b5cf6" },
+};
 
 interface OrderSummaryPanelProps {
   items: OrderSummaryItem[];
@@ -72,9 +102,17 @@ interface OrderSummaryPanelProps {
   /** Order mode (managed by parent) */
   orderMode: OrderMode;
   onOrderModeChange: (mode: OrderMode) => void;
+  /** Table number — shown in context badge when dine_in */
+  tableNumber?: string | null;
+  /** Discount callbacks (optional — when provided, enables discount UI) */
+  onApplyDiscount?: (discountCents: number, reason?: string) => void;
+  onRemoveDiscount?: () => void;
+  discountReason?: string;
+  /** Current operator role (for employee discount visibility in modal). */
+  operatorRole?: string;
 }
 
-const PLACEHOLDER_EMOJI = "🍽️";
+const PLACEHOLDER_EMOJI = "\uD83C\uDF7D\uFE0F";
 
 export function OrderSummaryPanel({
   items,
@@ -88,8 +126,15 @@ export function OrderSummaryPanel({
   proceedDisabled = false,
   orderMode,
   onOrderModeChange,
+  tableNumber,
+  onApplyDiscount,
+  onRemoveDiscount,
+  discountReason,
+  operatorRole,
 }: OrderSummaryPanelProps) {
+  const { t } = useTranslation("tpv");
   const [failedImageIds, setFailedImageIds] = useState<Set<string>>(new Set());
+  const [discountModalOpen, setDiscountModalOpen] = useState(false);
   const { formatAmount } = useCurrency();
   const totalCents = subtotalCents + taxCents - discountCents;
 
@@ -109,6 +154,41 @@ export function OrderSummaryPanel({
         padding: "16px 14px",
       }}
     >
+      {/* Context badge — shows active order destination */}
+      {orderMode && (
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 8,
+            padding: "8px 12px",
+            background: `${(MODE_BADGE[orderMode] ?? MODE_BADGE.take_away).color}10`,
+            border: `1px solid ${(MODE_BADGE[orderMode] ?? MODE_BADGE.take_away).color}30`,
+            borderRadius: 10,
+            marginBottom: 8,
+          }}
+        >
+          <span style={{ fontSize: 20 }}>
+            {(MODE_BADGE[orderMode] ?? MODE_BADGE.take_away).emoji}
+          </span>
+          <span
+            style={{
+              color: (MODE_BADGE[orderMode] ?? MODE_BADGE.take_away).color,
+              fontWeight: 700,
+              fontSize: 14,
+            }}
+          >
+            {orderMode === "dine_in" && tableNumber
+              ? t("contextBadge.table", { n: tableNumber })
+              : orderMode === "counter"
+                ? t("contextBadge.counter")
+                : orderMode === "delivery"
+                  ? t("contextBadge.delivery")
+                  : t("contextBadge.takeaway")}
+          </span>
+        </div>
+      )}
+
       {/* Mode tabs */}
       <OrderModeSelector value={orderMode} onChange={onOrderModeChange} />
 
@@ -122,7 +202,7 @@ export function OrderSummaryPanel({
         }}
       >
         <span style={{ color: "#fafafa", fontWeight: 700, fontSize: 15 }}>
-          Items
+          {t("orderSummary.items")}
         </span>
         {items.length > 0 && (
           <button
@@ -138,7 +218,7 @@ export function OrderSummaryPanel({
               cursor: "pointer",
             }}
           >
-            Clear All
+            {t("orderSummary.clearAll")}
           </button>
         )}
       </div>
@@ -166,162 +246,316 @@ export function OrderSummaryPanel({
               gap: 8,
             }}
           >
-            <span style={{ fontSize: 32, opacity: 0.4 }}>🛒</span>
+            <span style={{ fontSize: 32, opacity: 0.4 }}>{"\uD83D\uDED2"}</span>
             <span style={{ color: "#555", fontSize: 13 }}>
-              Nenhum item no pedido
+              {t("orderSummary.emptyOrder")}
             </span>
           </div>
         ) : (
-          items.map((item) => (
-            <div
-              key={item.product_id}
-              style={{
-                display: "flex",
-                gap: 10,
-                padding: 10,
-                backgroundColor: "#1e1e1e",
-                borderRadius: 12,
-              }}
-            >
-              {/* Thumbnail */}
+          items.map((item) => {
+            const hasModifiers =
+              item.modifiers != null && item.modifiers.length > 0;
+
+            return (
               <div
+                key={item.product_id}
                 style={{
-                  width: 52,
-                  height: 52,
-                  borderRadius: 10,
-                  backgroundColor: "#2a2a2a",
-                  overflow: "hidden",
-                  flexShrink: 0,
+                  display: "flex",
+                  gap: 10,
+                  padding: 10,
+                  backgroundColor: "#1e1e1e",
+                  borderRadius: 12,
                 }}
               >
-                {item.image_url && !failedImageIds.has(item.product_id) ? (
-                  <img
-                    src={item.image_url}
-                    alt=""
-                    style={{
-                      width: "100%",
-                      height: "100%",
-                      objectFit: "cover",
-                    }}
-                    onError={() => markImageFailed(item.product_id)}
-                  />
-                ) : (
+                {/* Thumbnail */}
+                <div
+                  style={{
+                    width: 52,
+                    height: 52,
+                    borderRadius: 10,
+                    backgroundColor: "#2a2a2a",
+                    overflow: "hidden",
+                    flexShrink: 0,
+                  }}
+                >
+                  {item.image_url && !failedImageIds.has(item.product_id) ? (
+                    <img
+                      src={item.image_url}
+                      alt=""
+                      style={{
+                        width: "100%",
+                        height: "100%",
+                        objectFit: "cover",
+                      }}
+                      onError={() => markImageFailed(item.product_id)}
+                    />
+                  ) : (
+                    <div
+                      style={{
+                        width: "100%",
+                        height: "100%",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        fontSize: 20,
+                      }}
+                    >
+                      {PLACEHOLDER_EMOJI}
+                    </div>
+                  )}
+                </div>
+
+                {/* Details */}
+                <div style={{ flex: 1, minWidth: 0 }}>
                   <div
                     style={{
-                      width: "100%",
-                      height: "100%",
+                      color: "#fafafa",
+                      fontWeight: 600,
+                      fontSize: 13,
+                      lineHeight: 1.3,
+                    }}
+                  >
+                    {item.name}
+                  </div>
+                  {item.subtitle && (
+                    <div style={{ color: "#666", fontSize: 11, marginTop: 2 }}>
+                      {item.subtitle}
+                    </div>
+                  )}
+
+                  {/* Modifier sub-lines */}
+                  {hasModifiers &&
+                    item.modifiers!.map((mod) => (
+                      <div
+                        key={mod.id}
+                        style={{
+                          color: "#a1a1aa",
+                          fontSize: 11,
+                          marginTop: 2,
+                          display: "flex",
+                          justifyContent: "space-between",
+                        }}
+                      >
+                        <span>
+                          {"\u21B3"} {mod.name}
+                        </span>
+                        {mod.priceDeltaCents !== 0 && (
+                          <span
+                            style={{
+                              color:
+                                mod.priceDeltaCents > 0
+                                  ? "#fb923c"
+                                  : "#4ade80",
+                              fontWeight: 600,
+                            }}
+                          >
+                            {mod.priceDeltaCents > 0 ? "+" : ""}
+                            {formatAmount(mod.priceDeltaCents)}
+                          </span>
+                        )}
+                      </div>
+                    ))}
+
+                  <div
+                    style={{
                       display: "flex",
                       alignItems: "center",
-                      justifyContent: "center",
-                      fontSize: 20,
+                      justifyContent: "space-between",
+                      marginTop: 6,
                     }}
                   >
-                    {PLACEHOLDER_EMOJI}
-                  </div>
-                )}
-              </div>
-
-              {/* Details */}
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div
-                  style={{
-                    color: "#fafafa",
-                    fontWeight: 600,
-                    fontSize: 13,
-                    lineHeight: 1.3,
-                  }}
-                >
-                  {item.name}
-                </div>
-                {item.subtitle && (
-                  <div style={{ color: "#666", fontSize: 11, marginTop: 2 }}>
-                    {item.subtitle}
-                  </div>
-                )}
-                <div
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "space-between",
-                    marginTop: 6,
-                  }}
-                >
-                  {/* Price */}
-                  <span
-                    style={{ color: "#fafafa", fontWeight: 700, fontSize: 14 }}
-                  >
-                    {formatAmount(item.unit_price * item.quantity)}
-                  </span>
-                  {/* Qty controls */}
-                  <div
-                    style={{ display: "flex", alignItems: "center", gap: 4 }}
-                  >
-                    <button
-                      type="button"
-                      onClick={() =>
-                        onUpdateQuantity(
-                          item.product_id,
-                          Math.max(0, item.quantity - 1),
-                        )
-                      }
-                      style={{
-                        width: 26,
-                        height: 26,
-                        borderRadius: 7,
-                        border: "1px solid #333",
-                        backgroundColor: "transparent",
-                        color: "#a3a3a3",
-                        cursor: "pointer",
-                        fontSize: 15,
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        lineHeight: 1,
-                      }}
-                    >
-                      −
-                    </button>
+                    {/* Price (includes modifier deltas) */}
                     <span
-                      style={{
-                        color: "#fafafa",
-                        fontSize: 13,
-                        minWidth: 22,
-                        textAlign: "center",
-                        fontWeight: 600,
-                      }}
+                      style={{ color: "#fafafa", fontWeight: 700, fontSize: 14 }}
                     >
-                      {item.quantity}
+                      {formatAmount(itemTotalCents(item))}
                     </span>
-                    <button
-                      type="button"
-                      onClick={() =>
-                        onUpdateQuantity(item.product_id, item.quantity + 1)
-                      }
-                      style={{
-                        width: 26,
-                        height: 26,
-                        borderRadius: 7,
-                        border: "none",
-                        backgroundColor: ACCENT,
-                        color: "#fff",
-                        cursor: "pointer",
-                        fontSize: 16,
-                        fontWeight: 700,
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        lineHeight: 1,
-                      }}
+                    {/* Qty controls */}
+                    <div
+                      style={{ display: "flex", alignItems: "center", gap: 4 }}
                     >
-                      +
-                    </button>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          onUpdateQuantity(
+                            item.product_id,
+                            Math.max(0, item.quantity - 1),
+                          )
+                        }
+                        style={{
+                          width: 26,
+                          height: 26,
+                          borderRadius: 7,
+                          border: "1px solid #333",
+                          backgroundColor: "transparent",
+                          color: "#a3a3a3",
+                          cursor: "pointer",
+                          fontSize: 15,
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          lineHeight: 1,
+                        }}
+                      >
+                        {"\u2212"}
+                      </button>
+                      <span
+                        style={{
+                          color: "#fafafa",
+                          fontSize: 13,
+                          minWidth: 22,
+                          textAlign: "center",
+                          fontWeight: 600,
+                        }}
+                      >
+                        {item.quantity}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          onUpdateQuantity(item.product_id, item.quantity + 1)
+                        }
+                        style={{
+                          width: 26,
+                          height: 26,
+                          borderRadius: 7,
+                          border: "none",
+                          backgroundColor: ACCENT,
+                          color: "#fff",
+                          cursor: "pointer",
+                          fontSize: 16,
+                          fontWeight: 700,
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          lineHeight: 1,
+                        }}
+                      >
+                        +
+                      </button>
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
-          ))
+            );
+          })
         )}
       </div>
+
+      {/* Discount row */}
+      {onApplyDiscount && (
+        <div
+          style={{
+            borderTop: "1px solid rgba(255,255,255,0.06)",
+            paddingTop: 10,
+            marginTop: 10,
+          }}
+        >
+          {discountCents > 0 ? (
+            <div
+              data-testid="discount-active"
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                padding: "8px 10px",
+                background: "#1a1207",
+                borderRadius: 8,
+                border: "1px solid #f9731633",
+              }}
+            >
+              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                <span style={{ color: "#f97316", fontSize: 13, fontWeight: 600 }}>
+                  -{formatAmount(discountCents)}
+                </span>
+                {discountReason && (
+                  <span style={{ color: "#9ca3af", fontSize: 11 }}>
+                    {discountReason}
+                  </span>
+                )}
+              </div>
+              <div style={{ display: "flex", gap: 6 }}>
+                <button
+                  type="button"
+                  onClick={() => setDiscountModalOpen(true)}
+                  style={{
+                    padding: "2px 8px",
+                    background: "transparent",
+                    border: "1px solid #27272a",
+                    borderRadius: 6,
+                    color: "#9ca3af",
+                    fontSize: 11,
+                    cursor: "pointer",
+                  }}
+                >
+                  {t("discount.title", "Aplicar Desconto")}
+                </button>
+                {onRemoveDiscount && (
+                  <button
+                    type="button"
+                    data-testid="remove-discount-inline"
+                    onClick={onRemoveDiscount}
+                    style={{
+                      padding: "2px 6px",
+                      background: "transparent",
+                      border: "none",
+                      color: "#dc2626",
+                      fontSize: 14,
+                      cursor: "pointer",
+                      lineHeight: 1,
+                    }}
+                  >
+                    {"\u2715"}
+                  </button>
+                )}
+              </div>
+            </div>
+          ) : (
+            <button
+              type="button"
+              data-testid="add-discount-btn"
+              onClick={() => setDiscountModalOpen(true)}
+              style={{
+                width: "100%",
+                padding: "8px 0",
+                background: "transparent",
+                border: "1px dashed #27272a",
+                borderRadius: 8,
+                color: "#9ca3af",
+                fontSize: 12,
+                cursor: "pointer",
+              }}
+            >
+              {t("discount.addDiscount", "Adicionar desconto")}
+            </button>
+          )}
+        </div>
+      )}
+
+      {/* Discount Modal */}
+      {discountModalOpen && onApplyDiscount && (
+        <DiscountModal
+          subtotalCents={subtotalCents}
+          currentDiscountCents={discountCents}
+          onApply={(cents, r) => {
+            onApplyDiscount(cents, r);
+            setDiscountModalOpen(false);
+          }}
+          onRemove={() => {
+            onRemoveDiscount?.();
+            setDiscountModalOpen(false);
+          }}
+          onClose={() => setDiscountModalOpen(false)}
+          cartItems={items.map((i) => ({
+            product_id: i.product_id,
+            name: i.name,
+            quantity: i.quantity,
+            unit_price: i.unit_price,
+            line_total: itemTotalCents(i),
+          }))}
+          operatorRole={operatorRole}
+        />
+      )}
 
       {/* Summary */}
       <div
@@ -334,10 +568,15 @@ export function OrderSummaryPanel({
           gap: 6,
         }}
       >
-        <SummaryRow label="Subtotal" value={subtotalCents} />
-        {taxCents > 0 && <SummaryRow label="Tax (5%)" value={taxCents} />}
+        <SummaryRow label={t("orderSummary.subtotal")} value={subtotalCents} />
+        {taxCents > 0 && (
+          <SummaryRow
+            label={`${t("orderSummary.tax")} (${Math.round(parseFloat(localStorage.getItem("chefiapp_tax_rate") || "0.05") * 100)}%)`}
+            value={taxCents}
+          />
+        )}
         {discountCents > 0 && (
-          <SummaryRow label="Discount" value={-discountCents} />
+          <SummaryRow label={t("orderSummary.discount")} value={-discountCents} />
         )}
         <div
           style={{
@@ -349,7 +588,7 @@ export function OrderSummaryPanel({
             marginTop: 4,
           }}
         >
-          <span>Total</span>
+          <span>{t("orderSummary.total")}</span>
           <span>{formatAmount(totalCents)}</span>
         </div>
       </div>
@@ -382,7 +621,7 @@ export function OrderSummaryPanel({
           }}
         >
           <PrinterIcon />
-          Print Receipt
+          {t("orderSummary.printReceipt")}
         </button>
         <button
           type="button"
@@ -405,7 +644,7 @@ export function OrderSummaryPanel({
             transition: "background-color 0.15s ease",
           }}
         >
-          Proceed
+          {t("orderSummary.proceed")}
           <ArrowRightIcon />
         </button>
       </div>

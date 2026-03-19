@@ -17,7 +17,16 @@ import { TPVSettingsPage } from "../../pages/TPVMinimal/TPVSettingsPage";
 import { TPVShiftPage } from "../../pages/TPVMinimal/TPVShiftPage";
 import { TPVTablesPage } from "../../pages/TPVMinimal/TPVTablesPage";
 import { TPVTasksPage } from "../../pages/TPVMinimal/TPVTasksPage";
+import { TPVScreensPage } from "../../pages/TPVMinimal/TPVScreensPage";
+import { TPVExpoPage } from "../../pages/TPVMinimal/TPVExpoPage";
+import { TPVCustomerDisplayPage } from "../../pages/TPVMinimal/TPVCustomerDisplayPage";
+import { TPVDeliveryPage } from "../../pages/TPVMinimal/TPVDeliveryPage";
 import { TPVWebEditorPage } from "../../pages/TPVMinimal/TPVWebEditorPage";
+import { ScreenKitchenPage } from "../../pages/TPVMinimal/screens/ScreenKitchenPage";
+import { ScreenBarPage } from "../../pages/TPVMinimal/screens/ScreenBarPage";
+import { ScreenExpoPage } from "../../pages/TPVMinimal/screens/ScreenExpoPage";
+import { ScreenDeliveryPage } from "../../pages/TPVMinimal/screens/ScreenDeliveryPage";
+import { ScreenCustomerDisplayPage } from "../../pages/TPVMinimal/screens/ScreenCustomerDisplayPage";
 import { ErrorBoundary } from "../../ui/design-system/ErrorBoundary";
 import { GlobalBlockedView } from "../../ui/design-system/components/GlobalBlockedView";
 import {
@@ -25,6 +34,7 @@ import {
   APP_ROUTES,
   DASHBOARD_ROUTES,
   OPERATIONAL_ROUTES,
+  SCREEN_ROUTES,
 } from "../constants/routeConstants";
 
 export const OperationalDesktopRoutesFragment = (
@@ -78,6 +88,10 @@ export const OperationalDesktopRoutesFragment = (
         <Route path="tasks" element={<TPVTasksPage />} />
         <Route path="reservations" element={<TPVReservationsPage />} />
         <Route path="web-editor" element={<TPVWebEditorPage />} />
+        <Route path="expo" element={<TPVExpoPage />} />
+        <Route path="customer-display" element={<TPVCustomerDisplayPage />} />
+        <Route path="delivery" element={<TPVDeliveryPage />} />
+        <Route path="screens" element={<TPVScreensPage />} />
         <Route path="settings" element={<TPVSettingsPage />} />
       </Route>
     </Route>
@@ -114,6 +128,62 @@ export const OperationalDesktopRoutesFragment = (
         }
       />
     </Route>
+
+    {/* ── Dedicated Screen Routes (/screen/*) ──────────────────────────
+         Isolated surfaces: no TPV sidebar/header. ScreenLayout provides
+         a minimal header with station label, clock, and back button.
+         Each screen opens in a new window from the TPV Screens Hub.
+    */}
+    <Route
+      path={SCREEN_ROUTES.KITCHEN}
+      element={
+        <ErrorBoundary context="Screen:Kitchen" fallback={<GlobalBlockedView title="Erro na tela" description="Recarregue para continuar." action={{ label: "Recarregar", onClick: () => window.location.reload() }} />}>
+          <OperationalFullscreenWrapper>
+            <ScreenKitchenPage />
+          </OperationalFullscreenWrapper>
+        </ErrorBoundary>
+      }
+    />
+    <Route
+      path={SCREEN_ROUTES.BAR}
+      element={
+        <ErrorBoundary context="Screen:Bar" fallback={<GlobalBlockedView title="Erro na tela" description="Recarregue para continuar." action={{ label: "Recarregar", onClick: () => window.location.reload() }} />}>
+          <OperationalFullscreenWrapper>
+            <ScreenBarPage />
+          </OperationalFullscreenWrapper>
+        </ErrorBoundary>
+      }
+    />
+    <Route
+      path={SCREEN_ROUTES.EXPO}
+      element={
+        <ErrorBoundary context="Screen:Expo" fallback={<GlobalBlockedView title="Erro na tela" description="Recarregue para continuar." action={{ label: "Recarregar", onClick: () => window.location.reload() }} />}>
+          <OperationalFullscreenWrapper>
+            <ScreenExpoPage />
+          </OperationalFullscreenWrapper>
+        </ErrorBoundary>
+      }
+    />
+    <Route
+      path={SCREEN_ROUTES.DELIVERY}
+      element={
+        <ErrorBoundary context="Screen:Delivery" fallback={<GlobalBlockedView title="Erro na tela" description="Recarregue para continuar." action={{ label: "Recarregar", onClick: () => window.location.reload() }} />}>
+          <OperationalFullscreenWrapper>
+            <ScreenDeliveryPage />
+          </OperationalFullscreenWrapper>
+        </ErrorBoundary>
+      }
+    />
+    <Route
+      path={SCREEN_ROUTES.CUSTOMER_DISPLAY}
+      element={
+        <ErrorBoundary context="Screen:CustomerDisplay" fallback={<GlobalBlockedView title="Erro na tela" description="Recarregue para continuar." action={{ label: "Recarregar", onClick: () => window.location.reload() }} />}>
+          <OperationalFullscreenWrapper>
+            <ScreenCustomerDisplayPage />
+          </OperationalFullscreenWrapper>
+        </ErrorBoundary>
+      }
+    />
 
     <Route
       path={OPERATIONAL_ROUTES.CASH}

@@ -52,6 +52,7 @@ import {
   setTabIsolated,
 } from "../../../core/storage/TabIsolatedStorage";
 import { eventTaskGenerator } from "../../../core/tasks/EventTaskGenerator";
+import { occupyTableForOrder, markTableInPrep, markTableCleaning } from "../../../infra/writers/TableWriter";
 import { useOfflineOrder } from "./OfflineOrderContext";
 import { OrderContext, type OrderCreateInput } from "./OrderContextToken"; // FASE 3.4: Token isolado
 // DOCKER CORE: All writes go through PostgREST RPCs (see ARCHITECTURE_DECISION.md)
@@ -324,17 +325,12 @@ export function OrderProvider({
     });
     getActiveOrders(false); // Initial load (with spinner)
 
-    // 1. SAFETY NET: Defensive Polling (30s)
-    // 🔴 RISK: Se Supabase Realtime falhar silenciosamente, este é o único fallback.
-    // Intervalo de 30s é um trade-off entre carga no servidor e latência máxima de pedidos.
-    // TODO: Considerar reduzir para 15s em horário de pico se necessário.
+    // 1. PRIMARY SYNC: Polling (5s)
+    // Realtime WebSocket requires Supabase Realtime tenant config (encrypted jwt_secret).
+    // Until that is resolved, 5s polling is the primary sync mechanism for KDS/TPV.
     pollingRef.current = setInterval(() => {
-      Logger.info("🛡️ Defensive Polling (30s interval)", {
-        context: "OrderContext",
-        tenantId: restaurantId,
-      });
       getActiveOrders(true);
-    }, 30000);
+    }, 5000);
 
     // 2. REALTIME SUBSCRIPTION
     const channel = setupRealtimeSubscription();
@@ -656,6 +652,11 @@ export function OrderProvider({
       .catch((err) =>
         console.warn("[OrderContextReal] Tarefa por pedido não criada:", err),
       );
+
+    // Auto-occupy table (fire-and-forget, non-blocking)
+    if (orderInput.tableId && restaurantId) {
+      occupyTableForOrder(orderInput.tableId, restaurantId).catch(() => {});
+    }
 
     // HARD RULE 4: Persistir pedido ativo (Tab-Isolated)
     setTabIsolated("chefiapp_active_order_id", localOrder.id);
@@ -982,6 +983,16 @@ export function OrderProvider({
             origin: "TPV",
           });
           if (updateError) throw new Error(updateError.message);
+
+          // Bridge: mesa → in_prep após envio à cozinha (fire-and-forget)
+          try {
+            const sentOrder = await OrderEngine.getOrderById(orderId);
+            if (sentOrder?.tableId) {
+              markTableInPrep(sentOrder.tableId, restaurantId).catch(() => {});
+            }
+          } catch {
+            // Non-blocking — table state is best-effort
+          }
           break;
 
         case "ready":
@@ -1342,6 +1353,16 @@ export function OrderProvider({
               context: "OrderContext",
               orderId,
             });
+          }
+
+          // Bridge: mesa → cleaning após pagamento (fire-and-forget)
+          try {
+            const paidOrderForTable = await OrderEngine.getOrderById(orderId);
+            if (paidOrderForTable?.tableId) {
+              markTableCleaning(paidOrderForTable.tableId, restaurantId).catch(() => {});
+            }
+          } catch {
+            // Non-blocking — table state is best-effort
           }
 
           // Limpar pedido ativo após pagamento

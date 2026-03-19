@@ -36,6 +36,9 @@ export const VALID_COUNTRIES: Country[] = [
   "MX",
   "CA",
   "AU",
+  "IT",
+  "FR",
+  "DE",
 ];
 
 /** Fusos horários válidos */
@@ -48,6 +51,9 @@ export const VALID_TIMEZONES: Timezone[] = [
   "America/Mexico_City",
   "America/Toronto",
   "Australia/Sydney",
+  "Europe/Rome",
+  "Europe/Paris",
+  "Europe/Berlin",
 ];
 
 /** Moedas válidas */
@@ -71,6 +77,9 @@ export const VALID_LOCALES: Locale[] = [
   "es-MX",
   "en-CA",
   "en-AU",
+  "it-IT",
+  "fr-FR",
+  "de-DE",
 ];
 
 /**

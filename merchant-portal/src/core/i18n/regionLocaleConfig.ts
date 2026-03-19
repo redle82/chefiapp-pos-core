@@ -20,9 +20,9 @@ export const COUNTRY_LOCALE: Record<string, SupportedLocale> = {
   PT: "pt-PT",
   ES: "es",
   AD: "es", // Andorra — es
-  FR: "en", // França — fallback en até ter fr
-  DE: "en", // Alemanha — fallback en até ter de
-  IT: "en", // Itália — fallback en até ter it
+  FR: "en", // France — fallback en until fr bundle exists
+  DE: "en", // Germany — fallback en until de bundle exists
+  IT: "en", // Italy — fallback en until it bundle exists
   NL: "en",
   BE: "en",
   AT: "en",

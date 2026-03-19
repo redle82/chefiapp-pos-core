@@ -35,14 +35,14 @@ jobs:
       - name: ❌ Detect Manual Task Creation
         run: |
           echo "🔍 Scanning for manual task creation..."
-          CHANGED_FILES=$(git diff --name-only HEAD~1 HEAD | grep -E "^merchant-portal/src/(pages/AppStaff|components)/.*\\.(ts|tsx)$" || true)
-          if [ -z "$CHANGED_FILES" ]; then
-            echo "✅ No AppStaff/components changes in this commit. Skipping."
-            exit 0
-          fi
 
           # Search for prohibited patterns
-          VIOLATIONS=$(echo "$CHANGED_FILES" | xargs grep -nE "createTask\|newTask\|addTask" || true)
+          VIOLATIONS=$(grep -r "createTask\|newTask\|addTask" \
+            merchant-portal/src/pages/AppStaff \
+            merchant-portal/src/components \
+            --include="*.tsx" --include="*.ts" \
+            --exclude-dir=node_modules \
+            --exclude-dir=context || true)
 
           if [ -n "$VIOLATIONS" ]; then
             echo "❌ CANON VIOLATION: Manual task creation detected (Law 2)"
@@ -63,13 +63,13 @@ jobs:
       - name: ❌ Detect Cross-Role Navigation
         run: |
           echo "🔍 Scanning for cross-role navigation..."
-          CHANGED_FILES=$(git diff --name-only HEAD~1 HEAD | grep -E "^merchant-portal/src/(pages/AppStaff|components)/.*\\.(ts|tsx)$" || true)
-          if [ -z "$CHANGED_FILES" ]; then
-            echo "✅ No AppStaff/components changes in this commit. Skipping."
-            exit 0
-          fi
 
-          VIOLATIONS=$(echo "$CHANGED_FILES" | xargs grep -nE "switchRole\|changeRole\|selectRole\|setRole.*onClick" || true)
+          VIOLATIONS=$(grep -r "switchRole\|changeRole\|selectRole\|setRole.*onClick" \
+            merchant-portal/src/pages/AppStaff \
+            merchant-portal/src/components \
+            --include="*.tsx" --include="*.ts" \
+            --exclude-dir=node_modules \
+            --exclude-dir=context || true)
 
           if [ -n "$VIOLATIONS" ]; then
             echo "❌ CANON VIOLATION: Role switching detected (Law 4)"
@@ -87,13 +87,12 @@ jobs:
       - name: ❌ Detect UI Customization
         run: |
           echo "🔍 Scanning for UI customization..."
-          CHANGED_FILES=$(git diff --name-only HEAD~1 HEAD | grep -E "^merchant-portal/src/(pages/AppStaff|ui)/.*\\.(ts|tsx)$" || true)
-          if [ -z "$CHANGED_FILES" ]; then
-            echo "✅ No AppStaff/UI changes in this commit. Skipping."
-            exit 0
-          fi
 
-          VIOLATIONS=$(echo "$CHANGED_FILES" | xargs grep -nE "theme\|customLayout\|userPreference.*ui\|setTheme\|changeLayout" || true)
+          VIOLATIONS=$(grep -r "theme\|customLayout\|userPreference.*ui\|setTheme\|changeLayout" \
+            merchant-portal/src/pages/AppStaff \
+            merchant-portal/src/ui \
+            --include="*.tsx" --include="*.ts" \
+            --exclude-dir=node_modules || true)
 
           if [ -n "$VIOLATIONS" ]; then
             echo "⚠️  WARNING: Possible UI customization detected"
@@ -111,13 +110,12 @@ jobs:
       - name: ❌ Detect Gamification
         run: |
           echo "🔍 Scanning for gamification..."
-          CHANGED_FILES=$(git diff --name-only HEAD~1 HEAD | grep -E "^merchant-portal/src/(pages/AppStaff|components)/.*\\.(ts|tsx)$" || true)
-          if [ -z "$CHANGED_FILES" ]; then
-            echo "✅ No AppStaff/components changes in this commit. Skipping."
-            exit 0
-          fi
 
-          VIOLATIONS=$(echo "$CHANGED_FILES" | xargs grep -nE "points\|badge\|leaderboard\|score\|achievement\|level" || true)
+          VIOLATIONS=$(grep -r "points\|badge\|leaderboard\|score\|achievement\|level" \
+            merchant-portal/src/pages/AppStaff \
+            merchant-portal/src/components \
+            --include="*.tsx" --include="*.ts" \
+            --exclude-dir=node_modules || true)
 
           if [ -n "$VIOLATIONS" ]; then
             echo "❌ CANON VIOLATION: Gamification detected (Anti-Feature)"
@@ -135,13 +133,11 @@ jobs:
       - name: ❌ Detect External Task Manager Integration
         run: |
           echo "🔍 Scanning for task manager integrations..."
-          CHANGED_FILES=$(git diff --name-only HEAD~1 HEAD | grep -E "^merchant-portal/src/.*\\.(ts|tsx)$" || true)
-          if [ -z "$CHANGED_FILES" ]; then
-            echo "✅ No merchant-portal source changes in this commit. Skipping."
-            exit 0
-          fi
 
-          VIOLATIONS=$(echo "$CHANGED_FILES" | xargs grep -nE "trello\|notion\|asana\|todoist\|clickup" || true)
+          VIOLATIONS=$(grep -r "trello\|notion\|asana\|todoist\|clickup" \
+            merchant-portal/src \
+            --include="*.tsx" --include="*.ts" \
+            --exclude-dir=node_modules || true)
 
           if [ -n "$VIOLATIONS" ]; then
             echo "❌ CANON VIOLATION: Task manager integration detected (Anti-Feature)"
@@ -211,14 +207,13 @@ jobs:
       - name: ✅ Verify Tool Sovereignty (Law 1)
         run: |
           echo "🔍 Verifying Tool Sovereignty..."
-          CHANGED_APPSTAFF=$(git diff --name-only HEAD~1 HEAD | grep -E "^merchant-portal/src/pages/AppStaff/.*\\.(ts|tsx)$" || true)
-          if [ -z "$CHANGED_APPSTAFF" ]; then
-            echo "✅ No AppStaff changes in this commit. Skipping."
-            exit 0
-          fi
 
           # dominantTool MUST be calculated, never set by user
-          VIOLATIONS=$(echo "$CHANGED_APPSTAFF" | xargs grep -nE "setDominantTool\|dominantTool.*=.*'order'\|dominantTool.*=.*'production'" || true)
+          VIOLATIONS=$(grep -r "setDominantTool\|dominantTool.*=.*'order'\|dominantTool.*=.*'production'" \
+            merchant-portal/src/pages/AppStaff \
+            --include="*.tsx" --include="*.ts" \
+            --exclude-dir=node_modules \
+            --exclude-dir=context || true)
 
           if [ -n "$VIOLATIONS" ]; then
             echo "❌ CANON VIOLATION: dominantTool manually set (Law 1)"
@@ -232,7 +227,7 @@ jobs:
           fi
 
           # Verify dominantTool calculation exists
-          if ! echo "$CHANGED_APPSTAFF" | xargs grep -nE "useMemo.*dominantTool" > /dev/null; then
+          if ! grep -r "useMemo.*dominantTool" merchant-portal/src/pages/AppStaff --include="*.tsx" > /dev/null; then
             echo "❌ CANON VIOLATION: dominantTool not calculated via useMemo"
             exit 1
           fi
@@ -242,20 +237,15 @@ jobs:
       - name: ✅ Verify System Reflex (Law 2)
         run: |
           echo "🔍 Verifying System Reflex..."
-          CHANGED_CONTEXT=$(git diff --name-only HEAD~1 HEAD | grep -E "^merchant-portal/src/pages/AppStaff/context/.*\\.tsx$" || true)
-          if [ -z "$CHANGED_CONTEXT" ]; then
-            echo "✅ No AppStaff context changes in this commit. Skipping."
-            exit 0
-          fi
 
           # checkSystemReflex MUST be called in interval
-          if ! echo "$CHANGED_CONTEXT" | xargs grep -n "checkSystemReflex" > /dev/null; then
+          if ! grep -r "checkSystemReflex" merchant-portal/src/pages/AppStaff/context --include="*.tsx" > /dev/null; then
             echo "❌ CANON VIOLATION: checkSystemReflex not invoked"
             exit 1
           fi
 
           # Interval MUST exist
-          if ! echo "$CHANGED_CONTEXT" | xargs grep -nE "setInterval.*checkSystemReflex\|checkSystemReflex.*setInterval" > /dev/null; then
+          if ! grep -r "setInterval.*checkSystemReflex\|checkSystemReflex.*setInterval" merchant-portal/src/pages/AppStaff/context --include="*.tsx" > /dev/null; then
             echo "❌ CANON VIOLATION: System reflex not automated via interval"
             exit 1
           fi
@@ -265,20 +255,18 @@ jobs:
       - name: ✅ Verify Temporal Memory (Law 3)
         run: |
           echo "🔍 Verifying Temporal Memory..."
-          CHANGED_APPSTAFF=$(git diff --name-only HEAD~1 HEAD | grep -E "^merchant-portal/src/pages/AppStaff/.*\\.(ts|tsx)$" || true)
-          if [ -z "$CHANGED_APPSTAFF" ]; then
-            echo "✅ No AppStaff changes in this commit. Skipping."
-            exit 0
-          fi
 
           # lastActivityAt MUST be tracked
-          if ! echo "$CHANGED_APPSTAFF" | xargs grep -n "lastActivityAt" > /dev/null; then
+          if ! grep -r "lastActivityAt" merchant-portal/src/pages/AppStaff/context --include="*.tsx" > /dev/null; then
             echo "❌ CANON VIOLATION: lastActivityAt not tracked (Law 3)"
             exit 1
           fi
 
           # No automatic logout on idle
-          VIOLATIONS=$(echo "$CHANGED_APPSTAFF" | xargs grep -nE "logout.*idle\|idle.*logout\|clearSession.*idle" || true)
+          VIOLATIONS=$(grep -r "logout.*idle\|idle.*logout\|clearSession.*idle" \
+            merchant-portal/src/pages/AppStaff \
+            --include="*.tsx" --include="*.ts" \
+            --exclude-dir=node_modules || true)
 
           if [ -n "$VIOLATIONS" ]; then
             echo "❌ CANON VIOLATION: Automatic logout on idle detected (Law 3)"
@@ -293,13 +281,13 @@ jobs:
           echo "🔍 Verifying Progressive Externalization..."
 
           # TaskMigrationEngine MUST exist
-          if [ ! -f "merchant-portal/src/intelligence/nervous-system/TaskMigrationEngine.ts" ]; then
+          if [ ! -f "merchant-portal/src/core/nervous-system/TaskMigrationEngine.ts" ]; then
             echo "❌ CANON VIOLATION: TaskMigrationEngine missing (Law 6)"
             exit 1
           fi
 
           # calculateTaskMigration MUST exist
-          if ! grep "export.*calculateTaskMigration" merchant-portal/src/intelligence/nervous-system/TaskMigrationEngine.ts > /dev/null; then
+          if ! grep "export.*calculateTaskMigration" merchant-portal/src/core/nervous-system/TaskMigrationEngine.ts > /dev/null; then
             echo "❌ CANON VIOLATION: calculateTaskMigration not exported (Law 6)"
             exit 1
           fi

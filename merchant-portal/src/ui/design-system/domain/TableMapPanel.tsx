@@ -6,19 +6,22 @@ import React, {
   useRef,
   useState,
 } from "react";
+import { useTranslation } from "react-i18next";
 import { currencyService } from "../../../core/currency/CurrencyService";
+import {
+  type TableStatus,
+  TABLE_STATE_COLORS,
+  TABLE_STATUS_LABELS,
+} from "../../../core/operational/tableStates";
 import { Card } from "../Card";
 import { Text } from "../primitives/Text";
 import { colors } from "../tokens/colors";
 import { spacing } from "../tokens/spacing";
 
-// Define Table interface locally or import (ideally import but avoiding huge refactor, redefining for now or importing from logic layer)
-// Importing from context seems cleanest but it's in pages/TPV/context.
-// For UI component, let's keep it pure and define interface props.
 export interface TableData {
   id: string;
   number: number;
-  status: "free" | "occupied" | "reserved";
+  status: TableStatus;
   seats: number;
   x?: number;
   y?: number;
@@ -26,7 +29,8 @@ export interface TableData {
   zone?: string;
   /** ISO timestamp when table was occupied — used for elapsed-time display */
   seatedAt?: string | null;
-  // SEMANA 1 - Tarefa 1.1: Informações do pedido ativo
+  /** ISO timestamp when table entered current state — time-in-state tracking */
+  lastStateChangeAt?: string | null;
   orderInfo?: {
     id: string;
     status:
@@ -44,14 +48,11 @@ export interface TableData {
 interface TableMapPanelProps {
   tables: TableData[];
   onSelectTable: (tableId: string) => void;
-  onCreateOrder?: (tableId: string) => void; // SEMANA 1 - Tarefa 1.1: Ação rápida para criar pedido
-  /** Gap #7: callback to persist table position after drag */
+  onCreateOrder?: (tableId: string) => void;
   onUpdatePosition?: (tableId: string, x: number, y: number) => void;
-  /** Gap #10: open transfer/merge/split actions for occupied table */
   onTableAction?: (tableId: string) => void;
 }
 
-// FASE 5: Memoizar componente pesado para melhorar performance
 export const TableMapPanel: React.FC<TableMapPanelProps> = memo(
   ({
     tables,
@@ -60,8 +61,15 @@ export const TableMapPanel: React.FC<TableMapPanelProps> = memo(
     onUpdatePosition,
     onTableAction,
   }) => {
-    // Gap #7: Canvas / Grid toggle + drag state
-    const hasPositionedTables = tables.some((t) => t.x != null && t.y != null);
+    const { t } = useTranslation("operational");
+
+    // Action badges per state — shows what action is pending
+    const ACTION_BADGES: Partial<Record<TableStatus, { icon: string; label: string }>> = {
+      ready_to_serve: { icon: "🍽", label: t("tableMap.badgeServe") },
+      bill_requested: { icon: "💳", label: t("tableMap.badgeBill") },
+      cleaning: { icon: "🧹", label: t("tableMap.badgeClean") },
+    };
+    const hasPositionedTables = tables.some((tbl) => tbl.x != null && tbl.y != null);
     const [viewMode, setViewMode] = useState<"grid" | "canvas">(
       hasPositionedTables ? "canvas" : "grid",
     );
@@ -80,78 +88,69 @@ export const TableMapPanel: React.FC<TableMapPanelProps> = memo(
       Record<string, { x: number; y: number }>
     >({});
 
-    // Phase 7: live clock for elapsed-time display (tick every 60s)
+    // Live clock for elapsed-time display (tick every 60s)
     const [nowMs, setNowMs] = useState(Date.now());
     useEffect(() => {
       const id = setInterval(() => setNowMs(Date.now()), 60_000);
       return () => clearInterval(id);
     }, []);
 
-    // Phase 7: aggregate stats
+    // Aggregate stats — operational grouping
     const stats = useMemo(() => {
-      const free = tables.filter((t) => t.status === "free").length;
-      const occupied = tables.filter((t) => t.status === "occupied").length;
-      const reserved = tables.filter((t) => t.status === "reserved").length;
-      return { free, occupied, reserved, total: tables.length };
+      const free = tables.filter((tbl) => tbl.status === "free").length;
+      const active = tables.filter((tbl) =>
+        ["occupied", "in_prep", "ready_to_serve"].includes(tbl.status),
+      ).length;
+      const attention = tables.filter((tbl) =>
+        ["ready_to_serve", "bill_requested", "cleaning"].includes(tbl.status),
+      ).length;
+      const reserved = tables.filter((tbl) => tbl.status === "reserved").length;
+      return { free, active, attention, reserved, total: tables.length };
     }, [tables]);
 
-    // Phase 7: zone groups for grid mode
+    // Zone groups for grid mode
     const zoneGroups = useMemo(() => {
-      const hasZones = tables.some((t) => t.zone);
+      const hasZones = tables.some((tbl) => tbl.zone);
       if (!hasZones) return [{ zone: null as string | null, tables }];
       const map = new Map<string, TableData[]>();
-      for (const t of tables) {
-        const z = t.zone ?? "Sem zona";
+      for (const tbl of tables) {
+        const z = tbl.zone ?? t("tableMap.noZone");
         if (!map.has(z)) map.set(z, []);
-        map.get(z)!.push(t);
+        map.get(z)!.push(tbl);
       }
       return Array.from(map.entries()).map(([zone, tables]) => ({
         zone,
         tables,
       }));
-    }, [tables]);
+    }, [tables, t]);
 
     const getStatusLabel = (
-      status: string,
+      status: TableStatus,
       orderInfo?: TableData["orderInfo"],
-    ) => {
+    ): string => {
+      // Order status overrides table status label
       if (orderInfo) {
         switch (orderInfo.status) {
           case "partially_paid":
-            return "PAGO PARCIAL";
+            return t("tableStates.partially_paid");
           case "paid":
-            return "PAGO";
+            return t("tableStates.paid");
           case "ready":
-            return "PRONTO";
+            return t("tableStates.ready");
           case "preparing":
-            return "PREPARANDO";
+            return t("tableStates.preparing");
           default:
-            return "OCUPADA";
+            break;
         }
       }
-      switch (status) {
-        case "free":
-          return "LIVRE";
-        case "occupied":
-          return "OCUPADA";
-        case "reserved":
-          return "RESERVADA";
-        default:
-          return "DESC.";
-      }
+      return t(TABLE_STATUS_LABELS[status] ?? "tableMap.unknown");
     };
 
-    // RADAR: Enhanced Color Logic
-    const getHealthAwareColor = (
-      status: string,
-      health: string | undefined,
+    // Color per state — direct from canonical map, with order override
+    const getTableColor = (
+      status: TableStatus,
       orderInfo?: TableData["orderInfo"],
-    ) => {
-      // 1. Critical Operational States (Override everything)
-      if (health === "angry") return colors.destructive.base;
-      if (health === "pulsing") return colors.action.base;
-
-      // 2. Order Status
+    ): string => {
       if (orderInfo) {
         switch (orderInfo.status) {
           case "partially_paid":
@@ -159,27 +158,14 @@ export const TableMapPanel: React.FC<TableMapPanelProps> = memo(
           case "paid":
             return colors.success.base;
           case "ready":
-            return colors.info.base;
+            return TABLE_STATE_COLORS.ready_to_serve;
           case "preparing":
-            return colors.action.base;
+            return TABLE_STATE_COLORS.in_prep;
           default:
-            return health === "bored"
-              ? colors.warning.base
-              : colors.success.base;
+            break;
         }
       }
-
-      // 4. Default Status Colors
-      switch (status) {
-        case "free":
-          return colors.success.base;
-        case "occupied":
-          return health === "bored" ? colors.warning.base : colors.success.base;
-        case "reserved":
-          return colors.info.base;
-        default:
-          return colors.text.tertiary;
-      }
+      return TABLE_STATE_COLORS[status] ?? colors.text.tertiary;
     };
 
     // --- Drag handlers (canvas mode) ---
@@ -231,16 +217,36 @@ export const TableMapPanel: React.FC<TableMapPanelProps> = memo(
 
     // ---- Shared table card renderer ----
     const renderTableCard = (table: TableData, isCanvas: boolean) => {
-      const health = (table as any).health;
-      const statusColor = getHealthAwareColor(
-        table.status,
-        health,
-        table.orderInfo,
-      );
+      const statusColor = getTableColor(table.status, table.orderInfo);
       const isFree = table.status === "free";
       const hasOrder = !!table.orderInfo;
-      const formatTotal = (cents: number) =>
-        currencyService.formatAmount(cents);
+      const isBlocked = table.status === "blocked";
+      const actionBadge = ACTION_BADGES[table.status];
+
+      // Elapsed time since seating (total occupation)
+      const elapsedMinutes =
+        !isFree && table.seatedAt
+          ? Math.floor((nowMs - new Date(table.seatedAt).getTime()) / 60_000)
+          : 0;
+
+      // Time in current state
+      const stateMinutes = table.lastStateChangeAt
+        ? Math.floor(
+            (nowMs - new Date(table.lastStateChangeAt).getTime()) / 60_000,
+          )
+        : 0;
+
+      const formatElapsed = (m: number): string => {
+        if (m < 60) return `${m}m`;
+        return `${Math.floor(m / 60)}h${String(m % 60).padStart(2, "0")}`;
+      };
+
+      const elapsedColor = (m: number): string =>
+        m < 15
+          ? colors.success.base
+          : m < 30
+            ? colors.warning.base
+            : colors.destructive.base;
 
       return (
         <div
@@ -264,14 +270,16 @@ export const TableMapPanel: React.FC<TableMapPanelProps> = memo(
             display: "flex",
             flexDirection: "column",
             justifyContent: "space-between",
-            backgroundColor: isFree ? `${colors.success.base}10` : undefined,
+            backgroundColor: `${statusColor}10`,
             borderRadius: "8px",
             position: isCanvas ? "absolute" : "relative",
+            opacity: isBlocked ? 0.5 : 1,
             userSelect: editMode ? "none" : undefined,
             touchAction: editMode ? "none" : undefined,
           }}
         >
           <Card surface="layer2" padding="md" hoverable>
+            {/* Header: number + status dot */}
             <div
               style={{
                 display: "flex",
@@ -282,72 +290,87 @@ export const TableMapPanel: React.FC<TableMapPanelProps> = memo(
               <Text size="2xl" weight="black" color="primary">
                 {table.number}
               </Text>
-              {/* RADAR OPERACIONAL: Heartbeat Visualization */}
               <div
                 style={{
                   width: 12,
                   height: 12,
                   borderRadius: "50%",
                   backgroundColor: statusColor,
-                  boxShadow:
-                    health === "pulsing" || health === "angry"
-                      ? `0 0 8px ${statusColor}`
-                      : "none",
-                  animation:
-                    health === "pulsing"
-                      ? "pulse-radar 1.5s infinite"
-                      : health === "angry"
-                      ? "pulse-slow 3s infinite"
-                      : "none",
                 }}
               />
             </div>
 
+            {/* Status + times */}
             <div style={{ marginTop: spacing[2] }}>
               <div
                 style={{
                   display: "flex",
                   justifyContent: "space-between",
+                  alignItems: "center",
                 }}
               >
                 <Text size="xs" weight="bold" style={{ color: statusColor }}>
                   {getStatusLabel(table.status, table.orderInfo)}
                 </Text>
 
-                {/* RADAR: Show Wait Time if relevant */}
-                {((table as any).waitMinutes > 15 || health === "pulsing") && (
-                  <Text size="xs" color="destructive" weight="bold">
-                    {health === "pulsing"
-                      ? "CHAMANDO"
-                      : `${Math.floor((table as any).waitMinutes)}m`}
-                  </Text>
+                {/* Dual time display */}
+                {!isFree && !isBlocked && (
+                  <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
+                    {/* Total occupation time */}
+                    {elapsedMinutes >= 1 && (
+                      <span
+                        style={{
+                          fontSize: 10,
+                          fontWeight: 700,
+                          color: elapsedColor(elapsedMinutes),
+                        }}
+                      >
+                        ⏱ {formatElapsed(elapsedMinutes)}
+                      </span>
+                    )}
+                    {/* Time in current state (only if different from occupation) */}
+                    {stateMinutes >= 1 &&
+                      table.status !== "occupied" &&
+                      stateMinutes !== elapsedMinutes && (
+                        <span
+                          style={{
+                            fontSize: 10,
+                            fontWeight: 600,
+                            color: colors.text.tertiary,
+                          }}
+                        >
+                          ↻ {formatElapsed(stateMinutes)}
+                        </span>
+                      )}
+                  </div>
                 )}
-                {/* Phase 7: elapsed time since seating */}
-                {!isFree &&
-                  table.seatedAt &&
-                  (() => {
-                    const elapsed = Math.floor(
-                      (nowMs - new Date(table.seatedAt).getTime()) / 60_000,
-                    );
-                    if (elapsed < 1) return null;
-                    const elColor =
-                      elapsed < 15
-                        ? colors.success.base
-                        : elapsed < 30
-                        ? colors.warning.base
-                        : colors.destructive.base;
-                    return (
-                      <Text size="xs" weight="bold" style={{ color: elColor }}>
-                        ⏱ {elapsed}m
-                      </Text>
-                    );
-                  })()}
               </div>
+
               <Text size="xs" color="tertiary">
-                {table.seats} Lugares
+                {table.seats} {t("tableMap.seats")}
               </Text>
 
-              {/* SEMANA 1 - Tarefa 1.1: Mostrar informações do pedido */}
+              {/* Action badge (pending action indicator) */}
+              {actionBadge && !editMode && (
+                <div
+                  style={{
+                    marginTop: 4,
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: 4,
+                    padding: "2px 8px",
+                    borderRadius: 10,
+                    backgroundColor: `${statusColor}20`,
+                    fontSize: 10,
+                    fontWeight: 700,
+                    color: statusColor,
+                  }}
+                >
+                  {actionBadge.icon} {actionBadge.label}
+                </div>
+              )}
+
+              {/* Order info */}
               {hasOrder && table.orderInfo && (
                 <div
                   style={{
@@ -357,7 +380,7 @@ export const TableMapPanel: React.FC<TableMapPanelProps> = memo(
                   }}
                 >
                   <Text size="xs" color="primary" weight="bold">
-                    {formatTotal(table.orderInfo.total)}
+                    {currencyService.formatAmount(table.orderInfo.total)}
                   </Text>
                   {table.orderInfo.status === "partially_paid" && (
                     <Text
@@ -365,15 +388,15 @@ export const TableMapPanel: React.FC<TableMapPanelProps> = memo(
                       color="warning"
                       style={{ display: "block", marginTop: 2 }}
                     >
-                      ⚠️ Parcial
+                      ⚠️ {t("tableMap.partiallyPaid")}
                     </Text>
                   )}
                 </div>
               )}
             </div>
 
-            {/* Gap #10: Action button for occupied tables (Transfer/Merge/Split) */}
-            {!isFree && hasOrder && onTableAction && !editMode && (
+            {/* Action button for non-free tables */}
+            {!isFree && !isBlocked && onTableAction && !editMode && (
               <div
                 style={{
                   marginTop: spacing[2],
@@ -393,16 +416,16 @@ export const TableMapPanel: React.FC<TableMapPanelProps> = memo(
                     cursor: "pointer",
                     textAlign: "center",
                     padding: spacing[1],
-                    backgroundColor: `${colors.warning.base}10`,
+                    backgroundColor: `${statusColor}10`,
                     borderRadius: 4,
                   }}
                 >
-                  ⚙ Ações
+                  ⚙ {t("tableMap.actions")}
                 </Text>
               </div>
             )}
 
-            {/* SEMANA 1 - Tarefa 1.1: Botão de ação rápida para mesa livre */}
+            {/* Quick action for free tables */}
             {isFree && onCreateOrder && !editMode && (
               <div
                 style={{
@@ -427,7 +450,7 @@ export const TableMapPanel: React.FC<TableMapPanelProps> = memo(
                     borderRadius: 4,
                   }}
                 >
-                  + Abrir Conta
+                  + {t("tableMap.openBill")}
                 </Text>
               </div>
             )}
@@ -456,7 +479,7 @@ export const TableMapPanel: React.FC<TableMapPanelProps> = memo(
           }}
         >
           <Text size="xl" weight="black" color="primary">
-            Mapa de Mesas
+            {t("tableMap.title")}
           </Text>
 
           <div
@@ -491,7 +514,7 @@ export const TableMapPanel: React.FC<TableMapPanelProps> = memo(
                     color: viewMode === mode ? "#fff" : colors.text.secondary,
                   }}
                 >
-                  {mode === "grid" ? "⊞ Grade" : "◳ Planta"}
+                  {mode === "grid" ? `⊞ ${t("tableMap.gridMode")}` : `◳ ${t("tableMap.canvasMode")}`}
                 </button>
               ))}
             </div>
@@ -515,30 +538,21 @@ export const TableMapPanel: React.FC<TableMapPanelProps> = memo(
                   color: editMode ? colors.action.base : colors.text.secondary,
                 }}
               >
-                {editMode ? "✓ Guardar" : "✎ Editar"}
+                {editMode ? `✓ ${t("tableMap.save")}` : `✎ ${t("tableMap.edit")}`}
               </button>
             )}
 
-            {/* Phase 7: stats chips */}
+            {/* Stats chips — operational grouping */}
             <div style={{ display: "flex", gap: spacing[2], flexWrap: "wrap" }}>
-              {(
-                [
-                  { key: "free", color: colors.success.base, label: "Livres" },
-                  {
-                    key: "occupied",
-                    color: colors.action.base,
-                    label: "Ocupadas",
-                  },
-                  {
-                    key: "reserved",
-                    color: colors.info.base,
-                    label: "Reservadas",
-                  },
-                ] as const
-              ).map(({ key, color, label }) =>
-                stats[key] > 0 ? (
+              {([
+                { count: stats.free, color: TABLE_STATE_COLORS.free, label: t("tableMap.free") },
+                { count: stats.active, color: TABLE_STATE_COLORS.occupied, label: t("tableMap.occupied") },
+                { count: stats.attention, color: TABLE_STATE_COLORS.bill_requested, label: t("tableMap.attention") },
+                { count: stats.reserved, color: TABLE_STATE_COLORS.reserved, label: t("tableMap.reserved") },
+              ]).map(({ count, color, label }) =>
+                count > 0 ? (
                   <span
-                    key={key}
+                    key={label}
                     style={{
                       fontSize: 11,
                       fontWeight: 700,
@@ -550,7 +564,7 @@ export const TableMapPanel: React.FC<TableMapPanelProps> = memo(
                       whiteSpace: "nowrap",
                     }}
                   >
-                    {stats[key]} {label}
+                    {count} {label}
                   </span>
                 ) : null,
               )}
@@ -558,26 +572,11 @@ export const TableMapPanel: React.FC<TableMapPanelProps> = memo(
           </div>
         </div>
 
-        {/* Keyframe animations */}
-        <style>{`
-          @keyframes pulse-radar {
-            0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(var(--color-action-base), 0.7); }
-            70% { transform: scale(1); box-shadow: 0 0 0 10px rgba(var(--color-action-base), 0); }
-            100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(var(--color-action-base), 0); }
-          }
-          @keyframes pulse-slow {
-            0% { opacity: 1; }
-            50% { opacity: 0.6; }
-            100% { opacity: 1; }
-          }
-        `}</style>
-
         {/* ----- GRID VIEW ----- */}
         {viewMode === "grid" && (
           <div style={{ overflowY: "auto", paddingBottom: spacing[4] }}>
             {zoneGroups.map(({ zone, tables: zoneTables }) => (
               <div key={zone ?? "all"} style={{ marginBottom: spacing[6] }}>
-                {/* Zone header (only when zones exist) */}
                 {zone !== null && (
                   <div
                     style={{
@@ -607,8 +606,8 @@ export const TableMapPanel: React.FC<TableMapPanelProps> = memo(
                         padding: "1px 7px",
                       }}
                     >
-                      {zoneTables.filter((t) => t.status === "free").length}/
-                      {zoneTables.length} livres
+                      {zoneTables.filter((tbl) => tbl.status === "free").length}/
+                      {zoneTables.length} {t("tableMap.zoneFree")}
                     </span>
                     <div
                       style={{
@@ -634,7 +633,7 @@ export const TableMapPanel: React.FC<TableMapPanelProps> = memo(
           </div>
         )}
 
-        {/* ----- CANVAS VIEW (Gap #7) ----- */}
+        {/* ----- CANVAS VIEW ----- */}
         {viewMode === "canvas" && (
           <div
             ref={canvasRef}
@@ -652,7 +651,7 @@ export const TableMapPanel: React.FC<TableMapPanelProps> = memo(
               minHeight: 400,
             }}
           >
-            {/* Dot grid background for spatial reference */}
+            {/* Dot grid background */}
             <div
               style={{
                 position: "absolute",
@@ -691,13 +690,14 @@ export const TableMapPanel: React.FC<TableMapPanelProps> = memo(
     );
   },
   (prevProps, nextProps) => {
-    // FASE 5: Comparação customizada para evitar re-renders desnecessários
     return (
       prevProps.tables.length === nextProps.tables.length &&
       prevProps.tables.every(
         (table, idx) =>
           table.id === nextProps.tables[idx]?.id &&
-          table.status === nextProps.tables[idx]?.status,
+          table.status === nextProps.tables[idx]?.status &&
+          table.lastStateChangeAt === nextProps.tables[idx]?.lastStateChangeAt &&
+          table.seatedAt === nextProps.tables[idx]?.seatedAt,
       )
     );
   },

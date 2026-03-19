@@ -247,6 +247,56 @@
     "noShiftDesc": "Não tem um turno aberto. Entre em modo Turno ou Operação para começar.",
     "startShift": "Abrir turno"
   },
+  "tenant": {
+    "selectRestaurant": "Selecionar restaurante",
+    "role": {
+      "owner": "Dono",
+      "manager": "Gerente",
+      "staff": "Staff",
+      "waiter": "Garçom",
+      "kitchen": "Cozinha"
+    },
+    "yourRestaurants": "Os seus Restaurantes",
+    "selectToOperate": "Selecione o restaurante para operar",
+    "singleTenant": "Um único restaurante associado. A redirecionar…"
+  },
+  "security": {
+    "metaTitle": "Segurança e Dados — ChefIApp",
+    "metaDescription": "Como o ChefIApp trata os seus dados: sessões, infraestrutura, privacidade e transparência.",
+    "tryFree": "Testar grátis",
+    "badge": "Segurança e Dados",
+    "heading": "Como tratamos os seus dados",
+    "intro": "Transparência sobre sessões, armazenamento e práticas de privacidade do ChefIApp.",
+    "sessionAccessTitle": "Acesso por sessão",
+    "sessionAccessBody": "O ChefIApp usa sessões autenticadas para cada utilizador. Não partilhamos credenciais entre restaurantes e cada sessão é isolada.",
+    "noDataSaleTitle": "Não vendemos dados",
+    "noDataSaleBody": "Os dados do seu restaurante pertencem-lhe. Não vendemos, partilhamos ou monetizamos dados de clientes ou operações.",
+    "infrastructureTitle": "Infraestrutura",
+    "infrastructureBody": "Os dados são armazenados em servidores seguros via Supabase (infraestrutura AWS). Usamos encriptação em trânsito (TLS) e em repouso.",
+    "privacyTitle": "Privacidade",
+    "privacyBodyPrefix": "Consulte a nossa",
+    "privacyPolicyLink": "Política de Privacidade",
+    "privacyBodySuffix": "Para detalhes completos sobre recolha, uso e direitos sobre os seus dados.",
+    "disclaimerTitle": "Aviso",
+    "disclaimerBody": "Esta página descreve práticas actuais. O ChefIApp reserva-se o direito de atualizar estas práticas, notificando os utilizadores conforme exigido por lei.",
+    "navPrivacy": "Privacidade",
+    "navTerms": "Termos",
+    "navDpa": "DPA",
+    "navBackToLanding": "Voltar à landing"
+  },
+  "installApps": {
+    "subtitle": "Escolha a loja compatível com o seu dispositivo para baixar o ChefIApp Staff.",
+    "availableIn": "Disponível em",
+    "comingSoon": "Em breve",
+    "differenceTitle": "Qual a diferença?",
+    "appleDesc": "Para iPhone e iPad. Descarregue pela App Store da Apple.",
+    "androidDesc": "Para dispositivos Android. Descarregue pela Google Play.",
+    "howItWorksTitle": "Como funciona",
+    "step1": "Descarregue a app na loja do seu dispositivo.",
+    "step2": "Abra a app e faça login com a conta do restaurante.",
+    "step3": "Pronto! Pode começar a receber pedidos e gerir mesas.",
+    "backToDevices": "Voltar a Dispositivos"
+  },
   "fiscal": {
     "pendingAriaLabel": "{{count}} pedidos fiscais pendentes",
     "pendingBadge_one": "{{count}} Fiscal Pendente",
@@ -259,5 +309,41 @@
     "toastFailed_other": "{{count}} pedidos falharam após múltiplas tentativas.",
     "viewDetails": "Ver Detalhes",
     "closeAlert": "Fechar alerta"
+  },
+  "staffLanding": {
+    "tagline": "Gestão de equipa inteligente",
+    "availableForTeam": "Disponível para a sua equipa",
+    "comingSoon": "Em breve",
+    "installViaQR": "Instale via código QR",
+    "qrInstructions": "Digitalize o código QR com o telemóvel para instalar a app Staff",
+    "enterWithCode": "Entrar com código",
+    "enterWithCodeDesc": "Introduza o código fornecido pelo gerente",
+    "enterAsEmployee": "Entrar como colaborador",
+    "enterAsEmployeeDesc": "Selecione o seu perfil da lista",
+    "localOperation": "Operação local",
+    "enterAs": "Entrar como",
+    "whatToOperate": "O que quer operar?",
+    "insertCode": "Inserir código",
+    "panelCode": "Código do painel de administração",
+    "verifying": "A verificar…",
+    "connect": "Conectar",
+    "unknownError": "Erro desconhecido",
+    "demoGuideCodesLabel": "Códigos de teste",
+    "loadingPeople": "A carregar colaboradores…",
+    "noPeopleConfigured": "Nenhum colaborador configurado",
+    "choosePersonDesc": "Escolha o seu perfil para continuar",
+    "joining": "A entrar…",
+    "errorLoadPeople": "Erro ao carregar colaboradores",
+    "errorJoining": "Erro ao entrar",
+    "roles": {
+      "owner": "Dono",
+      "manager": "Gerente",
+      "waiter": "Garçom",
+      "kitchen": "Cozinheiro",
+      "cook": "Cozinheiro",
+      "cleaning": "Limpeza",
+      "staff": "Staff",
+      "employee": "Colaborador"
+    }
   }
 }

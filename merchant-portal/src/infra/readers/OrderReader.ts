@@ -101,6 +101,80 @@ export async function readReadyOrders(
 }
 
 /**
+ * Itens preparados (ready_at IS NOT NULL) de pedidos READY/CLOSED do turno actual.
+ * Retorna itens com station normalizada + dados do pedido (short_id, created_at, table_number).
+ */
+export interface PreparedItem extends CoreOrderItem {
+  order_short_id: string | null;
+  order_created_at: string | null;
+  order_table_number: number | null;
+}
+
+export async function readPreparedItems(
+  restaurantId: string,
+  station?: "KITCHEN" | "BAR",
+  limit: number = 200,
+): Promise<PreparedItem[]> {
+  // Fetch recent completed orders (READY + CLOSED) from today's shift
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const sinceISO = today.toISOString();
+
+  const { data: orders, error: ordErr } = await dockerCoreClient
+    .from("gm_orders")
+    .select("id, short_id, created_at, table_number")
+    .eq("restaurant_id", restaurantId)
+    .in("status", ["READY", "CLOSED"])
+    .gte("created_at", sinceISO)
+    .order("created_at", { ascending: false })
+    .limit(limit);
+
+  if (ordErr || !orders || orders.length === 0) return [];
+
+  const orderIds = (orders as Array<{ id: string }>).map((o) => o.id);
+  const orderMap = new Map(
+    (orders as Array<{ id: string; short_id: string | null; created_at: string | null; table_number: number | null }>)
+      .map((o) => [o.id, o]),
+  );
+
+  const { data: items, error: itemErr } = await dockerCoreClient
+    .from("gm_order_items")
+    .select("*, gm_products(station)")
+    .in("order_id", orderIds)
+    .not("ready_at", "is", null)
+    .order("ready_at", { ascending: false })
+    .limit(limit);
+
+  if (itemErr || !items) return [];
+
+  const rows = (items as (CoreOrderItem & {
+    gm_products?: { station?: string | null } | null;
+  })[]);
+
+  const result: PreparedItem[] = [];
+  for (const row of rows) {
+    const { gm_products: product, ...item } = row;
+    const raw = (item.station ?? product?.station ?? "KITCHEN")
+      ?.toString()
+      .toUpperCase();
+    const normalizedStation = raw === "BAR" ? "BAR" : "KITCHEN";
+
+    if (station && normalizedStation !== station) continue;
+
+    const orderInfo = orderMap.get(item.order_id);
+    result.push({
+      ...item,
+      station: normalizedStation,
+      order_short_id: orderInfo?.short_id ?? null,
+      order_created_at: orderInfo?.created_at ?? null,
+      order_table_number: orderInfo?.table_number ?? null,
+    } as PreparedItem);
+  }
+
+  return result;
+}
+
+/**
  * Pedidos para analytics (período implícito; limit para performance).
  */
 export async function readOrdersForAnalytics(

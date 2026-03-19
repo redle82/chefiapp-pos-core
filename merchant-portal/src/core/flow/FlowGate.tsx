@@ -102,7 +102,9 @@ export function FlowGate({ children }: { children: ReactNode }) {
       };
 
       // Public Void Protocol: /public/* is customer-facing — never block or redirect.
-      if (pathname.startsWith("/public")) {
+      // Screen Protocol: /screen/* are dedicated surfaces — never block or redirect.
+      // Operational Protocol: /op/* (TPV, KDS) have their own guards — never block here.
+      if (pathname.startsWith("/public") || pathname.startsWith("/screen/") || pathname.startsWith("/op/")) {
         if (mounted) {
           clearLoadingTimeout();
           setIsChecking(false);
@@ -130,6 +132,7 @@ export function FlowGate({ children }: { children: ReactNode }) {
         pathname.startsWith("/app/staff/") ||
         pathname === "/operacao" ||
         pathname.startsWith("/op/") ||
+        pathname.startsWith("/screen/") ||
         pathname === "/task-system" ||
         pathname === "/inventory-stock" ||
         pathname === "/shopping-list";
@@ -506,6 +509,14 @@ export function FlowGate({ children }: { children: ReactNode }) {
     // Depender de session?.user?.id evita loop "Maximum update depth exceeded":
     // session é um objeto; nova referência a cada render faz o effect re-correr e setLifecycleState de novo.
   }, [session?.user?.id, sessionLoading, location.pathname]);
+
+  // Public Void Protocol (synchronous): /public/* never waits for auth/lifecycle checks.
+  // Screen Protocol: /screen/* are dedicated operational surfaces opened from a running TPV.
+  // Operational Protocol: /op/* are operational surfaces (TPV, KDS) — never block at FlowGate level.
+  // They have their own guards (ShiftGate, BrowserBlockGuard, OperatorContext lock screen).
+  if (location.pathname.startsWith("/public") || location.pathname.startsWith("/screen/") || location.pathname.startsWith("/op/")) {
+    return <>{children}</>;
+  }
 
   // Contrato ORE: apenas LOADING ou READY (children). Timeout não bloqueia — deixa páginas (ORE) decidir.
   if (isChecking) {
