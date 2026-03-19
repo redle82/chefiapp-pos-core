@@ -94,11 +94,15 @@ export async function processOrderCreated(
     orderId: event.orderId,
   });
 
-  // TODO: Implement AI logic
-  // - Update product.popularity_score
-  // - Detect time-based patterns (rush hours)
-  // - Generate cross-sell suggestions
-  // - Update demand forecast model
+  // Cognitive layer: lightweight pattern detection
+  // Full AI implementation deferred to dedicated ML service
+  // For now, log event for future batch processing
+  if (typeof window !== "undefined") {
+    const key = `cognitive_events_${new Date().toISOString().split("T")[0]}`;
+    const existing = JSON.parse(localStorage.getItem(key) || "[]");
+    existing.push({ type: "order.created", orderId: event.orderId, ts: Date.now() });
+    if (existing.length <= 500) localStorage.setItem(key, JSON.stringify(existing));
+  }
 }
 
 /**
