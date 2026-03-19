@@ -31,8 +31,8 @@ jobs:
             echo "❌ SYSTEM_TRUTH_CODEX.md missing"
             exit 1
           fi
-          if [ ! -f "PARTE_3_REGRAS_DO_CORE.md" ]; then
-            echo "❌ PARTE_3_REGRAS_DO_CORE.md missing"
+          if [ ! -f "PARTE_3_REGRAS_DO_CORE.md" ] && [ ! -f "docs/archive/PARTE_3_REGRAS_DO_CORE.md" ]; then
+            echo "❌ PARTE_3_REGRAS_DO_CORE.md missing (expected at repo root or docs/archive/)"
             exit 1
           fi
           echo "✅ Kernel Layer validated"
@@ -48,8 +48,8 @@ jobs:
             echo "❌ TenantResolver.ts missing"
             exit 1
           fi
-          if [ ! -f "TENANT_RESOLUTION_CONTRACT.md" ]; then
-            echo "❌ TENANT_RESOLUTION_CONTRACT.md missing"
+          if [ ! -f "TENANT_RESOLUTION_CONTRACT.md" ] && [ ! -f "docs/archive/TENANT_RESOLUTION_CONTRACT.md" ]; then
+            echo "❌ TENANT_RESOLUTION_CONTRACT.md missing (expected at repo root or docs/archive/)"
             exit 1
           fi
           echo "✅ Gates Layer validated"
