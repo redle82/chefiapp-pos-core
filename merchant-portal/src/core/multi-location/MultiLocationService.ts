@@ -1,7 +1,7 @@
 /**
  * Multi-Location Service — Manage multiple restaurant locations under one organization.
  */
-import { getDockerCoreFetchClient } from "../../infra/dockerCoreFetchClient";
+import { getDockerCoreFetchClient } from "../infra/dockerCoreFetchClient";
 
 export interface Location {
   id: string;

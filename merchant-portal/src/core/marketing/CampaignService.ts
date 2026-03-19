@@ -1,7 +1,7 @@
 /**
  * Campaign Service — CRUD and management for automated marketing campaigns.
  */
-import { getDockerCoreFetchClient } from "../../infra/dockerCoreFetchClient";
+import { getDockerCoreFetchClient } from "../infra/dockerCoreFetchClient";
 
 export type CampaignType =
   | "welcome"
