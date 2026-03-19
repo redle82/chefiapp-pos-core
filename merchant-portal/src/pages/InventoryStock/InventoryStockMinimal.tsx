@@ -15,6 +15,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
+import { WasteLogModal } from "./components/WasteLogModal";
 import { ExportButtons } from "../../components/common/ExportButtons";
 import { useCurrency } from "../../core/currency/useCurrency";
 import { useExportBranding } from "../../core/export/useExportBranding";
@@ -187,6 +188,9 @@ export function InventoryStockMinimal() {
   const [availablePacks, setAvailablePacks] = useState<PresetPack[]>([]);
   const [importingPack, setImportingPack] = useState(false);
   const [importPackMessage, setImportPackMessage] = useState("");
+
+  // Waste modal state
+  const [showWasteModal, setShowWasteModal] = useState(false);
 
   useEffect(() => {
     loadAllData();
@@ -682,7 +686,30 @@ export function InventoryStockMinimal() {
           ← Voltar
         </Button>
         <h1 className={styles.pageTitle}>📦 Inventário e Estoque</h1>
+        <div style={{ display: "flex", gap: 8, marginLeft: "auto" }}>
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={() => setShowWasteModal(true)}
+          >
+            {t("waste.logWaste", { defaultValue: "Log Waste" })}
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => navigate("/admin/inventory/waste")}
+          >
+            {t("waste.viewReport", { defaultValue: "Waste Report" })}
+          </Button>
+        </div>
       </header>
+
+      {/* Waste Log Modal */}
+      <WasteLogModal
+        open={showWasteModal}
+        onClose={() => setShowWasteModal(false)}
+        onSuccess={() => loadAllData()}
+      />
 
       {/* Error banner */}
       {error && (
