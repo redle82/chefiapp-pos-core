@@ -16,3 +16,6 @@
 
 ### 4. Risk Assessment
 <!-- Does this touch the 'Money' path? (Orders, Payments, Sessions) -->
+
+### 5. Repo hygiene (optional)
+- **CI / GitHub setup:** If this PR changes workflows or policies, see [`docs/ops/GITHUB_REPOSITORY_SETUP.md`](../docs/ops/GITHUB_REPOSITORY_SETUP.md).

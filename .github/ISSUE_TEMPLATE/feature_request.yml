@@ -1,0 +1,32 @@
+name: Feature / improvement
+description: Propose a product or engineering improvement
+labels: ["enhancement", "triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        **Language:** Prefer **English** for technical detail (see `docs/LANGUAGE_POLICY.md`).
+        Large changes should align with scope — see `docs/strategy/SCOPE_FREEZE.md` when relevant.
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem or opportunity
+      description: What pain or gap does this address?
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed direction
+      description: High-level approach (no need for full spec).
+    validations:
+      required: true
+  - type: checkboxes
+    id: surfaces
+    attributes:
+      label: Likely surfaces (optional)
+      options:
+        - label: Merchant portal / AppStaff
+        - label: Mobile app
+        - label: Core / server / billing
+        - label: Docs only

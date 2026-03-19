@@ -10,6 +10,8 @@
 **Version:** `1.2.0` — Production Ready
 **Status:** 🟢 **READY FOR PRODUCTION**
 
+[![ChefIApp CI](https://github.com/redle82/chefiapp-pos-core/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/redle82/chefiapp-pos-core/actions/workflows/ci.yml)
+
 > **🌍 Language:** All code, commits, and canonical documentation are in **English**.
 > See [`docs/LANGUAGE_POLICY.md`](docs/LANGUAGE_POLICY.md) for complete rules.
 
@@ -281,6 +283,7 @@ The system is **complete and stable** for production.
 
 ### References
 
+- **GitHub & CI (Dependabot, branch protection, secrets):** [docs/ops/GITHUB_REPOSITORY_SETUP.md](docs/ops/GITHUB_REPOSITORY_SETUP.md)
 - **Next actions (scope & validation):** [docs/strategy/NEXT_ACTIONS.md](docs/strategy/NEXT_ACTIONS.md) — FASE 1–3 validation, FASE 5 polish, FASE 6 print
 - **Billing, PIX, SumUp:** [docs/BILLING_PIX_SUMUP_INDEX.md](docs/BILLING_PIX_SUMUP_INDEX.md) — índice e scripts; validação: `./scripts/run-billing-pix-sumup-validation.sh` (gateway em 4320).
 - **Observability:** [docs/ops/OBSERVABILITY_SETUP.md](docs/ops/OBSERVABILITY_SETUP.md)

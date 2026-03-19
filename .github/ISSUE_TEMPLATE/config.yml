@@ -1,0 +1,8 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Documentação do repositório & CI
+    url: https://github.com/redle82/chefiapp-pos-core/blob/main/docs/ops/GITHUB_REPOSITORY_SETUP.md
+    about: Fluxo de CI, secrets opcionais, branch protection e boas práticas no GitHub.
+  - name: Índice de issues (guia)
+    url: https://github.com/redle82/chefiapp-pos-core/blob/main/docs/GITHUB_ISSUES.md
+    about: Como reportar e classificar trabalho no projeto.

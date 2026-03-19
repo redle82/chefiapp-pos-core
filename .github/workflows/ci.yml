@@ -17,10 +17,16 @@ on:
         default: false
         type: boolean
 
+concurrency:
+  group: chefiapp-ci-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
 jobs:
   validate:
     name: Validate Code Quality
     runs-on: ubuntu-latest
+    env:
+      BILLING_AUDIT_DATABASE_URL: ${{ secrets.CORE_BILLING_AUDIT_DATABASE_URL }}
 
     steps:
       - name: Checkout Repo
@@ -56,8 +62,8 @@ jobs:
       - name: Merchant-portal canonical coverage gate (Vitest)
         continue-on-error: true
         run: |
-          pnpm --filter merchant-portal exec vitest run --coverage
-          pnpm --filter merchant-portal run check:coverage:branches
+          npm run test:coverage -w merchant-portal
+          BRANCH_COVERAGE_MIN=80 node merchant-portal/scripts/check-branch-coverage.mjs
 
       - name: Server coverage gate
         continue-on-error: true
@@ -72,7 +78,7 @@ jobs:
       # C4.3: Billing Core audit — runs only when CORE_BILLING_AUDIT_DATABASE_URL is set (release readiness).
       # Fails job on DRIFT/BAD_VALUE or connection error (exit 1). Skip when secret not configured.
       - name: Audit billing Core (gm_restaurants.billing_status vs merchant_subscriptions)
-        if: secrets.CORE_BILLING_AUDIT_DATABASE_URL != ''
+        if: env.BILLING_AUDIT_DATABASE_URL != ''
         env:
           DATABASE_URL: ${{ secrets.CORE_BILLING_AUDIT_DATABASE_URL }}
         run: npm run audit:billing-core
@@ -186,12 +192,12 @@ jobs:
           npm -w merchant-portal run preview &
           for i in $(seq 1 30); do curl -s -o /dev/null -w "%{http_code}" http://localhost:4173/ | grep -q 200 && break; sleep 2; done
 
-      - name: Flakiness hunt (repeat-each=${{ inputs.flakiness_repeat || '10' }})
+      - name: Flakiness hunt (repeat-each=${{ github.event.inputs.flakiness_repeat || '10' }})
         run: |
           cd merchant-portal
           npx playwright test \
             --project=setup --project=contracts --project=core \
-            --repeat-each=${{ inputs.flakiness_repeat || '10' }} \
+            --repeat-each=${{ github.event.inputs.flakiness_repeat || '10' }} \
             --retries=0 --workers=1 \
             --fail-on-flaky-tests \
             --reporter=list \
