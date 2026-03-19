@@ -54,6 +54,7 @@ import { PayoutsPage } from "../../features/admin/payments/pages/PayoutsPage";
 import { ReconciliationPage } from "../../features/admin/payments/pages/ReconciliationPage";
 import { TransactionsPage } from "../../features/admin/payments/pages/TransactionsPage";
 import { DiscountsPage } from "../../features/admin/discounts/pages/DiscountsPage";
+import OrdersPage from "../../features/admin/orders/pages/OrdersPage";
 import { PromotionsPage } from "../../features/admin/promotions/pages/PromotionsPage";
 import { ShiftDashboardPage } from "../../features/admin/shifts/pages/ShiftDashboardPage";
 import { ReceiptHistoryPage } from "../../features/admin/receipts/pages/ReceiptHistoryPage";
@@ -206,6 +207,16 @@ export const AdminRoutesFragment = (
         <ManagementAdvisor>
           <DashboardLayout>
             <PromotionsPage />
+          </DashboardLayout>
+        </ManagementAdvisor>
+      }
+    />
+    <Route
+      path="/admin/orders"
+      element={
+        <ManagementAdvisor>
+          <DashboardLayout>
+            <OrdersPage />
           </DashboardLayout>
         </ManagementAdvisor>
       }
@@ -382,6 +393,10 @@ export const AdminRoutesFragment = (
     <Route
       path="/admin/translations"
       element={<Navigate to="/admin/catalog/translations" replace />}
+    />
+    <Route
+      path="/admin/inventory"
+      element={<Navigate to="/admin/inventory/waste" replace />}
     />
     <Route
       path="/admin/inventory/waste"
