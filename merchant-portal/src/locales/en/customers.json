@@ -1,0 +1,125 @@
+{
+  "pageTitle": "Customers",
+  "pageSubtitle": "View customer profiles, spending patterns and preferences.",
+  "createNew": "New Customer",
+  "search": "Search by name, phone or email...",
+  "loading": "Loading customers...",
+  "empty": "No customers found.",
+  "emptyCreate": "No customers yet. Create your first customer to get started.",
+  "totalCustomers": "{{count}} customer(s) total",
+  "perPage": "{{n}} / page",
+
+  "columns": {
+    "name": "Name",
+    "phone": "Phone",
+    "email": "Email",
+    "visits": "Visits",
+    "totalSpent": "Total Spent",
+    "lastVisit": "Last Visit",
+    "segment": "Segment",
+    "source": "Source"
+  },
+
+  "segments": {
+    "all": "All",
+    "new": "New",
+    "regular": "Regular",
+    "vip": "VIP",
+    "at_risk": "At Risk",
+    "lost": "Lost"
+  },
+
+  "detail": {
+    "backToList": "Back to customers",
+    "contactInfo": "Contact Information",
+    "stats": "Statistics",
+    "totalVisits": "Total Visits",
+    "totalSpent": "Total Spent",
+    "avgTicket": "Avg. Ticket",
+    "firstVisit": "First Visit",
+    "lastVisit": "Last Visit",
+    "points": "Points",
+    "dietary": "Dietary Preferences",
+    "noDietary": "No dietary preferences set.",
+    "addDietary": "Add preference",
+    "orderHistory": "Order History",
+    "noOrders": "No orders found.",
+    "staffNotes": "Staff Notes",
+    "noNotes": "No notes yet.",
+    "addNote": "Add note",
+    "addNotePlaceholder": "Write a note about this customer...",
+    "actions": "Actions",
+    "edit": "Edit",
+    "merge": "Merge",
+    "exportData": "Export Data (GDPR)",
+    "delete": "Delete",
+    "never": "Never"
+  },
+
+  "form": {
+    "createTitle": "New Customer",
+    "editTitle": "Edit Customer",
+    "name": "Name",
+    "namePlaceholder": "Full name",
+    "phone": "Phone",
+    "phonePlaceholder": "+351 912 345 678",
+    "email": "Email",
+    "emailPlaceholder": "email@example.com",
+    "notes": "Notes",
+    "notesPlaceholder": "Staff notes...",
+    "dietary": "Dietary Preferences",
+    "dietaryPlaceholder": "e.g. vegan, gluten-free, shellfish allergy",
+    "cancel": "Cancel",
+    "save": "Save",
+    "saving": "Saving...",
+    "errorNameRequired": "Name is required",
+    "errorPhoneRequired": "Phone is required"
+  },
+
+  "quickAdd": {
+    "title": "Customer",
+    "searchPlaceholder": "Search or add customer...",
+    "addNew": "Add new customer",
+    "linked": "Linked customer",
+    "visits": "{{count}} visits",
+    "unlink": "Unlink",
+    "dietaryAlert": "Dietary alert"
+  },
+
+  "merge": {
+    "title": "Merge Customers",
+    "description": "Select a duplicate customer to merge into this one. The duplicate will be deleted.",
+    "searchDuplicate": "Search duplicate...",
+    "confirm": "Merge",
+    "cancel": "Cancel",
+    "success": "Customers merged successfully.",
+    "error": "Failed to merge customers."
+  },
+
+  "delete": {
+    "title": "Delete Customer",
+    "description": "This action cannot be undone. All customer data will be permanently deleted.",
+    "confirm": "Delete",
+    "cancel": "Cancel",
+    "success": "Customer deleted.",
+    "error": "Failed to delete customer."
+  },
+
+  "kpi": {
+    "totalCustomers": "Total Customers",
+    "avgVisits": "Avg. Visits",
+    "avgSpend": "Avg. Spend",
+    "avgTicket": "Avg. Ticket"
+  },
+
+  "dietary_options": {
+    "vegan": "Vegan",
+    "vegetarian": "Vegetarian",
+    "gluten_free": "Gluten-Free",
+    "lactose_free": "Lactose-Free",
+    "nut_allergy": "Nut Allergy",
+    "shellfish_allergy": "Shellfish Allergy",
+    "halal": "Halal",
+    "kosher": "Kosher"
+  }
+}
