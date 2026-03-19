@@ -1,6 +1,32 @@
 /**
- * Componentes do Design System — export central
+ * ChefIApp Design System — Component Library
+ *
+ * Shared components with consistent dark theme styling.
+ * Use these instead of hardcoded inline styles.
+ *
+ * Usage:
+ *   import { DSButton, DSCard, DSBadge, DSInput, DSModal } from "@/ui/design-system/components";
  */
+
+// Primitives
+export { DSButton } from "./DSButton";
+export type { DSButtonVariant, DSButtonSize } from "./DSButton";
+
+export { DSCard } from "./DSCard";
+export type { DSCardPadding } from "./DSCard";
+
+export { DSBadge } from "./DSBadge";
+export type { DSBadgeVariant, DSBadgeSize } from "./DSBadge";
+
+export { DSInput } from "./DSInput";
+
+export { DSModal } from "./DSModal";
+
+// Composites
+export { DSKpiCard } from "./DSKpiCard";
+export { DSPageHeader } from "./DSPageHeader";
+
+// State views
 
 export { LoadingState, useLoadingState } from "./LoadingState";
 export type { LoadingStateProps, LoadingStateVariant } from "./LoadingState";
