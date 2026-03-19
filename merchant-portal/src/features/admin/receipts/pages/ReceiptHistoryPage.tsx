@@ -7,8 +7,12 @@
  */
 
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { ExportButtons } from "../../../../components/common/ExportButtons";
 import { useRestaurantRuntime } from "../../../../context/RestaurantRuntimeContext";
+import { centsToDecimalStr } from "../../../../core/export/ExportService";
+import { useExportBranding } from "../../../../core/export/useExportBranding";
 import { useFormatLocale } from "../../../../core/i18n/useFormatLocale";
+import { usePrinter } from "../../../../core/printing/usePrinter";
 import {
   listReceipts,
   markReceiptPrinted,
@@ -18,7 +22,6 @@ import type {
   ReceiptLogRow,
 } from "../../../../core/receipt/ReceiptHistoryService";
 import { mapReceiptForPrint } from "../../../../pages/TPVMinimal/types/ReceiptData";
-import { usePrinter } from "../../../../core/printing/usePrinter";
 import { AdminPageHeader } from "../../dashboard/components/AdminPageHeader";
 
 /* ------------------------------------------------------------------ */
@@ -306,6 +309,7 @@ const PAGE_SIZE = 50;
 export function ReceiptHistoryPage() {
   const locale = useFormatLocale();
   const { runtime } = useRestaurantRuntime();
+  const branding = useExportBranding();
   const printer = usePrinter();
 
   const [rows, setRows] = useState<ReceiptLogRow[]>([]);
@@ -432,6 +436,46 @@ export function ReceiptHistoryPage() {
         onChange={handleFiltersChange}
         loading={loading}
       />
+
+      {/* Export */}
+      {rows.length > 0 && (
+        <ExportButtons
+          title="Historico de recibos"
+          subtitle="Recibos emitidos pelo sistema"
+          dateRange={
+            filters.dateFrom || filters.dateTo
+              ? `${filters.dateFrom ?? "..."} - ${filters.dateTo ?? "..."}`
+              : undefined
+          }
+          filename={`recibos-${new Date().toISOString().slice(0, 10)}`}
+          branding={branding}
+          formats={["pdf", "excel", "csv"]}
+          orientation="landscape"
+          datasets={[
+            {
+              name: "Recibos",
+              columns: [
+                { header: "Data/Hora" },
+                { header: "Pedido" },
+                { header: "Mesa/Modo" },
+                { header: "Itens", align: "right", format: "number" },
+                { header: "Total", align: "right", format: "currency" },
+                { header: "Pagamento" },
+                { header: "Impresso" },
+              ],
+              rows: rows.map((row) => [
+                formatDateTime(row.created_at, locale),
+                row.receipt_data.orderIdShort,
+                tableOrMode(row.receipt_data),
+                row.receipt_data.items.length,
+                centsToDecimalStr(row.receipt_data.grandTotalCents),
+                paymentLabel(row.receipt_data.paymentMethod),
+                row.printed_at ? "Sim" : "Nao",
+              ]),
+            },
+          ]}
+        />
+      )}
 
       {/* No restaurant selected */}
       {!runtime.restaurant_id && (

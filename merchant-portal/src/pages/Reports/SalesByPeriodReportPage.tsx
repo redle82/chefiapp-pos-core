@@ -6,9 +6,12 @@
  */
 
 import { useCallback, useMemo, useState } from "react";
+import { ExportButtons } from "../../components/common/ExportButtons";
 import { DataModeBanner } from "../../components/DataModeBanner";
 import { useRestaurantRuntime } from "../../context/RestaurantRuntimeContext";
 import { currencyService } from "../../core/currency/CurrencyService";
+import { centsToDecimalStr } from "../../core/export/ExportService";
+import { useExportBranding } from "../../core/export/useExportBranding";
 import { getFormatLocale } from "../../core/i18n/regionLocaleConfig";
 import { useFormatLocale } from "../../core/i18n/useFormatLocale";
 import {
@@ -206,6 +209,7 @@ function downloadCsvMonthly(aggregates: MonthlyAggregate[], filename: string) {
 export function SalesByPeriodReportPage() {
   const { runtime } = useRestaurantRuntime();
   const locale = useFormatLocale();
+  const branding = useExportBranding();
   const { restaurantId, loading: loadingRestaurant } = useRestaurantId();
   const now = useMemo(() => new Date(), []);
   const [dateFrom, setDateFrom] = useState<Date>(() => startOfMonth(now));
@@ -336,6 +340,64 @@ export function SalesByPeriodReportPage() {
         >
           Exportar CSV (resumo por mês)
         </button>
+        {data.length > 0 && (
+          <ExportButtons
+            title="Vendas por periodo"
+            subtitle="Historico de turnos no intervalo escolhido"
+            dateRange={`${toDateInputValue(dateFrom)} - ${toDateInputValue(dateTo)}`}
+            filename={`vendas-periodo-${toDateInputValue(dateFrom)}-${toDateInputValue(dateTo)}`}
+            branding={branding}
+            formats={["pdf", "excel"]}
+            orientation="landscape"
+            datasets={[
+              {
+                name: "Resumo por dia",
+                subtitle: "Agregado diario (vendas e pedidos por dia)",
+                columns: [
+                  { header: "Dia" },
+                  { header: "Vendas", align: "right", format: "currency" },
+                  { header: "Pedidos", align: "right", format: "number" },
+                ],
+                rows: dailyAggregates.map((row) => [
+                  new Date(row.date + "T12:00:00").toLocaleDateString(locale),
+                  centsToDecimalStr(row.total_sales_cents),
+                  row.orders_count,
+                ]),
+                footerRow: [
+                  "Total",
+                  centsToDecimalStr(totalCents),
+                  totalOrders,
+                ],
+                summaryCards: [
+                  { label: "Total vendas", value: formatCents(totalCents), highlight: true },
+                  { label: "Total pedidos", value: String(totalOrders) },
+                  { label: "Dias", value: String(dailyAggregates.length) },
+                ],
+              },
+              {
+                name: "Detalhe por turno",
+                columns: [
+                  { header: "Abertura" },
+                  { header: "Fecho" },
+                  { header: "Vendas", align: "right", format: "currency" },
+                  { header: "Pedidos", align: "right", format: "number" },
+                ],
+                rows: data.map((row) => [
+                  formatDateTime(row.opened_at),
+                  formatDateTime(row.closed_at),
+                  centsToDecimalStr(row.total_sales_cents),
+                  row.orders_count,
+                ]),
+                footerRow: [
+                  "Total",
+                  "",
+                  centsToDecimalStr(totalCents),
+                  totalOrders,
+                ],
+              },
+            ]}
+          />
+        )}
       </div>
 
       {error && <p className={styles.errorText}>{error}</p>}

@@ -15,7 +15,9 @@
 import { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
+import { ExportButtons } from "../../components/common/ExportButtons";
 import { useCurrency } from "../../core/currency/useCurrency";
+import { useExportBranding } from "../../core/export/useExportBranding";
 import { useRestaurantIdentity } from "../../core/identity/useRestaurantIdentity";
 import { dockerCoreClient } from "../../infra/docker-core/connection";
 import {
@@ -92,6 +94,7 @@ export function InventoryStockMinimal() {
   const navigate = useNavigate();
   const { symbol: currencySymbol } = useCurrency();
   const { identity } = useRestaurantIdentity();
+  const exportBranding = useExportBranding();
   const restaurantId =
     identity?.restaurantId || "00000000-0000-0000-0000-000000000100";
 
@@ -1445,6 +1448,44 @@ export function InventoryStockMinimal() {
         <section>
           <div className={styles.sectionHeader}>
             <h2 className={styles.sectionTitle}>Estoque</h2>
+            {stockLevels.length > 0 && (
+              <ExportButtons
+                title="Relatorio de Estoque"
+                subtitle="Niveis de estoque atuais"
+                filename={`estoque-${new Date().toISOString().slice(0, 10)}`}
+                branding={exportBranding}
+                formats={["pdf", "excel", "csv"]}
+                datasets={[
+                  {
+                    name: "Estoque",
+                    columns: [
+                      { header: "Ingrediente" },
+                      { header: "Local" },
+                      { header: "Quantidade Atual", align: "right", format: "number" },
+                      { header: "Unidade" },
+                      { header: "Minimo", align: "right", format: "number" },
+                      { header: "Status" },
+                    ],
+                    rows: stockLevels.map((s: any) => [
+                      s.ingredient?.name || "N/A",
+                      s.location?.name || "N/A",
+                      s.qty,
+                      s.ingredient?.unit || "",
+                      s.min_qty,
+                      s.qty <= s.min_qty ? "BAIXO" : "OK",
+                    ]),
+                    summaryCards: [
+                      { label: "Total itens", value: String(stockLevels.length) },
+                      {
+                        label: "Estoque baixo",
+                        value: String(stockLevels.filter((s: any) => s.qty <= s.min_qty).length),
+                        highlight: stockLevels.some((s: any) => s.qty <= s.min_qty),
+                      },
+                    ],
+                  },
+                ]}
+              />
+            )}
           </div>
 
           {stockLevels.length === 0 ? (

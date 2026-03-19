@@ -8,10 +8,13 @@
 
 import { useCallback, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { ExportButtons } from "../../components/common/ExportButtons";
 import { ShiftHistorySection } from "../../components/Dashboard/ShiftHistorySection";
 import { DataModeBanner } from "../../components/DataModeBanner";
 import { useRestaurantRuntime } from "../../context/RestaurantRuntimeContext";
 import { useCurrency } from "../../core/currency/useCurrency";
+import { centsToDecimalStr } from "../../core/export/ExportService";
+import { useExportBranding } from "../../core/export/useExportBranding";
 import { centsToDecimal, exportCsv } from "../../core/reports/csvExport";
 import FiscalReconciliationService from "../../core/services/FiscalReconciliationService";
 import {
@@ -26,6 +29,7 @@ export function DailyClosingReportPage() {
   const { t, i18n } = useTranslation("operational");
   const { symbol } = useCurrency();
   const { runtime } = useRestaurantRuntime();
+  const branding = useExportBranding();
   const { restaurantId } = useRestaurantId();
   const { data } = useShiftHistory(restaurantId, { daysBack: 7 });
   const {
@@ -127,6 +131,35 @@ export function DailyClosingReportPage() {
           >
             {t("dailyClosing.exportCsv")}
           </button>
+        )}
+        {data && data.length > 0 && (
+          <ExportButtons
+            title={t("dailyClosing.title")}
+            subtitle={t("dailyClosing.subtitle")}
+            dateRange={new Date().toLocaleDateString(i18n.language)}
+            filename={`fecho-diario-${new Date().toISOString().slice(0, 10)}`}
+            branding={branding}
+            formats={["pdf", "excel"]}
+            datasets={[
+              {
+                name: t("dailyClosing.title"),
+                columns: [
+                  { header: t("dailyClosing.csv.shift") },
+                  { header: t("dailyClosing.csv.opened") },
+                  { header: t("dailyClosing.csv.closed") },
+                  { header: t("dailyClosing.csv.sales", { currency: symbol }), align: "right", format: "currency" },
+                  { header: t("dailyClosing.csv.orders"), align: "right", format: "number" },
+                ],
+                rows: data.map((s) => [
+                  s.shift_id.slice(0, 8),
+                  s.opened_at ? new Date(s.opened_at).toLocaleString(i18n.language) : "\u2014",
+                  s.closed_at ? new Date(s.closed_at).toLocaleString(i18n.language) : t("dailyClosing.csv.open"),
+                  centsToDecimalStr(s.total_sales_cents),
+                  s.orders_count,
+                ]),
+              },
+            ]}
+          />
         )}
       </div>
       <p className={styles.subtitle}>{t("dailyClosing.subtitle")}</p>
