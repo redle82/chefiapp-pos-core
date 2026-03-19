@@ -52,6 +52,22 @@ export function getCookiePreferences(): CookiePreferences | null {
   return getStoredPreferences();
 }
 
+/**
+ * Reset cookie preferences — removes stored consent so the banner re-appears.
+ * Useful for a "Manage cookie preferences" link in the footer.
+ */
+export function resetCookiePreferences(): void {
+  localStorage.removeItem(CONSENT_STORAGE_KEY);
+  localStorage.removeItem(CONSENT_PREFS_KEY);
+  window.dispatchEvent(new CustomEvent("chefiapp:cookie-consent-reset"));
+}
+
+/** Check if the browser Do Not Track signal is enabled. */
+function isDNTEnabled(): boolean {
+  if (typeof navigator === "undefined") return false;
+  return navigator.doNotTrack === "1";
+}
+
 function hasConsent(): boolean {
   if (typeof window === "undefined") return true;
   if (localStorage.getItem(CONSENT_STORAGE_KEY) === "true") return true;
@@ -69,7 +85,19 @@ export function CookieConsentBanner() {
   const [marketing, setMarketing] = useState(false);
 
   useEffect(() => {
-    setVisible(!hasConsent());
+    const shouldShow = !hasConsent();
+    setVisible(shouldShow);
+
+    // Respect DNT: pre-reject non-essential when DNT is enabled
+    if (shouldShow && isDNTEnabled()) {
+      setAnalytics(false);
+      setMarketing(false);
+    }
+
+    // Listen for reset events (from footer "Manage cookies" link)
+    const onReset = () => setVisible(true);
+    window.addEventListener("chefiapp:cookie-consent-reset", onReset);
+    return () => window.removeEventListener("chefiapp:cookie-consent-reset", onReset);
   }, []);
 
   const persistConsent = useCallback(async (prefs: CookiePreferences) => {
@@ -92,6 +120,10 @@ export function CookieConsentBanner() {
     localStorage.setItem(CONSENT_STORAGE_KEY, "true");
     localStorage.setItem(CONSENT_PREFS_KEY, JSON.stringify(prefs));
     setVisible(false);
+    // Dispatch event so analytics/marketing scripts can react
+    window.dispatchEvent(
+      new CustomEvent("chefiapp:cookie-consent", { detail: prefs }),
+    );
   }, []);
 
   const handleAcceptAll = () =>
