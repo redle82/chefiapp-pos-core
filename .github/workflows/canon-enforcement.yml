@@ -293,13 +293,13 @@ jobs:
           echo "🔍 Verifying Progressive Externalization..."
 
           # TaskMigrationEngine MUST exist
-          if [ ! -f "merchant-portal/src/core/nervous-system/TaskMigrationEngine.ts" ]; then
+          if [ ! -f "merchant-portal/src/intelligence/nervous-system/TaskMigrationEngine.ts" ]; then
             echo "❌ CANON VIOLATION: TaskMigrationEngine missing (Law 6)"
             exit 1
           fi
 
           # calculateTaskMigration MUST exist
-          if ! grep "export.*calculateTaskMigration" merchant-portal/src/core/nervous-system/TaskMigrationEngine.ts > /dev/null; then
+          if ! grep "export.*calculateTaskMigration" merchant-portal/src/intelligence/nervous-system/TaskMigrationEngine.ts > /dev/null; then
             echo "❌ CANON VIOLATION: calculateTaskMigration not exported (Law 6)"
             exit 1
           fi
