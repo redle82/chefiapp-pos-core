@@ -88,10 +88,23 @@ export class DeliverooOAuth {
 
             const data = await response.json();
             
-            // Verificar se token expirou
+            // Check if token expired — attempt refresh via backend
             if (data.expires_at && new Date(data.expires_at) < new Date()) {
-                // TODO: Implementar refresh token no backend
-                console.warn('[DeliverooOAuth] Token expired, refresh not yet implemented');
+                if (data.refresh_token) {
+                    try {
+                        const refreshResponse = await fetch(`/api/integrations/deliveroo/refresh`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ refresh_token: data.refresh_token, restaurant_id: this.restaurantId }),
+                        });
+                        if (refreshResponse.ok) {
+                            const refreshed = await refreshResponse.json();
+                            return refreshed.access_token;
+                        }
+                    } catch {
+                        console.warn('[DeliverooOAuth] Token refresh failed, re-auth required');
+                    }
+                }
                 return null;
             }
 

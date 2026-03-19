@@ -40,13 +40,11 @@ export class TaskFeedback {
    * Adicionar feedback a uma tarefa
    */
   async addFeedback(feedback: TaskFeedbackData): Promise<void> {
-    if (getBackendType() !== BackendType.docker) {
-      Logger.warn(
-        "[CORE TODO] TaskFeedback.addFeedback ainda não persiste no Core. Dados recebidos:",
-        { feedback },
-      );
+    try {
+      await this.persistFeedback(feedback);
+    } catch {
+      Logger.warn("[TaskFeedback] Failed to persist feedback", { feedback });
     }
-    return;
   }
 
   /**
@@ -106,29 +104,70 @@ export class TaskFeedback {
    * Buscar feedback de uma tarefa
    */
   async getFeedback(taskId: string): Promise<TaskFeedbackData | null> {
-    if (getBackendType() !== BackendType.docker) {
-      Logger.warn(
-        "[CORE TODO] TaskFeedback.getFeedback ainda não lê do Core. Retornando null.",
-        { taskId },
-      );
+    try {
+      return await this.readFeedback(taskId);
+    } catch {
+      Logger.warn("[TaskFeedback] Failed to read feedback", { taskId });
+      return null;
     }
-    return null;
   }
 
   /**
    * Listar tarefas com feedback
    */
   async getTasksWithFeedback(
-    restaurantId: string,
-    limit: number = 50,
+    _restaurantId: string,
+    _limit: number = 50,
   ): Promise<Array<Task & { feedback: TaskFeedbackData }>> {
-    if (getBackendType() !== BackendType.docker) {
-      Logger.warn(
-        "[CORE TODO] TaskFeedback.getTasksWithFeedback ainda não lê do Core. Retornando lista vazia.",
-        { restaurantId, limit },
-      );
-    }
+    // IndexedDB stores feedback by taskId, not by restaurant
+    // Full implementation requires joining with task data from Core
     return [];
+  }
+
+  private async persistFeedback(feedback: TaskFeedbackData): Promise<void> {
+    const DB_NAME = "chefiapp_task_feedback";
+    const STORE = "feedback";
+    return new Promise((resolve, reject) => {
+      const req = indexedDB.open(DB_NAME, 1);
+      req.onupgradeneeded = () => {
+        const db = req.result;
+        if (!db.objectStoreNames.contains(STORE)) {
+          db.createObjectStore(STORE, { keyPath: "taskId" });
+        }
+      };
+      req.onsuccess = () => {
+        try {
+          const tx = req.result.transaction(STORE, "readwrite");
+          tx.objectStore(STORE).put({ ...feedback, updatedAt: new Date().toISOString() });
+          tx.oncomplete = () => resolve();
+          tx.onerror = () => reject(tx.error);
+        } catch (e) { reject(e); }
+      };
+      req.onerror = () => reject(req.error);
+    });
+  }
+
+  private async readFeedback(taskId: string): Promise<TaskFeedbackData | null> {
+    const DB_NAME = "chefiapp_task_feedback";
+    const STORE = "feedback";
+    return new Promise((resolve, reject) => {
+      const req = indexedDB.open(DB_NAME, 1);
+      req.onupgradeneeded = () => {
+        const db = req.result;
+        if (!db.objectStoreNames.contains(STORE)) {
+          db.createObjectStore(STORE, { keyPath: "taskId" });
+        }
+      };
+      req.onsuccess = () => {
+        try {
+          const tx = req.result.transaction(STORE, "readonly");
+          const getReq = tx.objectStore(STORE).get(taskId);
+          getReq.onsuccess = () => resolve(getReq.result ?? null);
+          getReq.onerror = () => reject(getReq.error);
+        } catch (e) { reject(e); }
+      };
+      req.onerror = () => reject(req.error);
+    });
   }
 }
 

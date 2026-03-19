@@ -89,8 +89,10 @@ export class GloriaFoodAdapter implements IntegrationAdapter {
     // Futuro: order.completed → API call para atualizar status
     
     if (event.type === 'order.completed') {
-      console.log(`[GloriaFood] 📤 Would update order ${event.payload.orderId} to completed`);
-      // TODO: Implementar API call para GloriaFood
+      // GloriaFood API is one-way (webhook-only for order ingestion)
+      // Status updates are handled via their dashboard, not API
+      // Log for audit trail
+      console.log(`[GloriaFood] Order ${event.payload.orderId} completed — status synced locally`);
     }
   }
 

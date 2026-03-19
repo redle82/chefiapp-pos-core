@@ -53,8 +53,8 @@ export default function TPVMobilePage() {
   // Tab navigation state
   const [activeTab, setActiveTab] = useState<TPVMobileTab>("pos");
   const [showTableModal, setShowTableModal] = useState(false);
-  const [pendingOrderCount] = useState(0); // TODO: fetch from orders
-  const [occupiedTableCount] = useState(0); // TODO: fetch from tables
+  const [pendingOrderCount, setPendingOrderCount] = useState(0);
+  const [occupiedTableCount, setOccupiedTableCount] = useState(0);
 
   // POS state
   const [products, setProducts] = useState<MobileProduct[]>([]);
@@ -174,6 +174,22 @@ export default function TPVMobilePage() {
       }
 
       setLoading(false);
+
+      // Fetch pending order count
+      const { count: orderCount } = await dockerCoreClient
+        .from("gm_orders")
+        .select("id", { count: "exact", head: true })
+        .eq("restaurant_id", restaurantId)
+        .in("status", ["OPEN", "PENDING", "IN_PROGRESS"]);
+      setPendingOrderCount(orderCount || 0);
+
+      // Fetch occupied table count
+      const { count: tableCount } = await dockerCoreClient
+        .from("gm_tables")
+        .select("id", { count: "exact", head: true })
+        .eq("restaurant_id", restaurantId)
+        .eq("status", "occupied");
+      setOccupiedTableCount(tableCount || 0);
     };
 
     fetchData();

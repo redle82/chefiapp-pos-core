@@ -138,9 +138,27 @@ class CurrencyService {
    * Fetch exchange rates from API (placeholder for future implementation)
    */
   async fetchExchangeRates(baseCurrency: CurrencyCode = "EUR"): Promise<void> {
-    // TODO: Implement API call to exchange rate service
-    // For now, using default rates
-    Logger.debug(`[CurrencyService] Fetching rates for ${baseCurrency}`);
+    try {
+      const res = await fetch(`https://open.er-api.com/v6/latest/${baseCurrency}`);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json();
+      if (data.result === "success" && data.rates) {
+        const currencies: CurrencyCode[] = ["EUR", "USD", "GBP", "BRL"];
+        for (const to of currencies) {
+          if (to !== baseCurrency && data.rates[to]) {
+            this.exchangeRates.set(`${baseCurrency}-${to}`, {
+              from: baseCurrency,
+              to,
+              rate: data.rates[to],
+              timestamp: Date.now(),
+            });
+          }
+        }
+        Logger.debug(`[CurrencyService] Updated rates from API for ${baseCurrency}`);
+      }
+    } catch {
+      Logger.debug(`[CurrencyService] API unavailable, using default rates for ${baseCurrency}`);
+    }
   }
 
   /**

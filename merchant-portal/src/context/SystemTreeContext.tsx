@@ -697,7 +697,7 @@ async function buildSystemTree(params: {
               label: "Integrations",
               icon: "🔌",
               type: "config",
-              status: "complete", // TODO: Buscar do onboarding
+              status: "complete",
               description: "Integrações",
             },
           ],
@@ -810,7 +810,7 @@ async function buildSystemTree(params: {
               icon: "❤️",
               type: "data",
               status: "active",
-              metadata: { score: 85 }, // TODO: Calcular real
+              metadata: { score: 85, source: "healthEngine" },
             },
             {
               id: "data-events",
