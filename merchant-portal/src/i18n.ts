@@ -38,6 +38,8 @@ import ptPTOperational from "./locales/pt-PT/operational.json";
 import ptPTWaiter from "./locales/pt-PT/waiter.json";
 // Sidebar
 import ptPTSidebar from "./locales/pt-PT/sidebar.json";
+// Customer Menu
+import ptPTCustomerMenu from "./locales/pt-PT/customer-menu.json";
 
 // ── pt-BR ───────────────────────────────────────────────────────────────────
 import ptBRCommon from "./locales/pt-BR/common.json";
@@ -53,6 +55,7 @@ import ptBRShift from "./locales/pt-BR/shift.json";
 import ptBRSidebar from "./locales/pt-BR/sidebar.json";
 import ptBRTpv from "./locales/pt-BR/tpv.json";
 import ptBRWaiter from "./locales/pt-BR/waiter.json";
+import ptBRCustomerMenu from "./locales/pt-BR/customer-menu.json";
 
 // ── en ──────────────────────────────────────────────────────────────────────
 import enCommon from "./locales/en/common.json";
@@ -68,6 +71,7 @@ import enShift from "./locales/en/shift.json";
 import enSidebar from "./locales/en/sidebar.json";
 import enTpv from "./locales/en/tpv.json";
 import enWaiter from "./locales/en/waiter.json";
+import enCustomerMenu from "./locales/en/customer-menu.json";
 
 // ── es ──────────────────────────────────────────────────────────────────────
 import {
@@ -87,6 +91,7 @@ import esShift from "./locales/es/shift.json";
 import esSidebar from "./locales/es/sidebar.json";
 import esTpv from "./locales/es/tpv.json";
 import esWaiter from "./locales/es/waiter.json";
+import esCustomerMenu from "./locales/es/customer-menu.json";
 
 const DEFAULT_LANG = "pt-BR";
 
@@ -107,6 +112,7 @@ const ALL_NS = [
   "operational",
   "waiter",
   "sidebar",
+  "customer-menu",
 ] as const;
 
 // Respect stored locale (LocaleSwitcher) ou derivar de país/região ou browser.
@@ -158,6 +164,7 @@ void i18n.use(initReactI18next).init({
       operational: ptPTOperational,
       waiter: ptPTWaiter,
       sidebar: ptPTSidebar,
+      "customer-menu": ptPTCustomerMenu,
       legal: {
         /* kept inline — stable legal text */
         dataPrivacyTitle: "Dados e privacidade",
@@ -267,6 +274,7 @@ void i18n.use(initReactI18next).init({
       operational: ptBROperational,
       waiter: ptBRWaiter,
       sidebar: ptBRSidebar,
+      "customer-menu": ptBRCustomerMenu,
       legal: {
         /* kept inline — stable legal text */
         dataPrivacyTitle: "Dados e privacidade",
@@ -376,6 +384,7 @@ void i18n.use(initReactI18next).init({
       operational: enOperational,
       waiter: enWaiter,
       sidebar: enSidebar,
+      "customer-menu": enCustomerMenu,
       legal: {
         /* kept inline — stable legal text */
         dataPrivacyTitle: "Data and privacy",
@@ -482,6 +491,7 @@ void i18n.use(initReactI18next).init({
       operational: esOperational,
       waiter: esWaiter,
       sidebar: esSidebar,
+      "customer-menu": esCustomerMenu,
       legal: {
         /* kept inline — stable legal text */
         dataPrivacyTitle: "Datos y privacidad",

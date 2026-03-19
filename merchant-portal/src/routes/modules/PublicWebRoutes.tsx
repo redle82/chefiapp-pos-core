@@ -34,6 +34,11 @@ const TrackOrderPage = lazy(() =>
     default: m.TrackOrderPage,
   })),
 );
+const CustomerMenuPage = lazy(() =>
+  import("../../pages/CustomerMenu/CustomerMenuPage").then((m) => ({
+    default: m.CustomerMenuPage,
+  })),
+);
 
 const PublicSuspense = ({ children }: { children: React.ReactNode }) => (
   <Suspense fallback={<LoadingState variant="minimal" />}>{children}</Suspense>
@@ -56,6 +61,10 @@ export const PublicWebRoutesFragment = (
     <Route
       path="/public/:slug/kds"
       element={<PublicSuspense><PublicKDS /></PublicSuspense>}
+    />
+    <Route
+      path="/order/:restaurantId"
+      element={<PublicSuspense><CustomerMenuPage /></PublicSuspense>}
     />
     <Route
       path="/track/:orderId"

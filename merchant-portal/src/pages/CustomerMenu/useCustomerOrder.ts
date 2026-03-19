@@ -1,10 +1,11 @@
 /**
- * useCustomerOrder — Hook for customer self-service ordering via QR code.
+ * useCustomerOrder -- Hook for customer self-service ordering via QR code.
  *
  * Fetches the public menu (no auth required), manages cart state,
  * and submits orders via the atomic RPC.
  *
  * Data: gm_menu_categories + gm_products filtered by restaurant_id and available=true.
+ * Also fetches restaurant identity (name, logo) for the header.
  */
 
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -33,7 +34,13 @@ export interface CartItem {
   quantity: number;
 }
 
+export interface RestaurantInfo {
+  name: string;
+  logoUrl: string | null;
+}
+
 interface UseCustomerOrderReturn {
+  restaurant: RestaurantInfo;
   menu: { categories: Category[]; products: Product[] };
   cart: CartItem[];
   addToCart: (product: Product, quantity?: number) => void;
@@ -41,14 +48,41 @@ interface UseCustomerOrderReturn {
   updateQuantity: (productId: string, quantity: number) => void;
   cartTotal: number;
   cartItemCount: number;
+  notes: string;
+  setNotes: (notes: string) => void;
   submitOrder: () => Promise<{ success: boolean; orderId?: string }>;
   submitting: boolean;
   orderSubmitted: boolean;
+  submittedOrderId: string | null;
+  resetOrder: () => void;
   loading: boolean;
   error: string | null;
 }
 
-// ─── Menu fetch (public, no auth) ───
+// ─── Data fetching (public, no auth) ───
+
+async function fetchRestaurantInfo(
+  restaurantId: string,
+): Promise<RestaurantInfo> {
+  const { data, error } = await dockerCoreClient
+    .from("gm_restaurants")
+    .select("name, commercial_name, display_name, logo_url")
+    .eq("id", restaurantId)
+    .maybeSingle();
+
+  if (error || !data) return { name: "Menu", logoUrl: null };
+
+  const row = data as Record<string, unknown>;
+  const name =
+    (row.commercial_name as string) ||
+    (row.display_name as string) ||
+    (row.name as string) ||
+    "Menu";
+  return {
+    name,
+    logoUrl: (row.logo_url as string) ?? null,
+  };
+}
 
 async function fetchCategories(restaurantId: string): Promise<Category[]> {
   const { data, error } = await dockerCoreClient
@@ -70,7 +104,9 @@ async function fetchCategories(restaurantId: string): Promise<Category[]> {
 async function fetchProducts(restaurantId: string): Promise<Product[]> {
   const { data, error } = await dockerCoreClient
     .from("gm_products")
-    .select("id, name, description, price_cents, category_id, photo_url, available, gm_product_assets(image_url)")
+    .select(
+      "id, name, description, price_cents, category_id, photo_url, available, gm_product_assets(image_url)",
+    )
     .eq("restaurant_id", restaurantId)
     .eq("available", true)
     .order("name", { ascending: true });
@@ -94,16 +130,22 @@ export function useCustomerOrder(
   restaurantId: string,
   tableNumber?: number,
 ): UseCustomerOrderReturn {
+  const [restaurant, setRestaurant] = useState<RestaurantInfo>({
+    name: "Menu",
+    logoUrl: null,
+  });
   const [categories, setCategories] = useState<Category[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
   const [cart, setCart] = useState<CartItem[]>([]);
+  const [notes, setNotes] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [orderSubmitted, setOrderSubmitted] = useState(false);
+  const [submittedOrderId, setSubmittedOrderId] = useState<string | null>(null);
   const mountedRef = useRef(true);
 
-  // Fetch menu on mount
+  // Fetch restaurant info + menu on mount
   useEffect(() => {
     mountedRef.current = true;
     if (!restaurantId) {
@@ -113,11 +155,13 @@ export function useCustomerOrder(
 
     const load = async () => {
       try {
-        const [cats, prods] = await Promise.all([
+        const [info, cats, prods] = await Promise.all([
+          fetchRestaurantInfo(restaurantId),
           fetchCategories(restaurantId),
           fetchProducts(restaurantId),
         ]);
         if (!mountedRef.current) return;
+        setRestaurant(info);
         setCategories(cats);
         setProducts(prods);
         setError(null);
@@ -179,6 +223,7 @@ export function useCustomerOrder(
   }> => {
     if (cart.length === 0) return { success: false };
     setSubmitting(true);
+    setError(null);
 
     try {
       const rpcItems = cart.map((ci) => ({
@@ -189,11 +234,14 @@ export function useCustomerOrder(
       }));
 
       const syncMetadata: Record<string, unknown> = {
-        origin: "WEB",
+        origin: "QR",
         source: "qr_order",
       };
       if (tableNumber !== undefined) {
         syncMetadata.table_number = tableNumber;
+      }
+      if (notes.trim()) {
+        syncMetadata.customer_notes = notes.trim();
       }
 
       const { data, error: rpcError } = await dockerCoreClient.rpc(
@@ -203,7 +251,6 @@ export function useCustomerOrder(
           p_items: rpcItems,
           p_payment_method: "pending",
           p_sync_metadata: syncMetadata,
-          table_id: null,
         },
       );
 
@@ -215,7 +262,9 @@ export function useCustomerOrder(
 
       const orderId = (data as { id?: string })?.id;
       setOrderSubmitted(true);
+      setSubmittedOrderId(orderId ?? null);
       setCart([]);
+      setNotes("");
       return { success: true, orderId: orderId ?? undefined };
     } catch (err) {
       console.error("[useCustomerOrder] submitOrder error", err);
@@ -224,9 +273,18 @@ export function useCustomerOrder(
     } finally {
       setSubmitting(false);
     }
-  }, [cart, restaurantId, tableNumber]);
+  }, [cart, restaurantId, tableNumber, notes]);
+
+  const resetOrder = useCallback(() => {
+    setOrderSubmitted(false);
+    setSubmittedOrderId(null);
+    setCart([]);
+    setNotes("");
+    setError(null);
+  }, []);
 
   return {
+    restaurant,
     menu: { categories, products },
     cart,
     addToCart,
@@ -234,9 +292,13 @@ export function useCustomerOrder(
     updateQuantity,
     cartTotal,
     cartItemCount,
+    notes,
+    setNotes,
     submitOrder,
     submitting,
     orderSubmitted,
+    submittedOrderId,
+    resetOrder,
     loading,
     error,
   };

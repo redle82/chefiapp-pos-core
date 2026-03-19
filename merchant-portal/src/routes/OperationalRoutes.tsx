@@ -841,6 +841,7 @@ export const OperationalRoutesFragment = (
     />
     <Route path="/public/:slug/kds" element={<PublicKDS />} />
     <Route path="/public/:slug/menu" element={<CustomerMenuPage />} />
+    <Route path="/order/:restaurantId" element={<CustomerMenuPage />} />
     <Route path="/track/:orderId" element={<TrackOrderPage />} />
 
     <Route path="/welcome" element={<WelcomePage />} />
