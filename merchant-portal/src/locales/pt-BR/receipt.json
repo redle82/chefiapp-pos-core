@@ -50,5 +50,7 @@
   "paymentPix": "Pix",
   "dineIn": "Mesa",
   "takeAway": "Para Viagem",
-  "delivery": "Entrega"
+  "delivery": "Entrega",
+  "reopenOrder": "Reabrir Pedido",
+  "reopenReasonRequired": "É necessário indicar um motivo para reabrir este pedido."
 }

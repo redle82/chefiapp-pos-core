@@ -52,6 +52,7 @@ import { PaymentsLayout } from "../../features/admin/payments/pages/PaymentsLayo
 import { PayoutsPage } from "../../features/admin/payments/pages/PayoutsPage";
 import { TransactionsPage } from "../../features/admin/payments/pages/TransactionsPage";
 import { PromotionsPage } from "../../features/admin/promotions/pages/PromotionsPage";
+import { ReceiptHistoryPage } from "../../features/admin/receipts/pages/ReceiptHistoryPage";
 import { AdminReportsOverview } from "../../features/admin/reports/AdminReportsOverview";
 import { MultiUnitOverviewReportPage } from "../../features/admin/reports/MultiUnitOverviewReportPage";
 import { ReservationsOperationalPage } from "../../features/admin/reservas/pages/ReservationsOperationalPage";
@@ -108,6 +109,16 @@ export const AdminRoutesFragment = (
         <ManagementAdvisor>
           <DashboardLayout>
             <ClosuresPage />
+          </DashboardLayout>
+        </ManagementAdvisor>
+      }
+    />
+    <Route
+      path="/admin/receipts"
+      element={
+        <ManagementAdvisor>
+          <DashboardLayout>
+            <ReceiptHistoryPage />
           </DashboardLayout>
         </ManagementAdvisor>
       }

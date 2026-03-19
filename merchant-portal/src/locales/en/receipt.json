@@ -50,5 +50,7 @@
   "paymentPix": "MB Way",
   "dineIn": "Dine-In",
   "takeAway": "Take-Away",
-  "delivery": "Delivery"
+  "delivery": "Delivery",
+  "reopenOrder": "Reopen Order",
+  "reopenReasonRequired": "A reason is required to reopen this order."
 }

@@ -7,19 +7,15 @@
  * O logo aparece em: TPV header/sidebar, KDS, AppStaff, QR mesa, página web pública.
  */
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { LogoUpload } from "../../../../components/common/LogoUpload";
 import { useRestaurantRuntime } from "../../../../context/RestaurantRuntimeContext";
 import {
   BackendType,
   getBackendType,
 } from "../../../../core/infra/backendAdapter";
 import { dockerCoreClient } from "../../../../infra/docker-core/connection";
-import { RestaurantLogo } from "../../../../ui/RestaurantLogo";
-
-/** Max file size for logo upload (512KB — stored as data URL in DB). */
-const MAX_LOGO_SIZE = 512 * 1024;
-const ACCEPTED_IMAGE_TYPES = ["image/png", "image/jpeg", "image/svg+xml", "image/webp"];
 
 const TYPES = [
   { value: "RESTAURANT", label: "Restaurante" },
@@ -54,41 +50,11 @@ export function GeneralCardIdentity() {
   });
   const [saving, setSaving] = useState(false);
   const [loaded, setLoaded] = useState(false);
-  const [logoError, setLogoError] = useState<string | null>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const restaurantId = runtime.restaurant_id ?? null;
 
-  const handleLogoFileChange = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>) => {
-      setLogoError(null);
-      const file = e.target.files?.[0];
-      if (!file) return;
-
-      if (!ACCEPTED_IMAGE_TYPES.includes(file.type)) {
-        setLogoError("Formato inválido. Use PNG, JPG, SVG ou WebP.");
-        return;
-      }
-      if (file.size > MAX_LOGO_SIZE) {
-        setLogoError(`Ficheiro demasiado grande (max ${Math.round(MAX_LOGO_SIZE / 1024)}KB).`);
-        return;
-      }
-
-      const reader = new FileReader();
-      reader.onload = () => {
-        const dataUrl = reader.result as string;
-        setForm((p) => ({ ...p, logoUrl: dataUrl }));
-      };
-      reader.onerror = () => setLogoError("Erro ao ler o ficheiro.");
-      reader.readAsDataURL(file);
-    },
-    [],
-  );
-
-  const handleRemoveLogo = useCallback(() => {
-    setForm((p) => ({ ...p, logoUrl: "" }));
-    setLogoError(null);
-    if (fileInputRef.current) fileInputRef.current.value = "";
+  const handleLogoChange = useCallback((dataUrl: string) => {
+    setForm((p) => ({ ...p, logoUrl: dataUrl }));
   }, []);
 
   useEffect(() => {
@@ -350,112 +316,15 @@ export function GeneralCardIdentity() {
           <div>
             <label style={labelStyle}>Logo do restaurante</label>
             <p style={{ margin: "0 0 8px", fontSize: 11, color: "var(--text-secondary)", opacity: 0.7 }}>
-              Aparece no TPV, KDS, app staff, QR das mesas e página web.
+              Aparece no TPV, KDS, app staff, QR das mesas e pagina web.
             </p>
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: 16,
-                padding: 12,
-                borderRadius: 10,
-                border: "1px dashed var(--surface-border)",
-                backgroundColor: "rgba(255,255,255,0.02)",
-              }}
-            >
-              {/* Current logo preview */}
-              <RestaurantLogo
-                logoUrl={form.logoUrl || null}
-                name={form.name || "R"}
-                size={72}
-                style={{
-                  borderRadius: 12,
-                  border: "2px solid var(--surface-border)",
-                  flexShrink: 0,
-                }}
-              />
-
-              <div style={{ display: "flex", flexDirection: "column", gap: 8, flex: 1, minWidth: 0 }}>
-                {/* File upload button */}
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept="image/png,image/jpeg,image/svg+xml,image/webp"
-                  onChange={handleLogoFileChange}
-                  style={{ display: "none" }}
-                />
-                <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-                  <button
-                    type="button"
-                    onClick={() => fileInputRef.current?.click()}
-                    style={{
-                      padding: "6px 14px",
-                      borderRadius: 6,
-                      border: "1px solid var(--surface-border)",
-                      backgroundColor: "transparent",
-                      fontSize: 12,
-                      fontWeight: 600,
-                      cursor: "pointer",
-                      color: "var(--text-primary)",
-                    }}
-                  >
-                    {form.logoUrl ? "Alterar imagem" : "Carregar imagem"}
-                  </button>
-                  {form.logoUrl && (
-                    <button
-                      type="button"
-                      onClick={handleRemoveLogo}
-                      style={{
-                        padding: "6px 14px",
-                        borderRadius: 6,
-                        border: "1px solid rgba(239,68,68,0.3)",
-                        backgroundColor: "transparent",
-                        fontSize: 12,
-                        fontWeight: 600,
-                        cursor: "pointer",
-                        color: "#ef4444",
-                      }}
-                    >
-                      Remover
-                    </button>
-                  )}
-                </div>
-
-                <span style={{ fontSize: 10, color: "var(--text-secondary)", opacity: 0.6 }}>
-                  PNG, JPG, SVG ou WebP. Max 512KB.
-                </span>
-
-                {/* URL input fallback (collapsible) */}
-                <details style={{ marginTop: 2 }}>
-                  <summary
-                    style={{
-                      fontSize: 11,
-                      color: "var(--text-secondary)",
-                      cursor: "pointer",
-                      opacity: 0.7,
-                      userSelect: "none",
-                    }}
-                  >
-                    Ou colar URL da imagem
-                  </summary>
-                  <input
-                    type="url"
-                    value={form.logoUrl.startsWith("data:") ? "" : form.logoUrl}
-                    onChange={(e) =>
-                      setForm((p) => ({ ...p, logoUrl: e.target.value }))
-                    }
-                    placeholder="https://… (URL da imagem)"
-                    style={{ ...inputStyle, marginTop: 4, fontSize: 11 }}
-                  />
-                </details>
-
-                {logoError && (
-                  <span style={{ fontSize: 11, color: "#ef4444", fontWeight: 500 }}>
-                    {logoError}
-                  </span>
-                )}
-              </div>
-            </div>
+            <LogoUpload
+              logoUrl={form.logoUrl || null}
+              name={form.name || "R"}
+              onChange={handleLogoChange}
+              size={72}
+              disabled={saving}
+            />
           </div>
           <div>
             <button

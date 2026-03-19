@@ -7,18 +7,38 @@
  * Estilo: fundo branco, font monospace, max-width 320px — simula papel termico.
  */
 
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useCurrency } from "../../../core/currency/useCurrency";
 import type { ReceiptData } from "../types/ReceiptData";
+import type { UserRole } from "../../../core/context/ContextTypes";
 
 interface FiscalReceiptProps {
   receipt: ReceiptData;
   onNewOrder: () => void;
   onPrint: () => void;
+  /** Callback to reopen this order. If undefined, the button is hidden. */
+  onReopenOrder?: (reason: string) => Promise<void>;
+  /** Current operator role — reopen is only visible to manager/owner. */
+  operatorRole?: UserRole;
 }
 
-export function FiscalReceipt({ receipt, onNewOrder, onPrint }: FiscalReceiptProps) {
+export function FiscalReceipt({
+  receipt,
+  onNewOrder,
+  onPrint,
+  onReopenOrder,
+  operatorRole,
+}: FiscalReceiptProps) {
   const { t } = useTranslation("receipt");
+  const [reopenModalOpen, setReopenModalOpen] = useState(false);
+  const [reopenReason, setReopenReason] = useState("");
+  const [reopenLoading, setReopenLoading] = useState(false);
+  const [reopenError, setReopenError] = useState<string | null>(null);
+
+  const canReopen =
+    onReopenOrder != null &&
+    (operatorRole === "manager" || operatorRole === "owner");
   const { formatAmount } = useCurrency();
   const r = receipt.restaurant;
 
@@ -312,7 +332,72 @@ export function FiscalReceipt({ receipt, onNewOrder, onPrint }: FiscalReceiptPro
             {t("newOrder")}
           </button>
         </div>
+
+        {/* Reopen Order — only visible to manager/owner */}
+        {canReopen && (
+          <div
+            style={{
+              marginTop: 8,
+              borderTop: "1px dashed #ddd",
+              paddingTop: 12,
+            }}
+          >
+            <button
+              type="button"
+              onClick={() => {
+                setReopenModalOpen(true);
+                setReopenReason("");
+                setReopenError(null);
+              }}
+              style={{
+                width: "100%",
+                padding: "10px 0",
+                background: "#fffbeb",
+                border: "1px solid #f59e0b",
+                borderRadius: 8,
+                color: "#92400e",
+                fontWeight: 600,
+                fontSize: 13,
+                cursor: "pointer",
+                fontFamily: "system-ui, sans-serif",
+              }}
+            >
+              {t("reopenOrder", "Reopen Order")}
+            </button>
+          </div>
+        )}
       </div>
+
+      {/* Reopen Order Modal */}
+      {reopenModalOpen && (
+        <ReopenOrderModal
+          onConfirm={async () => {
+            if (!reopenReason.trim()) {
+              setReopenError(
+                t("reopenReasonRequired", "A reason is required to reopen this order."),
+              );
+              return;
+            }
+            setReopenLoading(true);
+            setReopenError(null);
+            try {
+              await onReopenOrder!(reopenReason.trim());
+              setReopenModalOpen(false);
+            } catch (err) {
+              setReopenError(
+                err instanceof Error ? err.message : "Failed to reopen order.",
+              );
+            } finally {
+              setReopenLoading(false);
+            }
+          }}
+          onCancel={() => setReopenModalOpen(false)}
+          reason={reopenReason}
+          onReasonChange={setReopenReason}
+          loading={reopenLoading}
+          error={reopenError}
+        />
+      )}
     </div>
   );
 }
@@ -349,6 +434,153 @@ function Row({
     >
       <span style={{ color: "#555" }}>{label}</span>
       <span>{value}</span>
+    </div>
+  );
+}
+
+/* ── Reopen Order Modal ── */
+
+function ReopenOrderModal({
+  onConfirm,
+  onCancel,
+  reason,
+  onReasonChange,
+  loading,
+  error,
+}: {
+  onConfirm: () => void;
+  onCancel: () => void;
+  reason: string;
+  onReasonChange: (v: string) => void;
+  loading: boolean;
+  error: string | null;
+}) {
+  return (
+    <div
+      onClick={onCancel}
+      style={{
+        position: "fixed",
+        inset: 0,
+        background: "rgba(0,0,0,0.75)",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        zIndex: 10001,
+        backdropFilter: "blur(4px)",
+      }}
+    >
+      <div
+        onClick={(e) => e.stopPropagation()}
+        style={{
+          background: "#0a0a0a",
+          border: "1px solid #27272a",
+          borderRadius: 20,
+          width: "min(400px, 92vw)",
+          padding: 24,
+          display: "flex",
+          flexDirection: "column",
+          gap: 16,
+          fontFamily: "system-ui, sans-serif",
+        }}
+      >
+        <h2
+          style={{
+            color: "#f59e0b",
+            fontSize: 18,
+            fontWeight: 700,
+            margin: 0,
+          }}
+        >
+          Reopen Order
+        </h2>
+        <p
+          style={{
+            color: "#a1a1aa",
+            fontSize: 13,
+            margin: 0,
+            lineHeight: 1.5,
+          }}
+        >
+          This action will reopen the paid order so it can be modified. A reason
+          is required for audit compliance.
+        </p>
+
+        <textarea
+          value={reason}
+          onChange={(e) => onReasonChange(e.target.value)}
+          placeholder="Reason for reopening (e.g., customer wants to add items, wrong payment)..."
+          rows={3}
+          style={{
+            width: "100%",
+            padding: 12,
+            background: "#18181b",
+            border: "1px solid #3f3f46",
+            borderRadius: 10,
+            color: "#e4e4e7",
+            fontSize: 14,
+            resize: "vertical",
+            fontFamily: "system-ui, sans-serif",
+            outline: "none",
+            boxSizing: "border-box",
+          }}
+          autoFocus
+        />
+
+        {error && (
+          <div
+            style={{
+              color: "#ef4444",
+              fontSize: 13,
+              padding: "8px 12px",
+              background: "#1c1917",
+              borderRadius: 8,
+              border: "1px solid #7f1d1d",
+            }}
+          >
+            {error}
+          </div>
+        )}
+
+        <div style={{ display: "flex", gap: 8 }}>
+          <button
+            type="button"
+            onClick={onCancel}
+            disabled={loading}
+            style={{
+              flex: 1,
+              padding: "12px 0",
+              background: "#18181b",
+              border: "1px solid #3f3f46",
+              borderRadius: 12,
+              color: "#d4d4d8",
+              fontWeight: 600,
+              fontSize: 14,
+              cursor: "pointer",
+            }}
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            onClick={onConfirm}
+            disabled={loading || !reason.trim()}
+            style={{
+              flex: 1,
+              padding: "12px 0",
+              background: reason.trim() ? "#92400e" : "#3f3f46",
+              border: "none",
+              borderRadius: 12,
+              color: "#fff",
+              fontWeight: 600,
+              fontSize: 14,
+              cursor: loading || !reason.trim() ? "not-allowed" : "pointer",
+              opacity: loading ? 0.5 : 1,
+            }}
+          >
+            {loading ? "Reopening..." : "Confirm Reopen"}
+          </button>
+        </div>
+      </div>
     </div>
   );
 }

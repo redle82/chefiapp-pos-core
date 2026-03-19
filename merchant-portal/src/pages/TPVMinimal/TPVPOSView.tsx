@@ -58,6 +58,8 @@ import { mapReceiptForPrint } from "./types/ReceiptData";
 import { PrintService } from "../../core/printing/PrintService";
 import { loadLogoRaster } from "../../core/printing/templates/OrderReceipt";
 import { saveReceipt } from "../../core/receipt/ReceiptHistoryService";
+import { useOperator } from "./context/OperatorContext";
+import { reopenOrder } from "../../core/orders/reopenOrder";
 import "./TPVPOSView.css";
 
 const DEFAULT_RESTAURANT_ID = "00000000-0000-0000-0000-000000000100";
@@ -71,6 +73,7 @@ export function TPVPOSView() {
   const toast = useToast();
   const { formatAmount } = useCurrency();
   const { identity } = useRestaurantIdentity();
+  const { operator } = useOperator();
   const outletContext = useOutletContext<{ searchQuery?: string }>();
   const searchQuery = outletContext?.searchQuery ?? "";
   const [searchParams] = useSearchParams();
@@ -1001,6 +1004,27 @@ export function TPVPOSView() {
       {lastReceipt && (
         <FiscalReceipt
           receipt={lastReceipt}
+          operatorRole={operator?.role}
+          onReopenOrder={async (reason: string) => {
+            if (!operator) return;
+            const result = await reopenOrder({
+              orderId: lastReceipt.orderId,
+              restaurantId,
+              operatorId: operator.id,
+              operatorName: operator.name,
+              operatorRole: operator.role,
+              reason,
+            });
+            if (!result.success) {
+              throw new Error(result.error ?? "Failed to reopen order");
+            }
+            toast.success(
+              t("posView.orderReopened", "Order reopened successfully"),
+            );
+            setLastReceipt(null);
+            // Navigate to the order in the POS (reload with order context)
+            navigate(`/op/tpv/pos?table=${lastReceipt.table ?? ""}&reopenedOrder=${lastReceipt.orderId}`);
+          }}
           onNewOrder={() => {
             setLastReceipt(null);
             setContextChosen(false);

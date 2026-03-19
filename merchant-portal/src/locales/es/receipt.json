@@ -50,5 +50,7 @@
   "paymentPix": "MB Way",
   "dineIn": "Mesa",
   "takeAway": "Para Llevar",
-  "delivery": "Entrega"
+  "delivery": "Entrega",
+  "reopenOrder": "Reabrir Pedido",
+  "reopenReasonRequired": "Se requiere un motivo para reabrir este pedido."
 }
