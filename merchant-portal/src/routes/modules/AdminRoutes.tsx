@@ -52,8 +52,11 @@ import { PaymentsLayout } from "../../features/admin/payments/pages/PaymentsLayo
 import { PayoutsPage } from "../../features/admin/payments/pages/PayoutsPage";
 import { ReconciliationPage } from "../../features/admin/payments/pages/ReconciliationPage";
 import { TransactionsPage } from "../../features/admin/payments/pages/TransactionsPage";
+import { DiscountsPage } from "../../features/admin/discounts/pages/DiscountsPage";
 import { PromotionsPage } from "../../features/admin/promotions/pages/PromotionsPage";
+import { ShiftDashboardPage } from "../../features/admin/shifts/pages/ShiftDashboardPage";
 import { ReceiptHistoryPage } from "../../features/admin/receipts/pages/ReceiptHistoryPage";
+import { TableManagementPage } from "../../features/admin/tables/pages/TableManagementPage";
 import { TipsPage } from "../../features/admin/tips/TipsPage";
 import { AdminReportsOverview } from "../../features/admin/reports/AdminReportsOverview";
 import { MultiUnitOverviewReportPage } from "../../features/admin/reports/MultiUnitOverviewReportPage";
@@ -126,6 +129,16 @@ export const AdminRoutesFragment = (
       }
     />
     <Route
+      path="/admin/shifts"
+      element={
+        <ManagementAdvisor>
+          <DashboardLayout>
+            <ShiftDashboardPage />
+          </DashboardLayout>
+        </ManagementAdvisor>
+      }
+    />
+    <Route
       path="/admin/tips"
       element={
         <ManagementAdvisor>
@@ -172,6 +185,16 @@ export const AdminRoutesFragment = (
       <Route path="payouts" element={<PayoutsPage />} />
       <Route path="reconciliation" element={<ReconciliationPage />} />
     </Route>
+    <Route
+      path="/admin/discounts"
+      element={
+        <ManagementAdvisor>
+          <DashboardLayout>
+            <DiscountsPage />
+          </DashboardLayout>
+        </ManagementAdvisor>
+      }
+    />
     <Route
       path="/admin/promotions"
       element={
@@ -459,7 +482,13 @@ export const AdminRoutesFragment = (
     />
     <Route
       path="/admin/tables"
-      element={<Navigate to="/admin/config/ubicaciones" replace />}
+      element={
+        <ManagementAdvisor>
+          <DashboardLayout>
+            <TableManagementPage />
+          </DashboardLayout>
+        </ManagementAdvisor>
+      }
     />
     <Route
       path="/admin/printers"

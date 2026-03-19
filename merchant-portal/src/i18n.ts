@@ -42,6 +42,8 @@ import ptPTSidebar from "./locales/pt-PT/sidebar.json";
 import ptPTCustomerMenu from "./locales/pt-PT/customer-menu.json";
 // Tips
 import ptPTTips from "./locales/pt-PT/tips.json";
+// Tables
+import ptPTTables from "./locales/pt-PT/tables.json";
 
 // ── pt-BR ───────────────────────────────────────────────────────────────────
 import ptBRCommon from "./locales/pt-BR/common.json";
@@ -59,6 +61,7 @@ import ptBRTpv from "./locales/pt-BR/tpv.json";
 import ptBRWaiter from "./locales/pt-BR/waiter.json";
 import ptBRCustomerMenu from "./locales/pt-BR/customer-menu.json";
 import ptBRTips from "./locales/pt-BR/tips.json";
+import ptBRTables from "./locales/pt-BR/tables.json";
 
 // ── en ──────────────────────────────────────────────────────────────────────
 import enCommon from "./locales/en/common.json";
@@ -76,6 +79,7 @@ import enTpv from "./locales/en/tpv.json";
 import enWaiter from "./locales/en/waiter.json";
 import enCustomerMenu from "./locales/en/customer-menu.json";
 import enTips from "./locales/en/tips.json";
+import enTables from "./locales/en/tables.json";
 
 // ── es ──────────────────────────────────────────────────────────────────────
 import {
@@ -97,6 +101,7 @@ import esTpv from "./locales/es/tpv.json";
 import esWaiter from "./locales/es/waiter.json";
 import esCustomerMenu from "./locales/es/customer-menu.json";
 import esTips from "./locales/es/tips.json";
+import esTables from "./locales/es/tables.json";
 
 const DEFAULT_LANG = "pt-BR";
 
@@ -119,6 +124,7 @@ const ALL_NS = [
   "sidebar",
   "customer-menu",
   "tips",
+  "tables",
 ] as const;
 
 // Respect stored locale (LocaleSwitcher) ou derivar de país/região ou browser.
@@ -172,6 +178,7 @@ void i18n.use(initReactI18next).init({
       sidebar: ptPTSidebar,
       "customer-menu": ptPTCustomerMenu,
       tips: ptPTTips,
+      tables: ptPTTables,
       legal: {
         /* kept inline — stable legal text */
         dataPrivacyTitle: "Dados e privacidade",
@@ -283,6 +290,7 @@ void i18n.use(initReactI18next).init({
       sidebar: ptBRSidebar,
       "customer-menu": ptBRCustomerMenu,
       tips: ptBRTips,
+      tables: ptBRTables,
       legal: {
         /* kept inline — stable legal text */
         dataPrivacyTitle: "Dados e privacidade",
@@ -394,6 +402,7 @@ void i18n.use(initReactI18next).init({
       sidebar: enSidebar,
       "customer-menu": enCustomerMenu,
       tips: enTips,
+      tables: enTables,
       legal: {
         /* kept inline — stable legal text */
         dataPrivacyTitle: "Data and privacy",
@@ -502,6 +511,7 @@ void i18n.use(initReactI18next).init({
       sidebar: esSidebar,
       "customer-menu": esCustomerMenu,
       tips: esTips,
+      tables: esTables,
       legal: {
         /* kept inline — stable legal text */
         dataPrivacyTitle: "Datos y privacidad",

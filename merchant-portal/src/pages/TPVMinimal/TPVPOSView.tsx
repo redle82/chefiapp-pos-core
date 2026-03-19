@@ -638,6 +638,7 @@ export function TPVPOSView() {
     onApplyDiscount: handleApplyDiscount,
     onRemoveDiscount: handleRemoveDiscount,
     discountReason,
+    operatorRole: operator?.role,
   };
 
   const statusPanelProps = {

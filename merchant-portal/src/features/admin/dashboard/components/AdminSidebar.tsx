@@ -53,7 +53,7 @@ const NAV_GROUPS: SidebarGroup[] = [
       { labelKey: "adminNav.itemCardapio", to: "/admin/catalog" },
       { labelKey: "adminNav.itemPedidos", to: "/admin/orders" },
       { labelKey: "adminNav.itemMesas", to: "/admin/tables" },
-      { labelKey: "adminNav.itemReservas", to: "/admin/reservations", status: "planned" },
+      { labelKey: "adminNav.itemReservas", to: "/admin/reservations" },
     ],
   },
   {
@@ -63,6 +63,7 @@ const NAV_GROUPS: SidebarGroup[] = [
       { labelKey: "adminNav.itemTransacoes", to: "/admin/payments" },
       { labelKey: "adminNav.itemFechamentos", to: "/admin/closures" },
       { labelKey: "adminNav.itemRecibos", to: "/admin/receipts" },
+      { labelKey: "adminNav.itemTurnos", to: "/admin/shifts" },
       { labelKey: "adminNav.itemGorjetas", to: "/admin/tips" },
       { labelKey: "adminNav.itemRelatorios", to: "/admin/reports" },
     ],
@@ -83,6 +84,7 @@ const NAV_GROUPS: SidebarGroup[] = [
     titleKey: "adminNav.groupConectar",
     items: [
       { labelKey: "adminNav.itemClientes", to: "/admin/customers" },
+      { labelKey: "adminNav.itemDescontos", to: "/admin/discounts" },
       { labelKey: "adminNav.itemPromocoes", to: "/admin/promotions" },
       {
         labelKey: "adminNav.itemIntegracoes",
