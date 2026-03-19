@@ -1,0 +1,89 @@
+{
+  "pageTitle": "Analytics",
+  "pageSubtitle": "Advanced business intelligence and performance insights.",
+  "loading": "Loading analytics...",
+  "noData": "No data available for the selected period.",
+  "exportFilename": "analytics-report",
+  "period": {
+    "today": "Today",
+    "thisWeek": "This week",
+    "lastWeek": "Last week",
+    "thisMonth": "This month",
+    "lastMonth": "Last month",
+    "last30Days": "Last 30 days",
+    "last90Days": "Last 90 days",
+    "custom": "Custom"
+  },
+  "dashboard": {
+    "title": "Business Dashboard",
+    "subtitle": "Executive summary with key performance indicators.",
+    "revenueToday": "Revenue today",
+    "revenueWeek": "Revenue this week",
+    "revenueMonth": "Revenue this month",
+    "ordersToday": "Orders today",
+    "avgTicket": "Avg. ticket",
+    "customerCount": "Customers",
+    "revenueTrend": "Revenue trend (7 days)",
+    "paymentBreakdown": "Payment methods",
+    "topProducts": "Top 5 products",
+    "busiestHours": "Busiest hours today",
+    "weekComparison": "This week vs last week",
+    "vsLastWeek": "vs last week",
+    "noRevenue": "No revenue recorded yet."
+  },
+  "menu": {
+    "title": "Menu Performance",
+    "subtitle": "Boston Matrix analysis and product performance ranking.",
+    "bostonMatrix": "Boston Matrix",
+    "stars": "Stars",
+    "starsDesc": "High sales, high margin",
+    "cashCows": "Cash Cows",
+    "cashCowsDesc": "High sales, low margin",
+    "questionMarks": "Question Marks",
+    "questionMarksDesc": "Low sales, high margin",
+    "dogs": "Dogs",
+    "dogsDesc": "Low sales, low margin",
+    "productRanking": "Product ranking",
+    "colName": "Product",
+    "colCategory": "Category",
+    "colSold": "Sold",
+    "colRevenue": "Revenue",
+    "colCost": "Cost",
+    "colMargin": "Margin %",
+    "colTrend": "Trend",
+    "filterCategory": "Filter by category",
+    "allCategories": "All categories",
+    "sortBy": "Sort by",
+    "tipRemoveDogs": "Consider removing items with low sales and low margin.",
+    "tipPromoteQuestions": "Promote items with high margin but low visibility.",
+    "noProducts": "No product data available."
+  },
+  "heatmap": {
+    "title": "Revenue Heatmap",
+    "subtitle": "Revenue distribution by day of week and hour.",
+    "days": {
+      "mon": "Mon",
+      "tue": "Tue",
+      "wed": "Wed",
+      "thu": "Thu",
+      "fri": "Fri",
+      "sat": "Sat",
+      "sun": "Sun"
+    },
+    "peakTimes": "Peak times",
+    "staffingSuggestion": "Staffing suggestion",
+    "staffHint": "Consider increasing staff during peak hours: {{hours}}.",
+    "noHeatmapData": "Not enough data to generate a heatmap."
+  },
+  "sidebar": {
+    "analytics": "Analytics",
+    "dashboard": "Dashboard",
+    "menuPerformance": "Menu Performance",
+    "heatmap": "Revenue Heatmap"
+  },
+  "kpi": {
+    "up": "up",
+    "down": "down",
+    "noChange": "no change"
+  }
+}
