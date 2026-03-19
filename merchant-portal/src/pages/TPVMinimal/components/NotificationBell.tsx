@@ -1,10 +1,16 @@
 /**
  * NotificationBell — Notification bell icon with dropdown for the TPV Header.
  *
- * Aggregates operational alerts:
- * 1. Tables needing attention (ready_to_serve, bill_requested, cleaning)
- * 2. Open tasks count
- * 3. Kitchen delayed orders (via TPVCentralEvents)
+ * Aggregates two sources:
+ * 1. **Operational alerts** (polled every 30s): tables needing attention, open tasks, kitchen delays
+ * 2. **Push notification history** (from PushNotificationService): persistent, supports read/unread
+ *
+ * Features:
+ * - Unread notification count badge
+ * - Dropdown with recent notifications (last 20)
+ * - Mark individual as read on click
+ * - "Mark all as read" button
+ * - Notification persistence in localStorage via PushNotificationService
  *
  * Polls every 30s for table + task data. Listens to event bus for kitchen pressure.
  */
@@ -14,16 +20,21 @@ import { useTranslation } from "react-i18next";
 import { dockerCoreClient } from "../../../infra/docker-core/connection";
 import tpvEventBus from "../../../core/tpv/TPVCentralEvents";
 import type { KitchenPressurePayload } from "../../../core/tpv/TPVCentralEvents";
+import {
+  pushNotificationService,
+  type StoredNotification,
+} from "../../../core/notifications/PushNotificationService";
 
 /* ── Types ────────────────────────────────────────────────────── */
 
-type NotificationType = "table_attention" | "task_pending" | "kitchen_delayed";
+type NotificationType = "table_attention" | "task_pending" | "kitchen_delayed" | "push";
 
 interface Notification {
   id: string;
   type: NotificationType;
   message: string;
   timestamp: Date;
+  read: boolean;
   meta?: { tableNumber?: number; taskId?: string; orderId?: string };
 }
 
@@ -51,12 +62,30 @@ function BellIcon() {
   );
 }
 
+function CheckAllIcon() {
+  return (
+    <svg
+      width="14"
+      height="14"
+      viewBox="0 0 14 14"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="M1.5 7.5l3 3 6-6" />
+    </svg>
+  );
+}
+
 /* ── Helpers ───────────────────────────────────────────────────── */
 
 const ICON_MAP: Record<NotificationType, string> = {
   table_attention: "\uD83C\uDF7D", // fork and knife plate
   task_pending: "\uD83D\uDCCB",    // clipboard
   kitchen_delayed: "\uD83D\uDD25", // fire
+  push: "\uD83D\uDD14",            // bell
 };
 
 function timeAgo(date: Date): string {
@@ -68,6 +97,18 @@ function timeAgo(date: Date): string {
   return `${hours}h${minutes % 60}m`;
 }
 
+/** Convert StoredNotification to our internal Notification type */
+function fromStored(sn: StoredNotification): Notification {
+  return {
+    id: sn.id,
+    type: "push",
+    message: `${sn.title}: ${sn.body}`,
+    timestamp: new Date(sn.timestamp),
+    read: sn.read,
+    meta: sn.data as Notification["meta"],
+  };
+}
+
 /* ── Component ────────────────────────────────────────────────── */
 
 export function NotificationBell({ restaurantId }: NotificationBellProps) {
@@ -76,6 +117,33 @@ export function NotificationBell({ restaurantId }: NotificationBellProps) {
   const [open, setOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const kitchenDelayedRef = useRef(0);
+
+  /* ── Merge operational + push notifications ────────────────── */
+
+  const buildNotificationList = useCallback(
+    (operationalItems: Notification[]) => {
+      // Get push notification history
+      const pushHistory = pushNotificationService.getHistory(20);
+      const pushItems = pushHistory.map(fromStored);
+
+      // Merge: operational items are always "unread" (live state)
+      // Push items carry their own read state
+      const merged = [...operationalItems, ...pushItems];
+
+      // De-duplicate by id
+      const seen = new Set<string>();
+      const unique = merged.filter((n) => {
+        if (seen.has(n.id)) return false;
+        seen.add(n.id);
+        return true;
+      });
+
+      // Sort by timestamp descending (most recent first), limit to 20
+      unique.sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
+      return unique.slice(0, 20);
+    },
+    [],
+  );
 
   /* ── Fetch table + task notifications ────────────────────── */
 
@@ -115,6 +183,7 @@ export function NotificationBell({ restaurantId }: NotificationBellProps) {
             type: "table_attention",
             message,
             timestamp: changedAt,
+            read: false,
             meta: { tableNumber },
           });
         }
@@ -137,6 +206,7 @@ export function NotificationBell({ restaurantId }: NotificationBellProps) {
           type: "task_pending",
           message: t("header.tasksPending", { count }),
           timestamp: new Date(),
+          read: false,
         });
       }
     } catch {
@@ -150,13 +220,12 @@ export function NotificationBell({ restaurantId }: NotificationBellProps) {
         type: "kitchen_delayed",
         message: t("header.kitchenDelayed", { count: kitchenDelayedRef.current }),
         timestamp: new Date(),
+        read: false,
       });
     }
 
-    // Sort by timestamp descending (most recent first)
-    items.sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
-    setNotifications(items);
-  }, [restaurantId, t]);
+    setNotifications(buildNotificationList(items));
+  }, [restaurantId, t, buildNotificationList]);
 
   /* ── Polling ────────────────────────────────────────────── */
 
@@ -173,7 +242,6 @@ export function NotificationBell({ restaurantId }: NotificationBellProps) {
       "kitchen.pressure_change",
       (event) => {
         kitchenDelayedRef.current = event.payload.delayedOrders;
-        // Re-fetch to update the list
         fetchNotifications();
       },
     );
@@ -195,9 +263,31 @@ export function NotificationBell({ restaurantId }: NotificationBellProps) {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [open]);
 
+  /* ── Actions ────────────────────────────────────────────── */
+
+  const handleMarkAsRead = useCallback(
+    (notificationId: string) => {
+      // Mark in push service if it's a push notification
+      pushNotificationService.markAsRead(notificationId);
+      // Update local state
+      setNotifications((prev) =>
+        prev.map((n) =>
+          n.id === notificationId ? { ...n, read: true } : n,
+        ),
+      );
+    },
+    [],
+  );
+
+  const handleMarkAllAsRead = useCallback(() => {
+    pushNotificationService.markAllAsRead();
+    setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
+  }, []);
+
   /* ── Render ─────────────────────────────────────────────── */
 
-  const count = notifications.length;
+  const totalCount = notifications.length;
+  const unreadCount = notifications.filter((n) => !n.read).length;
 
   return (
     <div ref={containerRef} style={{ position: "relative", flexShrink: 0 }}>
@@ -217,14 +307,14 @@ export function NotificationBell({ restaurantId }: NotificationBellProps) {
           borderRadius: 8,
           border: "1px solid rgba(255,255,255,0.08)",
           backgroundColor: open ? "rgba(255,255,255,0.08)" : "transparent",
-          color: count > 0 ? "#fafafa" : "#737373",
+          color: unreadCount > 0 ? "#fafafa" : "#737373",
           cursor: "pointer",
           transition: "background-color 0.15s",
         }}
       >
         <BellIcon />
-        {/* Badge */}
-        {count > 0 && (
+        {/* Badge — shows unread count */}
+        {unreadCount > 0 && (
           <span
             data-testid="notification-badge"
             style={{
@@ -244,7 +334,7 @@ export function NotificationBell({ restaurantId }: NotificationBellProps) {
               pointerEvents: "none",
             }}
           >
-            {count > 99 ? "99+" : count}
+            {unreadCount > 99 ? "99+" : unreadCount}
           </span>
         )}
       </button>
@@ -257,8 +347,8 @@ export function NotificationBell({ restaurantId }: NotificationBellProps) {
             position: "absolute",
             top: "calc(100% + 8px)",
             right: 0,
-            width: 320,
-            maxHeight: 400,
+            width: 340,
+            maxHeight: 440,
             overflowY: "auto",
             backgroundColor: "#1a1a1a",
             border: "1px solid rgba(255,255,255,0.08)",
@@ -277,27 +367,62 @@ export function NotificationBell({ restaurantId }: NotificationBellProps) {
               borderBottom: "1px solid rgba(255,255,255,0.06)",
             }}
           >
-            <span style={{ color: "#fafafa", fontWeight: 600, fontSize: 14 }}>
-              {t("header.notifications")}
-            </span>
-            {count > 0 && (
-              <span
+            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              <span style={{ color: "#fafafa", fontWeight: 600, fontSize: 14 }}>
+                {t("header.notifications")}
+              </span>
+              {unreadCount > 0 && (
+                <span
+                  style={{
+                    fontSize: 11,
+                    fontWeight: 600,
+                    padding: "2px 8px",
+                    borderRadius: 10,
+                    backgroundColor: "rgba(239,68,68,0.15)",
+                    color: "#ef4444",
+                  }}
+                >
+                  {unreadCount}
+                </span>
+              )}
+            </div>
+            {/* Mark all as read */}
+            {unreadCount > 0 && (
+              <button
+                type="button"
+                onClick={handleMarkAllAsRead}
+                title={t("header.markAllRead")}
                 style={{
-                  fontSize: 11,
-                  fontWeight: 600,
-                  padding: "2px 8px",
-                  borderRadius: 10,
-                  backgroundColor: "rgba(239,68,68,0.15)",
-                  color: "#ef4444",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 4,
+                  fontSize: 12,
+                  fontWeight: 500,
+                  color: "#f97316",
+                  backgroundColor: "transparent",
+                  border: "none",
+                  cursor: "pointer",
+                  padding: "2px 6px",
+                  borderRadius: 6,
+                  transition: "background-color 0.1s",
+                }}
+                onMouseEnter={(e) => {
+                  (e.currentTarget as HTMLButtonElement).style.backgroundColor =
+                    "rgba(249,115,22,0.1)";
+                }}
+                onMouseLeave={(e) => {
+                  (e.currentTarget as HTMLButtonElement).style.backgroundColor =
+                    "transparent";
                 }}
               >
-                {count}
-              </span>
+                <CheckAllIcon />
+                {t("header.markAllRead")}
+              </button>
             )}
           </div>
 
           {/* Items */}
-          {count === 0 ? (
+          {totalCount === 0 ? (
             <div
               style={{
                 padding: "32px 16px",
@@ -313,23 +438,48 @@ export function NotificationBell({ restaurantId }: NotificationBellProps) {
               {notifications.map((n) => (
                 <div
                   key={n.id}
+                  role="button"
+                  tabIndex={0}
+                  onClick={() => handleMarkAsRead(n.id)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      handleMarkAsRead(n.id);
+                    }
+                  }}
                   style={{
                     display: "flex",
                     alignItems: "flex-start",
                     gap: 10,
                     padding: "10px 16px",
-                    cursor: "default",
+                    cursor: "pointer",
                     transition: "background-color 0.1s",
+                    backgroundColor: n.read
+                      ? "transparent"
+                      : "rgba(249,115,22,0.04)",
                   }}
                   onMouseEnter={(e) => {
                     (e.currentTarget as HTMLDivElement).style.backgroundColor =
-                      "rgba(255,255,255,0.04)";
+                      n.read
+                        ? "rgba(255,255,255,0.04)"
+                        : "rgba(249,115,22,0.08)";
                   }}
                   onMouseLeave={(e) => {
                     (e.currentTarget as HTMLDivElement).style.backgroundColor =
-                      "transparent";
+                      n.read ? "transparent" : "rgba(249,115,22,0.04)";
                   }}
                 >
+                  {/* Unread dot */}
+                  <div
+                    style={{
+                      width: 8,
+                      height: 8,
+                      borderRadius: 4,
+                      backgroundColor: n.read ? "transparent" : "#f97316",
+                      flexShrink: 0,
+                      marginTop: 6,
+                    }}
+                  />
+
                   {/* Type icon */}
                   <span style={{ fontSize: 16, lineHeight: "20px", flexShrink: 0 }}>
                     {ICON_MAP[n.type]}
@@ -339,10 +489,11 @@ export function NotificationBell({ restaurantId }: NotificationBellProps) {
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div
                       style={{
-                        color: "#e5e5e5",
+                        color: n.read ? "#a3a3a3" : "#e5e5e5",
                         fontSize: 14,
                         lineHeight: 1.4,
                         wordBreak: "break-word",
+                        fontWeight: n.read ? 400 : 500,
                       }}
                     >
                       {n.message}
