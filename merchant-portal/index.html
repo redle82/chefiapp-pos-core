@@ -24,6 +24,7 @@ content="AppStaff — Aplicação para a equipa do restaurante. Gestão de turno
 <meta property="og:type" content="website" />
 <script>
 window.process = { env: {} };
+if (typeof globalThis.global === 'undefined') { globalThis.global = globalThis; }
 </script>
 <!-- Polyfill Buffer for PDFMake/TPV - ESM-compatible -->
 <script>

@@ -75,8 +75,6 @@ export default defineConfig(async ({ mode }) => {
   return {
     base,
     define: {
-      // Polyfill global for libraries that expect Node.js global
-      global: "globalThis",
       __VITE_ENV__: "import.meta.env",
       // Inject local IP for QR code generation in device provisioning
       __LOCAL_IP__: JSON.stringify(localIp),
