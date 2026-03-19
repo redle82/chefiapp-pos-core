@@ -86,12 +86,15 @@ export class HealthEngine {
         ? "degraded"
         : "healthy";
 
-    // TODO: Implementar quando tabela operational_health existir no Docker Core
-    // Por enquanto, retornar ID sintético em DEV_STABLE_MODE
-    Logger.warn(
-      "[HealthEngine] recordOperationalHealth não implementado no Docker Core",
-    );
-    return `op-health-${health.restaurantId}-${Date.now()}`;
+    // Persist to IndexedDB for offline-first health tracking
+    const id = `op-health-${health.restaurantId}-${Date.now()}`;
+    try {
+      const record = { id, type: "operational", status: overallStatus, data: health, timestamp: new Date().toISOString() };
+      await this.persistHealthRecord(record);
+    } catch {
+      Logger.warn("[HealthEngine] Failed to persist operational health");
+    }
+    return id;
   }
 
   /**
@@ -116,12 +119,14 @@ export class HealthEngine {
         ? "tired"
         : "healthy";
 
-    // TODO: Implementar quando tabela human_health existir no Docker Core
-    // Por enquanto, retornar ID sintético em DEV_STABLE_MODE
-    Logger.warn(
-      "[HealthEngine] recordHumanHealth não implementado no Docker Core",
-    );
-    return `human-health-${health.restaurantId}-${Date.now()}`;
+    const id = `human-health-${health.restaurantId}-${Date.now()}`;
+    try {
+      const record = { id, type: "human", status, data: health, timestamp: new Date().toISOString() };
+      await this.persistHealthRecord(record);
+    } catch {
+      Logger.warn("[HealthEngine] Failed to persist human health");
+    }
+    return id;
   }
 
   /**
@@ -147,12 +152,14 @@ export class HealthEngine {
         ? "warning"
         : "healthy";
 
-    // TODO: Implementar quando tabela financial_health existir no Docker Core
-    // Por enquanto, retornar ID sintético em DEV_STABLE_MODE
-    Logger.warn(
-      "[HealthEngine] recordFinancialHealth não implementado no Docker Core",
-    );
-    return `financial-health-${health.restaurantId}-${Date.now()}`;
+    const id = `financial-health-${health.restaurantId}-${Date.now()}`;
+    try {
+      const record = { id, type: "financial", status, data: health, timestamp: new Date().toISOString() };
+      await this.persistHealthRecord(record);
+    } catch {
+      Logger.warn("[HealthEngine] Failed to persist financial health");
+    }
+    return id;
   }
 
   /**
@@ -370,6 +377,31 @@ export class HealthEngine {
       breakdown: row.breakdown || {},
       measuredAt: new Date(row.measured_at),
     };
+  }
+  /** Persist health record to IndexedDB for offline-first tracking. */
+  private async persistHealthRecord(record: { id: string; type: string; status: string; data: unknown; timestamp: string }): Promise<void> {
+    const DB_NAME = "chefiapp_health";
+    const STORE = "health_records";
+    return new Promise((resolve, reject) => {
+      const req = indexedDB.open(DB_NAME, 1);
+      req.onupgradeneeded = () => {
+        const db = req.result;
+        if (!db.objectStoreNames.contains(STORE)) {
+          db.createObjectStore(STORE, { keyPath: "id" });
+        }
+      };
+      req.onsuccess = () => {
+        try {
+          const tx = req.result.transaction(STORE, "readwrite");
+          tx.objectStore(STORE).put(record);
+          tx.oncomplete = () => resolve();
+          tx.onerror = () => reject(tx.error);
+        } catch (e) {
+          reject(e);
+        }
+      };
+      req.onerror = () => reject(req.error);
+    });
   }
 }
 
