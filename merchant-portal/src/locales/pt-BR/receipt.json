@@ -52,5 +52,12 @@
   "takeAway": "Para Viagem",
   "delivery": "Entrega",
   "reopenOrder": "Reabrir Pedido",
-  "reopenReasonRequired": "É necessário indicar um motivo para reabrir este pedido."
+  "reopenReasonRequired": "É necessário indicar um motivo para reabrir este pedido.",
+  "emailReceipt": "Enviar Recibo por Email",
+  "emailPlaceholder": "cliente@email.com",
+  "emailSend": "Enviar",
+  "emailSending": "Enviando...",
+  "emailSent": "Recibo enviado!",
+  "emailFailed": "Falha ao enviar.",
+  "cancel": "Cancelar"
 }

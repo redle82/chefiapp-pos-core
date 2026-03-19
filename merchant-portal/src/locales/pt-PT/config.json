@@ -307,5 +307,23 @@
     "localeEsES": "Espanhol (Espanha)",
     "localeEnUS": "Inglês (EUA)",
     "localePtPT": "Português (Portugal)"
+  },
+  "email": {
+    "title": "Notificações por Email",
+    "description": "Enviar recibos digitais e notificações aos clientes por email.",
+    "loading": "A carregar...",
+    "enableReceipts": "Ativar recibos por email",
+    "autoSend": "Enviar recibo automaticamente após pagamento",
+    "sendOrderConfirmation": "Enviar confirmação de pedido ao cliente",
+    "promptMode": "Recolha de email do cliente",
+    "promptAtCheckout": "Pedir no checkout",
+    "promptOptional": "Opcional (botão no recibo)",
+    "promptNever": "Nunca pedir",
+    "preview": "Pré-visualizar Template",
+    "sendTest": "Enviar Email de Teste",
+    "sending": "A enviar...",
+    "testSent": "Email de teste enviado!",
+    "testFailed": "Falha: {{error}}",
+    "errorNoRestaurant": "Nenhum restaurante selecionado."
   }
 }

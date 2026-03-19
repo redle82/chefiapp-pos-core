@@ -17,6 +17,8 @@ interface FiscalReceiptProps {
   receipt: ReceiptData;
   onNewOrder: () => void;
   onPrint: () => void;
+  /** Callback to send receipt via email. If undefined, the button is hidden. */
+  onEmailReceipt?: (email: string) => Promise<void>;
   /** Callback to reopen this order. If undefined, the button is hidden. */
   onReopenOrder?: (reason: string) => Promise<void>;
   /** Current operator role — reopen is only visible to manager/owner. */
@@ -27,6 +29,7 @@ export function FiscalReceipt({
   receipt,
   onNewOrder,
   onPrint,
+  onEmailReceipt,
   onReopenOrder,
   operatorRole,
 }: FiscalReceiptProps) {
@@ -35,6 +38,10 @@ export function FiscalReceipt({
   const [reopenReason, setReopenReason] = useState("");
   const [reopenLoading, setReopenLoading] = useState(false);
   const [reopenError, setReopenError] = useState<string | null>(null);
+  const [emailInputOpen, setEmailInputOpen] = useState(false);
+  const [customerEmail, setCustomerEmail] = useState("");
+  const [emailSending, setEmailSending] = useState(false);
+  const [emailResult, setEmailResult] = useState<string | null>(null);
 
   const canReopen =
     onReopenOrder != null &&
@@ -332,6 +339,137 @@ export function FiscalReceipt({
             {t("newOrder")}
           </button>
         </div>
+
+        {/* Email Receipt */}
+        {onEmailReceipt && (
+          <div
+            style={{
+              marginTop: 8,
+              borderTop: "1px dashed #ddd",
+              paddingTop: 12,
+            }}
+          >
+            {!emailInputOpen ? (
+              <button
+                type="button"
+                onClick={() => {
+                  setEmailInputOpen(true);
+                  setEmailResult(null);
+                }}
+                style={{
+                  width: "100%",
+                  padding: "10px 0",
+                  background: "#f0f9ff",
+                  border: "1px solid #3b82f6",
+                  borderRadius: 8,
+                  color: "#1e40af",
+                  fontWeight: 600,
+                  fontSize: 13,
+                  cursor: "pointer",
+                  fontFamily: "system-ui, sans-serif",
+                }}
+              >
+                {t("emailReceipt", "Email Receipt")}
+              </button>
+            ) : (
+              <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                <input
+                  type="email"
+                  value={customerEmail}
+                  onChange={(e) => setCustomerEmail(e.target.value)}
+                  placeholder={t("emailPlaceholder", "customer@email.com")}
+                  autoFocus
+                  style={{
+                    width: "100%",
+                    padding: "8px 10px",
+                    border: "1px solid #d4d4d8",
+                    borderRadius: 6,
+                    fontSize: 13,
+                    fontFamily: "system-ui, sans-serif",
+                    boxSizing: "border-box",
+                  }}
+                />
+                <div style={{ display: "flex", gap: 6 }}>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setEmailInputOpen(false);
+                      setCustomerEmail("");
+                      setEmailResult(null);
+                    }}
+                    style={{
+                      flex: 1,
+                      padding: "8px 0",
+                      background: "#f4f4f5",
+                      border: "1px solid #d4d4d8",
+                      borderRadius: 6,
+                      color: "#52525b",
+                      fontWeight: 600,
+                      fontSize: 12,
+                      cursor: "pointer",
+                      fontFamily: "system-ui, sans-serif",
+                    }}
+                  >
+                    {t("cancel", "Cancel")}
+                  </button>
+                  <button
+                    type="button"
+                    disabled={emailSending || !customerEmail.trim()}
+                    onClick={async () => {
+                      if (!customerEmail.trim()) return;
+                      setEmailSending(true);
+                      setEmailResult(null);
+                      try {
+                        await onEmailReceipt(customerEmail.trim());
+                        setEmailResult(t("emailSent", "Receipt sent!"));
+                        setCustomerEmail("");
+                        setEmailInputOpen(false);
+                      } catch (err) {
+                        setEmailResult(
+                          err instanceof Error
+                            ? err.message
+                            : t("emailFailed", "Failed to send."),
+                        );
+                      } finally {
+                        setEmailSending(false);
+                      }
+                    }}
+                    style={{
+                      flex: 1,
+                      padding: "8px 0",
+                      background: customerEmail.trim() ? "#3b82f6" : "#a1a1aa",
+                      border: "none",
+                      borderRadius: 6,
+                      color: "#fff",
+                      fontWeight: 600,
+                      fontSize: 12,
+                      cursor: emailSending || !customerEmail.trim() ? "not-allowed" : "pointer",
+                      fontFamily: "system-ui, sans-serif",
+                      opacity: emailSending ? 0.6 : 1,
+                    }}
+                  >
+                    {emailSending ? t("emailSending", "Sending...") : t("emailSend", "Send")}
+                  </button>
+                </div>
+                {emailResult && (
+                  <p
+                    style={{
+                      margin: 0,
+                      fontSize: 11,
+                      color: emailResult.includes("sent") || emailResult.includes("enviado")
+                        ? "#10b981"
+                        : "#ef4444",
+                      textAlign: "center",
+                      fontFamily: "system-ui, sans-serif",
+                    }}
+                  >
+                    {emailResult}
+                  </p>
+                )}
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Reopen Order — only visible to manager/owner */}
         {canReopen && (

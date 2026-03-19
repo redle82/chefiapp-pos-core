@@ -58,8 +58,12 @@ import { mapReceiptForPrint } from "./types/ReceiptData";
 import { PrintService } from "../../core/printing/PrintService";
 import { loadLogoRaster } from "../../core/printing/templates/OrderReceipt";
 import { saveReceipt } from "../../core/receipt/ReceiptHistoryService";
+import { sendReceiptEmail, getEmailSettings } from "../../core/notifications/EmailService";
 import { useOperator } from "./context/OperatorContext";
+import { saveTip } from "../../core/payment/TipService";
+import type { TipType } from "../../core/payment/TipService";
 import { reopenOrder } from "../../core/orders/reopenOrder";
+import { TipSelector } from "./components/TipSelector";
 import "./TPVPOSView.css";
 
 const DEFAULT_RESTAURANT_ID = "00000000-0000-0000-0000-000000000100";
@@ -109,7 +113,8 @@ export function TPVPOSView() {
   const [splitPayProcessing, setSplitPayProcessing] = useState(false);
   // Tip & payment method state
   const [tipCents, setTipCents] = useState(0);
-  const [payMethod, setPayMethod] = useState<"cash" | "card" | "pix">("cash");
+  const [tipType, setTipType] = useState<TipType>("fixed");
+  const [payMethod, setPayMethod] = useState<"cash" | "card" | "pix" | "mbway" | "sumup_eur">("cash");
   const [tipModalOpen, setTipModalOpen] = useState(false);
   // Receipt state (full fiscal receipt snapshot)
   const [lastReceipt, setLastReceipt] = useState<ReceiptData | null>(null);
@@ -443,6 +448,7 @@ export function TPVPOSView() {
       taxCents,
       taxBreakdown,
       tipCents,
+      tipType: tipCents > 0 ? tipType : undefined,
       grandTotalCents,
       paymentMethod: payMethod,
     };
@@ -473,6 +479,17 @@ export function TPVPOSView() {
           setLastReceipt(receiptSnapshot);
           // Persist receipt history (fire-and-forget)
           saveReceipt(restaurantId, receiptSnapshot).catch(() => {});
+          // Persist tip record (fire-and-forget, tips are NOT taxed)
+          if (tipCents > 0) {
+            saveTip(restaurantId, {
+              orderId: fullOrderId,
+              amountCents: tipCents,
+              type: tipType,
+              operatorId: operator?.id ?? null,
+              operatorName: operator?.name ?? null,
+              createdAt: new Date().toISOString(),
+            }).catch(() => {});
+          }
           setCart([]);
           setTipCents(0);
           setDiscountCents(0);
@@ -489,6 +506,17 @@ export function TPVPOSView() {
           setLastReceipt(receiptSnapshot);
           // Persist receipt history (fire-and-forget)
           saveReceipt(restaurantId, receiptSnapshot).catch(() => {});
+          // Persist tip record (fire-and-forget, tips are NOT taxed)
+          if (tipCents > 0) {
+            saveTip(restaurantId, {
+              orderId: fullOrderId,
+              amountCents: tipCents,
+              type: tipType,
+              operatorId: operator?.id ?? null,
+              operatorName: operator?.name ?? null,
+              createdAt: new Date().toISOString(),
+            }).catch(() => {});
+          }
           setCart([]);
           setTipCents(0);
           setDiscountCents(0);
@@ -792,13 +820,36 @@ export function TPVPOSView() {
           orderId={currentOrderId}
           restaurantId={restaurantId}
           orderTotal={totalCents}
+          taxCents={taxCents}
+          items={cart}
           onPayPartial={handlePayPartial}
+          onAllPaid={async () => {
+            // All split parts paid — finalize order and reset
+            try {
+              await lifecycle.finalizeOrder(restaurantId, totalCents);
+              const fullOrderId = currentOrderId;
+              const receiptSnapshot = buildReceiptSnapshot(fullOrderId);
+              setLastReceipt(receiptSnapshot);
+              saveReceipt(restaurantId, receiptSnapshot).catch(() => {});
+              setCart([]);
+              setSplitBillOpen(false);
+              setTipCents(0);
+              setDiscountCents(0);
+              setDiscountReason(undefined);
+              toast.success(t("posView.billFullyPaid"));
+            } catch (err) {
+              Logger.error("[SplitBill] Finalize after all paid failed", err);
+              toast.error(
+                err instanceof Error ? err.message : t("posView.errorFinalizeOrder"),
+              );
+            }
+          }}
           onCancel={() => setSplitBillOpen(false)}
           loading={splitPayProcessing}
         />
       )}
 
-      {/* Tip Selection Modal */}
+      {/* Tip + Payment Modal */}
       {tipModalOpen && (
         <div
           onClick={() => {
@@ -822,102 +873,41 @@ export function TPVPOSView() {
               background: "#0a0a0a",
               border: "1px solid #27272a",
               borderRadius: 20,
-              width: "min(420px, 92vw)",
+              width: "min(440px, 92vw)",
+              maxHeight: "90vh",
+              overflowY: "auto",
               padding: 24,
               display: "flex",
               flexDirection: "column",
               gap: 16,
             }}
           >
-            <h2 style={{ color: "#fff", fontSize: 20, fontWeight: 700, margin: 0 }}>
-              {t("posView.tipTitle")}
-            </h2>
+            {/* Subtotal context */}
             <p style={{ color: "#a1a1aa", fontSize: 13, margin: 0 }}>
               Subtotal: {formatAmount(totalCents)}
             </p>
 
-            {/* Preset tip buttons */}
-            <div style={{ display: "flex", gap: 8 }}>
-              {[0, 5, 10, 15].map((pct) => {
-                const amount = Math.round(totalCents * (pct / 100));
-                const isSelected = tipCents === amount;
-                return (
-                  <button
-                    key={pct}
-                    type="button"
-                    onClick={() => setTipCents(amount)}
-                    style={{
-                      flex: 1,
-                      padding: "12px 0",
-                      background: isSelected ? "#1e1b4b" : "#18181b",
-                      border: isSelected
-                        ? "2px solid #6366f1"
-                        : "2px solid transparent",
-                      borderRadius: 10,
-                      color: isSelected ? "#fff" : "#d4d4d8",
-                      fontWeight: 600,
-                      fontSize: 14,
-                      cursor: "pointer",
-                    }}
-                  >
-                    {pct === 0 ? t("posView.noTip") : `${pct}%`}
-                    {pct > 0 && (
-                      <div
-                        style={{ fontSize: 11, color: "#71717a", marginTop: 2 }}
-                      >
-                        {formatAmount(amount)}
-                      </div>
-                    )}
-                  </button>
-                );
-              })}
-            </div>
-
-            {/* Summary */}
-            <div
-              style={{
-                background: "#18181b",
-                padding: 16,
-                borderRadius: 14,
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "center",
+            {/* TipSelector component */}
+            <TipSelector
+              totalCents={totalCents}
+              tipCents={tipCents}
+              onTipChange={(cents) => {
+                setTipCents(cents);
+                if (cents === 0) {
+                  setTipType("fixed");
+                } else {
+                  const roundUp = Math.ceil(totalCents / 100) * 100 - totalCents;
+                  if (cents === roundUp && roundUp > 0) {
+                    setTipType("round_up");
+                  } else {
+                    const matchesPct = [5, 10, 15, 20].some(
+                      (p) => Math.round(totalCents * (p / 100)) === cents,
+                    );
+                    setTipType(matchesPct ? "percentage" : "fixed");
+                  }
+                }
               }}
-            >
-              <div>
-                <div
-                  style={{
-                    color: "#71717a",
-                    fontSize: 12,
-                    textTransform: "uppercase",
-                    letterSpacing: 0.8,
-                  }}
-                >
-                  {t("posView.totalWithTip")}
-                </div>
-                <div
-                  style={{ color: "#10b981", fontSize: 24, fontWeight: 800 }}
-                >
-                  {formatAmount(totalCents + tipCents)}
-                </div>
-              </div>
-              {tipCents > 0 && (
-                <div style={{ textAlign: "right" }}>
-                  <div
-                    style={{
-                      color: "#71717a",
-                      fontSize: 12,
-                      textTransform: "uppercase",
-                    }}
-                  >
-                    {t("posView.tipLabel")}
-                  </div>
-                  <div style={{ color: "#e4e4e7", fontSize: 16, fontWeight: 700 }}>
-                    {formatAmount(tipCents)}
-                  </div>
-                </div>
-              )}
-            </div>
+            />
 
             {/* Payment method selector */}
             <div>
@@ -933,12 +923,14 @@ export function TPVPOSView() {
               >
                 {t("posView.paymentMethod")}
               </div>
-              <div style={{ display: "flex", gap: 8 }}>
+              <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
                 {(
                   [
                     { id: "cash" as const, label: t("posView.methodCash") },
                     { id: "card" as const, label: t("posView.methodCard") },
                     { id: "pix" as const, label: t("posView.methodPix") },
+                    { id: "mbway" as const, label: t("posView.methodMBWay") },
+                    { id: "sumup_eur" as const, label: t("posView.methodSumUp") },
                   ]
                 ).map((m) => (
                   <button
@@ -1005,6 +997,22 @@ export function TPVPOSView() {
         <FiscalReceipt
           receipt={lastReceipt}
           operatorRole={operator?.role}
+          onEmailReceipt={
+            getEmailSettings().emailReceiptsEnabled
+              ? async (email: string) => {
+                  if (!lastReceipt) return;
+                  const result = await sendReceiptEmail(
+                    restaurantId,
+                    email,
+                    lastReceipt,
+                  );
+                  if (!result.success) {
+                    throw new Error(result.error ?? "Failed to send email");
+                  }
+                  toast.success(t("posView.receiptEmailed", "Receipt emailed"));
+                }
+              : undefined
+          }
           onReopenOrder={async (reason: string) => {
             if (!operator) return;
             const result = await reopenOrder({

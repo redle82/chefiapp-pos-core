@@ -307,5 +307,23 @@
     "localeEsES": "Spanish (Spain)",
     "localeEnUS": "English (US)",
     "localePtPT": "Portuguese (Portugal)"
+  },
+  "email": {
+    "title": "Email Notifications",
+    "description": "Send digital receipts and notifications to customers via email.",
+    "loading": "Loading...",
+    "enableReceipts": "Enable email receipts",
+    "autoSend": "Auto-send receipt after payment",
+    "sendOrderConfirmation": "Send order confirmation to customer",
+    "promptMode": "Customer email collection",
+    "promptAtCheckout": "Prompt at checkout",
+    "promptOptional": "Optional (button on receipt)",
+    "promptNever": "Never ask",
+    "preview": "Preview Template",
+    "sendTest": "Send Test Email",
+    "sending": "Sending...",
+    "testSent": "Test email sent!",
+    "testFailed": "Failed: {{error}}",
+    "errorNoRestaurant": "No restaurant selected."
   }
 }

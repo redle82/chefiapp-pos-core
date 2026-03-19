@@ -52,5 +52,12 @@
   "takeAway": "Take-Away",
   "delivery": "Delivery",
   "reopenOrder": "Reopen Order",
-  "reopenReasonRequired": "A reason is required to reopen this order."
+  "reopenReasonRequired": "A reason is required to reopen this order.",
+  "emailReceipt": "Email Receipt",
+  "emailPlaceholder": "customer@email.com",
+  "emailSend": "Send",
+  "emailSending": "Sending...",
+  "emailSent": "Receipt sent!",
+  "emailFailed": "Failed to send.",
+  "cancel": "Cancel"
 }

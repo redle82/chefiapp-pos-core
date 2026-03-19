@@ -10,6 +10,7 @@ import { GeneralCardIdentity } from "../components/GeneralCardIdentity";
 import { GeneralCardLocale } from "../components/GeneralCardLocale";
 import { GeneralCardReceipt } from "../components/GeneralCardReceipt";
 import { GeneralCardIntegrations } from "../components/GeneralCardIntegrations";
+import { EmailSettingsCard } from "../components/EmailSettingsCard";
 
 export function GeneralConfigPage() {
   return (
@@ -29,6 +30,7 @@ export function GeneralConfigPage() {
         <GeneralCardLocale />
         <GeneralCardReceipt />
         <GeneralCardIntegrations />
+        <EmailSettingsCard />
       </div>
     </div>
   );
