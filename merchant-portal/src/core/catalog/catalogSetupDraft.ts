@@ -1,3 +1,4 @@
+import { getCountryConfig, inferCountry } from "../config/CountryConfig";
 import type { SalesChannel } from "./catalogTypes";
 
 export type CatalogBusinessType =
@@ -24,17 +25,23 @@ export interface CatalogSetupDraft {
 
 const STORAGE_KEY_PREFIX = "chefiapp_catalog_setup_v1";
 
-const DEFAULT_DRAFT: Omit<CatalogSetupDraft, "updatedAt"> = {
-  businessType: "RESTAURANT",
-  country: "ES",
-  currency: "EUR",
-  locale: "es-ES",
-  primaryLanguage: "es-ES",
-  brands: ["Marca principal"],
-  channels: ["LOCAL", "TAKEAWAY"],
-  initialTemplateId: "classic-restaurant",
-  importMode: "none",
-};
+function buildDefaultDraft(): Omit<CatalogSetupDraft, "updatedAt"> {
+  const country = inferCountry();
+  const cfg = getCountryConfig(country);
+  return {
+    businessType: "RESTAURANT",
+    country: cfg.code,
+    currency: cfg.currency,
+    locale: cfg.locale,
+    primaryLanguage: cfg.locale,
+    brands: ["Marca principal"],
+    channels: ["LOCAL", "TAKEAWAY"],
+    initialTemplateId: "classic-restaurant",
+    importMode: "none",
+  };
+}
+
+const DEFAULT_DRAFT: Omit<CatalogSetupDraft, "updatedAt"> = buildDefaultDraft();
 
 function nowIso(): string {
   return new Date().toISOString();

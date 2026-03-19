@@ -26,6 +26,9 @@ export const CountrySchema = z.enum([
   "MX",
   "CA",
   "AU",
+  "IT",
+  "FR",
+  "DE",
 ]);
 
 /** Schema para fuso horário */
@@ -38,6 +41,9 @@ export const TimezoneSchema = z.enum([
   "America/Mexico_City",
   "America/Toronto",
   "Australia/Sydney",
+  "Europe/Rome",
+  "Europe/Paris",
+  "Europe/Berlin",
 ]);
 
 /** Schema para moeda */
@@ -61,6 +67,9 @@ export const LocaleSchema = z.enum([
   "es-MX",
   "en-CA",
   "en-AU",
+  "it-IT",
+  "fr-FR",
+  "de-DE",
 ]);
 
 /** Schema para zona do restaurante */

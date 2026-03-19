@@ -4,7 +4,7 @@
  */
 
 // --- Primitives ---
-export type CountryCode = 'PT' | 'ES' | 'BR' | 'US';
+export type CountryCode = 'PT' | 'ES' | 'BR' | 'US' | 'IT' | 'FR' | 'DE' | 'GB';
 export type BusinessType = 'restaurant' | 'bar' | 'cafe' | 'bakery' | 'club' | 'other';
 export type StaffRole = 'KITCHEN' | 'FLOOR' | 'BAR' | 'MANAGER' | 'OWNER';
 

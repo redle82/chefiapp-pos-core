@@ -21,6 +21,9 @@ const LOCALES = [
   { value: "es-MX", label: "Español (México)" },
   { value: "en-CA", label: "English (Canada)" },
   { value: "en-AU", label: "English (Australia)" },
+  { value: "it-IT", label: "Italiano (Italia)" },
+  { value: "fr-FR", label: "Français (France)" },
+  { value: "de-DE", label: "Deutsch (Deutschland)" },
 ] as const;
 
 const TIMEZONES = [
@@ -34,6 +37,9 @@ const TIMEZONES = [
   { value: "America/Mexico_City", label: "America/Mexico_City (México)" },
   { value: "America/Toronto", label: "America/Toronto (Canada)" },
   { value: "Australia/Sydney", label: "Australia/Sydney" },
+  { value: "Europe/Rome", label: "Europe/Rome (Italia)" },
+  { value: "Europe/Paris", label: "Europe/Paris (France)" },
+  { value: "Europe/Berlin", label: "Europe/Berlin (Deutschland)" },
 ] as const;
 
 const CURRENCIES = [

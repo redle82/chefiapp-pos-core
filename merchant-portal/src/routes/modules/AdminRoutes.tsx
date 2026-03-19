@@ -50,6 +50,7 @@ import { ModulesPage } from "../../features/admin/modules/pages/ModulesPage";
 import { ObservabilityPage } from "../../features/admin/observability/pages/ObservabilityPage";
 import { PaymentsLayout } from "../../features/admin/payments/pages/PaymentsLayout";
 import { PayoutsPage } from "../../features/admin/payments/pages/PayoutsPage";
+import { ReconciliationPage } from "../../features/admin/payments/pages/ReconciliationPage";
 import { TransactionsPage } from "../../features/admin/payments/pages/TransactionsPage";
 import { PromotionsPage } from "../../features/admin/promotions/pages/PromotionsPage";
 import { ReceiptHistoryPage } from "../../features/admin/receipts/pages/ReceiptHistoryPage";
@@ -158,6 +159,7 @@ export const AdminRoutesFragment = (
       <Route index element={<Navigate to="transactions" replace />} />
       <Route path="transactions" element={<TransactionsPage />} />
       <Route path="payouts" element={<PayoutsPage />} />
+      <Route path="reconciliation" element={<ReconciliationPage />} />
     </Route>
     <Route
       path="/admin/promotions"

@@ -16,34 +16,9 @@ import {
 } from "../../../core/infra/backendAdapter";
 import { setTabIsolated } from "../../../core/storage/TabIsolatedStorage";
 import { dockerCoreClient } from "../../../infra/docker-core/connection";
+import { COUNTRY_CONFIGS, getCountryConfig } from "../../../core/config/CountryConfig";
 import styles from "./IdentitySection.module.css";
 // Domain writes ONLY via Core. No Supabase.
-
-// Presets oficiais por país para reduzir atrito no onboarding.
-// País virou a fonte de verdade; timezone/moeda/idioma vêm daqui
-// e podem ser ajustados manualmente depois se o usuário quiser.
-const COUNTRY_PRESETS = {
-  BR: {
-    timezone: "America/Sao_Paulo",
-    currency: "BRL",
-    locale: "pt-BR",
-  },
-  ES: {
-    timezone: "Europe/Madrid",
-    currency: "EUR",
-    locale: "es-ES",
-  },
-  PT: {
-    timezone: "Europe/Lisbon",
-    currency: "EUR",
-    locale: "pt-PT",
-  },
-  US: {
-    timezone: "America/New_York",
-    currency: "USD",
-    locale: "en-US",
-  },
-} as const;
 
 export function IdentitySection() {
   const { t } = useTranslation("onboarding");
@@ -384,10 +359,12 @@ export function IdentitySection() {
     }
 
     // País passou a ser o pivot que preenche os demais campos.
-    const preset = COUNTRY_PRESETS[value as keyof typeof COUNTRY_PRESETS];
+    const cfg = getCountryConfig(value);
     updateIdentityForm({
       country: value,
-      ...(preset ?? {}),
+      timezone: cfg.timezone,
+      currency: cfg.currency,
+      locale: cfg.locale,
     } as any);
   };
 
@@ -466,10 +443,11 @@ export function IdentitySection() {
             className={styles.select}
           >
             <option value="">{t("identity.countrySelect")}</option>
-            <option value="BR">{t("identity.countryBR")}</option>
-            <option value="ES">{t("identity.countryES")}</option>
-            <option value="PT">{t("identity.countryPT")}</option>
-            <option value="US">{t("identity.countryUS")}</option>
+            {Object.values(COUNTRY_CONFIGS).map((cfg) => (
+              <option key={cfg.code} value={cfg.code}>
+                {t(`identity.country${cfg.code}`, cfg.name)}
+              </option>
+            ))}
           </select>
         </div>
 
@@ -483,10 +461,11 @@ export function IdentitySection() {
             className={styles.select}
           >
             <option value="">{t("identity.timezoneSelect")}</option>
-            <option value="America/Sao_Paulo">{t("identity.timezoneBR")}</option>
-            <option value="Europe/Madrid">{t("identity.timezoneES")}</option>
-            <option value="Europe/Lisbon">{t("identity.timezonePT")}</option>
-            <option value="America/New_York">{t("identity.timezoneUS")}</option>
+            {[...new Set(Object.values(COUNTRY_CONFIGS).map((c) => c.timezone))].map((tz) => (
+              <option key={tz} value={tz}>
+                {tz}
+              </option>
+            ))}
           </select>
         </div>
 
@@ -499,9 +478,11 @@ export function IdentitySection() {
             onChange={(e) => handleChange("currency", e.target.value)}
             className={styles.select}
           >
-            <option value="BRL">{t("identity.currencyBRL")}</option>
-            <option value="EUR">{t("identity.currencyEUR")}</option>
-            <option value="USD">{t("identity.currencyUSD")}</option>
+            {[...new Set(Object.values(COUNTRY_CONFIGS).map((c) => c.currency))].map((cur) => (
+              <option key={cur} value={cur}>
+                {t(`identity.currency${cur}`, cur)}
+              </option>
+            ))}
           </select>
         </div>
 
@@ -514,10 +495,11 @@ export function IdentitySection() {
             onChange={(e) => handleChange("locale", e.target.value)}
             className={styles.select}
           >
-            <option value="pt-BR">{t("identity.localePtBR")}</option>
-            <option value="es-ES">{t("identity.localeEsES")}</option>
-            <option value="en-US">{t("identity.localeEnUS")}</option>
-            <option value="pt-PT">{t("identity.localePtPT")}</option>
+            {[...new Set(Object.values(COUNTRY_CONFIGS).map((c) => c.locale))].map((loc) => (
+              <option key={loc} value={loc}>
+                {t(`identity.locale_${loc}`, loc)}
+              </option>
+            ))}
           </select>
         </div>
       </div>
