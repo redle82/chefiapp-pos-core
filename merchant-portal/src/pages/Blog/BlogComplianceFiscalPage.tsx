@@ -1,16 +1,16 @@
 /**
  * Blog: Compliance Fiscal para Restaurantes em Portugal e Espanha — Pagina publica SEO.
  * Rota: /blog/compliance-fiscal-pt-es
- * Long-tail: compliance fiscal restaurante, SAF-T Portugal, TicketBAI Espanha, Verifactu, ATCUD
+ * Long-tail: compliance fiscal restaurante, SAF-T Portugal, TicketBAI Espanha, Verifactu, ATCUD, faturacao restaurante
  */
 import { useEffect } from "react";
 import { Link } from "react-router-dom";
 import { MadeWithLoveFooter } from "../../components/MadeWithLoveFooter";
 
 const META_TITLE =
-  "Compliance Fiscal para Restaurantes em Portugal e Espanha: Guia Completo 2026 — ChefIApp™";
+  "Compliance Fiscal para Restaurantes em Portugal e Espanha: Guia 2026 — ChefIApp™";
 const META_DESCRIPTION =
-  "Guia completo de compliance fiscal para restaurantes na Peninsula Iberica. SAF-T, ATCUD, TicketBAI, Verifactu — o que o seu sistema POS precisa garantir em 2026.";
+  "Guia completo sobre obrigacoes fiscais para restaurantes na Peninsula Iberica. SAF-T, ATCUD, TicketBAI, Verifactu — tudo o que precisa saber.";
 
 function setMeta(name: string, content: string, isProperty = false) {
   const attr = isProperty ? "property" : "name";
@@ -32,7 +32,7 @@ export function BlogComplianceFiscalPage() {
     setMeta("description", META_DESCRIPTION);
     setMeta(
       "keywords",
-      "compliance fiscal restaurante, SAF-T Portugal, TicketBAI Espanha, Verifactu, faturacao restaurante, ATCUD, hash chain fiscal, certificacao software fiscal",
+      "compliance fiscal restaurante, SAF-T Portugal, TicketBAI Espanha, Verifactu, ATCUD, faturacao restaurante, obrigacoes fiscais restauracao",
     );
     setMeta("og:title", META_TITLE, true);
     setMeta("og:description", META_DESCRIPTION, true);
@@ -101,60 +101,83 @@ export function BlogComplianceFiscalPage() {
           Legal / Fiscal
         </p>
         <h1 className="text-3xl md:text-4xl font-bold text-white mb-4">
-          Compliance Fiscal para Restaurantes em Portugal e Espanha: Guia
-          Completo 2026
+          Compliance Fiscal para Restaurantes em Portugal e Espanha: Guia 2026
         </h1>
         <p className="text-lg text-neutral-400 mb-12">
-          A fiscalidade em restaurantes na Peninsula Iberica esta cada vez mais
-          exigente. Entre SAF-T em Portugal, TicketBAI no Pais Basco e
-          Verifactu no resto de Espanha, manter o compliance fiscal e um
-          desafio operacional que o seu sistema POS tem de resolver de forma
-          nativa — nao como um add-on que se configura depois.
+          A legislacao fiscal para restaurantes na Peninsula Iberica mudou mais
+          nos ultimos 3 anos do que na decada anterior. SAF-T, ATCUD, TicketBAI,
+          Verifactu — siglas que muitos donos de restaurante desconhecem mas que
+          podem custar milhares de euros em multas. Este guia explica tudo o que
+          precisa de saber para manter o seu restaurante em conformidade em 2026.
         </p>
 
         <section className="prose prose-invert prose-amber max-w-none mb-14">
           <h2 className="text-2xl font-semibold text-white mt-12 mb-4">
+            A fiscalidade nos restaurantes ibericos esta a mudar
+          </h2>
+          <p className="text-neutral-300 mb-4 leading-relaxed">
+            Durante anos, a fiscalidade na restauracao funcionava num modelo
+            relativamente simples: emitir facturas, guardar copias, entregar a
+            contabilidade no final do mes. Os sistemas POS limitavam-se a
+            imprimir recibos e o resto era problema do contabilista. Esse modelo
+            acabou.
+          </p>
+          <p className="text-neutral-300 mb-4 leading-relaxed">
+            Tanto Portugal como Espanha estao a implementar sistemas de
+            fiscalizacao digital em tempo real, onde o software de facturacao e
+            o primeiro ponto de controlo. O objectivo e claro: eliminar a
+            evasao fiscal na restauracao, um sector historicamente associado a
+            economia paralela. O meio e igualmente claro: obrigar o software a
+            garantir a integridade dos dados fiscais, com assinaturas digitais,
+            codigos unicos e reporting automatico as autoridades tributarias.
+          </p>
+          <p className="text-neutral-300 mb-4 leading-relaxed">
+            Para os donos de restaurante que operam correctamente, isto e uma
+            boa noticia — desde que o seu software esteja preparado. Para quem
+            usa sistemas desactualizados, nao certificados ou importados sem
+            adaptacao local, e uma bomba-relogio que pode explodir na proxima
+            inspecao.
+          </p>
+
+          <h2 className="text-2xl font-semibold text-white mt-12 mb-4">
             Portugal: SAF-T e ATCUD
           </h2>
           <p className="text-neutral-300 mb-4 leading-relaxed">
-            Em Portugal, a Autoridade Tributaria (AT) exige que todos os
-            softwares de faturacao sejam certificados e cumpram um conjunto
-            rigoroso de requisitos tecnicos. O pilar central e o ficheiro SAF-T
-            (Standard Audit File for Tax Purposes) — um formato XML padronizado
-            que contem toda a informacao fiscal da empresa: faturas, notas de
-            credito, recibos, documentos de transporte e registos contabilisticos.
+            Em Portugal, o eixo central do compliance fiscal e o ficheiro SAF-T
+            (Standard Audit File for Tax). Este ficheiro XML, definido pela
+            Autoridade Tributaria (AT), contem todos os documentos comerciais
+            emitidos pelo software — facturas, facturas simplificadas, notas de
+            credito, guias de transporte, consultas de mesa. O SAF-T deve ser
+            exportado mensalmente e submetido a AT. Se o seu POS nao gera SAF-T
+            correctamente, nao e legal opera-lo em Portugal. Ponto final.
           </p>
           <p className="text-neutral-300 mb-4 leading-relaxed">
-            O SAF-T nao e opcional. Todos os meses, as empresas sao obrigadas a
-            submeter o ficheiro SAF-T de faturacao a AT. Em caso de inspecao, a
-            AT pode solicitar o SAF-T completo (contabilidade incluida) de
-            qualquer periodo. O software de faturacao deve ser capaz de gerar
-            este ficheiro de forma correcta, completa e sem intervencao manual.
+            Desde 2024, todos os documentos fiscais emitidos em Portugal devem
+            conter um ATCUD — Codigo Unico de Documento. O ATCUD e composto
+            pelo codigo de validacao da serie (obtido junto da AT antes de
+            comecar a emitir documentos nessa serie) e pelo numero sequencial do
+            documento dentro dessa serie. Este codigo aparece impresso no recibo
+            e permite a qualquer pessoa — cliente, inspector ou auditor —
+            verificar a autenticidade e rastreabilidade do documento.
           </p>
           <p className="text-neutral-300 mb-4 leading-relaxed">
-            Alem do SAF-T, existe a obrigacao do ATCUD — o Codigo Unico de
-            Documento. Desde 2023, todos os documentos fiscais emitidos em
-            Portugal devem conter um ATCUD, que e composto pelo codigo de
-            validacao da serie (atribuido pela AT) e pelo numero sequencial do
-            documento. O ATCUD funciona como uma impressao digital unica de
-            cada documento, permitindo a rastreabilidade total.
+            Alem do ATCUD, cada documento deve conter uma hash chain
+            criptografica. Isto significa que cada factura e assinada
+            digitalmente com base no conteudo da factura anterior, criando uma
+            cadeia inquebravel de documentos. Se alguem tentar alterar, eliminar
+            ou inserir uma factura retroactivamente, a cadeia parte-se e a
+            fraude torna-se detectavel pela AT. O algoritmo usado e RSA-SHA1, e
+            a chave privada e registada junto da autoridade tributaria no
+            momento da certificacao do software.
           </p>
           <p className="text-neutral-300 mb-4 leading-relaxed">
-            O sistema deve garantir tambem a hash chain — uma cadeia de
-            assinaturas digitais onde cada documento referencia o hash do
-            documento anterior. Isto torna impossivel alterar ou eliminar um
-            documento sem quebrar a cadeia, dando a AT a garantia de que a
-            sequencia de faturacao nao foi manipulada. Qualquer falha na hash
-            chain — um documento eliminado, uma numeracao com buracos — e
-            detectavel e resulta em penalizacao.
-          </p>
-          <p className="text-neutral-300 mb-4 leading-relaxed">
-            A numeracao sequencial e obrigatoria e sem falhas. Cada serie de
-            documentos deve ter numeracao continua (1, 2, 3...) sem saltos. Se
-            o documento numero 47 existe e o proximo e o 49, a AT vai querer
-            saber o que aconteceu ao 48. O software deve impedir que isto
-            aconteca, mesmo em cenarios de falha de rede, erros de sistema ou
-            operacoes simultaneas.
+            A numeracao dos documentos deve ser sequencial e sem falhas. Se a
+            factura 1001 existe, a 1002 tem de existir. Um salto de 1001 para
+            1003 e uma irregularidade fiscal que pode desencadear uma auditoria
+            e multas. O software e responsavel por garantir que isto nunca
+            acontece — mesmo em cenarios de falha de rede, crash do sistema,
+            dois terminais a emitir em simultaneo ou erro do operador. A
+            integridade sequencial nao e negociavel.
           </p>
 
           <h2 className="text-2xl font-semibold text-white mt-12 mb-4">
@@ -162,85 +185,87 @@ export function BlogComplianceFiscalPage() {
           </h2>
           <p className="text-neutral-300 mb-4 leading-relaxed">
             Em Espanha, o panorama fiscal e mais fragmentado devido a estrutura
-            autonomica. O Pais Basco — Alava, Bizkaia e Gipuzkoa — foi
-            pioneiro com o sistema TicketBAI, que entrou em vigor de forma
-            gradual entre 2022 e 2024. O TicketBAI exige que todos os
-            softwares de faturacao registem cada fatura num formato XML
-            especifico e a enviem electronicamente a administracao fiscal
-            correspondente.
+            autonomica, mas igualmente exigente. O Pais Basco foi o pioneiro com
+            o sistema TicketBAI, que obriga todos os negocios a emitir facturas
+            atraves de software certificado que gera um ficheiro XML assinado
+            digitalmente para cada transaccao. Esse ficheiro e enviado
+            automaticamente a administracao fiscal regional. TicketBAI e
+            obrigatorio em Bizkaia, Gipuzkoa e Araba desde 2024 e inclui
+            mecanismos de verificacao pelo consumidor atraves de codigo QR.
           </p>
           <p className="text-neutral-300 mb-4 leading-relaxed">
-            O TicketBAI inclui requisitos semelhantes ao sistema portugues: hash
-            chain entre documentos, assinatura digital com certificado
-            qualificado, numeracao sequencial e codigo QR em cada documento que
-            permite a verificacao por parte do consumidor. O consumidor pode
-            usar o codigo QR para verificar se a fatura foi efectivamente
-            comunicada as financas — um mecanismo de controlo cruzado.
+            Para o resto de Espanha, o governo central esta a implementar o
+            sistema Verifactu, que segue principios semelhantes ao TicketBAI mas
+            com ambito nacional. O Verifactu obriga o software de facturacao a
+            gerar registos inviolaveis de cada transaccao, com assinatura
+            digital e envio automatico (ou disponibilizacao imediata) a Agencia
+            Tributaria. A implementacao esta a ser faseada, com obrigatoriedade
+            para todos os negocios prevista ate final de 2026.
           </p>
           <p className="text-neutral-300 mb-4 leading-relaxed">
-            Para o resto de Espanha, o governo central introduziu o sistema
-            Verifactu, previsto para implementacao obrigatoria em 2026. O
-            Verifactu segue principios semelhantes ao TicketBAI: registo
-            electronico de todas as faturas, hash chain, assinatura digital e
-            comunicacao em tempo real (ou quase real) com a Agencia Tributaria.
-            A diferenca principal e que o Verifactu aplica-se a nivel nacional
-            e substitui os sistemas autonomicos nas regioes que nao tinham
-            sistema proprio.
-          </p>
-          <p className="text-neutral-300 mb-4 leading-relaxed">
-            A certificacao do software tambem e obrigatoria. Tanto no TicketBAI
-            como no Verifactu, o software de faturacao deve estar registado e
-            certificado pela administracao fiscal competente. Software nao
-            certificado nao pode ser utilizado — e a utilizacao de software
-            nao certificado e, por si so, uma infraccao fiscal.
+            Tal como em Portugal, o software de facturacao em Espanha deve ser
+            certificado pela administracao competente. A certificacao e
+            obrigatoria — usar software nao certificado e, por si so, uma
+            infraccao fiscal. Mas a certificacao e apenas o ponto de partida:
+            o sistema deve garantir a integridade dos dados em tempo real, nao
+            apenas no momento da certificacao. Um software certificado em 2024
+            que nao recebe actualizacoes pode estar em incumprimento em 2026
+            sem que o dono do restaurante sequer saiba.
           </p>
 
           <h2 className="text-2xl font-semibold text-white mt-12 mb-4">
-            O que o seu sistema POS precisa garantir
+            O que o seu POS deve garantir
           </h2>
           <p className="text-neutral-300 mb-4 leading-relaxed">
             Independentemente de operar em Portugal, Espanha ou em ambos os
-            mercados, o seu sistema POS deve garantir um conjunto minimo de
-            capacidades fiscais. Nao se trata de funcionalidades avancadas —
-            sao requisitos legais basicos sem os quais o software nao deveria
-            estar em operacao.
+            mercados, o seu sistema POS deve garantir os seguintes requisitos
+            fiscais sem excepcao:
           </p>
           <ul className="list-disc list-inside text-neutral-300 mb-4 space-y-2">
             <li>
-              <strong>Numeracao sequencial sem falhas</strong> — cada serie de
-              documentos com numeracao continua, sem saltos, mesmo em cenarios
-              de concorrencia ou falha de rede.
+              <strong className="text-white">
+                Numeracao sequencial sem falhas.
+              </strong>{" "}
+              Cada documento fiscal deve ter um numero sequencial dentro da sua
+              serie. Sem saltos, sem duplicados, sem resets. Mesmo com varios
+              terminais a operar em simultaneo.
             </li>
             <li>
-              <strong>Hash chain (assinatura digital encadeada)</strong> — cada
-              documento referencia o hash do anterior, criando uma cadeia
-              imutavel e verificavel.
+              <strong className="text-white">
+                Assinatura digital RSA-SHA1.
+              </strong>{" "}
+              Cada documento deve ser assinado digitalmente, criando uma hash
+              chain que liga cada factura a anterior. A chave privada deve ser
+              protegida e registada junto da autoridade fiscal competente.
             </li>
             <li>
-              <strong>Geracao de SAF-T</strong> — exportacao do ficheiro XML no
-              formato exigido pela AT portuguesa, pronto para submissao mensal.
+              <strong className="text-white">Codigo QR fiscal.</strong> Cada
+              recibo deve incluir um codigo QR que permite ao cliente ou a um
+              inspector verificar a autenticidade do documento junto da
+              administracao tributaria.
             </li>
             <li>
-              <strong>ATCUD em todos os documentos</strong> — codigo unico
-              composto por validacao da serie e numero sequencial.
+              <strong className="text-white">
+                Exportacao SAF-T automatica.
+              </strong>{" "}
+              O sistema deve gerar o ficheiro SAF-T com todos os documentos do
+              periodo, no formato XML correcto e actualizado, pronto para
+              submissao a AT sem intervencao tecnica.
             </li>
             <li>
-              <strong>Codigos QR fiscais</strong> — nos documentos emitidos,
-              para verificacao pelo consumidor e pela administracao fiscal.
+              <strong className="text-white">ATCUD em cada recibo.</strong>{" "}
+              Todos os documentos fiscais devem incluir o Codigo Unico de
+              Documento, composto pelo codigo de validacao da serie e pelo
+              numero sequencial. Sem ATCUD, o documento e invalido.
             </li>
             <li>
-              <strong>Comunicacao electronica</strong> — envio de documentos a
-              AT (Portugal) ou a administracao autonomica/nacional (Espanha)
-              nos formatos e prazos exigidos.
-            </li>
-            <li>
-              <strong>Certificacao do software</strong> — registo junto da AT
-              (Portugal) ou da administracao competente (Espanha).
-            </li>
-            <li>
-              <strong>Audit trail completo</strong> — registo de quem emitiu
-              cada documento, quando, e em que contexto (anulacoes, notas de
-              credito, correccoes).
+              <strong className="text-white">
+                Serie de documentos controlada.
+              </strong>{" "}
+              Cada serie deve ser comunicada e validada junto da AT antes de
+              ser utilizada. O sistema deve gerir as series automaticamente,
+              incluindo a transicao de ano fiscal e a criacao de novas series
+              quando necessario.
             </li>
           </ul>
 
@@ -248,132 +273,141 @@ export function BlogComplianceFiscalPage() {
             Penalidades por incumprimento
           </h2>
           <p className="text-neutral-300 mb-4 leading-relaxed">
-            As consequencias de nao cumprir com os requisitos fiscais sao
-            reais e significativas. Em Portugal, a utilizacao de software nao
-            certificado pode resultar em multas que variam entre 375 euros e
-            18.750 euros por infraccao, dependendo da dimensao da empresa e da
-            gravidade. A falta de submissao do SAF-T mensal, erros no ATCUD ou
-            falhas na hash chain sao infraccoes autonomas, cada uma com o seu
-            proprio quadro sancionatorio.
+            As penalidades por incumprimento fiscal nao sao risco teorico. Sao
+            reais, frequentes e podem ser devastadoras para um restaurante. Em
+            Portugal, a utilizacao de software nao certificado, a emissao de
+            documentos sem ATCUD, falhas na hash chain ou irregularidades na
+            numeracao sequencial podem resultar em coimas que vao de 375 euros
+            a 112.500 euros, dependendo da gravidade, da dimensao da empresa e
+            da reincidencia.
           </p>
           <p className="text-neutral-300 mb-4 leading-relaxed">
-            Em Espanha, o Regime Geral de Infraccoes e Sancoes Tributarias
-            preve multas que podem chegar a 150.000 euros para as infraccoes
-            mais graves relacionadas com software de faturacao. A utilizacao
-            de software que permita a manipulacao de dados fiscais — conhecida
-            como "software de dupla utilizacao" — e considerada infraccao muito
-            grave e pode acarretar sancoes adicionais, incluindo a proibicao
-            de exercer actividade.
+            Em Espanha, as multas podem atingir os 150.000 euros para
+            infraccoes graves relacionadas com software de facturacao. O uso de
+            software que permita a manipulacao de registos fiscais — os chamados
+            "software de supressao" ou "software de dupla utilizacao" — e
+            considerado infraccao muito grave e pode levar ao encerramento
+            temporario do estabelecimento e a responsabilidade criminal para o
+            gerente.
           </p>
           <p className="text-neutral-300 mb-4 leading-relaxed">
-            Para alem das multas, ha o risco operacional. Uma inspecao fiscal
-            que detecte irregularidades pode resultar no encerramento
-            temporario do estabelecimento, na obrigacao de refazer toda a
-            contabilidade do periodo em causa, e em danos reputacionais que
-            afectam o negocio a longo prazo. O custo de nao ter compliance
-            fiscal e sempre superior ao custo de o ter.
-          </p>
-
-          <h2 className="text-2xl font-semibold text-white mt-12 mb-4">
-            Como o ChefIApp resolve isto
-          </h2>
-          <p className="text-neutral-300 mb-4 leading-relaxed">
-            O ChefIApp foi desenhado com compliance fiscal como parte do nucleo
-            do sistema, nao como um modulo extra ou um add-on que se activa
-            depois. A arquitectura do sistema garante que cada documento emitido
-            cumpre automaticamente os requisitos legais sem que o operador
-            precise de pensar nisso.
-          </p>
-          <p className="text-neutral-300 mb-4 leading-relaxed">
-            A hash chain e gerada automaticamente a cada documento. A numeracao
-            sequencial e garantida a nivel de base de dados, com mecanismos de
-            proteccao contra concorrencia que impedem saltos mesmo em cenarios
-            de multiplos terminais a operar em simultaneo. O ATCUD e calculado
-            e inserido em cada documento sem intervencao manual.
-          </p>
-          <p className="text-neutral-300 mb-4 leading-relaxed">
-            A exportacao SAF-T esta integrada no sistema — o dono do
-            restaurante pode gerar o ficheiro para qualquer periodo com um
-            clique, pronto para submissao a AT. Os codigos QR fiscais sao
-            gerados automaticamente em cada recibo e fatura, cumprindo os
-            requisitos de verificacao pelo consumidor.
-          </p>
-          <p className="text-neutral-300 mb-4 leading-relaxed">
-            Para Espanha, o sistema suporta os requisitos do TicketBAI e esta
-            preparado para o Verifactu, com a mesma logica: compliance nativo,
-            nao retrofit. O objectivo e que o dono do restaurante se preocupe
-            com a comida e os clientes, nao com a fiscalidade — o sistema trata
-            disso automaticamente.
+            Alem das multas directas, o incumprimento fiscal pode desencadear
+            auditorias retroactivas que analisam anos de operacao. O custo em
+            tempo, advogados, contabilistas e stress e muitas vezes superior ao
+            da propria multa. E nao se iluda: as inspecoes fiscais a
+            restaurantes aumentaram significativamente nos ultimos dois anos,
+            tanto em Portugal como em Espanha. Nao e risco teorico — e risco
+            concreto e crescente.
           </p>
 
           <h2 className="text-2xl font-semibold text-white mt-12 mb-4">
-            Checklist de compliance fiscal
+            Software certificado vs compliance nativo
           </h2>
           <p className="text-neutral-300 mb-4 leading-relaxed">
-            Use esta lista para verificar se o seu sistema actual — ou o
-            sistema que esta a avaliar — cumpre os requisitos minimos:
+            Ha uma distincao importante que muitos donos de restaurante
+            desconhecem: ter software certificado nao e o mesmo que ter
+            compliance fiscal nativo. A certificacao e um selo que confirma que
+            o software cumpria os requisitos no momento da certificacao. Mas a
+            legislacao muda, as regras apertam, e um software certificado em
+            2023 pode nao cumprir os requisitos de 2026 se nao for actualizado
+            continuamente.
+          </p>
+          <p className="text-neutral-300 mb-4 leading-relaxed">
+            Compliance nativo significa que as regras fiscais estao integradas
+            no nucleo do sistema desde o primeiro dia, nao adicionadas como um
+            modulo extra, um plugin ou um patch posterior. A hash chain, o
+            ATCUD, a numeracao sequencial, a exportacao SAF-T, os codigos QR
+            fiscais — nada disto e opcional ou configuravel. E parte da
+            arquitectura base do sistema.
+          </p>
+          <p className="text-neutral-300 mb-4 leading-relaxed">
+            A diferenca pratica e significativa. Um sistema com compliance
+            nativo nao permite que o operador cometa erros fiscais, mesmo sem
+            querer. Nao e possivel eliminar uma factura — apenas anula-la com
+            nota de credito, mantendo o rastro. Nao e possivel alterar um
+            documento emitido. Nao e possivel criar saltos na numeracao. O
+            sistema protege o negocio automaticamente, sem depender da formacao
+            ou da atencao do operador.
+          </p>
+
+          <h2 className="text-2xl font-semibold text-white mt-12 mb-4">
+            Checklist de compliance fiscal 2026
+          </h2>
+          <p className="text-neutral-300 mb-4 leading-relaxed">
+            Use esta lista para verificar se o seu restaurante esta em
+            conformidade com as exigencias fiscais actuais em Portugal e
+            Espanha:
           </p>
           <ul className="list-disc list-inside text-neutral-300 mb-4 space-y-2">
             <li>
-              O software esta certificado pela AT (Portugal) ou registado na
-              administracao competente (Espanha)?
+              O software de facturacao esta certificado pela AT (Portugal) ou
+              registado na administracao competente (Espanha)?
             </li>
             <li>
-              Gera hash chain automatica entre todos os documentos fiscais?
+              Todos os recibos incluem ATCUD (Portugal) ou codigo Verifactu/
+              TicketBAI (Espanha)?
             </li>
             <li>
-              A numeracao sequencial e garantida sem saltos, mesmo com varios
-              terminais?
+              O sistema gera hash chain criptografica automatica em cada
+              documento, sem excepcao?
             </li>
             <li>
-              Gera ATCUD automaticamente em cada documento (Portugal)?
+              A numeracao dos documentos e sequencial e sem falhas, mesmo com
+              varios terminais em simultaneo?
             </li>
             <li>
-              Exporta SAF-T no formato correcto e actualizado da AT?
+              O ficheiro SAF-T e gerado correctamente e submetido mensalmente
+              a AT?
             </li>
             <li>
-              Insere codigos QR fiscais em recibos e faturas?
+              Cada recibo inclui codigo QR fiscal verificavel?
             </li>
             <li>
-              Suporta comunicacao electronica com a AT / administracao fiscal?
+              As series de documentos estao comunicadas e validadas junto da AT
+              antes de serem utilizadas?
             </li>
             <li>
-              Tem audit trail completo (quem, quando, que documento, que accao)?
+              O software recebe actualizacoes regulares para acompanhar
+              mudancas legislativas?
             </li>
             <li>
-              Impede a eliminacao ou alteracao de documentos fiscais emitidos?
+              Existe audit trail completo de todas as operacoes — emissao,
+              anulacao, notas de credito, correccoes?
             </li>
             <li>
-              Suporta notas de credito e anulacoes dentro do quadro legal?
+              O sistema impede a eliminacao ou alteracao retroactiva de
+              documentos fiscais emitidos?
             </li>
             <li>
-              Funciona em caso de falha de internet, mantendo a integridade
-              fiscal?
+              Em caso de operacao em ambos os paises, o sistema suporta os
+              requisitos de Portugal e Espanha em simultaneo?
             </li>
             <li>
-              O fornecedor tem historico de actualizacoes face a alteracoes
-              legislativas?
+              O contabilista tem acesso directo aos dados fiscais e ao SAF-T
+              sem depender de exportacoes manuais?
             </li>
             <li>
-              No caso de operar em Espanha: suporta TicketBAI e/ou Verifactu?
+              O sistema funciona offline mantendo a integridade fiscal e
+              sincroniza quando recupera ligacao?
             </li>
             <li>
-              Os dados fiscais sao armazenados de forma segura e conforme com
-              RGPD?
+              O fornecedor do software tem historico comprovado de actualizacoes
+              face a alteracoes legislativas?
             </li>
           </ul>
           <p className="text-neutral-300 mb-4 leading-relaxed">
-            Se o seu sistema nao cumpre a maioria destes pontos, esta exposto a
-            riscos legais e operacionais. A boa noticia e que em 2026 existem
-            solucoes que tratam de tudo isto de forma nativa, sem complicar a
-            operacao do dia-a-dia.
+            Se respondeu "nao" ou "nao sei" a qualquer uma destas perguntas,
+            tem trabalho a fazer. O custo de resolver o compliance agora e uma
+            fraccao do custo de resolver uma multa, uma auditoria ou uma
+            migracao de sistema forcada depois. Em 2026, nao ha desculpa para
+            operar com software que nao garante conformidade fiscal nativa.
           </p>
         </section>
 
         {/* CTA */}
         <div className="border-t border-neutral-800 pt-8 flex flex-col sm:flex-row items-center justify-between gap-6">
           <p className="text-neutral-400 text-sm">
-            Sistema com compliance fiscal nativo — teste 14 dias, sem cartao.
+            ChefIApp tem compliance fiscal nativo — teste 14 dias gratis.
           </p>
           <Link
             to="/auth/phone"

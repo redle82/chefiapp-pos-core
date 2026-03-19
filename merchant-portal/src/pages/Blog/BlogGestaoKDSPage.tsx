@@ -1,7 +1,7 @@
 /**
  * Blog: Gestao de Cozinha com KDS — Pagina publica SEO.
  * Rota: /blog/gestao-cozinha-kds
- * Long-tail: KDS cozinha, kitchen display system, gestao cozinha restaurante, sistema cozinha
+ * Long-tail: KDS cozinha, kitchen display system, gestao cozinha restaurante, sistema cozinha digital
  */
 import { useEffect } from "react";
 import { Link } from "react-router-dom";
@@ -10,7 +10,7 @@ import { MadeWithLoveFooter } from "../../components/MadeWithLoveFooter";
 const META_TITLE =
   "Gestao de Cozinha com KDS: Do Caos a Eficiencia — ChefIApp™";
 const META_DESCRIPTION =
-  "Como um Kitchen Display System transforma a operacao da cozinha: menos erros, tempos mais rapidos, comunicacao clara entre sala e cozinha.";
+  "Como um Kitchen Display System transforma a operacao da cozinha do seu restaurante. Menos erros, mais velocidade, melhor comunicacao.";
 
 function setMeta(name: string, content: string, isProperty = false) {
   const attr = isProperty ? "property" : "name";
@@ -32,7 +32,7 @@ export function BlogGestaoKDSPage() {
     setMeta("description", META_DESCRIPTION);
     setMeta(
       "keywords",
-      "KDS cozinha, kitchen display system, gestao cozinha restaurante, sistema cozinha, ecra cozinha, pedidos cozinha, KDS restaurante",
+      "KDS cozinha, kitchen display system, gestao cozinha restaurante, sistema cozinha digital, ecra cozinha restaurante",
     );
     setMeta("og:title", META_TITLE, true);
     setMeta("og:description", META_DESCRIPTION, true);
@@ -104,175 +104,230 @@ export function BlogGestaoKDSPage() {
           Gestao de Cozinha com KDS: Do Caos a Eficiencia
         </h1>
         <p className="text-lg text-neutral-400 mb-12">
-          A cozinha e o coracao do restaurante — e, em muitos casos, o maior
-          ponto de caos. Pedidos perdidos, prioridades mal geridas, comunicacao
-          por gritos entre sala e cozinha. Um Kitchen Display System elimina
-          esta friccao e transforma a cozinha numa operacao previsivel e
-          mensuravel.
+          A cozinha e o coracao de qualquer restaurante — e tambem o ponto onde
+          mais coisas podem correr mal. Tickets que se perdem, letra ilegivel,
+          prioridades confusas, gritos entre sala e cozinha. Um Kitchen Display
+          System elimina estes problemas de raiz e transforma a cozinha numa
+          operacao previsivel e mensuravel.
         </p>
 
         <section className="prose prose-invert prose-amber max-w-none mb-14">
           <h2 className="text-2xl font-semibold text-white mt-12 mb-4">
-            O que e um KDS e porque substituir o papel
+            O problema: a cozinha a funcionar no papel
+          </h2>
+          <p className="text-neutral-300 mb-4 leading-relaxed">
+            Na maioria dos restaurantes, o fluxo de pedidos para a cozinha ainda
+            depende de uma impressora termica que cospe tickets em papel. O
+            cozinheiro arranca o ticket, cola-o numa barra metalica ou prende-o
+            com um iman, e trabalha por ordem de chegada — em teoria. Na
+            pratica, o cenario e outro.
+          </p>
+          <p className="text-neutral-300 mb-4 leading-relaxed">
+            Os tickets caem ao chao e ficam debaixo de uma bancada durante o
+            servico inteiro. A letra fica ilegivel quando a impressora esta com
+            pouco papel ou quando o empregado escreveu a nota a mao a correr.
+            As prioridades confundem-se porque nao ha forma visual de saber
+            qual pedido esta ha mais tempo a espera. Modificacoes e alergias
+            ficam perdidas no meio de abreviaturas que so metade da equipa
+            entende.
+          </p>
+          <p className="text-neutral-300 mb-4 leading-relaxed">
+            O resultado e previsivel: pratos que saem atrasados, pedidos que vao
+            para a mesa errada, items esquecidos que so sao descobertos quando o
+            cliente reclama, e uma tensao constante entre sala e cozinha que
+            prejudica o ambiente de trabalho e, inevitavelmente, a experiencia
+            do cliente. Num servico de sabado a noite, uma cozinha que funciona
+            no papel esta permanentemente a beira do colapso.
+          </p>
+
+          <h2 className="text-2xl font-semibold text-white mt-12 mb-4">
+            O que e um KDS
           </h2>
           <p className="text-neutral-300 mb-4 leading-relaxed">
             Um KDS — Kitchen Display System — e um ecra digital instalado na
-            cozinha que recebe os pedidos directamente do sistema POS, em tempo
-            real, sem necessidade de impressao em papel. Quando o empregado de
-            mesa regista um pedido no tablet, esse pedido aparece
-            instantaneamente no ecra da cozinha, organizado por prioridade,
-            tempo e estacao.
+            cozinha que substitui a impressora de tickets. Em vez de papel, os
+            pedidos aparecem num ecra em tempo real, organizados por mesa, por
+            hora de entrada e por prioridade. O cozinheiro ve exactamente o que
+            precisa de preparar, em que ordem, e ha quanto tempo cada pedido
+            esta a espera.
           </p>
           <p className="text-neutral-300 mb-4 leading-relaxed">
-            O sistema de tickets em papel, ainda usado em milhares de
-            restaurantes, tem problemas evidentes: os tickets perdem-se, ficam
-            ilegíveis com o calor e a gordura, nao permitem reorganizar
-            prioridades, nao medem tempos de preparacao e criam uma dependencia
-            total da memoria e atencao do chefe de cozinha. Quando o servico
-            acelera, o papel colapsa.
+            Quando o empregado regista um pedido no POS — no tablet da sala, no
+            telemovel ou no terminal fixo — esse pedido aparece
+            instantaneamente no ecra da cozinha. Sem impressao, sem papel, sem
+            atrasos. Se o cliente pede uma alteracao — sem cebola, trocar o
+            acompanhamento, alergia a marisco — a modificacao aparece
+            imediatamente no ecra, destacada a cores para que ninguem a ignore.
           </p>
           <p className="text-neutral-300 mb-4 leading-relaxed">
-            Um KDS resolve tudo isto. Os pedidos sao digitais, imutaveis,
-            rastreiaveis. Nao se perdem, nao ficam ilegíveis, e qualquer
-            alteracao feita na sala — um item adicionado, uma nota especial,
-            um cancelamento — reflecte-se instantaneamente no ecra da cozinha.
-            Nao ha "o empregado esqueceu-se de avisar a cozinha". O sistema
-            avisa automaticamente.
+            Quando o cozinheiro termina um prato, toca no ecra e o item muda de
+            estado. A sala recebe a notificacao de que o prato esta pronto para
+            servir. Sem gritos, sem viagens desnecessarias a cozinha para
+            perguntar "ja esta?". Nao e tecnologia futurista — e uma solucao
+            que redes de fast-food usam ha mais de 15 anos. A diferenca e que
+            hoje esta acessivel a qualquer restaurante com um tablet de 200
+            euros montado na parede.
           </p>
 
           <h2 className="text-2xl font-semibold text-white mt-12 mb-4">
-            Como funciona um KDS moderno
+            Vantagens concretas
           </h2>
-          <p className="text-neutral-300 mb-4 leading-relaxed">
-            Num KDS moderno, cada pedido aparece como um cartao no ecra com
-            informacao clara: numero da mesa, itens pedidos, notas especiais
-            (alergias, preferencias de cozedura), hora do pedido e tempo
-            decorrido desde que o pedido entrou. Os cartoes sao organizados
-            cronologicamente — first in, first out — mas podem ser priorizados
-            manualmente quando necessario.
-          </p>
-          <p className="text-neutral-300 mb-4 leading-relaxed">
-            Cada cartao tem um timer visual que muda de cor conforme o tempo
-            avanca. Verde nos primeiros minutos, amarelo quando se aproxima do
-            tempo alvo, vermelho quando ultrapassa. Isto permite ao chefe de
-            cozinha ter uma visao instantanea do estado de toda a operacao sem
-            precisar de verificar cada pedido individualmente.
-          </p>
-          <p className="text-neutral-300 mb-4 leading-relaxed">
-            Quando um prato esta pronto, o cozinheiro toca no item ou no cartao
-            e marca-o como concluido. Esse sinal pode desencadear um alerta
-            para o empregado de mesa — no seu tablet ou por som — indicando que
-            o prato esta pronto para ser levado. Em sistemas avancados, o KDS
-            tambem calcula a sincronizacao entre pratos: se uma mesa pediu uma
-            entrada e um principal, o KDS pode atrasar o inicio do principal
-            ate que a entrada esteja quase pronta, para que tudo chegue a mesa
-            no timing correcto.
-          </p>
-
-          <h2 className="text-2xl font-semibold text-white mt-12 mb-4">
-            Estacoes dedicadas: KITCHEN, BAR, EXPO
-          </h2>
-          <p className="text-neutral-300 mb-4 leading-relaxed">
-            Numa cozinha profissional, nem todos precisam de ver tudo. O
-            cozinheiro de quentes nao precisa dos cocktails do bar. O barman
-            nao precisa das sobremesas. E o expedidor (expo) precisa de ver
-            o panorama completo para coordenar a saida de pratos.
-          </p>
-          <p className="text-neutral-300 mb-4 leading-relaxed">
-            Um KDS moderno permite criar estacoes dedicadas. Cada ecra mostra
-            apenas os itens relevantes para aquela estacao. A estacao KITCHEN
-            recebe os pratos quentes e frios. A estacao BAR recebe bebidas e
-            cocktails. A estacao EXPO mostra todos os itens de cada mesa,
-            permitindo ao expedidor coordenar a saida e garantir que nenhum
-            prato sai sozinho quando deveria sair acompanhado.
-          </p>
-          <p className="text-neutral-300 mb-4 leading-relaxed">
-            Esta separacao reduz o ruido visual em cada ecra, permite que cada
-            equipa se concentre no que lhe compete, e elimina a confusao de ter
-            30 ou 40 itens no mesmo ecra quando so 10 sao relevantes para
-            aquela estacao. O resultado e menos erros, mais foco e tempos de
-            preparacao mais curtos.
-          </p>
-
-          <h2 className="text-2xl font-semibold text-white mt-12 mb-4">
-            Impacto real nos tempos de servico
-          </h2>
-          <p className="text-neutral-300 mb-4 leading-relaxed">
-            Os numeros variam por operacao, mas os dados da industria sao
-            consistentes: restaurantes que migram de tickets em papel para KDS
-            reportam uma reducao media de 20% a 30% no tempo entre pedido e
-            entrega na mesa. Os erros de preparacao — prato errado, item
-            esquecido, nota de alergia ignorada — caem entre 40% e 60%.
-          </p>
-          <p className="text-neutral-300 mb-4 leading-relaxed">
-            O impacto vai alem da velocidade. Com um KDS, a comunicacao entre
-            sala e cozinha torna-se silenciosa e precisa. Nao ha necessidade
-            de o empregado ir fisicamente a cozinha perguntar "esta quase?".
-            O estado de cada pedido e visivel no tablet da sala. Isto liberta
-            tempo para o empregado estar com os clientes em vez de estar a
-            fazer de intermediario entre mesa e cozinha.
-          </p>
-          <p className="text-neutral-300 mb-4 leading-relaxed">
-            Alem disso, o KDS gera dados. Tempo medio de preparacao por prato,
-            tempo medio por estacao, picos de carga por hora, pratos que
-            consistentemente atrasam o servico. Estes dados permitem decisoes
-            informadas: reorganizar a carta, reforcar uma estacao em horarios
-            de pico, identificar bottlenecks que so o KDS consegue medir de
-            forma objectiva.
-          </p>
-
-          <h2 className="text-2xl font-semibold text-white mt-12 mb-4">
-            Implementar KDS sem interromper a operacao
-          </h2>
-          <p className="text-neutral-300 mb-4 leading-relaxed">
-            A maior resistencia a adopcao de um KDS vem da equipa de cozinha.
-            Cozinheiros com anos de experiencia a trabalhar com tickets em
-            papel nao mudam de um dia para o outro — nem devem ser forcados a
-            isso. A transicao deve ser gradual e pratica.
-          </p>
           <ul className="list-disc list-inside text-neutral-300 mb-4 space-y-2">
             <li>
-              <strong>Semana 1:</strong> Instale o ecra e mantenha o papel em
-              paralelo. A cozinha continua a trabalhar com tickets, mas ve os
-              pedidos tambem no ecra. Sem pressao.
+              <strong className="text-white">Zero tickets perdidos.</strong>{" "}
+              Cada pedido existe no ecra ate ser marcado como concluido. Nao ha
+              papel que caia, que se manche com gordura ou que fique esquecido
+              atras da fritadeira.
             </li>
             <li>
-              <strong>Semana 2:</strong> Reduza o papel. O ecra passa a ser a
-              referencia principal, o papel funciona como backup. A equipa
-              comeca a confiar no digital.
+              <strong className="text-white">Priorizacao automatica.</strong>{" "}
+              O KDS ordena os pedidos por tempo de espera. Os mais antigos ficam
+              no topo, com indicadores visuais — verde, amarelo, vermelho — que
+              mostram se o tempo esta dentro do aceitavel ou se ja ultrapassou o
+              limite definido.
             </li>
             <li>
-              <strong>Semana 3:</strong> Elimine o papel. O KDS e a unica
-              fonte de verdade. Se surgir algum problema, recue temporariamente
-              ao papel, identifique a causa e ajuste.
+              <strong className="text-white">Timers visuais.</strong> Cada
+              pedido tem um cronometro em tempo real. O chefe de cozinha ve, de
+              relance, o estado de toda a operacao sem precisar de verificar
+              cada ticket individualmente. Se um pedido esta em vermelho, e
+              prioridade imediata.
             </li>
             <li>
-              <strong>Semana 4:</strong> Optimize. Com a equipa ja confortavel,
-              ajuste timers, alertas e a organizacao dos ecras por estacao.
+              <strong className="text-white">
+                Comunicacao directa sala-cozinha.
+              </strong>{" "}
+              Quando a cozinha marca um prato como pronto, a sala recebe uma
+              notificacao instantanea no tablet do empregado. Acabam-se os
+              gritos de "mesa 7 pronta!" e as idas desnecessarias a cozinha
+              para perguntar pelo estado dos pedidos.
+            </li>
+            <li>
+              <strong className="text-white">Historico digital.</strong> Todos
+              os pedidos ficam registados com timestamps precisos. Quanto tempo
+              demorou cada prato, quem o preparou, a que horas foi servido.
+              Dados objectivos para optimizar processos, resolver disputas e
+              identificar bottlenecks.
+            </li>
+            <li>
+              <strong className="text-white">
+                Alergias e modificacoes visiveis.
+              </strong>{" "}
+              Restricoes alimentares aparecem destacadas no ecra, com cores e
+              icones que nao passam despercebidos. Um ticket em papel com "s/
+              gluten" escrito a caneta e um risco; um alerta vermelho num ecra
+              digital e impossivel de ignorar.
             </li>
           </ul>
+
+          <h2 className="text-2xl font-semibold text-white mt-12 mb-4">
+            Estacoes dedicadas
+          </h2>
           <p className="text-neutral-300 mb-4 leading-relaxed">
-            O ponto crucial e que o KDS nao deve ser imposto como uma
-            revolucao. Deve ser introduzido como uma melhoria incremental que a
-            equipa adopta ao seu ritmo. Os cozinheiros mais resistentes
-            costumam ser os maiores defensores do sistema depois de duas
-            semanas — porque percebem que o KDS os protege de erros que antes
-            eram inevitaveis.
+            Uma das funcionalidades mais poderosas de um KDS bem configurado e a
+            separacao por estacoes. Mostrar todos os pedidos a toda a gente cria
+            ruido e confusao. O cozinheiro de quentes nao precisa de ver os
+            cocktails do bar. O barman nao precisa das sobremesas. E o
+            expedidor precisa de ver o panorama completo para coordenar a saida.
           </p>
           <p className="text-neutral-300 mb-4 leading-relaxed">
-            Em termos de hardware, um tablet Android de 10 polegadas com capa
-            resistente e suporte de parede e suficiente para comecar. Nao
-            precisa de equipamento especializado de cozinha — embora ecras
-            profissionais com proteccao IP65 sejam recomendaveis em ambientes
-            com muito vapor e gordura. O investimento inicial e minimo
-            comparado com o retorno em eficiencia.
+            O ecra da <strong className="text-white">COZINHA</strong> mostra os
+            items quentes — pratos principais, sopas, entradas que vao ao forno
+            ou a grelha. O ecra do <strong className="text-white">BAR
+            </strong> mostra apenas bebidas — cocktails, cafes, sumos naturais,
+            cervejas artesanais que precisam de preparacao. O ecra do{" "}
+            <strong className="text-white">EXPO</strong> (expedicao) mostra o
+            pedido completo de cada mesa e serve como ponto de controlo final
+            — conferindo que todos os items estao prontos e correctos antes de
+            sairem para a sala.
+          </p>
+          <p className="text-neutral-300 mb-4 leading-relaxed">
+            Esta separacao elimina um dos problemas mais frequentes em cozinhas
+            ocupadas: o cozinheiro que ignora items de bar porque nao sao "da
+            sua responsabilidade", ou o barman que nao viu a bebida porque o
+            ticket estava enterrado entre pratos. Cada estacao ve apenas o seu
+            trabalho. Quando todos os items de um pedido estao prontos nas
+            varias estacoes, o expo e notificado automaticamente de que pode
+            montar e enviar para a sala.
+          </p>
+
+          <h2 className="text-2xl font-semibold text-white mt-12 mb-4">
+            Impacto nos tempos de servico
+          </h2>
+          <p className="text-neutral-300 mb-4 leading-relaxed">
+            Os numeros falam por si. Restaurantes que migram de tickets em papel
+            para KDS reportam consistentemente melhorias significativas nos
+            indicadores operacionais mais importantes. Em media, o tempo de
+            preparacao por pedido reduz-se entre 30% e 40%. A razao e simples:
+            eliminam-se os tempos mortos de procurar tickets, decifrar letra
+            ilegivel, perguntar prioridades e repetir informacao verbalmente.
+          </p>
+          <p className="text-neutral-300 mb-4 leading-relaxed">
+            A taxa de erros de pedido cai cerca de 80%. Quando o pedido aparece
+            num ecra digital, legivel, com modificacoes destacadas e alergias
+            sinalizadas a vermelho, a margem para erro humano reduz-se
+            drasticamente. Acabam-se os pratos devolvidos por "pedi sem queijo
+            e veio com queijo" ou "falta a sobremesa da mesa 12".
+          </p>
+          <p className="text-neutral-300 mb-4 leading-relaxed">
+            O impacto indirecto e igualmente relevante. Menos erros significa
+            menos desperdicio de comida e menos custos com ingredientes. Menos
+            tempo de preparacao significa mais mesas servidas por turno e mais
+            receita. Melhor comunicacao entre sala e cozinha significa menos
+            stress e melhor ambiente de trabalho — o que se traduz em menor
+            rotatividade da equipa, um dos maiores custos ocultos na
+            restauracao.
+          </p>
+
+          <h2 className="text-2xl font-semibold text-white mt-12 mb-4">
+            Como implementar sem parar a operacao
+          </h2>
+          <p className="text-neutral-300 mb-4 leading-relaxed">
+            A transicao para KDS nao precisa de ser dramatica nem de fechar o
+            restaurante. O processo recomendado e gradual e respeita o ritmo da
+            equipa.
+          </p>
+          <p className="text-neutral-300 mb-4 leading-relaxed">
+            <strong className="text-white">Passo 1: instalar o ecra.</strong>{" "}
+            Monte um tablet ou ecra na cozinha — pode ser um tablet Android de
+            10 polegadas, um iPad, ou um ecra dedicado com proteccao contra
+            calor e gordura. Ligue-o ao sistema POS e configure as estacoes. O
+            processo demora menos de uma hora.
+          </p>
+          <p className="text-neutral-300 mb-4 leading-relaxed">
+            <strong className="text-white">
+              Passo 2: correr paralelo com papel durante 1 semana.
+            </strong>{" "}
+            A cozinha continua a receber os tickets em papel como sempre, mas
+            agora tambem ve os pedidos no ecra. Nao ha pressao para mudar nada
+            — a equipa vai-se habituando ao novo sistema naturalmente, sem
+            risco. Se o ecra falhar, o papel esta la como backup.
+          </p>
+          <p className="text-neutral-300 mb-4 leading-relaxed">
+            <strong className="text-white">
+              Passo 3: desligar a impressora de tickets.
+            </strong>{" "}
+            Quando a equipa ja usa o ecra como referencia principal — e isto
+            acontece naturalmente em poucos dias, porque o ecra e simplesmente
+            mais facil de usar — desligue a impressora de tickets da cozinha.
+            Mantenha-a fisicamente no local durante mais uns dias como rede de
+            seguranca psicologica. Passada uma semana sem papel, pode
+            remove-la com confianca.
+          </p>
+          <p className="text-neutral-300 mb-4 leading-relaxed">
+            A maioria das equipas adapta-se em menos de 3 dias. O feedback mais
+            comum dos cozinheiros e "porque e que nao tinhamos isto antes?". Os
+            mais resistentes a mudanca costumam ser os maiores defensores do
+            sistema passados 15 dias — porque percebem que o KDS os protege de
+            erros que antes eram inevitaveis e lhes da uma visao clara do
+            estado da operacao que nunca tiveram com papel.
           </p>
         </section>
 
         {/* CTA */}
         <div className="border-t border-neutral-800 pt-8 flex flex-col sm:flex-row items-center justify-between gap-6">
           <p className="text-neutral-400 text-sm">
-            Ve o KDS do ChefIApp em accao — sem compromisso.
+            Veja o KDS do ChefIApp em accao — teste 14 dias gratis, sem cartao.
           </p>
           <Link
             to="/auth/phone"

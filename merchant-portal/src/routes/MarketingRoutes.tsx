@@ -15,9 +15,11 @@ import { AboutPage } from "../pages/About/AboutPage";
 import { PhoneLoginPage } from "../pages/AuthPhone/PhoneLoginPage";
 import { VerifyCodePage } from "../pages/AuthPhone/VerifyCodePage";
 import { BillingSuccessPage } from "../pages/Billing/BillingSuccessPage";
+import { BlogIndexPage } from "../pages/Blog/BlogIndexPage";
 import { BlogQuandoAbrirFecharCaixaPage } from "../pages/Blog/BlogQuandoAbrirFecharCaixaPage";
 import { BlogTPVRestaurantesPage } from "../pages/Blog/BlogTPVRestaurantesPage";
 import { BlogTPVVsPOSFiscalPage } from "../pages/Blog/BlogTPVVsPOSFiscalPage";
+import { BlogComparacaoPage } from "../pages/Blog/BlogComparacaoPage";
 import { BootstrapPage } from "../pages/BootstrapPage";
 import { ChangelogPage } from "../pages/Changelog/ChangelogPage";
 import { HelpStartLocalPage } from "../pages/HelpStartLocalPage";
@@ -82,7 +84,7 @@ export const MarketingRoutesFragment = (
     <Route path="/compare" element={<MarketComparisonPage />} />
     <Route path="/comparativo" element={<MarketComparisonPage />} />
     <Route path="/features" element={<FeaturesPage />} />
-    <Route path="/blog" element={<BlogTPVRestaurantesPage />} />
+    <Route path="/blog" element={<BlogIndexPage />} />
     <Route
       path="/blog/tpv-restaurantes"
       element={<BlogTPVRestaurantesPage />}
@@ -94,6 +96,10 @@ export const MarketingRoutesFragment = (
     <Route
       path="/blog/quando-abrir-fechar-caixa"
       element={<BlogQuandoAbrirFecharCaixaPage />}
+    />
+    <Route
+      path="/blog/chefiapp-vs-concorrencia"
+      element={<BlogComparacaoPage />}
     />
     <Route path="/changelog" element={<ChangelogPage />} />
     <Route path="/security" element={<SecurityPage />} />
