@@ -30,8 +30,8 @@ const DEFAULT_LINKS: SkipLink[] = [
 
 /** Styles: visually hidden until focused, then prominent */
 const linkStyle: CSSProperties = {
-  position: "absolute",
-  top: "-100%",
+  position: "fixed",
+  top: "-100px",
   left: 0,
   padding: "12px 24px",
   backgroundColor: "#f97316",
@@ -53,7 +53,7 @@ const linkFocusStyle: CSSProperties = {
 
 export function SkipLinks({ links = DEFAULT_LINKS }: SkipLinksProps) {
   return (
-    <nav aria-label="Skip navigation" style={{ position: "relative" }}>
+    <nav aria-label="Skip navigation">
       {links.map((link) => (
         <a
           key={link.targetId}
@@ -63,7 +63,7 @@ export function SkipLinks({ links = DEFAULT_LINKS }: SkipLinksProps) {
             Object.assign(e.currentTarget.style, linkFocusStyle);
           }}
           onBlur={(e) => {
-            e.currentTarget.style.top = "-100%";
+            e.currentTarget.style.top = "-100px";
           }}
           onClick={(e) => {
             const target = document.getElementById(link.targetId);
