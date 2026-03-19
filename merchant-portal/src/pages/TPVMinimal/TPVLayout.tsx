@@ -163,6 +163,9 @@ function TPVLayoutInner() {
     }
   }, [isSessionLocked, idleState, resetIdle]);
 
+  // Announcements for screen readers (status changes)
+  const [a11yAnnouncement, setA11yAnnouncement] = useState("");
+
   // Lock screen: no operator selected yet
   if (isLocked) {
     return (
@@ -201,9 +204,6 @@ function TPVLayoutInner() {
 
   const restaurantName =
     identity?.name ?? t("sidebar.restaurantName", "Restaurante");
-
-  // Announcements for screen readers (status changes)
-  const [a11yAnnouncement, setA11yAnnouncement] = useState("");
 
   // Expose announcement setter via outlet context so child pages can announce
   const announceStatus = (msg: string) => setA11yAnnouncement(msg);
