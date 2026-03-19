@@ -18,7 +18,8 @@ export type AuditAction =
   | "ORDER_REOPENED"
   | "ORDER_CANCELLED"
   | "RECEIPT_REPRINTED"
-  | "DISCOUNT_APPLIED";
+  | "DISCOUNT_APPLIED"
+  | "PAYMENT_REFUNDED";
 
 export interface AuditEvent {
   /** The action that was performed. */
