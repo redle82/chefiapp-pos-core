@@ -81,20 +81,27 @@ function parseBreaks(raw: unknown): BreakRecord[] {
   return [];
 }
 
+/**
+ * Map DB columns to ShiftLog.
+ * DB schema: id, restaurant_id, employee_id, role, start_time, end_time,
+ *            duration_minutes, status, shift_score, meta (jsonb), created_at
+ * We store operator_name, breaks, and method inside meta JSONB.
+ */
 function rowToShiftLog(row: Record<string, unknown>): ShiftLog {
+  const meta = (typeof row.meta === "object" && row.meta !== null ? row.meta : {}) as Record<string, unknown>;
   return {
     id: row.id as string,
-    operator_id: row.operator_id as string,
-    operator_name: (row.operator_name as string) ?? "",
+    operator_id: (row.employee_id as string) ?? "",
+    operator_name: (meta.operator_name as string) ?? "",
     restaurant_id: row.restaurant_id as string,
-    clock_in: row.clock_in as string,
-    clock_out: (row.clock_out as string) ?? null,
-    breaks: parseBreaks(row.breaks),
-    total_minutes: (row.total_minutes as number) ?? null,
-    method: (row.method as ClockInMethod) ?? "manual",
+    clock_in: (row.start_time as string) ?? (row.created_at as string),
+    clock_out: (row.end_time as string) ?? null,
+    breaks: parseBreaks(meta.breaks),
+    total_minutes: (row.duration_minutes as number) ?? null,
+    method: (meta.method as ClockInMethod) ?? "manual",
     status: (row.status as ShiftLog["status"]) ?? "active",
     created_at: row.created_at as string,
-    updated_at: row.updated_at as string,
+    updated_at: (row.created_at as string) ?? "",
   };
 }
 
@@ -117,21 +124,16 @@ export const ShiftClockService = {
     }
 
     const now = new Date().toISOString();
-    const id = generateId();
 
     const { error } = await dockerCoreClient.from("shift_logs").insert({
-      id,
-      operator_id: operatorId,
-      operator_name: operatorName,
       restaurant_id: restaurantId,
-      clock_in: now,
-      clock_out: null,
-      breaks: JSON.stringify([]),
-      total_minutes: null,
-      method,
+      employee_id: operatorId,
+      role: "staff",
+      start_time: now,
+      end_time: null,
+      duration_minutes: null,
       status: "active",
-      created_at: now,
-      updated_at: now,
+      meta: { operator_name: operatorName, breaks: [], method },
     });
 
     if (error) {
@@ -172,14 +174,13 @@ export const ShiftClockService = {
     const { error } = await dockerCoreClient
       .from("shift_logs")
       .update({
-        clock_out: now,
-        breaks: JSON.stringify(breaks),
-        total_minutes: totalMinutes,
+        end_time: now,
+        duration_minutes: totalMinutes,
         status: "completed",
-        updated_at: now,
+        meta: { operator_name: shift.operator_name, breaks, method: shift.method },
       })
       .eq("id", shiftId)
-      .eq("operator_id", operatorId);
+      .eq("employee_id", operatorId);
 
     if (error) {
       Logger.error("[ShiftClockService] clockOut failed", { error });
@@ -217,9 +218,8 @@ export const ShiftClockService = {
     const { error } = await dockerCoreClient
       .from("shift_logs")
       .update({
-        breaks: JSON.stringify(newBreaks),
         status: "on_break",
-        updated_at: now,
+        meta: { operator_name: shift.operator_name, breaks: newBreaks, method: shift.method },
       })
       .eq("id", shiftId);
 
@@ -252,9 +252,8 @@ export const ShiftClockService = {
     const { error } = await dockerCoreClient
       .from("shift_logs")
       .update({
-        breaks: JSON.stringify(breaks),
         status: "active",
-        updated_at: now,
+        meta: { operator_name: shift.operator_name, breaks, method: shift.method },
       })
       .eq("id", shiftId);
 
@@ -276,10 +275,10 @@ export const ShiftClockService = {
     const { data, error } = await dockerCoreClient
       .from("shift_logs")
       .select("*")
-      .eq("operator_id", operatorId)
+      .eq("employee_id", operatorId)
       .eq("restaurant_id", restaurantId)
       .in("status", ["active", "on_break"])
-      .order("clock_in", { ascending: false })
+      .order("start_time", { ascending: false })
       .limit(1)
       .maybeSingle();
 
@@ -312,14 +311,14 @@ export const ShiftClockService = {
     let query = dockerCoreClient
       .from("shift_logs")
       .select("*")
-      .eq("operator_id", operatorId)
+      .eq("employee_id", operatorId)
       .eq("restaurant_id", restaurantId)
-      .order("clock_in", { ascending: false });
+      .order("start_time", { ascending: false });
 
     if (range) {
       query = query
-        .gte("clock_in", range.from)
-        .lte("clock_in", `${range.to}T23:59:59.999Z`);
+        .gte("start_time", range.from)
+        .lte("start_time", `${range.to}T23:59:59.999Z`);
     }
 
     const { data, error } = await query.limit(100);
@@ -360,9 +359,9 @@ export const ShiftClockService = {
       .from("shift_logs")
       .select("*")
       .eq("restaurant_id", restaurantId)
-      .gte("clock_in", dayStart)
-      .lte("clock_in", dayEnd)
-      .order("clock_in", { ascending: false });
+      .gte("start_time", dayStart)
+      .lte("start_time", dayEnd)
+      .order("start_time", { ascending: false });
 
     const shifts = error || !data
       ? []
@@ -398,9 +397,9 @@ export const ShiftClockService = {
       .from("shift_logs")
       .select("*")
       .eq("restaurant_id", restaurantId)
-      .gte("clock_in", range.from)
-      .lte("clock_in", `${range.to}T23:59:59.999Z`)
-      .order("clock_in", { ascending: false });
+      .gte("start_time", range.from)
+      .lte("start_time", `${range.to}T23:59:59.999Z`)
+      .order("start_time", { ascending: false });
 
     if (error || !data) return [];
     return (data as Record<string, unknown>[]).map(rowToShiftLog);
@@ -421,7 +420,7 @@ export const ShiftClockService = {
       .select("*")
       .eq("restaurant_id", restaurantId)
       .in("status", ["active", "on_break"])
-      .lt("clock_in", cutoffTime);
+      .lt("start_time", cutoffTime);
 
     if (error || !data || data.length === 0) return 0;
 
@@ -445,11 +444,10 @@ export const ShiftClockService = {
       const { error: updateError } = await dockerCoreClient
         .from("shift_logs")
         .update({
-          clock_out: now,
-          breaks: JSON.stringify(breaks),
-          total_minutes: totalMinutes,
+          end_time: now,
+          duration_minutes: totalMinutes,
           status: "auto_closed",
-          updated_at: now,
+          meta: { operator_name: shift.operator_name, breaks, method: shift.method },
         })
         .eq("id", shift.id);
 
@@ -487,11 +485,10 @@ export const ShiftClockService = {
     const { error } = await dockerCoreClient
       .from("shift_logs")
       .update({
-        clock_in: clockIn,
-        clock_out: clockOut,
-        breaks: JSON.stringify(breaks),
-        total_minutes: totalMinutes,
-        updated_at: now,
+        start_time: clockIn,
+        end_time: clockOut,
+        duration_minutes: totalMinutes,
+        meta: { operator_name: shift.operator_name, breaks, method: shift.method },
       })
       .eq("id", shiftId);
 
