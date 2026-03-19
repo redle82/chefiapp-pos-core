@@ -1,0 +1,13 @@
+{
+  "widgetTitle": "Propinas",
+  "totalTips": "Total propinas",
+  "orderCount": "Pedidos c/ propina",
+  "byOperator": "Por operador",
+  "noTips": "Ninguna propina registrada en este periodo.",
+  "filter": {
+    "today": "Hoy",
+    "week": "7 dias",
+    "month": "30 dias",
+    "custom": "Personalizado"
+  }
+}

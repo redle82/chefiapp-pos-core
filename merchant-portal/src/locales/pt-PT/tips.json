@@ -1,0 +1,13 @@
+{
+  "widgetTitle": "Gorjetas",
+  "totalTips": "Total gorjetas",
+  "orderCount": "Pedidos c/ gorjeta",
+  "byOperator": "Por operador",
+  "noTips": "Nenhuma gorjeta registada neste periodo.",
+  "filter": {
+    "today": "Hoje",
+    "week": "7 dias",
+    "month": "30 dias",
+    "custom": "Personalizado"
+  }
+}

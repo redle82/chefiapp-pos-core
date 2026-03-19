@@ -63,6 +63,7 @@ const NAV_GROUPS: SidebarGroup[] = [
       { labelKey: "adminNav.itemTransacoes", to: "/admin/payments" },
       { labelKey: "adminNav.itemFechamentos", to: "/admin/closures" },
       { labelKey: "adminNav.itemRecibos", to: "/admin/receipts" },
+      { labelKey: "adminNav.itemGorjetas", to: "/admin/tips" },
       { labelKey: "adminNav.itemRelatorios", to: "/admin/reports" },
     ],
   },

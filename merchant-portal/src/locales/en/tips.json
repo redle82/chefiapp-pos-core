@@ -1,0 +1,13 @@
+{
+  "widgetTitle": "Tips",
+  "totalTips": "Total tips",
+  "orderCount": "Orders w/ tip",
+  "byOperator": "By operator",
+  "noTips": "No tips recorded for this period.",
+  "filter": {
+    "today": "Today",
+    "week": "7 days",
+    "month": "30 days",
+    "custom": "Custom"
+  }
+}
