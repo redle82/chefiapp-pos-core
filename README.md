@@ -1,0 +1,1 @@
+# chefiapp-pos-core
