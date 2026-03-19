@@ -66,6 +66,8 @@ export interface ReceiptData {
   taxBreakdown: ReceiptTaxLine[];
   /** Gorjeta em cêntimos. */
   tipCents: number;
+  /** Tipo de gorjeta (percentage, fixed, round_up). */
+  tipType?: "percentage" | "fixed" | "round_up";
   /** Total final em cêntimos (subtotal + tax - discount + tip). */
   grandTotalCents: number;
 

@@ -54,6 +54,7 @@ import { ReconciliationPage } from "../../features/admin/payments/pages/Reconcil
 import { TransactionsPage } from "../../features/admin/payments/pages/TransactionsPage";
 import { PromotionsPage } from "../../features/admin/promotions/pages/PromotionsPage";
 import { ReceiptHistoryPage } from "../../features/admin/receipts/pages/ReceiptHistoryPage";
+import { TipsPage } from "../../features/admin/tips/TipsPage";
 import { AdminReportsOverview } from "../../features/admin/reports/AdminReportsOverview";
 import { MultiUnitOverviewReportPage } from "../../features/admin/reports/MultiUnitOverviewReportPage";
 import { ReservationsOperationalPage } from "../../features/admin/reservas/pages/ReservationsOperationalPage";
@@ -120,6 +121,16 @@ export const AdminRoutesFragment = (
         <ManagementAdvisor>
           <DashboardLayout>
             <ReceiptHistoryPage />
+          </DashboardLayout>
+        </ManagementAdvisor>
+      }
+    />
+    <Route
+      path="/admin/tips"
+      element={
+        <ManagementAdvisor>
+          <DashboardLayout>
+            <TipsPage />
           </DashboardLayout>
         </ManagementAdvisor>
       }
