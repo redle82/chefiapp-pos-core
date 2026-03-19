@@ -16,7 +16,7 @@ import { useRestaurantRuntime } from "../../../../context/RestaurantRuntimeConte
 import {
   ShiftClockService,
   type ShiftLog,
-} from "../../../../core/shifts/ShiftService";
+} from "../../../../core/shift/ShiftService";
 
 /* ── Helpers ────────────────────────────────────────────────────── */
 

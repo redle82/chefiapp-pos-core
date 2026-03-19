@@ -16,7 +16,7 @@ import {
   ShiftClockService,
   type ShiftLog,
   type ShiftSummary,
-} from "../../../../core/shifts/ShiftService";
+} from "../../../../core/shift/ShiftService";
 import { AdminPageHeader } from "../../dashboard/components/AdminPageHeader";
 import { TimesheetGrid } from "../components/TimesheetGrid";
 

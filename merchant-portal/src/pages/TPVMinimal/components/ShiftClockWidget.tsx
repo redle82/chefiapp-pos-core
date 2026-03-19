@@ -15,7 +15,7 @@ import {
   ShiftClockService,
   type BreakType,
   type ShiftLog,
-} from "../../../core/shifts/ShiftService";
+} from "../../../core/shift/ShiftService";
 import { useOperator } from "../context/OperatorContext";
 import { useTPVRestaurantId } from "../hooks/useTPVRestaurantId";
 
