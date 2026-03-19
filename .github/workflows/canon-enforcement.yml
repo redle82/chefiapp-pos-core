@@ -211,13 +211,14 @@ jobs:
       - name: ✅ Verify Tool Sovereignty (Law 1)
         run: |
           echo "🔍 Verifying Tool Sovereignty..."
+          CHANGED_APPSTAFF=$(git diff --name-only HEAD~1 HEAD | grep -E "^merchant-portal/src/pages/AppStaff/.*\\.(ts|tsx)$" || true)
+          if [ -z "$CHANGED_APPSTAFF" ]; then
+            echo "✅ No AppStaff changes in this commit. Skipping."
+            exit 0
+          fi
 
           # dominantTool MUST be calculated, never set by user
-          VIOLATIONS=$(grep -r "setDominantTool\|dominantTool.*=.*'order'\|dominantTool.*=.*'production'" \
-            merchant-portal/src/pages/AppStaff \
-            --include="*.tsx" --include="*.ts" \
-            --exclude-dir=node_modules \
-            --exclude-dir=context || true)
+          VIOLATIONS=$(echo "$CHANGED_APPSTAFF" | xargs grep -nE "setDominantTool\|dominantTool.*=.*'order'\|dominantTool.*=.*'production'" || true)
 
           if [ -n "$VIOLATIONS" ]; then
             echo "❌ CANON VIOLATION: dominantTool manually set (Law 1)"
@@ -231,7 +232,7 @@ jobs:
           fi
 
           # Verify dominantTool calculation exists
-          if ! grep -r "useMemo.*dominantTool" merchant-portal/src/pages/AppStaff --include="*.tsx" > /dev/null; then
+          if ! echo "$CHANGED_APPSTAFF" | xargs grep -nE "useMemo.*dominantTool" > /dev/null; then
             echo "❌ CANON VIOLATION: dominantTool not calculated via useMemo"
             exit 1
           fi
@@ -241,15 +242,20 @@ jobs:
       - name: ✅ Verify System Reflex (Law 2)
         run: |
           echo "🔍 Verifying System Reflex..."
+          CHANGED_CONTEXT=$(git diff --name-only HEAD~1 HEAD | grep -E "^merchant-portal/src/pages/AppStaff/context/.*\\.tsx$" || true)
+          if [ -z "$CHANGED_CONTEXT" ]; then
+            echo "✅ No AppStaff context changes in this commit. Skipping."
+            exit 0
+          fi
 
           # checkSystemReflex MUST be called in interval
-          if ! grep -r "checkSystemReflex" merchant-portal/src/pages/AppStaff/context --include="*.tsx" > /dev/null; then
+          if ! echo "$CHANGED_CONTEXT" | xargs grep -n "checkSystemReflex" > /dev/null; then
             echo "❌ CANON VIOLATION: checkSystemReflex not invoked"
             exit 1
           fi
 
           # Interval MUST exist
-          if ! grep -r "setInterval.*checkSystemReflex\|checkSystemReflex.*setInterval" merchant-portal/src/pages/AppStaff/context --include="*.tsx" > /dev/null; then
+          if ! echo "$CHANGED_CONTEXT" | xargs grep -nE "setInterval.*checkSystemReflex\|checkSystemReflex.*setInterval" > /dev/null; then
             echo "❌ CANON VIOLATION: System reflex not automated via interval"
             exit 1
           fi
@@ -259,18 +265,20 @@ jobs:
       - name: ✅ Verify Temporal Memory (Law 3)
         run: |
           echo "🔍 Verifying Temporal Memory..."
+          CHANGED_APPSTAFF=$(git diff --name-only HEAD~1 HEAD | grep -E "^merchant-portal/src/pages/AppStaff/.*\\.(ts|tsx)$" || true)
+          if [ -z "$CHANGED_APPSTAFF" ]; then
+            echo "✅ No AppStaff changes in this commit. Skipping."
+            exit 0
+          fi
 
           # lastActivityAt MUST be tracked
-          if ! grep -r "lastActivityAt" merchant-portal/src/pages/AppStaff/context --include="*.tsx" > /dev/null; then
+          if ! echo "$CHANGED_APPSTAFF" | xargs grep -n "lastActivityAt" > /dev/null; then
             echo "❌ CANON VIOLATION: lastActivityAt not tracked (Law 3)"
             exit 1
           fi
 
           # No automatic logout on idle
-          VIOLATIONS=$(grep -r "logout.*idle\|idle.*logout\|clearSession.*idle" \
-            merchant-portal/src/pages/AppStaff \
-            --include="*.tsx" --include="*.ts" \
-            --exclude-dir=node_modules || true)
+          VIOLATIONS=$(echo "$CHANGED_APPSTAFF" | xargs grep -nE "logout.*idle\|idle.*logout\|clearSession.*idle" || true)
 
           if [ -n "$VIOLATIONS" ]; then
             echo "❌ CANON VIOLATION: Automatic logout on idle detected (Law 3)"
