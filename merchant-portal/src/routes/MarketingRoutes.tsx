@@ -33,6 +33,7 @@ import { OfficialLandingPage } from "../pages/LandingV2/LandingV2Page";
 import { LegalDPAPage } from "../pages/Legal/LegalDPAPage";
 import { LegalPrivacyPage } from "../pages/Legal/LegalPrivacyPage";
 import { LegalTermsPage } from "../pages/Legal/LegalTermsPage";
+import { ReservationPortal } from "../pages/CustomerMenu/ReservationPortal";
 import { MenuCatalogPage } from "../pages/MenuCatalog/MenuCatalogPage";
 import { MenuCatalogPageV2 } from "../pages/MenuCatalog/MenuCatalogPageV2";
 import { SecurityPage } from "../pages/Security/SecurityPage";
@@ -142,6 +143,8 @@ export const MarketingRoutesFragment = (
     {/* Menu: catálogo visual de decisão (spec MENU_CATALOG_VISUAL_SPEC) */}
     <Route path="/menu" element={<MenuCatalogPage />} />
     <Route path="/menu-v2" element={<MenuCatalogPageV2 />} />
+    {/* Online Reservation Portal — public, no auth */}
+    <Route path="/reserve/:restaurantId" element={<ReservationPortal />} />
     {/* Mentoria — acessível sem auth para dev/teste */}
     <Route path="/mentor" element={<MentorPage />} />
   </Fragment>
