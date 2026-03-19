@@ -1,11 +1,13 @@
 {
-  "name": "AppStaff — ChefIApp",
-  "short_name": "AppStaff",
-  "start_url": "/app/staff/home",
+  "name": "ChefIApp POS",
+  "short_name": "ChefIApp",
+  "description": "Sistema operacional para restaurantes. TPV, KDS e App Staff num so lugar.",
+  "start_url": "/op/tpv",
+  "scope": "/",
   "display": "standalone",
-  "orientation": "portrait",
-  "background_color": "#121212",
-  "theme_color": "#121212",
+  "orientation": "any",
+  "theme_color": "#f59e0b",
+  "background_color": "#0a0a0a",
   "icons": [
     {
       "src": "/Logo chefiapp os.png",
@@ -14,12 +16,11 @@
       "purpose": "any maskable"
     },
     {
-      "src": "/Logo chefiapp os.png",
+      "src": "/pwa-icon-512.png",
       "type": "image/png",
       "sizes": "512x512",
       "purpose": "any maskable"
     }
   ],
-  "categories": ["business", "finance", "productivity"],
-  "description": "Sistema operacional para restaurantes. TPV, KDS e App Staff num só lugar."
+  "categories": ["business", "finance", "productivity"]
 }

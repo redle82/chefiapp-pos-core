@@ -1,3 +1,11 @@
 {
-  "addToScreen": "Add to home screen"
+  "addToScreen": "Add to home screen",
+  "installBanner": "Install ChefIApp for faster access",
+  "installButton": "Install",
+  "installLater": "Later",
+  "offlineBanner": "You're offline -- changes will sync when connected",
+  "pendingChanges": "pending",
+  "dismiss": "Dismiss",
+  "updateAvailable": "New version available",
+  "updateNow": "Update now"
 }

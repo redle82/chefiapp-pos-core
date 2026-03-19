@@ -366,6 +366,17 @@ if (rootEl) {
   }
 })();
 
+// ─── PWA Service Worker Registration (production only) ────────────────────────
+// In production, register the service worker for offline support and caching.
+// In development, SW is disabled by DEV_STABLE_MODE (see preflight in index.html).
+if (!import.meta.env.DEV) {
+  import("./core/pwa/registerSW").then(({ registerServiceWorker }) => {
+    registerServiceWorker();
+  }).catch(() => {
+    // Non-fatal: SW registration is best-effort
+  });
+}
+
 // DOCKER CORE: Kernel init removido - Core gerencia seu próprio estado
 // const initKernel = async () => { ... }; // REMOVIDO
 

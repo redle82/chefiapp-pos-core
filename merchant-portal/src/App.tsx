@@ -13,6 +13,8 @@ import {
   useNavigate,
   useSearchParams,
 } from "react-router-dom";
+import { InstallPrompt } from "./components/common/InstallPrompt";
+import { OfflineIndicatorEnhanced } from "./components/common/OfflineIndicator";
 import { CookieConsentBanner } from "./components/CookieConsentBanner";
 import {
   GlobalUIStateProvider,
@@ -184,6 +186,8 @@ function App() {
           <SentryTagsSync />
           <SignupIntentRedirect />
           <CookieConsentBanner />
+          <InstallPrompt />
+          <OfflineIndicatorEnhanced />
           {/* <PublicLifecycleSync /> */}
           <BillingsPreloader />
           <Suspense fallback={<LoadingState variant="spinner" />}>
