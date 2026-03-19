@@ -14,6 +14,8 @@ import { Outlet, useLocation } from "react-router-dom";
 import { useAuth } from "../../core/auth/useAuth";
 import { useRestaurantIdentity } from "../../core/identity/useRestaurantIdentity";
 import { MadeWithLoveFooter } from "../../components/MadeWithLoveFooter";
+import { SkipLinks } from "../../components/common/SkipLinks";
+import { LiveRegion } from "../../components/common/LiveRegion";
 import { OperationalHeader } from "../../components/pos/OperationalHeader";
 import { IdleDimOverlay } from "./components/IdleDimOverlay";
 import { StationLockScreen } from "./components/StationLockScreen";
@@ -200,6 +202,12 @@ function TPVLayoutInner() {
   const restaurantName =
     identity?.name ?? t("sidebar.restaurantName", "Restaurante");
 
+  // Announcements for screen readers (status changes)
+  const [a11yAnnouncement, setA11yAnnouncement] = useState("");
+
+  // Expose announcement setter via outlet context so child pages can announce
+  const announceStatus = (msg: string) => setA11yAnnouncement(msg);
+
   return (
     <div
       className="tpv-layout"
@@ -213,6 +221,12 @@ function TPVLayoutInner() {
         color: "#fafafa",
       }}
     >
+      {/* Skip navigation links for keyboard users */}
+      <SkipLinks />
+
+      {/* ARIA live region for dynamic announcements */}
+      <LiveRegion message={a11yAnnouncement} />
+
       {/* Tier 1: Dim overlay */}
       {idleState === "dimmed" && !isSessionLocked && (
         <IdleDimOverlay
@@ -276,6 +290,7 @@ function TPVLayoutInner() {
             />
           )}
           <main
+            id="main-content"
             style={{
               flex: 1,
               overflow: "auto",
@@ -284,7 +299,7 @@ function TPVLayoutInner() {
             }}
           >
             <ContentBoundary>
-              <Outlet context={{ searchQuery, emitKitchenPressure }} />
+              <Outlet context={{ searchQuery, emitKitchenPressure, announceStatus }} />
             </ContentBoundary>
           </main>
           {!isKitchen && <MadeWithLoveFooter variant="default" />}

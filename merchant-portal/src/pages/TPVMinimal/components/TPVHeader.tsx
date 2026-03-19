@@ -230,7 +230,9 @@ export function TPVHeader({
             <SearchIcon />
           </span>
           <input
+            id="search-input"
             type="search"
+            aria-label={t("header.searchPlaceholder")}
             placeholder={t("header.searchPlaceholder")}
             value={searchQuery}
             onChange={(e) => onSearchChange?.(e.target.value)}
@@ -251,6 +253,7 @@ export function TPVHeader({
             <button
               type="button"
               onClick={() => onSearchChange?.("")}
+              aria-label={t("header.clearSearch")}
               title={t("header.clearSearch")}
               style={{
                 position: "absolute",

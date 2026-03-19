@@ -90,8 +90,17 @@ export function TPVProductCard({
       onClick={isUnavailable ? undefined : onAdd}
       role={isUnavailable ? undefined : "button"}
       tabIndex={isUnavailable ? undefined : 0}
+      aria-label={
+        isUnavailable
+          ? `${product.name} - ${symbol}${price} - Unavailable`
+          : `${product.name} - ${symbol}${price} - Add to order`
+      }
+      aria-disabled={isUnavailable || undefined}
       onKeyDown={(e) => {
-        if (!isUnavailable && (e.key === "Enter" || e.key === " ")) onAdd();
+        if (!isUnavailable && (e.key === "Enter" || e.key === " ")) {
+          e.preventDefault();
+          onAdd();
+        }
       }}
     >
       {/* Image (16:10 aspect) */}
@@ -110,7 +119,7 @@ export function TPVProductCard({
         {displayUrl ? (
           <img
             src={displayUrl}
-            alt=""
+            alt={product.name}
             style={{ width: "100%", height: "100%", objectFit: "cover" }}
             referrerPolicy="no-referrer"
             crossOrigin="anonymous"
@@ -236,6 +245,11 @@ export function TPVProductCard({
               if (!isUnavailable) onAdd();
             }}
             disabled={isUnavailable}
+            aria-label={
+              isUnavailable
+                ? `${product.name} - Unavailable`
+                : `Add ${product.name} to order`
+            }
             title={
               isUnavailable ? "Produto indisponível" : "Adicionar ao pedido"
             }

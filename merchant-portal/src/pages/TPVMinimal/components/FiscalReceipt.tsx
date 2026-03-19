@@ -77,7 +77,13 @@ export function FiscalReceipt({
 
   return (
     <div
+      role="dialog"
+      aria-modal="true"
+      aria-label={t("receiptTitle", "Fiscal Receipt")}
       onClick={onNewOrder}
+      onKeyDown={(e) => {
+        if (e.key === "Escape") onNewOrder();
+      }}
       style={{
         position: "fixed",
         inset: 0,
@@ -377,6 +383,7 @@ export function FiscalReceipt({
                   type="email"
                   value={customerEmail}
                   onChange={(e) => setCustomerEmail(e.target.value)}
+                  aria-label={t("emailPlaceholder", "customer@email.com")}
                   placeholder={t("emailPlaceholder", "customer@email.com")}
                   autoFocus
                   style={{
@@ -595,7 +602,13 @@ function ReopenOrderModal({
 }) {
   return (
     <div
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="reopen-modal-title"
       onClick={onCancel}
+      onKeyDown={(e) => {
+        if (e.key === "Escape" && !loading) onCancel();
+      }}
       style={{
         position: "fixed",
         inset: 0,
@@ -622,6 +635,7 @@ function ReopenOrderModal({
         }}
       >
         <h2
+          id="reopen-modal-title"
           style={{
             color: "#f59e0b",
             fontSize: 18,
@@ -646,6 +660,8 @@ function ReopenOrderModal({
         <textarea
           value={reason}
           onChange={(e) => onReasonChange(e.target.value)}
+          aria-label="Reason for reopening order"
+          aria-required="true"
           placeholder="Reason for reopening (e.g., customer wants to add items, wrong payment)..."
           rows={3}
           style={{
@@ -666,6 +682,7 @@ function ReopenOrderModal({
 
         {error && (
           <div
+            role="alert"
             style={{
               color: "#ef4444",
               fontSize: 13,

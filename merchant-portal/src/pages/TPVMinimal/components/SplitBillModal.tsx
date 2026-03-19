@@ -281,11 +281,16 @@ export function SplitBillModal({
 
   return (
     <div ref={overlayRef} onClick={handleOverlayClick} style={styles.overlay}>
-      <div style={styles.modal}>
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="split-bill-title"
+        style={styles.modal}
+      >
         {/* Header */}
         <div style={styles.header}>
           <div>
-            <h2 style={styles.title}>{t("splitBill.title", "Split Bill")}</h2>
+            <h2 id="split-bill-title" style={styles.title}>{t("splitBill.title", "Split Bill")}</h2>
             <span style={styles.orderId}>
               {t("splitBill.orderLabel", "Order")} #{orderId.slice(-6)}
             </span>
@@ -323,7 +328,7 @@ export function SplitBillModal({
         {/* ── Tab selector (only shown before parts are confirmed) ── */}
         {!parts && (
           <>
-            <div style={styles.tabRow}>
+            <div style={styles.tabRow} role="tablist" aria-label={t("splitBill.splitMethod", "Split method")}>
               {(
                 [
                   { id: "equal" as const, label: t("splitBill.equalTab", "Equal Split") },
@@ -333,6 +338,8 @@ export function SplitBillModal({
               ).map((tab) => (
                 <button
                   key={tab.id}
+                  role="tab"
+                  aria-selected={activeTab === tab.id}
                   onClick={() => setActiveTab(tab.id)}
                   style={{
                     ...styles.tabBtn,
@@ -353,13 +360,15 @@ export function SplitBillModal({
                 <div style={styles.counterRow}>
                   <button
                     onClick={() => setSplitCount((c) => Math.max(2, c - 1))}
+                    aria-label={t("splitBill.decreasePeople", "Decrease number of people")}
                     style={styles.counterBtn}
                   >
                     -
                   </button>
-                  <div style={styles.counterValue}>{splitCount}</div>
+                  <div style={styles.counterValue} aria-live="polite">{splitCount}</div>
                   <button
                     onClick={() => setSplitCount((c) => Math.min(20, c + 1))}
+                    aria-label={t("splitBill.increasePeople", "Increase number of people")}
                     style={styles.counterBtn}
                   >
                     +
@@ -575,7 +584,7 @@ export function SplitBillModal({
 
             {/* Error */}
             {payError && (
-              <div style={styles.errorBanner}>{payError}</div>
+              <div role="alert" style={styles.errorBanner}>{payError}</div>
             )}
 
             {/* Confirm split button */}
@@ -763,7 +772,7 @@ export function SplitBillModal({
 
             {/* Error */}
             {payError && (
-              <div style={styles.errorBanner}>{payError}</div>
+              <div role="alert" style={styles.errorBanner}>{payError}</div>
             )}
 
             {/* Back to config */}

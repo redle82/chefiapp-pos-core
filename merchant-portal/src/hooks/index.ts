@@ -11,4 +11,5 @@ export type {
   OnboardingState,
   OnboardingSteps,
 } from "./useOnboardingState";
+export { useKeyboardNav } from "./useKeyboardNav";
 export { useSetupContext } from "./useSetupContext";

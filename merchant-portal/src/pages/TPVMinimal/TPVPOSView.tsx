@@ -719,7 +719,7 @@ export function TPVPOSView() {
               selectedId={selectedCategoryId}
               onSelect={setSelectedCategoryId}
             />
-            <div className="tpv-products-grid">
+            <div className="tpv-products-grid" role="grid" aria-label={t("posView.productGrid", "Product grid")}>
               {filteredProducts.map((product) => {
                 const categoryName = categories.find(
                   (c) => c.id === product.category_id,
@@ -853,9 +853,18 @@ export function TPVPOSView() {
       {/* Tip + Payment Modal */}
       {tipModalOpen && (
         <div
+          role="dialog"
+          aria-modal="true"
+          aria-label={t("posView.tipAndPayment", "Tip and Payment")}
           onClick={() => {
             setTipModalOpen(false);
             setTipCents(0);
+          }}
+          onKeyDown={(e) => {
+            if (e.key === "Escape") {
+              setTipModalOpen(false);
+              setTipCents(0);
+            }
           }}
           style={{
             position: "fixed",

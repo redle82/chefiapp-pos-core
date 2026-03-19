@@ -577,9 +577,51 @@ function SectionHeader({ label, expanded }: { label: string; expanded: boolean }
 
 function ExitModal({ onCancel, onConfirm }: { onCancel: () => void; onConfirm: () => void }) {
   const { t } = useTranslation("tpv");
+  const dialogRef = useRef<HTMLDivElement>(null);
+
+  // Focus trap and keyboard handling
+  useEffect(() => {
+    const dialog = dialogRef.current;
+    if (!dialog) return;
+
+    // Focus the cancel button on mount
+    const cancelBtn = dialog.querySelector<HTMLElement>("button");
+    cancelBtn?.focus();
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        onCancel();
+        return;
+      }
+      if (e.key !== "Tab") return;
+
+      const focusable = Array.from(
+        dialog.querySelectorAll<HTMLElement>("button:not([disabled])"),
+      );
+      if (focusable.length === 0) return;
+
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+
+      if (e.shiftKey && document.activeElement === first) {
+        e.preventDefault();
+        last.focus();
+      } else if (!e.shiftKey && document.activeElement === last) {
+        e.preventDefault();
+        first.focus();
+      }
+    };
+
+    dialog.addEventListener("keydown", handleKeyDown);
+    return () => dialog.removeEventListener("keydown", handleKeyDown);
+  }, [onCancel]);
+
   return (
     <div
       data-testid="exit-modal"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="exit-modal-title"
       style={{
         position: "fixed",
         inset: 0,
@@ -592,6 +634,7 @@ function ExitModal({ onCancel, onConfirm }: { onCancel: () => void; onConfirm: (
       onClick={onCancel}
     >
       <div
+        ref={dialogRef}
         style={{
           backgroundColor: "#1a1a1a",
           border: "1px solid rgba(255,255,255,0.1)",
@@ -604,7 +647,7 @@ function ExitModal({ onCancel, onConfirm }: { onCancel: () => void; onConfirm: (
         onClick={(e) => e.stopPropagation()}
       >
         <IconExit />
-        <h3 style={{ color: "#fafafa", fontSize: 16, fontWeight: 700, margin: "16px 0 8px" }}>
+        <h3 id="exit-modal-title" style={{ color: "#fafafa", fontSize: 16, fontWeight: 700, margin: "16px 0 8px" }}>
           {t("sidebar.exitConfirmTitle")}
         </h3>
         <p style={{ color: "#737373", fontSize: 13, margin: "0 0 24px" }}>
@@ -713,6 +756,9 @@ export function TPVSidebar() {
 
   return (
     <aside
+      id="main-navigation"
+      role="navigation"
+      aria-label={t("sidebar.navigation", "TPV Navigation")}
       className={expanded ? "tpv-sidebar-expanded" : ""}
       data-testid="tpv-sidebar"
       style={{
@@ -775,6 +821,7 @@ export function TPVSidebar() {
                   to={item.to}
                   end={item.end}
                   title={tooltipLabel}
+                  aria-label={tooltipLabel}
                   style={({ isActive }) => itemStyle(isActive)}
                 >
                   <span style={{ flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", position: "relative" }}>

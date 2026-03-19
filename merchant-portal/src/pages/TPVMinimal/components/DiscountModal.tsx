@@ -258,6 +258,9 @@ export function DiscountModal({
     <div
       data-testid="discount-modal-overlay"
       onClick={onClose}
+      onKeyDown={(e) => {
+        if (e.key === "Escape") onClose();
+      }}
       style={{
         position: "fixed",
         inset: 0,
@@ -271,6 +274,9 @@ export function DiscountModal({
     >
       <div
         data-testid="discount-modal"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="discount-modal-title"
         onClick={(e) => e.stopPropagation()}
         style={{
           background: "#0a0a0a",
@@ -288,6 +294,7 @@ export function DiscountModal({
       >
         {/* Title */}
         <h2
+          id="discount-modal-title"
           style={{
             color: "#fafafa",
             fontSize: 20,
@@ -299,11 +306,13 @@ export function DiscountModal({
         </h2>
 
         {/* Tab selector */}
-        <div style={{ display: "flex", gap: 0, borderBottom: "1px solid #27272a" }}>
+        <div role="tablist" aria-label={t("discount.tabList", "Discount options")} style={{ display: "flex", gap: 0, borderBottom: "1px solid #27272a" }}>
           {(["discount", "coupon"] as const).map((tab) => (
             <button
               key={tab}
               type="button"
+              role="tab"
+              aria-selected={activeTab === tab}
               onClick={() => setActiveTab(tab)}
               style={{
                 flex: 1,
@@ -575,6 +584,7 @@ export function DiscountModal({
                   <input
                     type="number"
                     data-testid="custom-pct-input"
+                    aria-label={t("discount.customPercentage", "Custom percentage")}
                     min={0}
                     max={100}
                     step={1}
@@ -603,6 +613,7 @@ export function DiscountModal({
                 <input
                   type="number"
                   data-testid="fixed-amount-input"
+                  aria-label={t("discount.fixedAmount", "Fixed discount amount")}
                   min={0}
                   step={0.01}
                   value={fixedAmount}
@@ -631,6 +642,7 @@ export function DiscountModal({
             {exceedsMax && (
               <div
                 data-testid="validation-error"
+                role="alert"
                 style={{ color: "#ef4444", fontSize: 12, fontWeight: 500 }}
               >
                 {t(
@@ -679,6 +691,7 @@ export function DiscountModal({
                 <input
                   type="text"
                   data-testid="reason-input"
+                  aria-label={t("discount.reason", "Reason (optional)")}
                   value={reason}
                   onChange={(e) => setReason(e.target.value)}
                   placeholder={t(
@@ -772,6 +785,7 @@ export function DiscountModal({
               <input
                 type="text"
                 data-testid="coupon-code-input"
+                aria-label={t("discount.couponCodeLabel", "Coupon code")}
                 value={couponCode}
                 onChange={(e) => {
                   setCouponCode(e.target.value.toUpperCase());

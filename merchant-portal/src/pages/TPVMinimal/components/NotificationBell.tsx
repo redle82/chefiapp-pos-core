@@ -248,7 +248,7 @@ export function NotificationBell({ restaurantId }: NotificationBellProps) {
     return unsub;
   }, [fetchNotifications]);
 
-  /* ── Click outside to close ─────────────────────────────── */
+  /* ── Click outside / Escape to close ──────────────────── */
 
   useEffect(() => {
     if (!open) return;
@@ -259,8 +259,18 @@ export function NotificationBell({ restaurantId }: NotificationBellProps) {
       }
     };
 
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        setOpen(false);
+      }
+    };
+
     document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
+    document.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("keydown", handleKeyDown);
+    };
   }, [open]);
 
   /* ── Actions ────────────────────────────────────────────── */
@@ -295,7 +305,13 @@ export function NotificationBell({ restaurantId }: NotificationBellProps) {
       <button
         type="button"
         onClick={() => setOpen((prev) => !prev)}
-        aria-label={t("header.notifications")}
+        aria-label={
+          unreadCount > 0
+            ? `${t("header.notifications")} (${unreadCount} unread)`
+            : t("header.notifications")
+        }
+        aria-expanded={open}
+        aria-haspopup="true"
         data-testid="notification-bell"
         style={{
           position: "relative",
@@ -343,6 +359,8 @@ export function NotificationBell({ restaurantId }: NotificationBellProps) {
       {open && (
         <div
           data-testid="notification-dropdown"
+          role="region"
+          aria-label={t("header.notifications")}
           style={{
             position: "absolute",
             top: "calc(100% + 8px)",
