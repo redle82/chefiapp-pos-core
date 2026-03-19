@@ -21,6 +21,8 @@ jobs:
   validate:
     name: Validate Code Quality
     runs-on: ubuntu-latest
+    env:
+      BILLING_AUDIT_DATABASE_URL: ${{ secrets.CORE_BILLING_AUDIT_DATABASE_URL }}
 
     steps:
       - name: Checkout Repo
@@ -72,9 +74,9 @@ jobs:
       # C4.3: Billing Core audit — runs only when CORE_BILLING_AUDIT_DATABASE_URL is set (release readiness).
       # Fails job on DRIFT/BAD_VALUE or connection error (exit 1). Skip when secret not configured.
       - name: Audit billing Core (gm_restaurants.billing_status vs merchant_subscriptions)
-        if: secrets.CORE_BILLING_AUDIT_DATABASE_URL != ''
+        if: env.BILLING_AUDIT_DATABASE_URL != ''
         env:
-          DATABASE_URL: ${{ secrets.CORE_BILLING_AUDIT_DATABASE_URL }}
+          DATABASE_URL: ${{ env.BILLING_AUDIT_DATABASE_URL }}
         run: npm run audit:billing-core
 
       # F5.2: Fase 3 conformance — desktop/portal/mobile identity & pairing; fails job on exit 1.
