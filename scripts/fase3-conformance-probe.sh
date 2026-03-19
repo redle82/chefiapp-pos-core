@@ -8,6 +8,10 @@ ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$ROOT"
 
 FAIL=0
+HAS_PNPM=0
+if command -v pnpm >/dev/null 2>&1; then
+  HAS_PNPM=1
+fi
 
 echo "╔══════════════════════════════════════════════════╗"
 echo "║  Fase 3 — Conformance probe                     ║"
@@ -33,13 +37,21 @@ if [ $FAIL -eq 0 ]; then echo "  ✓ desktop-app structure ok"; fi
 # 2. Merchant-portal: Fase 3 conformance tests
 echo ""
 echo "▸ merchant-portal: Fase 3 conformance tests..."
-pnpm --filter merchant-portal run test:fase3-conformance || { echo "  ✗ merchant-portal test:fase3-conformance failed"; FAIL=1; }
+if [ "$HAS_PNPM" -eq 1 ]; then
+  pnpm --filter merchant-portal run test:fase3-conformance || { echo "  ✗ merchant-portal test:fase3-conformance failed"; FAIL=1; }
+else
+  npm -w merchant-portal run test:fase3-conformance || { echo "  ✗ merchant-portal test:fase3-conformance failed"; FAIL=1; }
+fi
 if [ $FAIL -eq 0 ]; then echo "  ✓ merchant-portal conformance tests passed"; fi
 
 # 3. Mobile-app: mobileActivationApi tests (role from backend)
 echo ""
 echo "▸ mobile-app: mobileActivationApi tests..."
-pnpm --filter mobile-app test -- mobileActivationApi.test.ts || { echo "  ✗ mobile-app mobileActivationApi tests failed"; FAIL=1; }
+if [ "$HAS_PNPM" -eq 1 ]; then
+  pnpm --filter mobile-app test -- mobileActivationApi.test.ts || { echo "  ✗ mobile-app mobileActivationApi tests failed"; FAIL=1; }
+else
+  npm -w mobile-app test -- mobileActivationApi.test.ts || { echo "  ✗ mobile-app mobileActivationApi tests failed"; FAIL=1; }
+fi
 if [ $FAIL -eq 0 ]; then echo "  ✓ mobile-app mobileActivationApi tests passed"; fi
 
 echo ""
