@@ -36,6 +36,7 @@ import tpvEventBus from "../../../core/tpv/TPVCentralEvents";
 import type { KitchenPressurePayload } from "../../../core/tpv/TPVCentralEvents";
 import { dockerCoreClient } from "../../../infra/docker-core/connection";
 import { useTPVRestaurantId } from "../hooks/useTPVRestaurantId";
+import { ShiftClockWidget } from "./ShiftClockWidget";
 
 const APP_NAME = "ChefIApp";
 
@@ -801,6 +802,13 @@ export function TPVSidebar() {
         </React.Fragment>
         );
       })}
+        {/* Shift clock widget — compact, at bottom of scrollable area */}
+        {expanded && (
+          <>
+            <SectionDivider expanded={expanded} />
+            <ShiftClockWidget />
+          </>
+        )}
       </div>
 
       {/* Exit with confirmation */}
