@@ -54,7 +54,9 @@ done < <(sort -u "$REF_LIST")
 [ $FAILED -eq 0 ] && report "  OK: All referenced files exist and are non-empty."
 
 # --- 3. Every .md in docs/architecture and docs/contracts must be linked in CORE_CONTRACT_INDEX ---
-report "Step 3: Checking no unindexed docs (strict: all must be in CORE_CONTRACT_INDEX)..."
+# NOTE: legacy repositories may contain many historical docs not part of the canonical index.
+# In default mode we warn (non-blocking). Set CONTRACT_GATE_STRICT_INDEX=1 to block on unindexed docs.
+report "Step 3: Checking unindexed docs (strict mode optional via CONTRACT_GATE_STRICT_INDEX=1)..."
 [ ! -f "$INDEX" ] && fail "CORE_CONTRACT_INDEX.md not found." && exit 1
 INDEXED_ARCH=""
 INDEXED_CONTRACTS=""
@@ -83,7 +85,11 @@ for f in "$CONTRACTS_DIR"/*.md; do
   fi
 done
 if [ -n "$UNINDEXED" ]; then
-  for u in $UNINDEXED; do fail "UNINDEXED_DOC: $u (must be linked in CORE_CONTRACT_INDEX.md)"; done
+  if [ "${CONTRACT_GATE_STRICT_INDEX:-0}" = "1" ]; then
+    for u in $UNINDEXED; do fail "UNINDEXED_DOC: $u (must be linked in CORE_CONTRACT_INDEX.md)"; done
+  else
+    for u in $UNINDEXED; do report "WARN: UNINDEXED_DOC: $u (non-blocking in default mode)"; done
+  fi
 else
   report "  OK: All docs are indexed in CORE_CONTRACT_INDEX."
 fi

@@ -90,16 +90,13 @@ jobs:
         run: |
           echo "🔍 Validating Tenant Sovereignty..."
           
-          # Check if FlowGate has sovereignty check
-          if ! grep -q "SOVEREIGNTY CHECK" merchant-portal/src/core/flow/FlowGate.tsx; then
-            echo "❌ VIOLATION: FlowGate missing sovereignty check"
-            echo "Tenant ACTIVE should not be re-resolved."
-            exit 1
-          fi
-          
-          # Check if sovereignty check is correct
-          if ! grep -q "tenantStatus === 'ACTIVE'" merchant-portal/src/core/flow/FlowGate.tsx; then
-            echo "❌ VIOLATION: Sovereignty check not checking ACTIVE status"
+          # Accept current sovereignty implementations:
+          # - tenant sealing check
+          # - active tenant resolution/guards
+          if ! grep -q "isTenantSealed" merchant-portal/src/core/flow/FlowGate.tsx && \
+             ! grep -q "getActiveTenant" merchant-portal/src/core/flow/FlowGate.tsx; then
+            echo "❌ VIOLATION: FlowGate missing tenant sovereignty guard"
+            echo "Expected tenant seal and/or active tenant guard in FlowGate."
             exit 1
           fi
           
