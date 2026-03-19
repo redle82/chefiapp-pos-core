@@ -243,20 +243,6 @@ export default defineConfig(async ({ mode }) => {
                 id.includes("/pages/Onboarding/") ||
                 id.includes("/pages/AppStaff/context/") ||
                 id.includes("/pages/AppStaff/data/") ||
-                // Marketing/landing pages: imported statically by MarketingRoutes at boot
-                id.includes("/pages/Landing/") ||
-                id.includes("/pages/LandingV2/") ||
-                id.includes("/pages/Billing/") ||
-                id.includes("/pages/Changelog/") ||
-                id.includes("/pages/Legal/") ||
-                id.includes("/pages/Blog/") ||
-                id.includes("/pages/AuthPhone/") ||
-                id.includes("/pages/LoginPage/") ||
-                id.includes("/pages/About/") ||
-                id.includes("/pages/Security/") ||
-                id.includes("/pages/Status/") ||
-                id.includes("/pages/BootstrapPage") ||
-                id.includes("/pages/HelpStartLocalPage") ||
                 id.includes("/pages/DebugTPV") ||
                 // Config components imported by features/admin/config/pages/
                 // — without this, app-runtime→app-admin circular dep occurs.
@@ -274,6 +260,30 @@ export default defineConfig(async ({ mode }) => {
                 id.includes("/pages/MenuCatalog/types")
               )
                 return "app-runtime";
+
+              // Marketing & public pages (not needed for TPV boot)
+              if (
+                id.includes("/pages/Landing/") ||
+                id.includes("/pages/LandingV2/") ||
+                id.includes("/pages/LandingGastro/") ||
+                id.includes("/pages/Blog/") ||
+                id.includes("/pages/About/") ||
+                id.includes("/pages/Security/") ||
+                id.includes("/pages/Status/") ||
+                id.includes("/pages/Changelog/") ||
+                id.includes("/pages/Legal/") ||
+                id.includes("/pages/Contact/")
+              )
+                return "pages-marketing";
+
+              if (
+                id.includes("/pages/Billing/") ||
+                id.includes("/pages/AuthPhone/") ||
+                id.includes("/pages/LoginPage/") ||
+                id.includes("/pages/BootstrapPage") ||
+                id.includes("/pages/HelpStartLocalPage")
+              )
+                return "pages-auth";
 
               // Feature chunks (domain-focused, low fragmentation)
               if (
@@ -317,9 +327,35 @@ export default defineConfig(async ({ mode }) => {
               return "app-core";
             }
 
-            // ── Shared runtime modules (non-page src/ directories only) ──
-            // ALL shared code (core, hooks, features, ui, components, infra, domain, etc.)
-            // MUST live in a single chunk to prevent TDZ circular dependencies.
+            // ── Feature chunks (lazy-loaded admin features) ──
+            // These are only loaded when navigating to admin pages,
+            // NOT at boot. Safe to split because they import from
+            // app-runtime but nothing imports FROM them at boot.
+            if (id.includes("/features/admin/analytics/")) return "feat-analytics";
+            if (id.includes("/features/admin/reports/") || id.includes("/pages/Reports/")) return "feat-reports";
+            if (id.includes("/features/admin/inventory/")) return "feat-inventory";
+            if (id.includes("/features/admin/shifts/")) return "feat-shifts";
+            if (id.includes("/features/admin/tips/")) return "feat-tips";
+            if (id.includes("/features/admin/receipts/")) return "feat-receipts";
+            if (id.includes("/features/admin/privacy/")) return "feat-privacy";
+            if (id.includes("/features/admin/discounts/")) return "feat-discounts";
+            if (id.includes("/features/admin/promotions/")) return "feat-promotions";
+            if (id.includes("/features/admin/loyalty/")) return "feat-loyalty";
+            if (id.includes("/features/admin/marketing/")) return "feat-marketing";
+            if (id.includes("/features/admin/multi-location/")) return "feat-multiloc";
+            if (id.includes("/features/admin/tables/")) return "feat-tables";
+            if (id.includes("/features/admin/orders/")) return "feat-orders";
+            // reservations has circular dep with app-runtime, keep together
+            // if (id.includes("/features/reservations/")) return "feat-reservations";
+            if (id.includes("/features/pv-mobile/")) return "feat-pv-mobile";
+            if (id.includes("/features/kds-mobile/")) return "feat-kds-mobile";
+
+            // ── Integration adapters (only loaded when configured) ──
+            if (id.includes("/integrations/adapters/")) return "feat-integrations";
+
+            // ── Shared runtime modules (non-page src/ directories) ──
+            // Core infrastructure that is imported at boot by TPV/KDS/routing.
+            // Must stay in one chunk to prevent TDZ circular dependencies.
             if (
               id.includes("/core/") ||
               id.includes("/context/") ||
