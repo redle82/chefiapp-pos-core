@@ -186,12 +186,12 @@ jobs:
           npm -w merchant-portal run preview &
           for i in $(seq 1 30); do curl -s -o /dev/null -w "%{http_code}" http://localhost:4173/ | grep -q 200 && break; sleep 2; done
 
-      - name: Flakiness hunt (repeat-each=${{ inputs.flakiness_repeat || '10' }})
+      - name: Flakiness hunt (repeat-each=${{ github.event.inputs.flakiness_repeat || '10' }})
         run: |
           cd merchant-portal
           npx playwright test \
             --project=setup --project=contracts --project=core \
-            --repeat-each=${{ inputs.flakiness_repeat || '10' }} \
+            --repeat-each=${{ github.event.inputs.flakiness_repeat || '10' }} \
             --retries=0 --workers=1 \
             --fail-on-flaky-tests \
             --reporter=list \
