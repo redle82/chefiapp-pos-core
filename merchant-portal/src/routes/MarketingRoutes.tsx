@@ -33,6 +33,7 @@ import { OfficialLandingPage } from "../pages/LandingV2/LandingV2Page";
 import { LegalDPAPage } from "../pages/Legal/LegalDPAPage";
 import { LegalPrivacyPage } from "../pages/Legal/LegalPrivacyPage";
 import { LegalTermsPage } from "../pages/Legal/LegalTermsPage";
+import { PrivacyPolicyPage } from "../pages/Legal/PrivacyPolicyPage";
 import { ReservationPortal } from "../pages/CustomerMenu/ReservationPortal";
 import { MenuCatalogPage } from "../pages/MenuCatalog/MenuCatalogPage";
 import { MenuCatalogPageV2 } from "../pages/MenuCatalog/MenuCatalogPageV2";
@@ -109,6 +110,7 @@ export const MarketingRoutesFragment = (
     <Route path="/legal/terms" element={<LegalTermsPage />} />
     <Route path="/legal/privacy" element={<LegalPrivacyPage />} />
     <Route path="/legal/dpa" element={<LegalDPAPage />} />
+    <Route path="/privacy" element={<PrivacyPolicyPage />} />
     {/* Demo Guide: entrada pública para o TPV em modo Free Trial */}
     <Route
       path="/trial"

@@ -112,7 +112,12 @@
     "itemClientes": "Clientes",
     "itemDescontos": "Descuentos",
     "itemPromocoes": "Promociones",
+    "itemDesperdicio": "Desperdicio",
     "itemIntegracoes": "Integraciones",
+    "itemPrivacidade": "Privacidad",
+    "itemAnalytics": "Analítica",
+    "itemMenuPerformance": "Rendimiento del Menú",
+    "itemHeatmap": "Mapa de Calor",
     "badgeExperimental": "BETA",
     "badgePlanned": "PRONTO",
     "badgeOff": "OFF"

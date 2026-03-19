@@ -54,6 +54,7 @@ const NAV_GROUPS: SidebarGroup[] = [
       { labelKey: "adminNav.itemPedidos", to: "/admin/orders" },
       { labelKey: "adminNav.itemMesas", to: "/admin/tables" },
       { labelKey: "adminNav.itemReservas", to: "/admin/reservations" },
+      { labelKey: "adminNav.itemDesperdicio", to: "/admin/inventory/waste" },
     ],
   },
   {
@@ -66,6 +67,9 @@ const NAV_GROUPS: SidebarGroup[] = [
       { labelKey: "adminNav.itemTurnos", to: "/admin/shifts" },
       { labelKey: "adminNav.itemGorjetas", to: "/admin/tips" },
       { labelKey: "adminNav.itemRelatorios", to: "/admin/reports" },
+      { labelKey: "adminNav.itemAnalytics", to: "/admin/analytics" },
+      { labelKey: "adminNav.itemMenuPerformance", to: "/admin/analytics/menu" },
+      { labelKey: "adminNav.itemHeatmap", to: "/admin/analytics/heatmap" },
     ],
   },
   {
@@ -77,6 +81,7 @@ const NAV_GROUPS: SidebarGroup[] = [
       { labelKey: "adminNav.itemAppStaff", to: "/admin/devices" },
       { labelKey: "adminNav.itemModulos", to: "/admin/modules" },
       { labelKey: "adminNav.itemObservabilidade", to: "/admin/observability" },
+      { labelKey: "adminNav.itemPrivacidade", to: "/admin/privacy" },
     ],
   },
   {

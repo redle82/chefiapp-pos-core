@@ -40,7 +40,7 @@ import {
   IntegrationsWhatsAppPage,
 } from "../../features/admin/config/pages/integrations";
 import { CustomerDetailPage } from "../../features/admin/customers/pages/CustomerDetailPage";
-import { CustomersPage } from "../../features/admin/customers/pages/CustomersPage";
+import { CustomerListPage } from "../../features/admin/customers/pages/CustomerListPage";
 import { DashboardLayout } from "../../features/admin/dashboard/components/DashboardLayout";
 import { DashboardHomePage } from "../../features/admin/dashboard/pages/DashboardHomePage";
 import { AdminDesktopPage } from "../../features/admin/devices/AdminDesktopPage";
@@ -48,6 +48,7 @@ import { AdminDevicesPage } from "../../features/admin/devices/AdminDevicesPage"
 import { AdminTPVTerminalsPage } from "../../features/admin/devices/AdminTPVTerminalsPage";
 import { ModulesPage } from "../../features/admin/modules/pages/ModulesPage";
 import { ObservabilityPage } from "../../features/admin/observability/pages/ObservabilityPage";
+import { PrivacySettingsPage } from "../../features/admin/privacy/pages/PrivacySettingsPage";
 import { PaymentsLayout } from "../../features/admin/payments/pages/PaymentsLayout";
 import { PayoutsPage } from "../../features/admin/payments/pages/PayoutsPage";
 import { ReconciliationPage } from "../../features/admin/payments/pages/ReconciliationPage";
@@ -61,9 +62,13 @@ import { TipsPage } from "../../features/admin/tips/TipsPage";
 import { AdminReportsOverview } from "../../features/admin/reports/AdminReportsOverview";
 import { MultiUnitOverviewReportPage } from "../../features/admin/reports/MultiUnitOverviewReportPage";
 import { ReservationsOperationalPage } from "../../features/admin/reservas/pages/ReservationsOperationalPage";
+import { WasteReportPage } from "../../features/admin/inventory/pages/WasteReportPage";
 import { GamificationImpactReportPage } from "../../pages/Reports/GamificationImpactReportPage";
 import { OperationalActivityReportPage } from "../../pages/Reports/OperationalActivityReportPage";
 import { SalesByPeriodReportPage } from "../../pages/Reports/SalesByPeriodReportPage";
+import { BusinessDashboardPage } from "../../features/admin/analytics/pages/BusinessDashboardPage";
+import { MenuPerformancePage } from "../../features/admin/analytics/pages/MenuPerformancePage";
+import { RevenueHeatmapPage } from "../../features/admin/analytics/pages/RevenueHeatmapPage";
 import { ErrorBoundary } from "../../ui/design-system/ErrorBoundary";
 
 function MenuV2ShellRoute({ children }: { children: ReactNode }) {
@@ -93,7 +98,7 @@ export const AdminRoutesFragment = (
       element={
         <ManagementAdvisor>
           <DashboardLayout>
-            <CustomersPage />
+            <CustomerListPage />
           </DashboardLayout>
         </ManagementAdvisor>
       }
@@ -379,6 +384,16 @@ export const AdminRoutesFragment = (
       element={<Navigate to="/admin/catalog/translations" replace />}
     />
     <Route
+      path="/admin/inventory/waste"
+      element={
+        <ManagementAdvisor>
+          <DashboardLayout>
+            <WasteReportPage />
+          </DashboardLayout>
+        </ManagementAdvisor>
+      }
+    />
+    <Route
       path="/admin/reports/overview"
       element={
         <ManagementAdvisor>
@@ -437,11 +452,51 @@ export const AdminRoutesFragment = (
       element={<Navigate to="/admin/reports/overview" replace />}
     />
     <Route
+      path="/admin/analytics"
+      element={
+        <ManagementAdvisor>
+          <DashboardLayout>
+            <BusinessDashboardPage />
+          </DashboardLayout>
+        </ManagementAdvisor>
+      }
+    />
+    <Route
+      path="/admin/analytics/menu"
+      element={
+        <ManagementAdvisor>
+          <DashboardLayout>
+            <MenuPerformancePage />
+          </DashboardLayout>
+        </ManagementAdvisor>
+      }
+    />
+    <Route
+      path="/admin/analytics/heatmap"
+      element={
+        <ManagementAdvisor>
+          <DashboardLayout>
+            <RevenueHeatmapPage />
+          </DashboardLayout>
+        </ManagementAdvisor>
+      }
+    />
+    <Route
       path="/admin/observability"
       element={
         <ManagementAdvisor>
           <DashboardLayout>
             <ObservabilityPage />
+          </DashboardLayout>
+        </ManagementAdvisor>
+      }
+    />
+    <Route
+      path="/admin/privacy"
+      element={
+        <ManagementAdvisor>
+          <DashboardLayout>
+            <PrivacySettingsPage />
           </DashboardLayout>
         </ManagementAdvisor>
       }
