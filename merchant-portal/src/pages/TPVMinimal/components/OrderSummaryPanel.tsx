@@ -108,6 +108,8 @@ interface OrderSummaryPanelProps {
   onApplyDiscount?: (discountCents: number, reason?: string) => void;
   onRemoveDiscount?: () => void;
   discountReason?: string;
+  /** Current operator role (for employee discount visibility in modal). */
+  operatorRole?: string;
 }
 
 const PLACEHOLDER_EMOJI = "\uD83C\uDF7D\uFE0F";
@@ -128,6 +130,7 @@ export function OrderSummaryPanel({
   onApplyDiscount,
   onRemoveDiscount,
   discountReason,
+  operatorRole,
 }: OrderSummaryPanelProps) {
   const { t } = useTranslation("tpv");
   const [failedImageIds, setFailedImageIds] = useState<Set<string>>(new Set());
@@ -543,6 +546,14 @@ export function OrderSummaryPanel({
             setDiscountModalOpen(false);
           }}
           onClose={() => setDiscountModalOpen(false)}
+          cartItems={items.map((i) => ({
+            product_id: i.product_id,
+            name: i.name,
+            quantity: i.quantity,
+            unit_price: i.unit_price,
+            line_total: itemTotalCents(i),
+          }))}
+          operatorRole={operatorRole}
         />
       )}
 
