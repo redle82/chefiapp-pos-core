@@ -10,6 +10,7 @@ import {
   type CampaignType,
   type CampaignStatus,
 } from "../../../../core/marketing/CampaignService";
+import { getRemainingDailySends } from "../../../../core/marketing/CampaignScheduler";
 import { useRestaurantRuntime } from "../../../../core/runtime/useRestaurantRuntime";
 
 const STATUS_COLORS: Record<CampaignStatus, string> = {
@@ -90,7 +91,10 @@ export default function CampaignDashboardPage() {
   return (
     <div className="page-enter admin-content-page" style={{ padding: 24 }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 24 }}>
-        <h1 style={{ color: "#fafafa", fontSize: 24, fontWeight: 700, margin: 0 }}>Marketing Campaigns</h1>
+        <div>
+          <h1 style={{ color: "#fafafa", fontSize: 24, fontWeight: 700, margin: 0 }}>Marketing Campaigns</h1>
+          <span style={{ color: "#a3a3a3", fontSize: 12 }}>{getRemainingDailySends(restaurantId || "")} sends remaining today</span>
+        </div>
         <button
           onClick={() => setShowCreate(!showCreate)}
           style={{ background: "#f59e0b", color: "#0a0a0a", border: "none", borderRadius: 8, padding: "8px 20px", fontWeight: 600, cursor: "pointer" }}

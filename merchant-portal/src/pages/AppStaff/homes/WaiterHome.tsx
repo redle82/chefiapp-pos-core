@@ -16,6 +16,7 @@
  */
 
 import { useNavigate } from "react-router-dom";
+import { requestBill } from "../../../core/orders/QuickOrderService";
 import { colors } from "../../../ui/design-system/tokens/colors";
 import { ShiftTaskSummary } from "../components/ShiftTaskSummary";
 import { useStaff } from "../context/StaffContext";

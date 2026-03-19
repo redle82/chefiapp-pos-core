@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useCatalogStore } from "../../../../core/catalog/catalogStore";
+import { setTranslation } from "../../../../core/catalog/ProductTranslationService";
 import { CatalogLayout } from "../components/CatalogLayout";
 
 const SUPPORTED_LOCALES = ["es-ES", "en-GB", "pt-PT"];
