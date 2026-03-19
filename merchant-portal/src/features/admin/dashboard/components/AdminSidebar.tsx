@@ -11,6 +11,7 @@
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { NavLink, useLocation } from "react-router-dom";
+import { SyncStatusIndicator } from "../../../../components/common/SyncStatusIndicator";
 import { useRestaurantIdentity } from "../../../../core/identity/useRestaurantIdentity";
 import { RestaurantLogo } from "../../../../ui/RestaurantLogo";
 import { OSSignature } from "../../../../ui/design-system/sovereign/OSSignature";
@@ -144,6 +145,11 @@ export function AdminSidebar() {
             </span>
           </div>
           <OSSignature state="ember" size="md" />
+        </div>
+
+        {/* Sync status */}
+        <div style={{ padding: "8px 16px" }}>
+          <SyncStatusIndicator />
         </div>
 
         {/* Navigation groups — exclusive accordion */}

@@ -5,6 +5,7 @@
  */
 
 import { useTranslation } from "react-i18next";
+import { SyncStatusIndicator } from "../../../components/common/SyncStatusIndicator";
 import { useRestaurantRuntime } from "../../../context/RestaurantRuntimeContext";
 import { useRestaurantIdentity } from "../../../core/identity/useRestaurantIdentity";
 import { RestaurantLogo } from "../../../ui/RestaurantLogo";
@@ -275,6 +276,9 @@ export function TPVHeader({
 
       {/* Spacer when search is hidden */}
       {hideSearch && <div style={{ flex: 1 }} />}
+
+      {/* Sync status indicator */}
+      <SyncStatusIndicator />
 
       {/* Notification bell */}
       {runtime.restaurant_id && (
