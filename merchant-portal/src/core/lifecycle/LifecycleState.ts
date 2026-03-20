@@ -42,7 +42,7 @@ const ROUTES_BY_STATE: Record<RestaurantLifecycleState, string[]> = {
     "/pricing",
     "/features",
     "/auth",
-    "/auth/phone",
+    "/auth/email",
     "/auth/verify",
     "/auth/email",
     "/bootstrap",

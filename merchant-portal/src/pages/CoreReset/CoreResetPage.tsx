@@ -24,7 +24,8 @@ export function CoreResetPage() {
   }, [coreReachable, navigate]);
 
   const handleTrialStart = () => {
-    navigate("/dashboard?trial=true");
+    const isElectron = typeof navigator !== "undefined" && navigator.userAgent.includes("Electron");
+    navigate(isElectron ? "/op/tpv?mode=trial" : "/dashboard?trial=true");
   };
 
   if (coreReachable) return null;

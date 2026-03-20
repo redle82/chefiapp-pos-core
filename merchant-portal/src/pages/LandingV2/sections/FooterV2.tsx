@@ -78,7 +78,7 @@ export const FooterV2 = () => {
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
             <Link
-              to="/auth/phone"
+              to="/auth/email"
               className="group inline-flex items-center justify-center px-10 py-5 text-lg font-bold rounded-xl bg-amber-500 text-black hover:bg-amber-400 transition-all duration-300 hover:-translate-y-0.5 shadow-lg shadow-amber-500/20 hover:shadow-xl hover:shadow-amber-500/30"
             >
               {t("footer.ctaButton")}

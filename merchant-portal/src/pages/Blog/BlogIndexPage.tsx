@@ -177,7 +177,7 @@ export function BlogIndexPage() {
             <span className="text-sm font-semibold text-white">ChefIApp</span>
           </Link>
           <Link
-            to="/auth/phone"
+            to="/auth/email"
             className="text-sm font-medium text-amber-500 hover:text-amber-400 transition-colors"
           >
             Testar gratis
@@ -250,7 +250,7 @@ export function BlogIndexPage() {
             Experimente o ChefIApp gratuitamente. Sem cartao, sem compromisso.
           </p>
           <Link
-            to="/auth/phone"
+            to="/auth/email"
             className="inline-block bg-amber-500 hover:bg-amber-400 text-neutral-950 font-semibold px-8 py-3 rounded-lg transition-colors"
           >
             Comecar gratis

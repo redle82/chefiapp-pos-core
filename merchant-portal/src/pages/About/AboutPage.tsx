@@ -83,7 +83,7 @@ export function AboutPage() {
             <span className="text-sm font-semibold text-white">ChefIApp</span>
           </Link>
           <Link
-            to="/auth/phone"
+            to="/auth/email"
             className="text-sm font-medium text-amber-500 hover:text-amber-400 transition-colors"
           >
             Testar grátis
@@ -231,7 +231,7 @@ export function AboutPage() {
             Comece hoje — sem compromisso, sem cartão de crédito.
           </p>
           <Link
-            to="/auth/phone"
+            to="/auth/email"
             className="inline-block px-6 py-2.5 bg-amber-500 text-neutral-950 font-semibold rounded-lg hover:bg-amber-400 transition-colors text-sm"
           >
             Começar grátis

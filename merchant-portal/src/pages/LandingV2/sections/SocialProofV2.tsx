@@ -83,7 +83,7 @@ export const SocialProofV2 = () => {
                   {sp.placeholderCta}
                 </p>
                 <Link
-                  to="/auth/phone"
+                  to="/auth/email"
                   className="inline-flex items-center justify-center px-6 py-3 text-sm font-semibold rounded-lg bg-amber-500 text-black hover:bg-amber-400 transition-colors"
                 >
                   {sp.placeholderButton}

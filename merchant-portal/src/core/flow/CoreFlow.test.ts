@@ -27,7 +27,7 @@ describe("CoreFlow Logic — auth → welcome → activation → dashboard", () 
     ).toEqual({ type: "ALLOW" });
   });
 
-  it("redireciona não autenticado para /auth/phone", () => {
+  it("redireciona não autenticado para /auth/email", () => {
     const decision = resolveNextRoute({
       ...baseState,
       isAuthenticated: false,
@@ -35,7 +35,7 @@ describe("CoreFlow Logic — auth → welcome → activation → dashboard", () 
     });
     expect(decision).toEqual({
       type: "REDIRECT",
-      to: "/auth/phone",
+      to: "/auth/email",
       reason: "Auth required",
     });
   });
@@ -55,13 +55,13 @@ describe("CoreFlow Logic — auth → welcome → activation → dashboard", () 
     });
   });
 
-  it("utilizador autenticado com restaurante não ativado vai para /app/activation ao entrar por /auth/phone", () => {
+  it("utilizador autenticado com restaurante não ativado vai para /app/activation ao entrar por /auth/email", () => {
     const decision = resolveNextRoute({
       ...baseState,
       isAuthenticated: true,
       hasOrganization: true,
       hasRestaurant: true,
-      currentPath: "/auth/phone",
+      currentPath: "/auth/email",
     });
     expect(decision).toEqual({
       type: "REDIRECT",
@@ -86,14 +86,14 @@ describe("CoreFlow Logic — auth → welcome → activation → dashboard", () 
     });
   });
 
-  it("utilizador ativado vai para /app/dashboard ao entrar por /auth/phone", () => {
+  it("utilizador ativado vai para /app/dashboard ao entrar por /auth/email", () => {
     const decision = resolveNextRoute({
       ...baseState,
       isAuthenticated: true,
       hasOrganization: true,
       hasRestaurant: true,
       activated: true,
-      currentPath: "/auth/phone",
+      currentPath: "/auth/email",
     });
     expect(decision).toEqual({
       type: "REDIRECT",

@@ -136,13 +136,13 @@ export const HeroV2 = () => {
             ) : (
               <>
                 <Link
-                  to="/auth/phone"
+                  to="/auth/email"
                   className="hidden sm:inline-flex px-4 py-2 text-sm text-neutral-400 hover:text-white transition-colors duration-200"
                 >
                   {t("hero.signIn")}
                 </Link>
                 <Link
-                  to="/auth/phone"
+                  to="/auth/email"
                   className="hidden sm:inline-flex px-5 py-2 text-sm font-semibold rounded-lg bg-amber-500 text-black hover:bg-amber-400 transition-all duration-200 hover:shadow-lg hover:shadow-amber-500/20"
                 >
                   {t("hero.tryFree")}
@@ -240,7 +240,7 @@ export const HeroV2 = () => {
               </div>
               {!hasSession && (
                 <Link
-                  to="/auth/phone"
+                  to="/auth/email"
                   onClick={() => setMobileOpen(false)}
                   className="block mt-2 py-3 text-center text-sm font-semibold rounded-lg bg-amber-500 text-black"
                 >
@@ -290,7 +290,7 @@ export const HeroV2 = () => {
               {/* CTAs */}
               <div className="flex flex-col sm:flex-row gap-4 mb-8">
                 <Link
-                  to="/auth/phone"
+                  to="/auth/email"
                   className="group relative inline-flex items-center justify-center px-8 py-4 text-base font-bold rounded-xl bg-amber-500 text-black hover:bg-amber-400 transition-all duration-300 hover:-translate-y-0.5 shadow-lg shadow-amber-500/25 hover:shadow-xl hover:shadow-amber-500/30"
                 >
                   {t("hero.ctaPrimary")}

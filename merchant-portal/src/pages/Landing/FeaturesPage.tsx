@@ -116,7 +116,7 @@ export function FeaturesPage() {
               Ver planos
             </Link>
             <Link
-              to="/auth/phone"
+              to="/auth/email"
               className="rounded-lg bg-amber-500 px-3.5 py-2.5 text-sm font-bold text-neutral-900 no-underline hover:bg-amber-400"
             >
               Começar agora

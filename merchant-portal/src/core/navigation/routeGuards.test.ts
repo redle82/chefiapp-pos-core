@@ -11,9 +11,9 @@ import {
 
 describe("routeGuards", () => {
   describe("resolveEntryRoute", () => {
-    it("no session → stays on entry path /auth/phone (CoreFlow ALLOW)", () => {
+    it("no session → stays on entry path /auth/email (CoreFlow ALLOW)", () => {
       const dest = resolveEntryRoute({ isAuthenticated: false }, {});
-      expect(dest).toBe("/auth/phone");
+      expect(dest).toBe("/auth/email");
     });
 
     it("authenticated without org → /welcome", () => {

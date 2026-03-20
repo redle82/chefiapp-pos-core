@@ -304,12 +304,12 @@ export function GastroLandingPage() {
             </div>
 
             <div className="hidden md:flex items-center gap-3">
-              <Link to="/auth/phone">
+              <Link to="/auth/email">
                 <span className="text-sm cursor-pointer landing-nav-link">
                   Entrar
                 </span>
               </Link>
-              <Link to="/auth/phone">
+              <Link to="/auth/email">
                 <span className="btn-primary text-sm py-2 px-5">
                   Ir para o sistema
                 </span>
@@ -348,7 +348,7 @@ export function GastroLandingPage() {
                   {item}
                 </a>
               ))}
-              <Link to="/auth/phone" onClick={() => setMobileMenuOpen(false)}>
+              <Link to="/auth/email" onClick={() => setMobileMenuOpen(false)}>
                 <span className="btn-primary block text-center mt-2">
                   Ir para o sistema
                 </span>
@@ -419,7 +419,7 @@ export function GastroLandingPage() {
             </p>
 
             <div className="flex flex-wrap items-center gap-4">
-              <Link to="/auth/phone">
+              <Link to="/auth/email">
                 <span className="btn-primary text-base px-8 py-4">
                   Começar trial gratuito <ArrowRight size={16} />
                 </span>
@@ -870,7 +870,7 @@ export function GastroLandingPage() {
                       </div>
                     ))}
                   </div>
-                  <Link to="/auth/phone">
+                  <Link to="/auth/email">
                     <span
                       className={`block text-center ${plan.popular ? "btn-primary" : "btn-ghost"}`}
                     >
@@ -973,7 +973,7 @@ export function GastroLandingPage() {
                 Cancela quando quiser.
               </p>
               <div className="flex flex-wrap items-center justify-center gap-4">
-                <Link to="/auth/phone">
+                <Link to="/auth/email">
                   <span className="btn-primary text-base px-10 py-4">
                     Começar agora <ArrowRight size={16} />
                   </span>

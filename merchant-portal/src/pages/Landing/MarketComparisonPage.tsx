@@ -296,8 +296,8 @@ export function MarketComparisonPage() {
                 Ver planos
               </Link>
               <Link
-                to="/auth/phone"
-                onClick={() => trackCompareCtaClick("try_now", "/auth/phone")}
+                to="/auth/email"
+                onClick={() => trackCompareCtaClick("try_now", "/auth/email")}
                 className="rounded-lg bg-amber-500 px-3.5 py-2 text-sm font-bold text-neutral-900 no-underline hover:bg-amber-400"
               >
                 Testar agora

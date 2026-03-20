@@ -15,6 +15,7 @@ import { AboutPage } from "../pages/About/AboutPage";
 import { PhoneLoginPage } from "../pages/AuthPhone/PhoneLoginPage";
 import { VerifyCodePage } from "../pages/AuthPhone/VerifyCodePage";
 import { AuthCallbackPage } from "../pages/AuthPhone/AuthCallbackPage";
+import { EmailOTPLoginPage } from "../pages/Auth/EmailOTPLoginPage";
 import { BillingSuccessPage } from "../pages/Billing/BillingSuccessPage";
 import { BlogIndexPage } from "../pages/Blog/BlogIndexPage";
 import { BlogQuandoAbrirFecharCaixaPage } from "../pages/Blog/BlogQuandoAbrirFecharCaixaPage";
@@ -122,9 +123,9 @@ export const MarketingRoutesFragment = (
       element={<Navigate to="/op/tpv?mode=trial" replace />}
     />
     {/* Auth / Onboarding Redirects */}
-    <Route path="/login" element={<Navigate to="/auth/login" replace />} />
-    <Route path="/register" element={<Navigate to="/auth/phone" replace />} />
-    <Route path="/signup" element={<Navigate to="/auth/phone" replace />} />
+    <Route path="/login" element={<Navigate to="/auth/email" replace />} />
+    <Route path="/register" element={<Navigate to="/auth/email" replace />} />
+    <Route path="/signup" element={<Navigate to="/auth/email" replace />} />
     <Route
       path="/forgot"
       element={<Navigate to="/forgot-password" replace />}
@@ -133,12 +134,13 @@ export const MarketingRoutesFragment = (
       path="/forgot-password"
       element={<Navigate to="/auth/email" replace />}
     />
-    <Route path="/auth" element={<Navigate to="/auth/phone" replace />} />
-    <Route path="/auth/login" element={<Suspense fallback={<AuthFallback />}><LoginPage /></Suspense>} />
-    <Route path="/auth/phone" element={<PhoneLoginPage />} />
+    <Route path="/auth" element={<Navigate to="/auth/email" replace />} />
+    <Route path="/auth/login" element={<Navigate to="/auth/email" replace />} />
+    <Route path="/auth/phone" element={<Navigate to="/auth/email" replace />} />
+    <Route path="/auth/email" element={<EmailOTPLoginPage />} />
     <Route path="/auth/verify" element={<VerifyCodePage />} />
     <Route path="/auth/callback" element={<AuthCallbackPage />} />
-    <Route path="/auth/email" element={<Suspense fallback={<AuthFallback />}><AuthPage /></Suspense>} />
+    <Route path="/auth/legacy" element={<Suspense fallback={<AuthFallback />}><AuthPage /></Suspense>} />
     <Route path="/bootstrap" element={<BootstrapPage />} />
     {/* NAVIGATION_CONTRACT: /setup/restaurant-minimal only in app tree → redirect to /app/activation */}
     {/* Core Operations */}
