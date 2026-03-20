@@ -895,5 +895,29 @@
       "refundRequested": "Refund requested",
       "refundRequestedDesc": "When a refund is requested."
     }
+  },
+  "guardrails": {
+    "discountFullOwnerOnly": "100% discount requires owner authorization",
+    "discountFullRequiresReason": "100% discount requires a written reason",
+    "discountExceedsOwnerThreshold": "Discount exceeds {{threshold}}% — owner authorization required",
+    "discountHighRequiresConfirmation": "This discount exceeds the threshold and requires confirmation",
+    "discountExceedsManagerThreshold": "Discount exceeds {{threshold}}% — manager authorization required",
+    "discountDenied": "Discount not allowed for your role",
+    "confirmDiscountTitle": "Confirm high-value discount",
+    "refundRequiresManager": "Refunds require manager or owner authorization",
+    "refundExceedsOwnerThreshold": "Refund exceeds threshold — owner authorization required",
+    "refundHighRequiresReason": "This refund exceeds the threshold and requires a written reason",
+    "cancelExceedsManagerThreshold": "Cancelling orders above this value requires manager authorization",
+    "cancelHighRequiresConfirmation": "This order exceeds the cancellation threshold and requires confirmation",
+    "cancelDenied": "You do not have permission to cancel this order",
+    "confirmCancelTitle": "Confirm order cancellation",
+    "cashRegisterLargeDifference": "Cash register difference exceeds threshold — please provide a reason",
+    "cashRegisterPercentageDifference": "Cash register balance differs significantly from expected",
+    "voidRequiresManager": "Void transactions require manager or owner authorization",
+    "reopenRequiresManager": "Reopening orders requires manager or owner authorization",
+    "reasonLabel": "Please provide a reason for this action",
+    "reasonPlaceholder": "E.g.: Manager approved, customer complaint...",
+    "confirm": "Confirm",
+    "cancel": "Cancel"
   }
 }

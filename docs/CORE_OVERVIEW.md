@@ -1,7 +1,9 @@
-# Core Overview — System Mental Map
+> **DEPRECATED** -- This document is outdated (2026-01-24). See [architecture/CORE_SYSTEM_OVERVIEW.md](architecture/CORE_SYSTEM_OVERVIEW.md) for the current core overview.
 
-> **This document answers: "What is untouchable? What is extensible? What is disposable?"**  
-> **Last updated:** 2026-01-24  
+# Core Overview -- System Mental Map
+
+> **This document answers: "What is untouchable? What is extensible? What is disposable?"**
+> **Last updated:** 2026-01-24
 > **Status:** RATIFIED
 
 ---

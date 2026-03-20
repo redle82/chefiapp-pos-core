@@ -1,7 +1,9 @@
-# 🏛️ ChefIApp Core v1.0 - Baseline Oficial
+> **DEPRECATED** -- This baseline is from 2026-01-27. The system has evolved significantly since then. See [DOMAIN-SPEC.md](DOMAIN-SPEC.md) and [SCHEMA.md](SCHEMA.md) for the current domain and data references.
 
-**Data de Validação:** 2026-01-27  
-**Status:** ✅ **CONGELADO - Nenhuma mudança estrutural sem novo run Nível 5**
+# ChefIApp Core v1.0 - Baseline Oficial
+
+**Data de Validacao:** 2026-01-27
+**Status:** CONGELADO - Nenhuma mudanca estrutural sem novo run Nivel 5
 
 ---
 

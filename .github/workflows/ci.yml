@@ -67,8 +67,7 @@ jobs:
       - name: ESLint
         run: npm run -w merchant-portal lint
 
-      - name: Prettier (advisory)
-        continue-on-error: true
+      - name: Prettier check
         run: npx prettier --check .
 
   # ============================================================================
@@ -123,13 +122,12 @@ jobs:
         run: npm ci
 
       - name: Run root tests (Jest)
-        continue-on-error: true
         run: npm run test:ci
 
       - name: Run merchant-portal tests (Vitest)
         run: |
           cd merchant-portal
-          npx vitest run --reporter=verbose 2>/dev/null || echo "No tests configured yet"
+          npx vitest run --reporter=verbose
 
       - name: Diagnose Jest open handles
         if: github.event_name == 'workflow_dispatch' && github.event.inputs.debug_open_handles == 'true'
@@ -243,8 +241,7 @@ jobs:
           echo "No secrets found in build output."
 
       - name: Audit npm dependencies
-        continue-on-error: true
-        run: npm audit --audit-level=high 2>/dev/null || true
+        run: npm audit --audit-level=high
 
   # ============================================================================
   # E2E Smoke Tests (depends on build)
@@ -420,7 +417,7 @@ jobs:
     name: "CI Status Gate"
     runs-on: ubuntu-latest
     if: always()
-    needs: [typecheck, lint, build, test, bundle-size, domain-integrity, security]
+    needs: [typecheck, lint, build, test, bundle-size, domain-integrity, security, e2e-smoke]
     steps:
       - name: Check all gates
         run: |
@@ -434,25 +431,29 @@ jobs:
           echo "| Bundle Size | ${{ needs.bundle-size.result }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Domain Integrity | ${{ needs.domain-integrity.result }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Security | ${{ needs.security.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| E2E Smoke | ${{ needs.e2e-smoke.result }} |" >> $GITHUB_STEP_SUMMARY
 
-      - name: Enforce required gates
+      - name: Enforce all gates
         if: |
           needs.typecheck.result != 'success' ||
+          needs.lint.result != 'success' ||
           needs.build.result != 'success' ||
+          needs.test.result != 'success' ||
+          needs.bundle-size.result != 'success' ||
           needs.domain-integrity.result != 'success' ||
-          needs.security.result != 'success'
+          needs.security.result != 'success' ||
+          needs.e2e-smoke.result != 'success'
         run: |
-          echo "::error::Required CI gates failed."
+          echo "::error::One or more CI gates failed. All gates must pass."
           echo "typecheck=${{ needs.typecheck.result }}"
+          echo "lint=${{ needs.lint.result }}"
           echo "build=${{ needs.build.result }}"
+          echo "test=${{ needs.test.result }}"
+          echo "bundle-size=${{ needs.bundle-size.result }}"
           echo "domain-integrity=${{ needs.domain-integrity.result }}"
           echo "security=${{ needs.security.result }}"
+          echo "e2e-smoke=${{ needs.e2e-smoke.result }}"
           exit 1
 
-      - name: Advisory gates warning
-        if: |
-          needs.lint.result != 'success' ||
-          needs.test.result != 'success' ||
-          needs.bundle-size.result != 'success'
-        run: |
-          echo "::warning::Some advisory gates did not pass (lint, test, bundle-size). These are non-blocking but should be fixed."
+      - name: All gates passed
+        run: echo "All 8 CI gates passed successfully."

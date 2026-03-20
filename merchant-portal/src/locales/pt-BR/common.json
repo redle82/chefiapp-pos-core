@@ -310,6 +310,23 @@
     "viewDetails": "Ver Detalhes",
     "closeAlert": "Fechar alerta"
   },
+  "uiStates": {
+    "loading": "Carregando...",
+    "emptyTitle": "Nada aqui ainda",
+    "emptyDescription": "Nao existem itens para exibir.",
+    "errorTitle": "Algo deu errado",
+    "retry": "Tentar novamente",
+    "offlineTitle": "Trabalhando offline",
+    "offlineDescription": "As alteracoes serao sincronizadas quando a conexao for restabelecida.",
+    "pendingCount": "{{count}} alteracoes pendentes",
+    "forceSync": "Sincronizar agora",
+    "permissionDeniedTitle": "Acesso negado",
+    "permissionDeniedDescription": "Voce precisa da funcao \"{{role}}\" para acessar esta area.",
+    "currentRole": "Sua funcao atual: {{role}}",
+    "notFoundTitle": "Pagina nao encontrada",
+    "notFoundDescription": "A pagina que voce procura nao existe ou foi movida.",
+    "goBack": "Voltar"
+  },
   "staffLanding": {
     "tagline": "Gestão de equipe inteligente",
     "availableForTeam": "Disponível para sua equipe",

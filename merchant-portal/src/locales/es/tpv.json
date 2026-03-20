@@ -895,5 +895,29 @@
       "refundRequested": "Reembolso solicitado",
       "refundRequestedDesc": "Cuando se solicita un reembolso."
     }
+  },
+  "guardrails": {
+    "discountFullOwnerOnly": "Descuento del 100% requiere autorización del propietario",
+    "discountFullRequiresReason": "Descuento del 100% requiere un motivo escrito",
+    "discountExceedsOwnerThreshold": "Descuento supera {{threshold}}% — requiere autorización del propietario",
+    "discountHighRequiresConfirmation": "Este descuento supera el umbral y requiere confirmación",
+    "discountExceedsManagerThreshold": "Descuento supera {{threshold}}% — requiere autorización del gerente",
+    "discountDenied": "Descuento no permitido para su rol",
+    "confirmDiscountTitle": "Confirmar descuento de alto valor",
+    "refundRequiresManager": "Los reembolsos requieren autorización de gerente o propietario",
+    "refundExceedsOwnerThreshold": "El reembolso supera el umbral — requiere autorización del propietario",
+    "refundHighRequiresReason": "Este reembolso supera el umbral y requiere un motivo escrito",
+    "cancelExceedsManagerThreshold": "Cancelar pedidos por encima de este valor requiere autorización del gerente",
+    "cancelHighRequiresConfirmation": "Este pedido supera el umbral de cancelación y requiere confirmación",
+    "cancelDenied": "No tiene permiso para cancelar este pedido",
+    "confirmCancelTitle": "Confirmar cancelación del pedido",
+    "cashRegisterLargeDifference": "La diferencia de caja supera el umbral — proporcione un motivo",
+    "cashRegisterPercentageDifference": "El saldo de caja difiere significativamente del esperado",
+    "voidRequiresManager": "Las anulaciones requieren autorización de gerente o propietario",
+    "reopenRequiresManager": "Reabrir pedidos requiere autorización de gerente o propietario",
+    "reasonLabel": "Proporcione un motivo para esta acción",
+    "reasonPlaceholder": "Ej.: Aprobado por gerente, queja de cliente...",
+    "confirm": "Confirmar",
+    "cancel": "Cancelar"
   }
 }

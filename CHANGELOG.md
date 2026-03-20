@@ -1,6 +1,53 @@
-# Changelog - Operational Nervous System
+# Changelog
 
 All notable changes to this project will be documented in this file.
+This changelog follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
+and this project adheres to [Semantic Versioning](https://semver.org/).
+
+---
+
+## [Unreleased]
+
+### Added
+
+- 30+ features across TPV, KDS, Admin, AppStaff surfaces
+- 10-layer architecture foundation (Interfaces, Application, Domain, Data, Infrastructure, Sync, Security, Observability, Release, Governance)
+- Sync/Offline hardening: 6 modules (SyncEngine, ConflictResolver, QueueManager, NetworkDetector, RetryScheduler, OfflineStorage)
+- Vercel API routes: 6 endpoints for server-side operations
+- Infrastructure resilience patterns: CircuitBreaker, RetryPolicy, TimeoutWrapper per external service
+- 128 sync tests + 72 property tests + 59 contract tests (259 total)
+- Domain specification: 10 bounded contexts with state machines, entities, invariants (`docs/DOMAIN-SPEC.md`)
+- Schema reference: 85 tables documented (`docs/SCHEMA.md`)
+- 5 incident runbooks (Backup/Restore, Payment Failure, Sync Queue Overflow, KDS Silent, Printer Failure, High Error Rate)
+- Structured logging with JSON output (`docs/LOGGING-GUIDE.md`)
+- Alert rules for operational health (`docs/ALERT-RULES.md`)
+
+### Changed
+
+- React 19 compatibility: shimmed `useSyncExternalStore` with native API
+- CI hardened: zero `continue-on-error`, 8 required gates (typecheck, lint, test, build, bundle-size, domain-integrity, security, e2e-smoke)
+- CHANGELOG format aligned to Keep a Changelog standard
+
+### Security
+
+- RLS policies on 31 tables with tenant isolation via `has_restaurant_access()` guard
+- RBAC permission matrix: 5 roles (owner, manager, cashier, waiter, kitchen) x 8 actions x 11 resources
+- Security audit with gap documentation (`docs/SECURITY-CHECKLIST.md`, `docs/RBAC-FLOW-AUDIT.md`)
+- OWASP ASVS checklist reviewed (`docs/architecture/OWASP_ASVS_CHECKLIST.md`)
+
+### Documentation
+
+- `docs/ARCHITECTURE_OVERVIEW.md` -- 10-layer architecture reference
+- `docs/DOMAIN-SPEC.md` -- 10 bounded contexts canonical specification
+- `docs/adr/` -- 9 Architecture Decision Records (001-007 + ADR-001, ADR-002)
+- `docs/SCHEMA.md` -- 85 tables with constraints and relationships
+- `docs/INFRA-RESILIENCE.md` -- Per-service resilience configuration
+- `docs/OWNERS.md` -- Code ownership per bounded context and infrastructure area
+- `docs/DEFINITION-OF-DONE.md` -- Feature, bug fix, and hotfix completion criteria
+- `docs/READINESS.md` -- Production readiness assessment (94.5%, pilot-ready)
+- War Plan 100% closure documentation complete
+
+---
 
 ## [1.4.4] - 2026-03-08
 
@@ -436,13 +483,5 @@ Simple waitlist without overengineering
 
 ---
 
-## 📝 Format
-
-This changelog follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
-and this project adheres to [Semantic Versioning](https://semver.org/).
-
----
-
-**Current Version:** 1.0.0
-**Launch Date:** 2026-01-24
-**Status:** ✅ Ready for Validation
+**Current Version:** 1.4.4
+**Last Updated:** 2026-03-20

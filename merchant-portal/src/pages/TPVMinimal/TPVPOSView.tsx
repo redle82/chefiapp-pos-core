@@ -71,7 +71,13 @@ import {
 import type { Order } from "../../domain/order/types";
 import { TipSelector } from "./components/TipSelector";
 import { ProtectedAction } from "../../components/common/ProtectedAction";
+import { ConfirmationDialog } from "../../components/common/ConfirmationDialog";
 import { hasPermission } from "../../core/security/RBACService";
+import type { Role } from "../../core/security/RBACService";
+import {
+  checkCancelPermission,
+  type GuardrailResult,
+} from "../../core/security/FinancialGuardrails";
 import "./TPVPOSView.css";
 
 const DEFAULT_RESTAURANT_ID = "00000000-0000-0000-0000-000000000100";
@@ -540,8 +546,40 @@ export function TPVPOSView() {
     }
   };
 
+  // ─── Cancel guardrail state ──────────────────────────────────────
+  const [cancelGuardrail, setCancelGuardrail] = useState<{
+    guardrail: GuardrailResult;
+  } | null>(null);
+
   // ─── Cancelar ─────────────────────────────────────────────────────
   const handleCancelOrder = async () => {
+    const operatorRole = (operator?.role ?? "waiter") as Role;
+    const guardrail = checkCancelPermission(
+      operatorRole,
+      totalCents,
+      restaurantId,
+    );
+
+    if (!guardrail.allowed) {
+      toast.error(
+        t(
+          guardrail.message ?? "guardrails.cancelDenied",
+          "You do not have permission to cancel this order",
+        ),
+      );
+      return;
+    }
+
+    if (guardrail.requiresConfirmation || guardrail.requiresReason) {
+      setCancelGuardrail({ guardrail });
+      return;
+    }
+
+    await executeCancelOrder();
+  };
+
+  const executeCancelOrder = async (reason?: string) => {
+    setCancelGuardrail(null);
     setCart([]);
     setDiscountCents(0);
     setDiscountReason(undefined);
@@ -1057,6 +1095,24 @@ export function TPVPOSView() {
             </button>
           </div>
         </div>
+      )}
+
+      {/* Cancel order guardrail confirmation */}
+      {cancelGuardrail && (
+        <ConfirmationDialog
+          title={t(
+            "guardrails.confirmCancelTitle",
+            "Confirm order cancellation",
+          )}
+          amount={formatAmount(totalCents)}
+          message={t(
+            cancelGuardrail.guardrail.message ?? "guardrails.cancelHighRequiresConfirmation",
+            "This order exceeds the cancellation threshold and requires confirmation.",
+          )}
+          requiresReason={cancelGuardrail.guardrail.requiresReason}
+          onConfirm={(reason) => executeCancelOrder(reason)}
+          onCancel={() => setCancelGuardrail(null)}
+        />
       )}
 
       {/* Fiscal receipt overlay after successful payment */}

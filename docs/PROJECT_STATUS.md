@@ -1,6 +1,8 @@
+> **DEPRECATED** -- This document is outdated (2026-01-24). See [READINESS.md](READINESS.md) for the current project status and readiness assessment.
+
 # PROJECT STATUS - ChefIApp Core
 
-> Estado atual do projeto após limpeza, validação e ratificação do Core.
+> Estado atual do projeto apos limpeza, validacao e ratificacao do Core.
 > Data: 2026-01-24
 
 ---

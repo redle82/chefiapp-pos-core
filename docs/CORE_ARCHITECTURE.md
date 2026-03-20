@@ -1,7 +1,9 @@
+> **DEPRECATED** -- This document is outdated (2026-01-24). See [architecture/CORE_SYSTEM_OVERVIEW.md](architecture/CORE_SYSTEM_OVERVIEW.md) and [architecture/ARCHITECTURE_OVERVIEW.md](architecture/ARCHITECTURE_OVERVIEW.md) for the current architecture reference.
+
 # ChefIApp Core Architecture
 
-> **Tag:** `v1.0-core-validated`  
-> **Data:** 2026-01-24  
+> **Tag:** `v1.0-core-validated`
+> **Data:** 2026-01-24
 > **Status:** VALIDADO
 
 ---

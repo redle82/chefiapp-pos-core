@@ -310,6 +310,23 @@
     "viewDetails": "Ver Detalhes",
     "closeAlert": "Fechar alerta"
   },
+  "uiStates": {
+    "loading": "A carregar...",
+    "emptyTitle": "Ainda nada aqui",
+    "emptyDescription": "Nao existem itens para apresentar.",
+    "errorTitle": "Algo correu mal",
+    "retry": "Tentar novamente",
+    "offlineTitle": "A trabalhar offline",
+    "offlineDescription": "As alteracoes serao sincronizadas quando a ligacao for restabelecida.",
+    "pendingCount": "{{count}} alteracoes pendentes",
+    "forceSync": "Sincronizar agora",
+    "permissionDeniedTitle": "Acesso negado",
+    "permissionDeniedDescription": "Precisa da funcao \"{{role}}\" para aceder a esta area.",
+    "currentRole": "A sua funcao atual: {{role}}",
+    "notFoundTitle": "Pagina nao encontrada",
+    "notFoundDescription": "A pagina que procura nao existe ou foi movida.",
+    "goBack": "Voltar"
+  },
   "staffLanding": {
     "tagline": "Gestão de equipa inteligente",
     "availableForTeam": "Disponível para a sua equipa",
