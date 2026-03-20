@@ -187,6 +187,13 @@ export const ADMIN_PRIMARY_NAV_GROUPS: SidebarGroup[] = [
       },
       {
         kind: "link",
+        label: "Monitoring",
+        to: "/admin/monitoring",
+        end: true,
+        icon: "🩺",
+      },
+      {
+        kind: "link",
         label: "Observabilidade",
         to: "/admin/observability",
         end: true,

@@ -1,7 +1,7 @@
 /**
  * Product Translation Service — Multi-language menu support per product.
  */
-import { getDockerCoreFetchClient } from "../../infra/dockerCoreFetchClient";
+import { getDockerCoreFetchClient } from "../infra/dockerCoreFetchClient";
 
 export interface ProductTranslation {
   productId: string;

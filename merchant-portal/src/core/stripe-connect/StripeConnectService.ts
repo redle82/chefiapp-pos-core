@@ -11,7 +11,7 @@
  * 4. Stripe splits: restaurant gets payment minus fee, ChefIApp gets fee
  */
 
-import { getDockerCoreFetchClient } from "../../infra/dockerCoreFetchClient";
+import { getDockerCoreFetchClient } from "../infra/dockerCoreFetchClient";
 
 export interface ConnectedAccount {
   id: string;

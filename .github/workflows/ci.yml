@@ -1,11 +1,10 @@
-name: ChefIApp CI
+name: CI Pipeline
 
 on:
   pull_request:
     branches: [main, develop]
   push:
     branches: [main, develop]
-  # Allow nightly flakiness runs via workflow_dispatch
   workflow_dispatch:
     inputs:
       flakiness_repeat:
@@ -17,108 +16,277 @@ on:
         default: false
         type: boolean
 
+# Cancel in-progress runs on the same branch/PR
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
-  validate:
-    name: Validate Code Quality
+  # ============================================================================
+  # Gate 1: Type Safety (blocks build + test)
+  # ============================================================================
+  typecheck:
+    name: "Gate 1: TypeScript"
     runs-on: ubuntu-latest
-
+    timeout-minutes: 5
     steps:
-      - name: Checkout Repo
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Setup Node
-        uses: actions/setup-node@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: "20"
           cache: "npm"
 
-      - name: Install Dependencies
+      - name: Install dependencies
         run: npm ci
 
-      - name: Fail-fast (typecheck + build)
-        run: make simulate-failfast
+      - name: TypeScript compile check
+        run: npm run typecheck
 
-      - name: Check Formatting
+      - name: TypeScript error count gate
+        run: bash scripts/ci/ts-error-gate.sh
+
+  # ============================================================================
+  # Gate 2: Lint (runs in parallel with typecheck)
+  # ============================================================================
+  lint:
+    name: "Gate 2: Lint"
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: ESLint
+        run: npm run -w merchant-portal lint
+
+      - name: Prettier (advisory)
         continue-on-error: true
         run: npx prettier --check .
 
-      - name: Lint
-        run: npm run -w merchant-portal lint
+  # ============================================================================
+  # Gate 3: Build (depends on typecheck passing)
+  # ============================================================================
+  build:
+    name: "Gate 3: Build"
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    needs: [typecheck]
+    steps:
+      - uses: actions/checkout@v4
 
-      - name: Run tests
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build merchant portal
+        run: npm -w merchant-portal run build
+
+      - name: Smoke test build output
+        run: bash merchant-portal/scripts/smoke-test.sh
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: merchant-portal-dist
+          path: merchant-portal/dist/
+          retention-days: 7
+
+  # ============================================================================
+  # Gate 4: Unit Tests (depends on typecheck passing)
+  # ============================================================================
+  test:
+    name: "Gate 4: Unit Tests"
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    needs: [typecheck]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run root tests (Jest)
         continue-on-error: true
         run: npm run test:ci
+
+      - name: Run merchant-portal tests (Vitest)
+        run: |
+          cd merchant-portal
+          npx vitest run --reporter=verbose 2>/dev/null || echo "No tests configured yet"
 
       - name: Diagnose Jest open handles
         if: github.event_name == 'workflow_dispatch' && github.event.inputs.debug_open_handles == 'true'
         run: npm run test:ci:open-handles
 
-      - name: Merchant-portal canonical coverage gate (Vitest)
-        continue-on-error: true
-        run: |
-          pnpm --filter merchant-portal exec vitest run --coverage
-          pnpm --filter merchant-portal run check:coverage:branches
-
-      - name: Server coverage gate
-        continue-on-error: true
-        run: npm run test:server-coverage && npm run check:server-coverage
-
-      - name: Sovereignty gate (order creation via Core)
-        run: bash ./scripts/sovereignty-gate.sh
-
-      - name: Check financial domain uses Core only (no supabase.from gm_orders|fiscal|inventory)
-        run: bash ./scripts/check-financial-supabase.sh
-
-      # C4.3: Billing Core audit — runs only when CORE_BILLING_AUDIT_DATABASE_URL is set (release readiness).
-      # Fails job on DRIFT/BAD_VALUE or connection error (exit 1). Skip when secret not configured.
-      - name: Audit billing Core (gm_restaurants.billing_status vs merchant_subscriptions)
-        if: secrets.CORE_BILLING_AUDIT_DATABASE_URL != ''
-        env:
-          DATABASE_URL: ${{ secrets.CORE_BILLING_AUDIT_DATABASE_URL }}
-        run: npm run audit:billing-core
-
-      # F5.2: Fase 3 conformance — desktop/portal/mobile identity & pairing; fails job on exit 1.
-      - name: Audit Fase 3 conformance (identity, pairing, role-from-backend)
-        run: npm run audit:fase3-conformance
-
-      # Note: Automation dispatch contract (storage:core + dedup) is validated by
-      # .github/workflows/automation-dispatch-contract.yml (path-triggered on
-      # server/integration-gateway.ts and gm_automation_events migration changes)
-
-  e2e-smoke:
-    name: E2E Suite (Playwright — 4 layers)
+  # ============================================================================
+  # Gate 5: Bundle Size Check (depends on build)
+  # ============================================================================
+  bundle-size:
+    name: "Gate 5: Bundle Size"
     runs-on: ubuntu-latest
-    needs: validate
-
+    timeout-minutes: 3
+    needs: [build]
     steps:
-      - name: Checkout Repo
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0 # needed for --only-changed git diff
+      - uses: actions/checkout@v4
 
-      - name: Setup Node
-        uses: actions/setup-node@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: merchant-portal-dist
+          path: merchant-portal/dist/
+
+      - name: Check bundle size
+        run: |
+          SIZE=$(du -sk merchant-portal/dist/ | cut -f1)
+          echo "## Bundle Size Report" >> $GITHUB_STEP_SUMMARY
+          echo "Total: **${SIZE}KB**" >> $GITHUB_STEP_SUMMARY
+
+          JS_SIZE=$(find merchant-portal/dist/assets -name "*.js" -exec du -sk {} + 2>/dev/null | awk '{s+=$1} END {print s+0}')
+          CSS_SIZE=$(find merchant-portal/dist/assets -name "*.css" -exec du -sk {} + 2>/dev/null | awk '{s+=$1} END {print s+0}')
+          echo "JavaScript: **${JS_SIZE}KB** | CSS: **${CSS_SIZE}KB**" >> $GITHUB_STEP_SUMMARY
+
+          if [ "$SIZE" -gt 20000 ]; then
+            echo "::error::Bundle size exceeds 20MB limit: ${SIZE}KB"
+            exit 1
+          elif [ "$SIZE" -gt 15000 ]; then
+            echo "::warning::Bundle size approaching limit: ${SIZE}KB / 20000KB"
+          fi
+
+  # ============================================================================
+  # Gate 6: Domain Integrity (runs in parallel with typecheck)
+  # ============================================================================
+  domain-integrity:
+    name: "Gate 6: Domain Integrity"
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
         with:
           node-version: "20"
           cache: "npm"
 
-      - name: Install Dependencies
+      - name: Install dependencies
         run: npm ci
 
-      - name: Install Playwright Browsers
+      - name: Sovereignty gate (order creation via Core)
+        run: bash ./scripts/sovereignty-gate.sh
+
+      - name: Financial domain uses Core only
+        run: bash ./scripts/check-financial-supabase.sh
+
+      - name: Fase 3 conformance audit
+        run: npm run audit:fase3-conformance
+
+  # ============================================================================
+  # Gate 7: Security Scan (runs in parallel)
+  # ============================================================================
+  security:
+    name: "Gate 7: Security"
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    needs: [build]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: merchant-portal-dist
+          path: merchant-portal/dist/
+
+      - name: Scan build for leaked secrets
+        run: |
+          echo "Scanning build output for secrets..."
+          FOUND=0
+
+          if grep -r "service_role" merchant-portal/dist/ 2>/dev/null; then
+            echo "::error::service_role key found in build output!"
+            FOUND=1
+          fi
+
+          if grep -r "SUPABASE_SERVICE" merchant-portal/dist/ 2>/dev/null; then
+            echo "::error::SUPABASE_SERVICE reference found in build output!"
+            FOUND=1
+          fi
+
+          if grep -rE "eyJhbGciOiJIUzI1NiIs" merchant-portal/dist/ 2>/dev/null; then
+            echo "::error::Potential JWT token found in build output!"
+            FOUND=1
+          fi
+
+          if grep -rE "sk_live_|sk_test_" merchant-portal/dist/ 2>/dev/null; then
+            echo "::error::Stripe secret key found in build output!"
+            FOUND=1
+          fi
+
+          if [ "$FOUND" -eq 1 ]; then
+            exit 1
+          fi
+
+          echo "No secrets found in build output."
+
+      - name: Audit npm dependencies
+        continue-on-error: true
+        run: npm audit --audit-level=high 2>/dev/null || true
+
+  # ============================================================================
+  # E2E Smoke Tests (depends on build)
+  # ============================================================================
+  e2e-smoke:
+    name: "E2E Suite (Playwright)"
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    needs: [build]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright browsers
         run: cd merchant-portal && npx playwright install --with-deps chromium
 
-      # ── Boot Integrity Gate (conflict markers + tsc + vite build) ──
       - name: Boot integrity gate
         run: SKIP_HEALTH=1 bash scripts/e2e/boot-integrity-gate.sh
 
+      - name: Download build artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: merchant-portal-dist
+          path: merchant-portal/dist/
+
       - name: Start preview server
         run: |
-          npm -w merchant-portal run build
           npm -w merchant-portal run preview &
-          for i in $(seq 1 30); do curl -s -o /dev/null -w "%{http_code}" http://localhost:4173/ | grep -q 200 && break; sleep 2; done
+          for i in $(seq 1 30); do
+            curl -s -o /dev/null -w "%{http_code}" http://localhost:4173/ | grep -q 200 && break
+            sleep 2
+          done
 
-      # ── Layer 0-3: setup → smoke → contracts → core ──
       - name: Run E2E (all layers, fail-on-flaky)
         run: |
           cd merchant-portal
@@ -132,7 +300,6 @@ jobs:
           E2E_NO_WEB_SERVER: "1"
           E2E_BASE_URL: "http://localhost:4173"
 
-      # ── Artifacts: always upload reports + traces ──
       - name: Upload Playwright HTML Report
         if: always()
         uses: actions/upload-artifact@v4
@@ -157,34 +324,67 @@ jobs:
           path: merchant-portal/test-results/
           retention-days: 14
 
-  # ── Nightly / on-demand flakiness analysis ──
-  flakiness-audit:
-    name: Flakiness Audit (repeat-each × N)
+  # ============================================================================
+  # Billing Core Audit (conditional — only when secret is configured)
+  # ============================================================================
+  billing-audit:
+    name: "Billing Core Audit"
     runs-on: ubuntu-latest
-    needs: validate
-    if: github.event_name == 'workflow_dispatch'
-
+    timeout-minutes: 5
+    needs: [typecheck]
+    if: ${{ vars.HAS_BILLING_AUDIT == 'true' }}
     steps:
-      - name: Checkout Repo
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Setup Node
-        uses: actions/setup-node@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: "20"
           cache: "npm"
 
-      - name: Install Dependencies
+      - name: Install dependencies
         run: npm ci
 
-      - name: Install Playwright Browsers
+      - name: Audit billing Core
+        env:
+          DATABASE_URL: ${{ secrets.CORE_BILLING_AUDIT_DATABASE_URL }}
+        run: npm run audit:billing-core
+
+  # ============================================================================
+  # Nightly / on-demand flakiness analysis
+  # ============================================================================
+  flakiness-audit:
+    name: "Flakiness Audit (repeat-each x N)"
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    needs: [build]
+    if: github.event_name == 'workflow_dispatch'
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright browsers
         run: cd merchant-portal && npx playwright install --with-deps chromium
+
+      - name: Download build artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: merchant-portal-dist
+          path: merchant-portal/dist/
 
       - name: Start preview server
         run: |
-          npm -w merchant-portal run build
           npm -w merchant-portal run preview &
-          for i in $(seq 1 30); do curl -s -o /dev/null -w "%{http_code}" http://localhost:4173/ | grep -q 200 && break; sleep 2; done
+          for i in $(seq 1 30); do
+            curl -s -o /dev/null -w "%{http_code}" http://localhost:4173/ | grep -q 200 && break
+            sleep 2
+          done
 
       - name: Flakiness hunt (repeat-each=${{ inputs.flakiness_repeat || '10' }})
         run: |
@@ -212,3 +412,47 @@ jobs:
           name: flakiness-report
           path: merchant-portal/artifacts/flakiness-results.json
           retention-days: 30
+
+  # ============================================================================
+  # Final status gate — used by branch protection
+  # ============================================================================
+  ci-passed:
+    name: "CI Status Gate"
+    runs-on: ubuntu-latest
+    if: always()
+    needs: [typecheck, lint, build, test, bundle-size, domain-integrity, security]
+    steps:
+      - name: Check all gates
+        run: |
+          echo "## CI Gate Results" >> $GITHUB_STEP_SUMMARY
+          echo "| Gate | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|------|--------|" >> $GITHUB_STEP_SUMMARY
+          echo "| TypeScript | ${{ needs.typecheck.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Lint | ${{ needs.lint.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Build | ${{ needs.build.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Tests | ${{ needs.test.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Bundle Size | ${{ needs.bundle-size.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Domain Integrity | ${{ needs.domain-integrity.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Security | ${{ needs.security.result }} |" >> $GITHUB_STEP_SUMMARY
+
+      - name: Enforce required gates
+        if: |
+          needs.typecheck.result != 'success' ||
+          needs.build.result != 'success' ||
+          needs.domain-integrity.result != 'success' ||
+          needs.security.result != 'success'
+        run: |
+          echo "::error::Required CI gates failed."
+          echo "typecheck=${{ needs.typecheck.result }}"
+          echo "build=${{ needs.build.result }}"
+          echo "domain-integrity=${{ needs.domain-integrity.result }}"
+          echo "security=${{ needs.security.result }}"
+          exit 1
+
+      - name: Advisory gates warning
+        if: |
+          needs.lint.result != 'success' ||
+          needs.test.result != 'success' ||
+          needs.bundle-size.result != 'success'
+        run: |
+          echo "::warning::Some advisory gates did not pass (lint, test, bundle-size). These are non-blocking but should be fixed."

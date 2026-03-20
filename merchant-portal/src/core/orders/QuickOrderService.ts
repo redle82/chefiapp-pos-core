@@ -1,7 +1,7 @@
 /**
  * Quick Order Service — Simplified ordering for waiter tablets.
  */
-import { getDockerCoreFetchClient } from "../../infra/dockerCoreFetchClient";
+import { getDockerCoreFetchClient } from "../infra/dockerCoreFetchClient";
 
 export interface QuickOrderItem {
   productId: string;

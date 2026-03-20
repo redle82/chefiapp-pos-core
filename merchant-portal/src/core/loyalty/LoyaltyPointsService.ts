@@ -1,7 +1,7 @@
 /**
  * Loyalty Points Service — Earn, redeem, and manage loyalty points.
  */
-import { getDockerCoreFetchClient } from "../../infra/dockerCoreFetchClient";
+import { getDockerCoreFetchClient } from "../infra/dockerCoreFetchClient";
 
 export type PointTransactionType = "EARN" | "REDEEM" | "EXPIRE" | "BONUS" | "REFUND_ADJUST";
 

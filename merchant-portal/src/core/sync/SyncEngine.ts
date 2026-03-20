@@ -9,7 +9,10 @@ import {
   ConnectivityService,
   type ConnectivityStatus,
 } from "./ConnectivityService";
+import { IdempotencyService } from "./IdempotencyService";
 import { IndexedDBQueue } from "./IndexedDBQueue";
+import { NetworkStateMachine } from "./NetworkStateMachine";
+import { OfflineQueueManager, type QueueHealth } from "./OfflineQueueManager";
 import { calculateNextRetry, MAX_RETRIES } from "./RetryStrategy";
 import type {
   OfflineQueueItem,
@@ -29,8 +32,10 @@ export type { ConnectivityStatus } from "./ConnectivityService";
  * 1. Consumes ConnectivityService (fonte única: online/offline/degraded)
  * 2. Process Offline Queue (when connectivity !== 'offline')
  * 3. Handles Retries with Backoff
- * 4. Ensures Idempotency via RPCs
+ * 4. Ensures Idempotency via RPCs + IdempotencyService
  * 5. Notifies UI of state changes
+ * 6. Priority-based queue processing via OfflineQueueManager
+ * 7. Network quality tracking via NetworkStateMachine
  */
 
 export type SyncEngineState = {
@@ -38,6 +43,7 @@ export type SyncEngineState = {
   networkStatus: "online" | "offline";
   connectivity: ConnectivityStatus;
   pendingCount: number;
+  queueHealth?: QueueHealth;
 };
 
 export type SyncListener = (state: SyncEngineState) => void;
@@ -53,6 +59,9 @@ class SyncEngineClass {
   constructor() {
     this.updatePendingCount();
     if (typeof window !== "undefined") {
+      // Start idempotency cleanup on app boot
+      IdempotencyService.startCleanupInterval();
+
       this.unsubscribeConnectivity = ConnectivityService.subscribe(
         (_status) => {
           this.notifyListeners();
@@ -153,6 +162,7 @@ class SyncEngineClass {
 
   /**
    * Main Processing Loop. Runs when online or degraded (writes enfileirados; retries when Core volta).
+   * Uses OfflineQueueManager for priority ordering (payments > orders > stock > rest).
    */
   public async processQueue() {
     if (this.isProcessing) return;
@@ -163,7 +173,8 @@ class SyncEngineClass {
     Logger.info("[SyncEngine] Starting queue processing...");
 
     try {
-      const pendingItems = await IndexedDBQueue.getPending();
+      // Use priority-based ordering from OfflineQueueManager
+      const pendingItems = await OfflineQueueManager.getPendingByPriority();
 
       if (pendingItems.length === 0) {
         Logger.info("[SyncEngine] No pending items.");
@@ -172,12 +183,15 @@ class SyncEngineClass {
         return;
       }
 
-      Logger.info(`[SyncEngine] Found ${pendingItems.length} pending items.`);
+      Logger.info(`[SyncEngine] Found ${pendingItems.length} pending items (priority-sorted).`);
 
       for (const item of pendingItems) {
         if (ConnectivityService.getConnectivity() === "offline") break;
         await this.processItem(item);
       }
+
+      // Purge old applied items to keep queue lean
+      await OfflineQueueManager.purgeApplied();
     } catch (err) {
       Logger.error("[SyncEngine] Critical error in processing loop", err);
     } finally {
@@ -199,21 +213,74 @@ class SyncEngineClass {
   }
 
   /**
-   * Process Individual Item
+   * Get queue health metrics for the system health dashboard.
+   */
+  public async getQueueHealth(): Promise<QueueHealth> {
+    return OfflineQueueManager.getQueueHealth();
+  }
+
+  /**
+   * Get dead letter items for admin review.
+   */
+  public async getDeadLetterItems() {
+    return OfflineQueueManager.getDeadLetterItems();
+  }
+
+  /**
+   * Retry a dead letter item (admin action).
+   */
+  public async retryDeadLetterItem(id: string) {
+    await OfflineQueueManager.retryDeadLetterItem(id);
+    this.forceSync();
+  }
+
+  /**
+   * Discard a dead letter item with audit reason (admin action).
+   */
+  public async discardDeadLetterItem(id: string, reason: string) {
+    await OfflineQueueManager.discardDeadLetterItem(id, reason);
+    await this.updatePendingCount();
+  }
+
+  /**
+   * Process Individual Item.
+   * Checks idempotency before dispatching. Tracks network quality.
    */
   private async processItem(item: OfflineQueueItem) {
+    const idempotencyKey = item.idempotency_key ?? item.id;
+
     try {
+      // Idempotency check: skip if already processed
+      const alreadyProcessed = await IdempotencyService.isProcessed(idempotencyKey);
+      if (alreadyProcessed) {
+        Logger.info(
+          `[SyncEngine] Item ${item.id} already processed (idempotency key: ${idempotencyKey}). Marking applied.`,
+        );
+        await IndexedDBQueue.updateStatus(item.id, "applied");
+        return;
+      }
+
       // Mark as syncing
       await IndexedDBQueue.updateStatus(item.id, "syncing");
       this.notifyListeners(); // Update syncing status UI
 
-      // Dispatch to Processor
-      await this.dispatch(item);
+      // Dispatch to Processor (track latency for network quality)
+      const startTime = Date.now();
+      const result = await this.dispatch(item);
+      const latencyMs = Date.now() - startTime;
 
-      // Mark as applied
+      // Record successful request for network quality tracking
+      NetworkStateMachine.recordRequestResult(true, latencyMs);
+
+      // Mark as applied and cache idempotency result
       await IndexedDBQueue.updateStatus(item.id, "applied");
-      Logger.info(`[SyncEngine] Item ${item.id} applied successfully.`);
+      await IdempotencyService.markProcessed(idempotencyKey, result);
+
+      Logger.info(`[SyncEngine] Item ${item.id} applied successfully (${latencyMs}ms).`);
     } catch (err: unknown) {
+      // Record failed request for network quality tracking
+      NetworkStateMachine.recordRequestResult(false);
+
       const currentAttempts = (item.attempts || 0) + 1;
       const errMessage = err instanceof Error ? err.message : String(err);
       const { class: failureClass } = classifyFailure(err);
@@ -223,9 +290,8 @@ class SyncEngineClass {
         Logger.error(
           `[SyncEngine] Item ${item.id} classified CRITICAL. Moving to Dead Letter. Error: ${errMessage}`,
         );
-        await IndexedDBQueue.updateStatus(
+        await OfflineQueueManager.moveToDeadLetter(
           item.id,
-          "dead_letter",
           errMessage || "Critical failure",
         );
         return;
@@ -235,9 +301,8 @@ class SyncEngineClass {
         Logger.error(
           `[SyncEngine] Item ${item.id} reached max retries (${MAX_RETRIES}). Moving to Dead Letter. Error: ${errMessage}`,
         );
-        await IndexedDBQueue.updateStatus(
+        await OfflineQueueManager.moveToDeadLetter(
           item.id,
-          "dead_letter",
           errMessage || "Max retries exceeded",
         );
         return;
@@ -262,35 +327,32 @@ class SyncEngineClass {
   /**
    * Dispatcher - Routes to appropriate RPC/Mutation.
    * Cada item deve ter idempotency_key estável; Core APIs devem ser idempotentes por essa key.
+   * Returns the result for idempotency caching.
    */
-  private async dispatch(item: OfflineQueueItem) {
+  private async dispatch(item: OfflineQueueItem): Promise<unknown> {
     switch (item.type) {
       case "ORDER_CREATE":
-        await this.syncOrderCreate(
+        return await this.syncOrderCreate(
           item.payload as OrderCreateSyncPayload,
           item.idempotency_key ?? item.id,
         );
-        break;
       case "ORDER_UPDATE":
         await this.syncOrderUpdate(
           item.payload as OrderUpdateSyncPayload,
           item.createdAt,
         );
-        break;
+        return { type: "ORDER_UPDATE", success: true };
       case "ORDER_PAY":
         await this.syncOrderPay(
           item.payload as OrderPaySyncPayload,
           item.idempotency_key ?? item.id,
         );
-        break;
+        return { type: "ORDER_PAY", success: true };
       // Legacy/Mapping support
       case "ORDER_ADD_ITEM":
       case "ORDER_UPDATE_ITEM_QTY":
       case "ORDER_REMOVE_ITEM":
       case "ORDER_CANCEL":
-        // Remap legacy types to generic update if needed aimed at same endpoint?
-        // For now, assume payload has enough info or map carefully.
-        // Better to throw if not supported yet to avoid data corruption.
         await this.syncOrderUpdate(
           {
             ...(item.payload as OrderUpdateSyncPayload),
@@ -298,7 +360,7 @@ class SyncEngineClass {
           },
           item.createdAt,
         );
-        break;
+        return { type: item.type, success: true };
       default:
         throw new Error(`Unknown item type: ${item.type}`);
     }

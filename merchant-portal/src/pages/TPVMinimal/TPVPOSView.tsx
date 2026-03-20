@@ -63,7 +63,15 @@ import { useOperator } from "./context/OperatorContext";
 import { saveTip } from "../../core/payment/TipService";
 import type { TipType } from "../../core/payment/TipService";
 import { reopenOrder } from "../../core/orders/reopenOrder";
+import {
+  canApplyDiscount,
+  canSplitBill,
+  type DiscountDescriptor,
+} from "../../domain/invariants/OrderInvariants";
+import type { Order } from "../../domain/order/types";
 import { TipSelector } from "./components/TipSelector";
+import { ProtectedAction } from "../../components/common/ProtectedAction";
+import { hasPermission } from "../../core/security/RBACService";
 import "./TPVPOSView.css";
 
 const DEFAULT_RESTAURANT_ID = "00000000-0000-0000-0000-000000000100";
@@ -610,6 +618,34 @@ export function TPVPOSView() {
 
   // Shared order panel props
   const handleApplyDiscount = (cents: number, reason?: string) => {
+    // Validate discount against domain invariants
+    const discountDescriptor: DiscountDescriptor = { amountCents: cents };
+    const orderSnapshot = {
+      id: currentOrderId ?? "",
+      restaurantId,
+      status: isSentToKitchen ? "PREPARING" as const : "OPEN" as const,
+      type: (orderMode ?? "take_away") === "take_away" ? "takeaway" as const : "dine_in" as const,
+      items: cart.map((c) => ({
+        id: c.product_id,
+        productId: c.product_id,
+        name: c.name,
+        quantity: c.quantity,
+        unitPrice: c.unit_price,
+      })),
+      subtotal: subtotalCents,
+      tax: taxCents,
+      discount: 0,
+      total: subtotalCents + taxCents,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+
+    const check = canApplyDiscount(orderSnapshot, discountDescriptor);
+    if (!check.allowed) {
+      toast.error(check.reason ?? t("posView.discountNotAllowed"));
+      return;
+    }
+
     setDiscountCents(cents);
     setDiscountReason(reason);
   };
@@ -651,8 +687,29 @@ export function TPVPOSView() {
       toast.info(t("posView.orderOnHold"));
     },
     onSplitBill: () => {
-      if (!isSentToKitchen) {
-        toast.warning(t("posView.sendToKitchenBeforeSplit"));
+      // Validate via domain invariant
+      const splitOrderSnapshot: Order = {
+        id: currentOrderId ?? "",
+        restaurantId,
+        status: isSentToKitchen ? "PREPARING" : "OPEN",
+        type: (orderMode ?? "take_away") === "take_away" ? "takeaway" : "dine_in",
+        items: cart.map((c) => ({
+          id: c.product_id,
+          productId: c.product_id,
+          name: c.name,
+          quantity: c.quantity,
+          unitPrice: c.unit_price,
+        })),
+        subtotal: subtotalCents,
+        tax: taxCents,
+        discount: discountCents,
+        total: totalCents,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      };
+      const splitCheck = canSplitBill(splitOrderSnapshot);
+      if (!splitCheck.allowed) {
+        toast.warning(splitCheck.reason ?? t("posView.sendToKitchenBeforeSplit"));
         return;
       }
       setSplitBillOpen(true);
@@ -1023,26 +1080,30 @@ export function TPVPOSView() {
                 }
               : undefined
           }
-          onReopenOrder={async (reason: string) => {
-            if (!operator) return;
-            const result = await reopenOrder({
-              orderId: lastReceipt.orderId,
-              restaurantId,
-              operatorId: operator.id,
-              operatorName: operator.name,
-              operatorRole: operator.role,
-              reason,
-            });
-            if (!result.success) {
-              throw new Error(result.error ?? "Failed to reopen order");
-            }
-            toast.success(
-              t("posView.orderReopened", "Order reopened successfully"),
-            );
-            setLastReceipt(null);
-            // Navigate to the order in the POS (reload with order context)
-            navigate(`/op/tpv/pos?table=${lastReceipt.table ?? ""}&reopenedOrder=${lastReceipt.orderId}`);
-          }}
+          onReopenOrder={
+            operator && hasPermission(operator.role, "reopen", "orders")
+              ? async (reason: string) => {
+                  const result = await reopenOrder({
+                    orderId: lastReceipt.orderId,
+                    restaurantId,
+                    operatorId: operator.id,
+                    operatorName: operator.name,
+                    operatorRole: operator.role,
+                    reason,
+                  });
+                  if (!result.success) {
+                    throw new Error(result.error ?? "Failed to reopen order");
+                  }
+                  toast.success(
+                    t("posView.orderReopened", "Order reopened successfully"),
+                  );
+                  setLastReceipt(null);
+                  navigate(
+                    `/op/tpv/pos?table=${lastReceipt.table ?? ""}&reopenedOrder=${lastReceipt.orderId}`,
+                  );
+                }
+              : undefined
+          }
           onNewOrder={() => {
             setLastReceipt(null);
             setContextChosen(false);

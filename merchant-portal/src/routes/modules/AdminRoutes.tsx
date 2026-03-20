@@ -47,6 +47,7 @@ import { AdminDesktopPage } from "../../features/admin/devices/AdminDesktopPage"
 import { AdminDevicesPage } from "../../features/admin/devices/AdminDevicesPage";
 import { AdminTPVTerminalsPage } from "../../features/admin/devices/AdminTPVTerminalsPage";
 import { ModulesPage } from "../../features/admin/modules/pages/ModulesPage";
+import { MonitoringPage } from "../../features/admin/monitoring/pages/MonitoringPage";
 import { ObservabilityPage } from "../../features/admin/observability/pages/ObservabilityPage";
 import { PrivacySettingsPage } from "../../features/admin/privacy/pages/PrivacySettingsPage";
 import { PaymentsLayout } from "../../features/admin/payments/pages/PaymentsLayout";
@@ -492,6 +493,16 @@ export const AdminRoutesFragment = (
         <ManagementAdvisor>
           <DashboardLayout>
             <RevenueHeatmapPage />
+          </DashboardLayout>
+        </ManagementAdvisor>
+      }
+    />
+    <Route
+      path="/admin/monitoring"
+      element={
+        <ManagementAdvisor>
+          <DashboardLayout>
+            <MonitoringPage />
           </DashboardLayout>
         </ManagementAdvisor>
       }

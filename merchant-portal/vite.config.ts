@@ -75,8 +75,6 @@ export default defineConfig(async ({ mode }) => {
   return {
     base,
     define: {
-      // Polyfill global for libraries that expect Node.js global
-      global: {},
       __VITE_ENV__: "import.meta.env",
       // Inject local IP for QR code generation in device provisioning
       __LOCAL_IP__: JSON.stringify(localIp),
@@ -104,6 +102,22 @@ export default defineConfig(async ({ mode }) => {
       },
     },
     plugins: [
+      // React 19 ships useSyncExternalStore natively. The legacy CJS shim
+      // package causes "Cannot set properties of undefined" in ESM production
+      // builds because its module.exports wrapper is incompatible. This plugin
+      // redirects all imports to our thin ESM shims that re-export from React.
+      {
+        name: "use-sync-external-store-react19-shim",
+        enforce: "pre" as const,
+        resolveId(source: string) {
+          if (source === "use-sync-external-store" || source === "use-sync-external-store/shim" || source === "use-sync-external-store/shim/index.js") {
+            return path.resolve(__dirname, "src/shims/use-sync-external-store-shim.ts");
+          }
+          if (source === "use-sync-external-store/with-selector" || source === "use-sync-external-store/shim/with-selector" || source === "use-sync-external-store/shim/with-selector.js") {
+            return path.resolve(__dirname, "src/shims/use-sync-external-store-with-selector-shim.ts");
+          }
+        },
+      },
       // Strip sourceMappingURL comments from node_modules so the browser
       // doesn't flood DevTools with "Could not read source map" warnings.
       mode !== "production" && {

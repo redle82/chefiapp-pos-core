@@ -1,2 +1,12 @@
-npm run typecheck
+#!/bin/sh
+
+# Gate 1: TypeScript must compile
+npm run typecheck 2>/dev/null || {
+  echo ""
+  echo "Pre-commit blocked: TypeScript errors found."
+  echo "Run 'npm run typecheck' to see details."
+  exit 1
+}
+
+# Gate 2: Lint staged files
 npx lint-staged

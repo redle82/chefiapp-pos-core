@@ -21,6 +21,8 @@ import {
   logAuditEvent,
   type AuditEvent,
 } from "../audit/AuditService";
+import { canReopenOrder } from "../../domain/invariants/OrderInvariants";
+import type { Order } from "../../domain/order/types";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -62,20 +64,25 @@ export async function reopenOrder(
     reason,
   } = params;
 
-  // Guard: role check
-  if (!ALLOWED_ROLES.includes(operatorRole)) {
-    return {
-      success: false,
-      error: "PERMISSION_DENIED: Only managers or owners can reopen orders.",
-    };
-  }
+  // Guard: validate via domain invariant
+  // Build a minimal order snapshot representing a PAID/CLOSED order
+  const orderSnapshot: Order = {
+    id: orderId,
+    restaurantId,
+    status: "PAID",
+    type: "dine_in",
+    items: [],
+    subtotal: 0,
+    tax: 0,
+    discount: 0,
+    total: 0,
+    createdAt: "",
+    updatedAt: "",
+  };
 
-  // Guard: reason is required
-  if (!reason.trim()) {
-    return {
-      success: false,
-      error: "REASON_REQUIRED: A reason must be provided to reopen an order.",
-    };
+  const check = canReopenOrder(orderSnapshot, operatorRole, reason);
+  if (!check.allowed) {
+    return { success: false, error: check.reason };
   }
 
   try {

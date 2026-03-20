@@ -8,6 +8,12 @@
 
 import { dockerCoreClient } from "../../infra/docker-core/connection";
 import { Logger } from "../logger";
+import {
+  canClockIn,
+  canClockOut,
+  canStartBreak,
+} from "../../domain/invariants/StaffInvariants";
+import { hasPermission, type Role } from "../security/RBACService";
 
 /* ── Types ──────────────────────────────────────────────────────── */
 
@@ -117,10 +123,11 @@ export const ShiftClockService = {
     restaurantId: string,
     method: ClockInMethod = "manual",
   ): Promise<{ success: boolean; shiftId?: string; error?: string }> {
-    // Check if operator already has an active shift
+    // Check if operator already has an active shift (domain invariant)
     const existing = await this.getActiveShift(operatorId, restaurantId);
-    if (existing) {
-      return { success: false, error: "ALREADY_CLOCKED_IN" };
+    const clockInCheck = canClockIn(operatorId, existing);
+    if (!clockInCheck.allowed) {
+      return { success: false, error: clockInCheck.reason ?? "ALREADY_CLOCKED_IN" };
     }
 
     const now = new Date().toISOString();
@@ -155,8 +162,11 @@ export const ShiftClockService = {
     if (!shift) {
       return { success: false, error: "SHIFT_NOT_FOUND" };
     }
-    if (shift.status === "completed" || shift.status === "auto_closed") {
-      return { success: false, error: "ALREADY_CLOCKED_OUT" };
+
+    // Domain invariant: validate clock-out preconditions
+    const clockOutCheck = canClockOut(shift);
+    if (!clockOutCheck.allowed) {
+      return { success: false, error: clockOutCheck.reason ?? "ALREADY_CLOCKED_OUT" };
     }
 
     // End any active break first
@@ -199,14 +209,11 @@ export const ShiftClockService = {
   ): Promise<{ success: boolean; error?: string }> {
     const shift = await this.getShiftById(shiftId);
     if (!shift) return { success: false, error: "SHIFT_NOT_FOUND" };
-    if (shift.status !== "active") {
-      return { success: false, error: "SHIFT_NOT_ACTIVE" };
-    }
 
-    // Check no active break already
-    const hasActiveBreak = shift.breaks.some((b) => b.end === null);
-    if (hasActiveBreak) {
-      return { success: false, error: "ALREADY_ON_BREAK" };
+    // Domain invariant: validate break preconditions
+    const breakCheck = canStartBreak(shift);
+    if (!breakCheck.allowed) {
+      return { success: false, error: breakCheck.reason ?? "SHIFT_NOT_ACTIVE" };
     }
 
     const now = new Date().toISOString();
@@ -461,12 +468,22 @@ export const ShiftClockService = {
   },
 
   /**
-   * Update a shift (manager correction).
+   * Update a shift (manager/owner correction only).
+   * Requires "update" permission on "shifts" resource.
    */
   async updateShift(
     shiftId: string,
     updates: { clock_in?: string; clock_out?: string; breaks?: BreakRecord[] },
+    callerRole?: Role,
   ): Promise<{ success: boolean; error?: string }> {
+    // RBAC guard: only manager/owner can edit shifts
+    if (callerRole && !hasPermission(callerRole, "update", "shifts")) {
+      return {
+        success: false,
+        error: "PERMISSION_DENIED: Only managers or owners can edit shifts.",
+      };
+    }
+
     const shift = await this.getShiftById(shiftId);
     if (!shift) return { success: false, error: "SHIFT_NOT_FOUND" };
 
