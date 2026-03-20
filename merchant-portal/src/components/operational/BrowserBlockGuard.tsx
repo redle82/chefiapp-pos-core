@@ -108,20 +108,15 @@ export function BrowserBlockGuard({
   const isTrialModeBypass =
     new URLSearchParams(location.search).get("mode") === "trial";
 
-  // DEV-ONLY override: permite rodar módulos operacionais no navegador quando
-  // flags explícitas estão ativas. Não afeta produção.
-  const allowBrowserRuntimeDev =
-    import.meta.env.DEV &&
-    (String(import.meta.env.VITE_ALLOW_BROWSER_RUNTIME_DEV ?? "").toLowerCase() ===
-      "true" ||
-      (requiredPlatform === "desktop" &&
-        String(
-          import.meta.env.VITE_ALLOW_BROWSER_TPV_DEV ?? "",
-        ).toLowerCase() === "true") ||
-      (requiredPlatform === "mobile" &&
-        String(
-          import.meta.env.VITE_ALLOW_BROWSER_APPSTAFF_DEV ?? "",
-        ).toLowerCase() === "true"));
+  // Browser override: permite rodar módulos operacionais no navegador.
+  // Em DEV usa flags _DEV; em produção usa flags sem _DEV (para piloto/demo).
+  const allowBrowserRuntime =
+    String(import.meta.env.VITE_ALLOW_BROWSER_RUNTIME ?? import.meta.env.VITE_ALLOW_BROWSER_RUNTIME_DEV ?? "").toLowerCase() === "true" ||
+    (requiredPlatform === "desktop" &&
+      String(import.meta.env.VITE_ALLOW_BROWSER_TPV ?? import.meta.env.VITE_ALLOW_BROWSER_TPV_DEV ?? "").toLowerCase() === "true") ||
+    (requiredPlatform === "mobile" &&
+      String(import.meta.env.VITE_ALLOW_BROWSER_APPSTAFF ?? import.meta.env.VITE_ALLOW_BROWSER_APPSTAFF_DEV ?? "").toLowerCase() === "true");
+  const allowBrowserRuntimeDev = allowBrowserRuntime;
 
   if (isInstalledRuntime || isTrialModeBypass || allowBrowserRuntimeDev) {
     const runtimeLabel: "browser" | "installed" = isInstalledRuntime
