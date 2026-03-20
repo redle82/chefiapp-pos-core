@@ -84,13 +84,19 @@ export default defineConfig(async ({ mode }) => {
     resolve: {
       dedupe: ["react", "react-dom", "react-router-dom"],
       // Invalid hook call: forçar uma única cópia de React (workspace: local ou raiz).
-      alias: {
-        react: reactPath,
-        "react-dom": reactDomPath,
-        "@": path.resolve(__dirname, "src"),
-        "@chefiapp/core-design-system/tokens.css": path.resolve(__dirname, "src/lib/core-design-system/tokens.css"),
-        "@chefiapp/core-design-system": path.resolve(__dirname, "src/lib/core-design-system/index.ts"),
-      },
+      alias: [
+        { find: "react", replacement: reactPath },
+        { find: "react-dom", replacement: reactDomPath },
+        { find: "@", replacement: path.resolve(__dirname, "src") },
+        { find: "@chefiapp/core-design-system/tokens.css", replacement: path.resolve(__dirname, "src/lib/core-design-system/tokens.css") },
+        { find: "@chefiapp/core-design-system", replacement: path.resolve(__dirname, "src/lib/core-design-system/index.ts") },
+        // Monorepo sibling packages — redirect relative escapes to src/lib/
+        { find: /^(\.\.\/)+fiscal-modules(.*)$/, replacement: path.resolve(__dirname, "src/lib/fiscal-modules") + "$2" },
+        { find: /^(\.\.\/)+billing-core(.*)$/, replacement: path.resolve(__dirname, "src/lib/billing-core") + "$2" },
+        { find: /^(\.\.\/)+core-engine(.*)$/, replacement: path.resolve(__dirname, "src/lib/core-engine") + "$2" },
+        { find: /^(\.\.\/)+event-log(.*)$/, replacement: path.resolve(__dirname, "src/lib/event-log") + "$2" },
+        { find: /^(\.\.\/)+integrations(.*)$/, replacement: path.resolve(__dirname, "src/lib/integrations") + "$2" },
+      ],
     },
     // Uma única instância de React: pre-bundle usa o mesmo alias para evitar Invalid hook call.
     optimizeDeps: {
