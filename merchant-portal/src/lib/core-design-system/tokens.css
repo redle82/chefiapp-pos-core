@@ -1,0 +1,85 @@
+/**
+ * @chefiapp/core-design-system — CSS custom properties
+ *
+ * Import in app entry (e.g. main.tsx):
+ *   import '@chefiapp/core-design-system/tokens.css';
+ *
+ * Contrato: docs/architecture/CORE_DESIGN_SYSTEM_CONTRACT.md
+ */
+
+:root {
+  /* Backgrounds */
+  --ds-background: #0a0a0a;
+  --ds-surface: #141414;
+  --ds-surface-elevated: rgba(255, 255, 255, 0.03);
+  --ds-surface-overlay: rgba(255, 255, 255, 0.04);
+
+  /* Text */
+  --ds-text-primary: rgba(255, 255, 255, 0.87);
+  --ds-text-secondary: rgba(255, 255, 255, 0.6);
+  --ds-text-muted: rgba(255, 255, 255, 0.4);
+  --ds-text-disabled: rgba(255, 255, 255, 0.25);
+  --ds-text-inverse: #0a0a0a;
+
+  /* Semantic */
+  --ds-accent: #22c55e;
+  --ds-warning: #fbbf24;
+  --ds-error: #ef4444;
+  --ds-success: #22c55e;
+  --ds-info: #3b82f6;
+
+  /* Border */
+  --ds-border: rgba(255, 255, 255, 0.08);
+  --ds-border-hover: rgba(255, 255, 255, 0.12);
+  --ds-border-active: rgba(255, 255, 255, 0.15);
+
+  /* Radius */
+  --ds-radius-sm: 4px;
+  --ds-radius-md: 8px;
+  --ds-radius-lg: 12px;
+
+  /* Spacing (base 4px) */
+  --ds-space-xs: 4px;
+  --ds-space-sm: 8px;
+  --ds-space-md: 16px;
+  --ds-space-lg: 24px;
+  --ds-space-xl: 32px;
+
+  /* Typography */
+  --ds-font-sans: Inter, system-ui, -apple-system, sans-serif;
+  --ds-font-size-xs: 12px;
+  --ds-font-size-sm: 14px;
+  --ds-font-size-base: 16px;
+  --ds-font-size-lg: 18px;
+  --ds-font-size-xl: 20px;
+  --ds-font-size-display: 32px;
+  --ds-font-size-display-lg: 40px;
+
+  /* States (Restaurant OS: universal, no legend) */
+  --ds-state-normal: var(--ds-text-primary);
+  --ds-state-warning: var(--ds-warning);
+  --ds-state-critical: var(--ds-error);
+  --ds-state-success: var(--ds-success);
+  --ds-state-offline: var(--ds-info);
+  --ds-state-blocked: #525252;
+
+  /* Tap target (Restaurant OS: min 44–48px) */
+  --ds-tap-target-min: 44px;
+  --ds-tap-target-comfortable: 48px;
+
+  /* Motion: minimal, only feedback */
+  --ds-duration-fast: 150ms;
+  --ds-duration-normal: 250ms;
+  --ds-easing-out: ease-out;
+
+  /* Time-first (Restaurant OS: elapsed, SLA, delay) */
+  --ds-time-elapsed: var(--ds-text-secondary);
+  --ds-time-sla-ok: var(--ds-success);
+  --ds-time-sla-warning: var(--ds-warning);
+  --ds-time-delay: var(--ds-error);
+
+  /* Stress-safe spacing (touch, pressure, bad light) */
+  --ds-stress-padding: 20px;
+  --ds-stress-gap: 16px;
+  --ds-stress-block: 24px;
+}
