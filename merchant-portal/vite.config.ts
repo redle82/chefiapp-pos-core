@@ -95,7 +95,7 @@ export default defineConfig(async ({ mode }) => {
         { find: /^(\.\.\/)+billing-core(.*)$/, replacement: path.resolve(__dirname, "src/lib/billing-core") + "$2" },
         { find: /^(\.\.\/)+core-engine(.*)$/, replacement: path.resolve(__dirname, "src/lib/core-engine") + "$2" },
         { find: /^(\.\.\/)+event-log(.*)$/, replacement: path.resolve(__dirname, "src/lib/event-log") + "$2" },
-        { find: /^(\.\.\/)+integrations(.*)$/, replacement: path.resolve(__dirname, "src/lib/integrations") + "$2" },
+        { find: /^\.\.\/\.\.\/\.\.\/\.\.\/\.\.\/integrations(.*)$/, replacement: path.resolve(__dirname, "src/lib/integrations") + "$1" },
       ],
     },
     // Uma única instância de React: pre-bundle usa o mesmo alias para evitar Invalid hook call.
