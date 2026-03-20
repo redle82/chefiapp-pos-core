@@ -207,6 +207,10 @@ export default defineConfig(async ({ mode }) => {
     },
     build: {
       sourcemap: useSentry, // Enable sourcemaps for Sentry (production only)
+      // Disable the module preload polyfill to avoid inline <script> tags.
+      // Modern browsers (Chrome 66+, Firefox 67+, Safari 17+) support modulepreload natively.
+      // This allows a strict CSP without 'unsafe-inline' for script-src.
+      modulePreload: { polyfill: false },
       rollupOptions: {
         output: {
           manualChunks(id) {

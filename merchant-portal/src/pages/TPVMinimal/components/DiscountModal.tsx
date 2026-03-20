@@ -24,6 +24,9 @@ import {
   type CouponValidationResult,
 } from "../../../core/discounts/CouponService";
 import { getTpvRestaurantId } from "../../../core/storage/installedDeviceStorage";
+import { checkDiscountPermission, type GuardrailResult } from "../../../core/security/FinancialGuardrails";
+import { ConfirmationDialog } from "../../../components/common/ConfirmationDialog";
+import type { Role } from "../../../core/security/RBACService";
 
 type DiscountMode = "percentage" | "fixed";
 type ModalTab = "discount" | "coupon";
@@ -142,13 +145,74 @@ export function DiscountModal({
         ? Math.round(parseFloat(fixedAmount) * 100) > subtotalCents
         : false);
 
+  // Guardrail confirmation state
+  const [pendingGuardrail, setPendingGuardrail] = useState<{
+    discountCents: number;
+    discountPercent: number;
+    guardrail: GuardrailResult;
+    baseReason?: string;
+  } | null>(null);
+
   const handleApply = () => {
     if (!isValid || exceedsMax) return;
     const discountReason =
       selectedRuleId
         ? discountRules.find((r) => r.id === selectedRuleId)?.name
         : reason.trim() || undefined;
+
+    // Calculate effective discount percentage for guardrail check
+    const effectivePct = subtotalCents > 0
+      ? (discountPreview / subtotalCents) * 100
+      : 0;
+
+    // Check financial guardrail
+    const operatorRoleTyped = (operatorRole ?? "waiter") as Role;
+    const guardrail = checkDiscountPermission(
+      operatorRoleTyped,
+      effectivePct,
+      restaurantId || undefined,
+    );
+
+    if (!guardrail.allowed) {
+      // Show denied message via existing validation error spot
+      setGuardrailDeniedMessage(
+        t(guardrail.message ?? "guardrails.discountDenied", "Discount not allowed for your role"),
+      );
+      return;
+    }
+
+    if (guardrail.requiresConfirmation || guardrail.requiresReason) {
+      // Show ConfirmationDialog
+      setPendingGuardrail({
+        discountCents: discountPreview,
+        discountPercent: effectivePct,
+        guardrail,
+        baseReason: discountReason,
+      });
+      return;
+    }
+
+    // No extra checks needed — apply directly
     onApply(discountPreview, discountReason);
+  };
+
+  // Guardrail denied message state
+  const [guardrailDeniedMessage, setGuardrailDeniedMessage] = useState<string | null>(null);
+
+  // Clear denied message when inputs change
+  useEffect(() => {
+    setGuardrailDeniedMessage(null);
+  }, [selectedPct, customPct, fixedAmount, selectedRuleId]);
+
+  const handleGuardrailConfirm = (confirmReason?: string) => {
+    if (!pendingGuardrail) return;
+    const finalReason = confirmReason
+      ? pendingGuardrail.baseReason
+        ? `${pendingGuardrail.baseReason} — ${confirmReason}`
+        : confirmReason
+      : pendingGuardrail.baseReason;
+    onApply(pendingGuardrail.discountCents, finalReason);
+    setPendingGuardrail(null);
   };
 
   const handlePresetClick = (pct: number) => {
@@ -652,6 +716,25 @@ export function DiscountModal({
               </div>
             )}
 
+            {/* Guardrail denied message */}
+            {guardrailDeniedMessage && (
+              <div
+                data-testid="guardrail-denied"
+                role="alert"
+                style={{
+                  color: "#ef4444",
+                  fontSize: 12,
+                  fontWeight: 500,
+                  background: "#1c1917",
+                  border: "1px solid #7f1d1d",
+                  borderRadius: 8,
+                  padding: "8px 12px",
+                }}
+              >
+                {guardrailDeniedMessage}
+              </div>
+            )}
+
             {/* Preview */}
             {discountPreview > 0 && !exceedsMax && (
               <div
@@ -1006,6 +1089,24 @@ export function DiscountModal({
           {"\u2715"}
         </button>
       </div>
+
+      {/* Guardrail confirmation dialog */}
+      {pendingGuardrail && (
+        <ConfirmationDialog
+          title={t(
+            "guardrails.confirmDiscountTitle",
+            "Confirm high-value discount",
+          )}
+          amount={`${Math.round(pendingGuardrail.discountPercent)}% — ${formatAmount(pendingGuardrail.discountCents)}`}
+          message={t(
+            pendingGuardrail.guardrail.message ?? "guardrails.discountHighRequiresConfirmation",
+            "This discount exceeds the threshold and requires confirmation.",
+          )}
+          requiresReason={pendingGuardrail.guardrail.requiresReason}
+          onConfirm={handleGuardrailConfirm}
+          onCancel={() => setPendingGuardrail(null)}
+        />
+      )}
     </div>
   );
 }
