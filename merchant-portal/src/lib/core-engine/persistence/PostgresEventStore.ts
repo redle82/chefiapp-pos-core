@@ -1,0 +1,164 @@
+import { Pool, PoolClient } from "pg";
+import { CoreEvent, EventStore, StreamId } from "../../event-log/types";
+import { PostgresLink } from "../../gate3-persistence/PostgresLink";
+
+type DBClient = Pool | PoolClient;
+
+export class PostgresEventStore implements EventStore {
+    constructor(private options: { pool?: DBClient } = {}) { }
+
+    private get db(): DBClient {
+        return this.options.pool || PostgresLink.getInstance().getPool();
+    }
+
+    async append(event: CoreEvent, expectedStreamVersion?: number): Promise<void> {
+        const streamParts = event.stream_id.split(":");
+        if (streamParts.length < 2) throw new Error("Invalid stream_id format");
+
+        const streamType = streamParts[0];
+        const streamId = streamParts.slice(1).join(":");
+
+        // P0-A: Concurrency Control
+        if (expectedStreamVersion !== undefined) {
+            if (event.stream_version !== expectedStreamVersion + 1) {
+                throw new Error(`Concurrency Exception: Expected version ${expectedStreamVersion}, but trying to append ${event.stream_version}`);
+            }
+        }
+
+        const query = `
+      INSERT INTO event_store 
+      (event_id, stream_type, stream_id, stream_version, event_type, payload, meta, created_at, idempotency_key)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+      ON CONFLICT (stream_type, stream_id, stream_version) DO NOTHING
+    `;
+
+        // [HARDENING] Extract meta from nested object
+        const metaObj = event.meta;
+
+        // [HARDENING] Extract Idempotency Key explicitly
+        const idempotencyKey = metaObj.idempotency_key || null;
+
+        const values = [
+            event.event_id,
+            streamType,
+            streamId,
+            event.stream_version,
+            event.type,
+            JSON.stringify(event.payload),
+            JSON.stringify(metaObj),
+            event.occurred_at,
+            idempotencyKey
+        ];
+
+        try {
+            const res = await this.db.query(query, values);
+            if (res.rowCount === 0) {
+                // Collision detected by Database (Race Condition)
+                throw new Error(`Concurrency Exception: Stream ${event.stream_id} version ${event.stream_version} already exists (DB Conflict).`);
+            }
+        } catch (err: any) {
+            // Handle Idempotency Collision
+            if (err.constraint === 'idx_event_store_idempotency') {
+                // Clean Error Code for Domain Handling
+                const e = new Error(`IDEMPOTENCY_COLLISION: Event with key ${idempotencyKey} already exists`);
+                (e as any).code = 'IDEMPOTENCY_COLLISION';
+                throw e;
+            }
+
+            if (err.constraint === 'event_store_event_id_key' || err.code === '23505') {
+                if (err.detail?.includes('event_id')) {
+                    throw new Error(`Duplicate Event ID: ${event.event_id}`);
+                }
+                // Fallback for version conflict
+                throw new Error(`Concurrency Exception: Stream ${event.stream_id} version ${event.stream_version} already exists.`);
+            }
+            throw err;
+        }
+    }
+
+    async readStream(stream_id: StreamId): Promise<CoreEvent[]> {
+        const streamParts = stream_id.split(":");
+        const streamType = streamParts[0];
+        const id = streamParts.slice(1).join(":");
+
+        const query = `
+      SELECT * FROM event_store 
+      WHERE stream_type = $1 AND stream_id = $2
+      ORDER BY stream_version ASC
+    `;
+
+        const res = await this.db.query(query, [streamType, id]);
+
+        return res.rows.map(this.mapRowToEvent);
+    }
+
+    async readAll(filter?: {
+        stream_id?: StreamId;
+        type?: string;
+        since?: Date;
+        until?: Date;
+    }): Promise<CoreEvent[]> {
+        let query = `SELECT * FROM event_store WHERE 1=1`;
+        const params: any[] = [];
+        let pIdx = 1;
+
+        if (filter?.stream_id) {
+            const parts = filter.stream_id.split(":");
+            query += ` AND stream_type = $${pIdx++} AND stream_id = $${pIdx++}`;
+            params.push(parts[0], parts.slice(1).join(":"));
+        }
+
+        if (filter?.type) {
+            query += ` AND event_type = $${pIdx++}`;
+            params.push(filter.type);
+        }
+
+        if (filter?.since) {
+            query += ` AND created_at >= $${pIdx++}`;
+            params.push(filter.since);
+        }
+
+        if (filter?.until) {
+            query += ` AND created_at <= $${pIdx++}`;
+            params.push(filter.until);
+        }
+
+        query += ` ORDER BY sequence_id ASC`;
+
+        const res = await this.db.query(query, params);
+        return res.rows.map(this.mapRowToEvent);
+    }
+
+    async getStreamVersion(stream_id: StreamId): Promise<number> {
+        const streamParts = stream_id.split(":");
+        const streamType = streamParts[0];
+        const id = streamParts.slice(1).join(":");
+
+        const query = `
+        SELECT MAX(stream_version) as ver 
+        FROM event_store 
+        WHERE stream_type = $1 AND stream_id = $2
+    `;
+
+        const res = await this.db.query(query, [streamType, id]);
+        return res.rows[0].ver || 0;
+    }
+
+    private mapRowToEvent(row: any): CoreEvent {
+        // [HARDENING] Reconstruct nested Metadata
+        const meta = row.meta || {};
+
+        // Ensure critical audit fields are present from columns or meta
+        if (row.idempotency_key) meta.idempotency_key = row.idempotency_key;
+
+        return {
+            event_id: row.event_id,
+            stream_id: `${row.stream_type}:${row.stream_id}`,
+            stream_version: row.stream_version,
+            type: row.event_type as any,
+            payload: row.payload,
+            occurred_at: new Date(row.created_at),
+            meta: meta // [REFACTOR] Injected as nested object
+        };
+    }
+}

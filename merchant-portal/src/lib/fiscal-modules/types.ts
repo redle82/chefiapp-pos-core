@@ -1,0 +1,44 @@
+export type FiscalStatus = "PENDING" | "REPORTED" | "REJECTED" | "QUEUED" | "OFFLINE_STORED";
+
+export interface FiscalResult {
+    status: FiscalStatus;
+    gov_protocol?: string;
+    error_details?: string;
+    reported_at: Date;
+    pdf_url?: string; // URL to download PDF invoice
+    qr_code?: string; // QR code for fiscal validation
+    fiscal_signature?: string; // Fiscal signature/hash
+}
+
+export type TaxDocumentType = "SAT_CFE" | "NFC_E" | "NF_E" | "MOCK" | "TICKETBAI" | "SAF-T";
+
+/**
+ * Represents the structured data required by the Fiscal Authority.
+ * This is DTO, totally separate from Core Event.
+ */
+export interface TaxDocument {
+    doc_type: TaxDocumentType;
+    ref_event_id: string; // Link to Core
+    ref_seal_id: string;  // Link to Legal Chain
+
+    // Minimal standard fields usually required
+    total_amount: number;
+    taxes: {
+        icms?: number;
+        pis?: number;
+        cofins?: number;
+        vat?: number; // IVA (Espanha/Portugal) - valor absoluto
+    };
+    // TASK-2.3.1: Separar vatRate de vatAmount
+    vatRate?: number; // Taxa de IVA como percentual (0.23 = 23%)
+    vatAmount?: number; // Valor absoluto de IVA em centavos ou unidades monetárias
+    items: Array<{
+        code: string;
+        description: string;
+        quantity: number;
+        unit_price: number;
+        total: number;
+    }>;
+
+    raw_payload?: any; // The XML or JSON sent to Gov
+}

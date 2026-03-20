@@ -1,0 +1,9 @@
+{
+  "name": "@chefiapp/core-engine",
+  "version": "1.0.0",
+  "main": "index.ts",
+  "types": "index.ts",
+  "dependencies": {
+    "zod": "^3.25.76"
+  }
+}
