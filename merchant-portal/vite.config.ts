@@ -88,8 +88,8 @@ export default defineConfig(async ({ mode }) => {
         react: reactPath,
         "react-dom": reactDomPath,
         "@": path.resolve(__dirname, "src"),
-        "@chefiapp/core-design-system/tokens.css": path.resolve(__dirname, "src/ui/design-system/core-tokens.css"),
-        "@chefiapp/core-design-system": path.resolve(__dirname, "../core-design-system/index.ts"),
+        "@chefiapp/core-design-system/tokens.css": path.resolve(__dirname, "src/lib/core-design-system/tokens.css"),
+        "@chefiapp/core-design-system": path.resolve(__dirname, "src/lib/core-design-system/index.ts"),
       },
     },
     // Uma única instância de React: pre-bundle usa o mesmo alias para evitar Invalid hook call.
