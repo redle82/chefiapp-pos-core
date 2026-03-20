@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { useMentorshipMessages } from "../../../../core/mentorship/useMentorshipMessages";
+import { useMentorshipMessages } from "../../core/intelligence/useMentorshipMessages";
 import type { MentorshipEvent } from "../../core/intelligence/MentorEngine";
 import { extractMentorshipEvents } from "./extractMentorshipEvents";
 import "./MentorPage.css";
