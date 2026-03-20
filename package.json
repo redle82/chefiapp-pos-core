@@ -6,7 +6,8 @@
   "workspaces": [
     "merchant-portal",
     "mobile-app",
-    "desktop-app"
+    "desktop-app",
+    "core-design-system"
   ],
   "directories": {
     "test": "tests"
