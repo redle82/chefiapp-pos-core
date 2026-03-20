@@ -2,6 +2,49 @@
   padding: 24px;
 }
 
+/* -- Refresh Controls -- */
+
+.refreshControls {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.uptimeLabel,
+.lastRefreshLabel {
+  font-size: 11px;
+  color: var(--text-tertiary);
+  font-variant-numeric: tabular-nums;
+}
+
+.refreshSelect {
+  background-color: var(--surface-elevated, #1a1a2e);
+  border: 1px solid var(--surface-border, rgba(255, 255, 255, 0.12));
+  border-radius: 6px;
+  padding: 4px 8px;
+  font-size: 11px;
+  color: var(--text-secondary);
+  cursor: pointer;
+}
+
+.refreshBtn {
+  background: none;
+  border: 1px solid var(--surface-border, rgba(255, 255, 255, 0.12));
+  border-radius: 6px;
+  padding: 4px 10px;
+  font-size: 11px;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+
+.refreshBtn:hover {
+  background-color: var(--surface-hover, rgba(255, 255, 255, 0.06));
+}
+
+/* -- Layout -- */
+
 .widgetRow {
   margin-bottom: 24px;
 }
@@ -11,6 +54,7 @@
   font-weight: 700;
   color: var(--text-primary);
   margin: 0 0 12px 0;
+  cursor: default;
 }
 
 .metricsSection {
@@ -29,6 +73,8 @@
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }
+
+/* -- Metrics Grid -- */
 
 .metricsGrid {
   display: grid;
@@ -59,6 +105,16 @@
   font-variant-numeric: tabular-nums;
 }
 
+.metricWarn {
+  color: #f59e0b;
+}
+
+.metricDanger {
+  color: #ef4444;
+}
+
+/* -- Empty State -- */
+
 .emptyState {
   font-size: 13px;
   color: var(--text-tertiary);
@@ -69,9 +125,142 @@
   border: 1px dashed var(--surface-border, rgba(255, 255, 255, 0.08));
 }
 
+/* -- Alerts Section -- */
+
 .alertsSection {
   margin-bottom: 24px;
 }
+
+/* Alert Summary Bar */
+
+.alertSummaryBar {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.alertSummaryItem {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 12px 20px;
+  border-radius: 8px;
+  background-color: var(--card-bg-on-dark, var(--surface-elevated));
+  border: 1px solid var(--surface-border, rgba(255, 255, 255, 0.06));
+  min-width: 100px;
+}
+
+.alertSummaryCritical {
+  border-color: rgba(239, 68, 68, 0.4);
+  background-color: rgba(239, 68, 68, 0.08);
+}
+
+.alertSummaryWarning {
+  border-color: rgba(245, 158, 11, 0.4);
+  background-color: rgba(245, 158, 11, 0.08);
+}
+
+.alertSummaryCount {
+  font-size: 24px;
+  font-weight: 800;
+  color: var(--text-primary);
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+
+.alertSummaryCritical .alertSummaryCount {
+  color: #ef4444;
+}
+
+.alertSummaryWarning .alertSummaryCount {
+  color: #f59e0b;
+}
+
+.alertSummaryLabel {
+  font-size: 11px;
+  color: var(--text-tertiary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-top: 4px;
+}
+
+/* Alert Rules Config */
+
+.alertRulesDetails {
+  margin-bottom: 16px;
+}
+
+.alertRulesSummary {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  cursor: pointer;
+  padding: 8px 0;
+  user-select: none;
+}
+
+.alertRulesSummary:hover {
+  color: var(--text-primary);
+}
+
+.alertRulesGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.alertRuleCard {
+  padding: 10px 14px;
+  border-radius: 8px;
+  background-color: var(--card-bg-on-dark, var(--surface-elevated));
+  border: 1px solid var(--surface-border, rgba(255, 255, 255, 0.06));
+}
+
+.alertRuleHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 4px;
+}
+
+.alertRuleSeverity {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  padding: 1px 6px;
+  border-radius: 4px;
+}
+
+.severityCritical {
+  background-color: rgba(239, 68, 68, 0.15);
+  color: #ef4444;
+}
+
+.severityWarning {
+  background-color: rgba(245, 158, 11, 0.15);
+  color: #f59e0b;
+}
+
+.alertRuleId {
+  font-size: 10px;
+  color: var(--text-tertiary);
+  font-family: "SF Mono", "Fira Code", monospace;
+}
+
+.alertRuleName {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.alertRuleDesc {
+  font-size: 11px;
+  color: var(--text-secondary);
+  margin-top: 2px;
+}
+
+/* Alert List */
 
 .alertList {
   display: flex;
@@ -130,4 +319,23 @@
   font-size: 12px;
   color: var(--text-secondary);
   margin-top: 2px;
+}
+
+/* -- Raw Metrics (Expandable) -- */
+
+.rawMetricsDetails {
+  margin-bottom: 24px;
+}
+
+.rawMetricsDetails > summary {
+  cursor: pointer;
+  user-select: none;
+}
+
+.rawMetricsDetails > summary:hover {
+  opacity: 0.8;
+}
+
+.rawMetricsContent {
+  margin-top: 12px;
 }
