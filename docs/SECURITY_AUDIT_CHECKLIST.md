@@ -1,6 +1,8 @@
-# ChefIApp — Security Audit Checklist (DAY 7)
+> **DEPRECATED** -- This document is from an earlier audit cycle (Day 7). See [SECURITY-CHECKLIST.md](SECURITY-CHECKLIST.md) for the current canonical security checklist (audited 2026-03-20).
 
-**Objetivo**: Verificação pré-release de segurança.  
+# ChefIApp -- Security Audit Checklist (DAY 7)
+
+**Objetivo**: Verificacao pre-release de seguranca.
 **Ref**: IMPLEMENTATION_CHECKLIST.md Day 7 Afternoon.
 
 ---

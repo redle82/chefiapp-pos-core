@@ -310,6 +310,23 @@
     "viewDetails": "Ver Detalles",
     "closeAlert": "Cerrar alerta"
   },
+  "uiStates": {
+    "loading": "Cargando...",
+    "emptyTitle": "Nada aqui todavia",
+    "emptyDescription": "No hay elementos para mostrar.",
+    "errorTitle": "Algo salio mal",
+    "retry": "Intentar de nuevo",
+    "offlineTitle": "Trabajando sin conexion",
+    "offlineDescription": "Los cambios se sincronizaran cuando se restablezca la conexion.",
+    "pendingCount": "{{count}} cambios pendientes",
+    "forceSync": "Sincronizar ahora",
+    "permissionDeniedTitle": "Acceso denegado",
+    "permissionDeniedDescription": "Necesita el rol \"{{role}}\" para acceder a esta area.",
+    "currentRole": "Su rol actual: {{role}}",
+    "notFoundTitle": "Pagina no encontrada",
+    "notFoundDescription": "La pagina que busca no existe o ha sido movida.",
+    "goBack": "Volver"
+  },
   "staffLanding": {
     "tagline": "Gestión de equipo inteligente",
     "availableForTeam": "Disponible para su equipo",

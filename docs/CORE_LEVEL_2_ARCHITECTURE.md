@@ -1,8 +1,10 @@
-# 🧠 Core Level 2 - Arquitetura de Interpretação
+> **DEPRECATED** -- This document is from 2026-01-27. See [architecture/ARCHITECTURE_OVERVIEW.md](architecture/ARCHITECTURE_OVERVIEW.md) for the current architecture reference.
 
-**Data:** 2026-01-27  
-**Status:** 📋 **ARQUITETURA DEFINIDA**  
-**Objetivo:** Transformar telemetria em decisão acionável
+# Core Level 2 - Arquitetura de Interpretacao
+
+**Data:** 2026-01-27
+**Status:** ARQUITETURA DEFINIDA
+**Objetivo:** Transformar telemetria em decisao acionavel
 
 ---
 

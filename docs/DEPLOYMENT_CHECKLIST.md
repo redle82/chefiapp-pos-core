@@ -1,6 +1,8 @@
-# 🚀 Deployment Checklist - ChefIApp
+> **DEPRECATED** -- This document is outdated. See [RELEASE-CHECKLIST.md](RELEASE-CHECKLIST.md) for the current canonical release checklist.
 
-**Checklist completo para deploy em produção**
+# Deployment Checklist - ChefIApp
+
+**Checklist completo para deploy em producao**
 
 ---
 

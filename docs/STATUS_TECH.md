@@ -1,7 +1,9 @@
-# Technical Status — Stability View
+> **DEPRECATED** -- This document is outdated (2026-01-24). See [READINESS.md](READINESS.md) for the current technical readiness assessment.
 
-> **This document answers: "Is the system stable? Can I trust it technically?"**  
-> **Last updated:** 2026-01-24  
+# Technical Status -- Stability View
+
+> **This document answers: "Is the system stable? Can I trust it technically?"**
+> **Last updated:** 2026-01-24
 > **Target audience:** Developers, DevOps, Tech Leads
 
 ---

@@ -1,6 +1,8 @@
-# 🔒 Security Best Practices - ChefIApp
+> **DEPRECATED** -- This document contains general guidance that has been consolidated. See [SECURITY-CHECKLIST.md](SECURITY-CHECKLIST.md) for the audited security checklist and [architecture/THREAT_MODEL.md](architecture/THREAT_MODEL.md) for the threat model.
 
-**Guia de segurança e melhores práticas**
+# Security Best Practices - ChefIApp
+
+**Guia de seguranca e melhores praticas**
 
 ---
 

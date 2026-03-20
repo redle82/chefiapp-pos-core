@@ -1,7 +1,9 @@
-# ✅ Estado Atual Final — ChefIApp
+> **DEPRECATED** -- This document is a point-in-time snapshot from 2026-01-26. See [READINESS.md](READINESS.md) for the current system status.
+
+# Estado Atual Final -- ChefIApp
 
 **Data:** 2026-01-26
-**Status:** ✅ PRONTO PARA TASK ENGINE
+**Status:** PRONTO PARA TASK ENGINE
 
 ---
 
