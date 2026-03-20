@@ -5,6 +5,15 @@
  *   import { OfflineCatalogCache, useOfflineOrders } from 'core/sync/offline';
  */
 
+// ─── Sync/Offline Infrastructure ─────────────────────────────────────────────
+
+export { ConflictResolutionStrategy } from './ConflictResolutionStrategy';
+export { IdempotencyService } from './IdempotencyService';
+export { NetworkStateMachine } from './NetworkStateMachine';
+export { OfflineOperationRules } from './OfflineOperationRules';
+export { OfflineQueueManager } from './OfflineQueueManager';
+export { ReconnectReconciler } from './ReconnectReconciler';
+
 // ─── Classes ─────────────────────────────────────────────────────────────────
 
 export { OfflineCatalogCache } from './OfflineCatalogCache';
@@ -38,3 +47,37 @@ export type { SyncResult } from './OfflineSyncBridge';
 
 export type { CatalogSyncState } from './useCatalogSync';
 export type { CreateOrderInput, OfflineOrdersState } from './useOfflineOrders';
+
+// ─── Sync/Offline Infrastructure Types ──────────────────────────────────────
+
+export type {
+  ConflictReport,
+  EntityType,
+  ResolutionStrategy,
+  VersionedRecord,
+} from './ConflictResolutionStrategy';
+
+export type { ProcessedEntry } from './IdempotencyService';
+
+export type {
+  NetworkQuality,
+  NetworkState,
+  NetworkStateListener,
+} from './NetworkStateMachine';
+
+export type {
+  OfflineAction,
+  OfflineCapability,
+} from './OfflineOperationRules';
+
+export type {
+  DeadLetterItem,
+  QueueHealth,
+} from './OfflineQueueManager';
+
+export type {
+  ReconciliationEvent,
+  ReconciliationListener,
+  ReconciliationProgress,
+  ReconciliationResult,
+} from './ReconnectReconciler';
