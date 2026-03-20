@@ -1,14 +1,13 @@
 /**
- * BrowserBlockGuard — Route-level guard that blocks plain browser access
- * to operational modules (TPV, KDS, AppStaff).
+ * BrowserBlockGuard — Route-level guard for operational modules (TPV, KDS, AppStaff).
  *
- * These modules MUST run as installed applications:
- *   - TPV / KDS  → Electron desktop app
- *   - AppStaff   → Mobile app (Expo/React Native)
+ * In Trial/Pilot mode, browser access is ALWAYS allowed.
+ * In Production, modules require installed applications unless overridden by env vars:
+ *   - VITE_ALLOW_BROWSER_RUNTIME=true       → all modules
+ *   - VITE_ALLOW_BROWSER_TPV=true            → TPV/KDS only
+ *   - VITE_ALLOW_BROWSER_APPSTAFF=true       → AppStaff only
  *
- * Only Admin runs in the browser.
- *
- * Detection:
+ * Detection (installed app):
  *   - Electron: navigator.userAgent includes "Electron"
  *   - Standalone PWA: display-mode: standalone (temporary bridge)
  *   - React Native WebView: window.ReactNativeWebView exists
@@ -17,6 +16,7 @@
  */
 
 import { Outlet, useLocation } from "react-router-dom";
+import { isTrial } from "../../core/runtime";
 import styles from "./BrowserBlockGuard.module.css";
 
 interface OperationalGuardTelemetryPayload {
@@ -108,17 +108,27 @@ export function BrowserBlockGuard({
   const isTrialModeBypass =
     new URLSearchParams(location.search).get("mode") === "trial";
 
-  // Browser override: permite rodar módulos operacionais no navegador.
-  // Em DEV usa flags _DEV; em produção usa flags sem _DEV (para piloto/demo).
+  // Trial/Pilot: always allow browser access — TPV must work in browser for evaluation.
+  const isPilot =
+    typeof window !== "undefined" &&
+    window.localStorage.getItem("chefiapp_pilot_mode") === "true";
+
+  // Browser override via env vars (for production deployments that need browser access).
   const allowBrowserRuntime =
     String(import.meta.env.VITE_ALLOW_BROWSER_RUNTIME ?? import.meta.env.VITE_ALLOW_BROWSER_RUNTIME_DEV ?? "").toLowerCase() === "true" ||
     (requiredPlatform === "desktop" &&
       String(import.meta.env.VITE_ALLOW_BROWSER_TPV ?? import.meta.env.VITE_ALLOW_BROWSER_TPV_DEV ?? "").toLowerCase() === "true") ||
     (requiredPlatform === "mobile" &&
       String(import.meta.env.VITE_ALLOW_BROWSER_APPSTAFF ?? import.meta.env.VITE_ALLOW_BROWSER_APPSTAFF_DEV ?? "").toLowerCase() === "true");
-  const allowBrowserRuntimeDev = allowBrowserRuntime;
 
-  if (isInstalledRuntime || isTrialModeBypass || allowBrowserRuntimeDev) {
+  const shouldAllow =
+    isInstalledRuntime ||
+    isTrialModeBypass ||
+    isTrial ||
+    isPilot ||
+    allowBrowserRuntime;
+
+  if (shouldAllow) {
     const runtimeLabel: "browser" | "installed" = isInstalledRuntime
       ? "installed"
       : "browser";
@@ -170,7 +180,7 @@ export function BrowserBlockGuard({
     },
   );
 
-  // ── Block: plain browser ──
+  // ── Block: plain browser (production only) ──
   const isDesktop = requiredPlatform === "desktop";
 
   return (

@@ -330,7 +330,7 @@ const ConnectCodeView: React.FC<{ onBack: () => void }> = ({ onBack }) => {
             color="secondary"
             className={styles.debugLabel}
           >
-            {t("staffLanding.demoGuideCodesLabel")}
+            {t("staffLanding.trialGuideCodesLabel")}
           </Text>
           <ul className={styles.debugList}>
             <li>
