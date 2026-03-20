@@ -1,10 +1,9 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
-import { getAuthActions } from "../../core/auth/authAdapter";
+import { signInWithPhoneOtp } from "../../core/auth/supabaseAuth";
+import { signInWithGoogle } from "../../core/auth/supabaseAuth";
 import {
-  BackendType,
   getBackendConfigured,
-  getBackendType,
 } from "../../core/infra/backendAdapter";
 import { GlobalLoadingView } from "../../ui/design-system/components";
 import styles from "./AuthPhone.module.css";
@@ -28,40 +27,63 @@ export function PhoneLoginPage() {
     }
   }, [searchParams]);
 
+  const [googleLoading, setGoogleLoading] = useState(false);
   const hasBackend = getBackendConfigured();
-  const isDocker = getBackendType() === BackendType.docker;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
 
-    if (!phone.trim()) {
+    const cleaned = phone.trim().replace(/\s+/g, "");
+    if (!cleaned) {
       setError("Indica o teu telefone.");
       return;
     }
 
-    if (!hasBackend || !isDocker) {
-      setError(
-        "Backend não configurado para login por telefone. Verifica a configuração do Core.",
-      );
+    // Ensure phone has country code
+    const formatted = cleaned.startsWith("+") ? cleaned : `+351${cleaned}`;
+
+    if (!hasBackend) {
+      setError("Backend não configurado. Verifica VITE_CORE_URL e VITE_CORE_ANON_KEY.");
       return;
     }
 
     setLoading(true);
     try {
-      try {
-        window.localStorage.setItem("chefiapp_owner_phone", phone.trim());
-      } catch {
-        // ignore storage errors
+      const result = await signInWithPhoneOtp(formatted);
+      if ("error" in result) {
+        setError(result.error.message);
+        return;
       }
-      getAuthActions().signIn();
+      // Save phone for verify page
+      try {
+        window.localStorage.setItem("chefiapp_owner_phone", formatted);
+      } catch {
+        // ignore
+      }
       navigate("/auth/verify", { replace: true });
     } catch (err: unknown) {
-      const msg =
-        err instanceof Error ? err.message : "Erro ao entrar. Tente de novo.";
+      const msg = err instanceof Error ? err.message : "Erro ao enviar SMS. Tente de novo.";
       setError(msg);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleGoogleLogin = async () => {
+    setError(null);
+    setGoogleLoading(true);
+    try {
+      const result = await signInWithGoogle();
+      if ("error" in result) {
+        setError(result.error.message);
+      }
+      // OAuth redirects automatically — no navigate needed
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Erro ao entrar com Google.";
+      setError(msg);
+    } finally {
+      setGoogleLoading(false);
     }
   };
 
@@ -108,6 +130,42 @@ export function PhoneLoginPage() {
             {loading ? "A enviar..." : "Receber código"}
           </button>
         </form>
+
+        <div style={{ display: "flex", alignItems: "center", gap: "12px", margin: "20px 0" }}>
+          <div style={{ flex: 1, height: "1px", background: "#44403c" }} />
+          <span style={{ color: "#a3a3a3", fontSize: "13px" }}>ou</span>
+          <div style={{ flex: 1, height: "1px", background: "#44403c" }} />
+        </div>
+
+        <button
+          type="button"
+          onClick={handleGoogleLogin}
+          disabled={googleLoading}
+          style={{
+            width: "100%",
+            padding: "12px",
+            borderRadius: "8px",
+            border: "1px solid #44403c",
+            background: "#1c1917",
+            color: "#fff",
+            fontSize: "15px",
+            fontWeight: 500,
+            cursor: googleLoading ? "not-allowed" : "pointer",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: "10px",
+            opacity: googleLoading ? 0.6 : 1,
+          }}
+        >
+          <svg width="18" height="18" viewBox="0 0 24 24">
+            <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z"/>
+            <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+            <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+            <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+          </svg>
+          {googleLoading ? "A entrar..." : "Entrar com Google"}
+        </button>
 
         <div className={styles.centerHint}>
           <Link to="/auth/email" className={styles.link}>

@@ -1,33 +1,72 @@
 import { useState } from "react";
-import { Link, useSearchParams } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { verifyPhoneOtp } from "../../core/auth/supabaseAuth";
+import { signInWithPhoneOtp } from "../../core/auth/supabaseAuth";
 import styles from "./AuthPhone.module.css";
 
-/** E2E only: session key used by Keycloak auth (must match authKeycloak.ts). */
-const SESSION_KEY = "chefiapp_keycloak_session";
-const TOKEN_EXPIRY_KEY = "chefiapp_keycloak_expiry";
-
 export function VerifyCodePage() {
-  const [searchParams] = useSearchParams();
   const [code, setCode] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [resending, setResending] = useState(false);
+  const [resent, setResent] = useState(false);
+  const navigate = useNavigate();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const phone =
+    typeof window !== "undefined"
+      ? window.localStorage.getItem("chefiapp_owner_phone") ?? ""
+      : "";
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // E2E only: mock OTP for Playwright (signup → bootstrap flow). Requires ?e2e_mock_otp=1 in URL.
-    if (
-      searchParams.get("e2e_mock_otp") === "1" &&
-      code.trim().replace(/\s/g, "") === "123456"
-    ) {
-      const state = {
-        session: { access_token: "e2e-mock-token" },
-        user: { id: "e2e-mock-user", email: "e2e@example.com" },
-      };
-      sessionStorage.setItem(SESSION_KEY, JSON.stringify(state));
-      sessionStorage.setItem(TOKEN_EXPIRY_KEY, String(Date.now() + 3600_000));
-      window.location.href = "/welcome";
+    setError(null);
+
+    const cleaned = code.trim().replace(/\s/g, "");
+    if (!cleaned || cleaned.length < 6) {
+      setError("Introduz o código de 6 dígitos.");
       return;
     }
-    // A verificação real do código é feita pelo provedor de autenticação (ex.: Keycloak).
-    // Esta tela existe apenas como representação UX do fluxo \"/auth/verify\".
+
+    if (!phone) {
+      setError("Número de telefone não encontrado. Volta ao login.");
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const result = await verifyPhoneOtp(phone, cleaned);
+      if ("error" in result) {
+        setError(result.error.message);
+        return;
+      }
+      // Success — session is now active via Supabase auth state change
+      navigate("/welcome", { replace: true });
+    } catch (err: unknown) {
+      const msg =
+        err instanceof Error ? err.message : "Erro ao verificar código.";
+      setError(msg);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleResend = async () => {
+    if (!phone || resending) return;
+    setResending(true);
+    setError(null);
+    try {
+      const result = await signInWithPhoneOtp(phone);
+      if ("error" in result) {
+        setError(result.error.message);
+      } else {
+        setResent(true);
+        setTimeout(() => setResent(false), 5000);
+      }
+    } catch {
+      setError("Erro ao reenviar código.");
+    } finally {
+      setResending(false);
+    }
   };
 
   return (
@@ -41,28 +80,56 @@ export function VerifyCodePage() {
           />
           <h1 className={styles.title}>Confirmar código</h1>
           <p className={styles.subtitle}>
-            Introduz o código que recebeste por SMS.
+            Introduz o código de 6 dígitos enviado para{" "}
+            <strong>{phone || "o teu telefone"}</strong>.
           </p>
         </div>
 
         <form onSubmit={handleSubmit}>
+          {error && <p className={styles.error}>{error}</p>}
           <label className={styles.label}>Código SMS</label>
           <input
             type="text"
+            inputMode="numeric"
+            autoComplete="one-time-code"
+            maxLength={7}
             value={code}
             onChange={(e) => setCode(e.target.value)}
             placeholder="123 456"
             required
             className={styles.input}
+            autoFocus
           />
-          <button type="submit" className={styles.button}>
-            Entrar
+          <button type="submit" disabled={loading} className={styles.button}>
+            {loading ? "A verificar..." : "Entrar"}
           </button>
         </form>
 
         <div className={styles.centerHint}>
+          <button
+            type="button"
+            onClick={handleResend}
+            disabled={resending}
+            style={{
+              background: "none",
+              border: "none",
+              color: resent ? "#22c55e" : "#f59e0b",
+              cursor: resending ? "not-allowed" : "pointer",
+              fontSize: "14px",
+              padding: "8px 0",
+            }}
+          >
+            {resent
+              ? "✓ Código reenviado!"
+              : resending
+                ? "A reenviar..."
+                : "Reenviar código"}
+          </button>
+        </div>
+
+        <div className={styles.centerHint}>
           <Link to="/auth/phone" className={styles.link}>
-            Voltar ao login por telefone
+            ← Voltar ao login
           </Link>
         </div>
       </div>
