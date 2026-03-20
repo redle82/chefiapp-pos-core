@@ -7,6 +7,10 @@
 
 import { Logger } from "../logger";
 import { supabase } from "../supabase";
+import {
+  getAllCircuitBreakers,
+  type CircuitBreakerState,
+} from "../infra/CircuitBreaker";
 
 export type HealthStatus = "healthy" | "degraded" | "down";
 
@@ -17,10 +21,20 @@ export interface HealthCheckResult {
   details?: Record<string, unknown>;
 }
 
+export interface CircuitBreakerHealthEntry {
+  name: string;
+  state: CircuitBreakerState;
+  consecutiveFailures: number;
+  totalCalls: number;
+  totalFailures: number;
+  lastFailureTime: number;
+}
+
 export interface SystemHealthSummary {
   overall: HealthStatus;
   timestamp: string;
   checks: HealthCheckResult[];
+  circuitBreakers: CircuitBreakerHealthEntry[];
   durationMs: number;
 }
 
@@ -203,6 +217,67 @@ export async function checkServiceWorker(): Promise<HealthCheckResult> {
 }
 
 /**
+ * Collect circuit breaker health entries from the global registry.
+ */
+function getCircuitBreakerHealth(): CircuitBreakerHealthEntry[] {
+  const entries: CircuitBreakerHealthEntry[] = [];
+  for (const [, cb] of getAllCircuitBreakers()) {
+    const metrics = cb.getMetrics();
+    entries.push({
+      name: cb.name,
+      state: metrics.state,
+      consecutiveFailures: metrics.consecutiveFailures,
+      totalCalls: metrics.totalCalls,
+      totalFailures: metrics.totalFailures,
+      lastFailureTime: metrics.lastFailureTime,
+    });
+  }
+  return entries;
+}
+
+/**
+ * Check circuit breaker states — any OPEN breaker means degraded service.
+ */
+export async function checkCircuitBreakers(): Promise<HealthCheckResult> {
+  return timedCheck("circuit_breakers", async () => {
+    const entries = getCircuitBreakerHealth();
+    if (entries.length === 0) {
+      return { status: "healthy", details: { note: "No circuit breakers registered" } };
+    }
+
+    const openBreakers = entries.filter((e) => e.state === "OPEN");
+    const halfOpenBreakers = entries.filter((e) => e.state === "HALF_OPEN");
+
+    const breakerSummary = Object.fromEntries(
+      entries.map((e) => [e.name, e.state]),
+    );
+
+    if (openBreakers.length > 0) {
+      return {
+        status: "degraded",
+        details: {
+          breakers: breakerSummary,
+          openServices: openBreakers.map((e) => e.name),
+          warning: `${openBreakers.length} service(s) in OPEN state`,
+        },
+      };
+    }
+
+    if (halfOpenBreakers.length > 0) {
+      return {
+        status: "healthy",
+        details: {
+          breakers: breakerSummary,
+          note: `${halfOpenBreakers.length} service(s) recovering (HALF_OPEN)`,
+        },
+      };
+    }
+
+    return { status: "healthy", details: { breakers: breakerSummary } };
+  });
+}
+
+/**
  * Run all health checks and return aggregated summary.
  */
 export async function checkAll(): Promise<SystemHealthSummary> {
@@ -214,20 +289,26 @@ export async function checkAll(): Promise<SystemHealthSummary> {
     checkPaymentProviders(),
     checkPrinter(),
     checkServiceWorker(),
+    checkCircuitBreakers(),
   ]);
 
+  const circuitBreakers = getCircuitBreakerHealth();
   const overall = getSystemStatus(checks);
 
   const summary: SystemHealthSummary = {
     overall,
     timestamp: new Date().toISOString(),
     checks,
+    circuitBreakers,
     durationMs: Math.round(performance.now() - start),
   };
 
   Logger.debug("[HealthCheckService] System health check complete", {
     overall,
     durationMs: summary.durationMs,
+    openCircuitBreakers: circuitBreakers
+      .filter((cb) => cb.state === "OPEN")
+      .map((cb) => cb.name),
   });
 
   return summary;

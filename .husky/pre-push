@@ -1,0 +1,32 @@
+#!/bin/sh
+
+echo "Pre-push: Running gates before push..."
+
+# Gate 1: TypeScript must compile
+echo ""
+echo "  [1/2] TypeScript compile check..."
+npm run typecheck 2>/dev/null || {
+  echo ""
+  echo "Pre-push blocked: TypeScript errors found."
+  echo "Run 'npm run typecheck' to see details."
+  exit 1
+}
+echo "  [1/2] TypeScript: OK"
+
+# Gate 2: Smoke test build output (if dist exists)
+echo ""
+echo "  [2/2] Smoke test..."
+if [ -d "merchant-portal/dist" ]; then
+  bash merchant-portal/scripts/smoke-test.sh || {
+    echo ""
+    echo "Pre-push blocked: Smoke test failed."
+    echo "Run 'bash merchant-portal/scripts/smoke-test.sh' to see details."
+    exit 1
+  }
+  echo "  [2/2] Smoke test: OK"
+else
+  echo "  [2/2] Smoke test: skipped (no build output; run 'npm -w merchant-portal run build' first)"
+fi
+
+echo ""
+echo "Pre-push: All gates passed."
