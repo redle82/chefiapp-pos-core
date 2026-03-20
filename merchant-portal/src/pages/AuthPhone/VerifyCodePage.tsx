@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { verifyPhoneOtp } from "../../core/auth/supabaseAuth";
-import { signInWithPhoneOtp } from "../../core/auth/supabaseAuth";
+import { verifyEmailOtp, signInWithEmailOtp } from "../../core/auth/supabaseAuth";
 import styles from "./AuthPhone.module.css";
 
 export function VerifyCodePage() {
@@ -12,9 +11,9 @@ export function VerifyCodePage() {
   const [resent, setResent] = useState(false);
   const navigate = useNavigate();
 
-  const phone =
+  const email =
     typeof window !== "undefined"
-      ? window.localStorage.getItem("chefiapp_owner_phone") ?? ""
+      ? window.localStorage.getItem("chefiapp_auth_email") ?? ""
       : "";
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -27,23 +26,22 @@ export function VerifyCodePage() {
       return;
     }
 
-    if (!phone) {
-      setError("Número de telefone não encontrado. Volta ao login.");
+    if (!email) {
+      setError("Email não encontrado. Volta ao login.");
       return;
     }
 
     setLoading(true);
     try {
-      const result = await verifyPhoneOtp(phone, cleaned);
+      const result = await verifyEmailOtp(email, cleaned);
       if ("error" in result) {
         setError(result.error.message);
         return;
       }
-      // Success — session is now active via Supabase auth state change
+      // Success — session is now active
       navigate("/welcome", { replace: true });
     } catch (err: unknown) {
-      const msg =
-        err instanceof Error ? err.message : "Erro ao verificar código.";
+      const msg = err instanceof Error ? err.message : "Erro ao verificar código.";
       setError(msg);
     } finally {
       setLoading(false);
@@ -51,11 +49,11 @@ export function VerifyCodePage() {
   };
 
   const handleResend = async () => {
-    if (!phone || resending) return;
+    if (!email || resending) return;
     setResending(true);
     setError(null);
     try {
-      const result = await signInWithPhoneOtp(phone);
+      const result = await signInWithEmailOtp(email);
       if ("error" in result) {
         setError(result.error.message);
       } else {
@@ -73,21 +71,17 @@ export function VerifyCodePage() {
     <div className={styles.page}>
       <div className={styles.card}>
         <div className={styles.header}>
-          <img
-            src="/logo-chefiapp-clean.png"
-            alt="ChefIApp"
-            className={styles.logo}
-          />
+          <img src="/logo-chefiapp-clean.png" alt="ChefIApp" className={styles.logo} />
           <h1 className={styles.title}>Confirmar código</h1>
           <p className={styles.subtitle}>
             Introduz o código de 6 dígitos enviado para{" "}
-            <strong>{phone || "o teu telefone"}</strong>.
+            <strong>{email || "o teu email"}</strong>.
           </p>
         </div>
 
         <form onSubmit={handleSubmit}>
           {error && <p className={styles.error}>{error}</p>}
-          <label className={styles.label}>Código SMS</label>
+          <label className={styles.label}>Código</label>
           <input
             type="text"
             inputMode="numeric"
