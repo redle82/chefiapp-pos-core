@@ -50,12 +50,14 @@ const AuthFallback = () => <div style={{ minHeight: "100vh", display: "flex", al
 /** Fragment com todas as rotas de marketing — usar como filho direto de <Routes>. */
 export const MarketingRoutesFragment = (
   <Fragment>
-    {/* Public / Marketing — landing Gastro 2027 na raiz; OfficialLandingPage em /landing, /v2, /landing-v2. */}
+    {/* Public / Marketing — OfficialLandingPage (com logo proeminente) na raiz */}
     <Route
       path="/"
       element={
         <PWAOpenToTPVRedirect>
-          <GastroLandingPage />
+          <LandingLocaleProvider>
+            <OfficialLandingPage />
+          </LandingLocaleProvider>
         </PWAOpenToTPVRedirect>
       }
     />

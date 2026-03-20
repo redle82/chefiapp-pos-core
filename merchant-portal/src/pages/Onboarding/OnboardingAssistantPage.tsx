@@ -1,586 +1,1042 @@
 /**
- * Onboarding Assistente — Fluxo de 9 passos ligado ao backend.
+ * OnboardingAssistantPage -- Multi-step wizard that creates a REAL restaurant.
  *
- * Usa useOnboarding(): create_onboarding_context, update_onboarding_step, get_onboarding_state.
- * Barra de progresso (progress_percent). No fim redireciona para /app/staff/home.
- * Ref: IMPLEMENTATION_CHECKLIST.md Day 3, docs/contracts/FUNIL_VIDA_CLIENTE.md
+ * Step 1: Restaurant name + type (cafe, restaurante, bar, fast food)
+ * Step 2: Country selection (uses CountryConfig for timezone/currency/VAT)
+ * Step 3: NIF/tax ID + phone + address
+ * Step 4: Logo upload (optional)
+ * Step 5: Review & create
+ *
+ * At the end, calls OnboardingService.createRestaurant() which:
+ *   1. gm_organizations -- INSERT company
+ *   2. gm_restaurants   -- INSERT restaurant with all config
+ *   3. gm_restaurant_members -- INSERT owner membership
+ *   4. gm_onboarding_state -- INSERT tracker
+ *
+ * Then redirects to /admin/home.
  */
 
 import { useEffect, useState } from "react";
-import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
-import { useOnboarding } from "../../hooks/useOnboarding";
-import { getPostOnboardingRedirectUrl } from "../../infra/clients/OnboardingClient";
+import { useAuth } from "../../core/auth/useAuth";
+import {
+  COUNTRY_CONFIGS,
+  getCountryConfig,
+  inferCountry,
+} from "../../core/config/CountryConfig";
+import {
+  createRestaurant,
+  getOnboardingStatus,
+  completeOnboarding,
+  type CreateRestaurantData,
+} from "../../core/onboarding/OnboardingService";
 
-const STEPS_ORDER = [
-  "welcome",
-  "restaurant_setup",
-  "legal_info",
-  "menu",
-  "staff",
-  "payment",
-  "devices",
-  "verification",
-  "complete",
+// ---------------------------------------------------------------------------
+// Constants
+// ---------------------------------------------------------------------------
+
+const TOTAL_STEPS = 5;
+
+const RESTAURANT_TYPES = [
+  { value: "restaurante", label: "Restaurante", icon: "🍽" },
+  { value: "cafe", label: "Cafe", icon: "☕" },
+  { value: "bar", label: "Bar", icon: "🍸" },
+  { value: "fast_food", label: "Fast Food", icon: "🍔" },
+  { value: "fast_casual", label: "Fast Casual", icon: "🥗" },
+  { value: "outro", label: "Outro", icon: "🏪" },
 ] as const;
 
-const styles = {
+const COUNTRY_OPTIONS = Object.entries(COUNTRY_CONFIGS).map(([code, cfg]) => ({
+  code,
+  name: cfg.name,
+  flag: getFlagEmoji(code),
+  currency: cfg.currencySymbol,
+}));
+
+function getFlagEmoji(countryCode: string): string {
+  try {
+    const codePoints = countryCode
+      .toUpperCase()
+      .split("")
+      .map((c) => 0x1f1e6 + c.charCodeAt(0) - 65);
+    return String.fromCodePoint(...codePoints);
+  } catch {
+    return "";
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Styles
+// ---------------------------------------------------------------------------
+
+const S = {
   page: {
     minHeight: "100vh",
     background:
-      "linear-gradient(to bottom, #0a0a0a 0%, #171717 50%, #1c1917 100%)",
-    padding: 24,
+      "linear-gradient(to bottom, #0a0a0a 0%, #111111 40%, #1c1917 100%)",
+    padding: "24px 16px",
     fontFamily: "Inter, system-ui, sans-serif",
     color: "#fafafa",
+    display: "flex" as const,
+    flexDirection: "column" as const,
+    alignItems: "center",
+  },
+  container: {
+    width: "100%",
     maxWidth: 480,
-    margin: "0 auto" as const,
   },
-  header: { marginBottom: 28, textAlign: "center" as const },
-  title: {
-    fontSize: 22,
-    fontWeight: 800,
+  progressContainer: {
+    marginBottom: 32,
+  },
+  progressLabel: {
+    display: "flex",
+    justifyContent: "space-between",
+    fontSize: 12,
+    color: "#737373",
     marginBottom: 8,
-    color: "#fafafa",
-    letterSpacing: "-0.02em",
   },
-  subtitle: { fontSize: 14, color: "#a3a3a3", lineHeight: 1.5 },
-  progressBar: {
-    height: 6,
-    borderRadius: 3,
-    backgroundColor: "#404040",
+  progressTrack: {
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: "#262626",
     overflow: "hidden" as const,
-    marginBottom: 24,
   },
   progressFill: {
     height: "100%",
-    borderRadius: 3,
+    borderRadius: 2,
     backgroundColor: "#eab308",
-    transition: "width 0.3s ease",
+    transition: "width 0.4s cubic-bezier(0.4, 0, 0.2, 1)",
   },
-  form: { display: "flex", flexDirection: "column" as const, gap: 20 },
+  header: {
+    marginBottom: 32,
+  },
+  stepNumber: {
+    display: "inline-block",
+    fontSize: 12,
+    fontWeight: 600,
+    color: "#eab308",
+    marginBottom: 8,
+    textTransform: "uppercase" as const,
+    letterSpacing: "0.08em",
+  },
+  title: {
+    fontSize: 24,
+    fontWeight: 800,
+    color: "#fafafa",
+    letterSpacing: "-0.02em",
+    lineHeight: 1.2,
+    marginBottom: 8,
+  },
+  subtitle: {
+    fontSize: 14,
+    color: "#a3a3a3",
+    lineHeight: 1.5,
+  },
+  form: {
+    display: "flex",
+    flexDirection: "column" as const,
+    gap: 20,
+  },
+  field: {
+    display: "flex",
+    flexDirection: "column" as const,
+    gap: 6,
+  },
   label: {
-    display: "block",
     fontSize: 13,
     fontWeight: 500,
     color: "#a3a3a3",
-    marginBottom: 6,
   },
   input: {
     width: "100%",
     boxSizing: "border-box" as const,
     padding: "12px 14px",
     fontSize: 15,
-    border: "1px solid #404040",
-    borderRadius: 8,
+    border: "1px solid #333",
+    borderRadius: 10,
     backgroundColor: "#141414",
     color: "#fafafa",
+    outline: "none",
+    transition: "border-color 0.15s ease",
+  },
+  inputFocus: {
+    borderColor: "#eab308",
   },
   select: {
     width: "100%",
+    boxSizing: "border-box" as const,
     padding: "12px 14px",
     fontSize: 15,
-    border: "1px solid #404040",
-    borderRadius: 8,
+    border: "1px solid #333",
+    borderRadius: 10,
     backgroundColor: "#141414",
     color: "#fafafa",
     cursor: "pointer",
+    outline: "none",
+    appearance: "none" as const,
   },
-  row: { display: "flex", alignItems: "center", gap: 12 },
-  checkbox: { width: 20, height: 20, cursor: "pointer" },
-  button: {
-    marginTop: 16,
+  typeGrid: {
+    display: "grid",
+    gridTemplateColumns: "repeat(2, 1fr)",
+    gap: 10,
+  },
+  typeCard: {
+    padding: "14px 12px",
+    border: "1px solid #333",
+    borderRadius: 12,
+    backgroundColor: "#141414",
+    cursor: "pointer",
+    textAlign: "center" as const,
+    transition: "border-color 0.15s ease, background-color 0.15s ease",
+  },
+  typeCardActive: {
+    borderColor: "#eab308",
+    backgroundColor: "rgba(234, 179, 8, 0.08)",
+  },
+  typeIcon: {
+    fontSize: 24,
+    marginBottom: 4,
+    display: "block",
+  },
+  typeLabel: {
+    fontSize: 13,
+    fontWeight: 500,
+    color: "#d4d4d4",
+  },
+  countryGrid: {
+    display: "grid",
+    gridTemplateColumns: "repeat(2, 1fr)",
+    gap: 10,
+  },
+  countryCard: {
+    padding: "12px",
+    border: "1px solid #333",
+    borderRadius: 12,
+    backgroundColor: "#141414",
+    cursor: "pointer",
+    display: "flex",
+    alignItems: "center",
+    gap: 10,
+    transition: "border-color 0.15s ease, background-color 0.15s ease",
+  },
+  countryCardActive: {
+    borderColor: "#eab308",
+    backgroundColor: "rgba(234, 179, 8, 0.08)",
+  },
+  countryFlag: {
+    fontSize: 22,
+  },
+  countryInfo: {
+    display: "flex",
+    flexDirection: "column" as const,
+  },
+  countryName: {
+    fontSize: 13,
+    fontWeight: 500,
+    color: "#d4d4d4",
+  },
+  countryCurrency: {
+    fontSize: 11,
+    color: "#737373",
+  },
+  actions: {
+    display: "flex",
+    gap: 12,
+    marginTop: 24,
+  },
+  btnPrimary: {
+    flex: 1,
     minHeight: 48,
     padding: "14px 24px",
     fontSize: 16,
-    fontWeight: 600,
+    fontWeight: 700,
     border: "none",
-    borderRadius: 10,
+    borderRadius: 12,
     cursor: "pointer",
     backgroundColor: "#eab308",
     color: "#0a0a0a",
+    transition: "opacity 0.15s ease",
   },
-  buttonSecondary: {
-    marginTop: 8,
-    minHeight: 44,
-    padding: "12px 20px",
+  btnSecondary: {
+    minHeight: 48,
+    padding: "14px 20px",
     fontSize: 14,
     fontWeight: 500,
     border: "1px solid #404040",
-    borderRadius: 10,
+    borderRadius: 12,
     cursor: "pointer",
     backgroundColor: "transparent",
     color: "#a3a3a3",
   },
-  error: { color: "#f87171", fontSize: 13, marginTop: 8 },
-};
+  btnDisabled: {
+    opacity: 0.5,
+    cursor: "not-allowed" as const,
+  },
+  error: {
+    padding: "10px 14px",
+    borderRadius: 8,
+    backgroundColor: "rgba(248, 113, 113, 0.1)",
+    border: "1px solid rgba(248, 113, 113, 0.2)",
+    color: "#f87171",
+    fontSize: 13,
+  },
+  review: {
+    display: "flex",
+    flexDirection: "column" as const,
+    gap: 16,
+  },
+  reviewCard: {
+    padding: "16px",
+    borderRadius: 12,
+    border: "1px solid #262626",
+    backgroundColor: "#141414",
+  },
+  reviewLabel: {
+    fontSize: 11,
+    fontWeight: 600,
+    color: "#737373",
+    textTransform: "uppercase" as const,
+    letterSpacing: "0.06em",
+    marginBottom: 4,
+  },
+  reviewValue: {
+    fontSize: 15,
+    color: "#fafafa",
+    fontWeight: 500,
+  },
+  skipText: {
+    fontSize: 13,
+    color: "#737373",
+    textAlign: "center" as const,
+    marginTop: 8,
+  },
+  logoUpload: {
+    width: "100%",
+    minHeight: 120,
+    border: "2px dashed #333",
+    borderRadius: 16,
+    display: "flex",
+    flexDirection: "column" as const,
+    alignItems: "center",
+    justifyContent: "center",
+    cursor: "pointer",
+    backgroundColor: "#0d0d0d",
+    transition: "border-color 0.15s ease",
+    gap: 8,
+  },
+  logoUploadActive: {
+    borderColor: "#eab308",
+  },
+  logoPreview: {
+    width: 64,
+    height: 64,
+    objectFit: "cover" as const,
+    borderRadius: 16,
+  },
+  success: {
+    textAlign: "center" as const,
+    padding: "40px 0",
+  },
+  successIcon: {
+    fontSize: 48,
+    marginBottom: 16,
+    display: "block",
+  },
+  successTitle: {
+    fontSize: 22,
+    fontWeight: 800,
+    color: "#fafafa",
+    marginBottom: 8,
+  },
+  successSubtitle: {
+    fontSize: 14,
+    color: "#a3a3a3",
+    lineHeight: 1.5,
+  },
+  loading: {
+    display: "flex",
+    flexDirection: "column" as const,
+    alignItems: "center",
+    justifyContent: "center",
+    minHeight: "100vh",
+    background: "#0a0a0a",
+    color: "#a3a3a3",
+    fontFamily: "Inter, system-ui, sans-serif",
+    fontSize: 14,
+  },
+  spinner: {
+    width: 24,
+    height: 24,
+    border: "2px solid #333",
+    borderTopColor: "#eab308",
+    borderRadius: "50%",
+    marginBottom: 12,
+  },
+} as const;
 
-const PAISES = [
-  { value: "PT", label: "Portugal" },
-  { value: "BR", label: "Brasil" },
-  { value: "ES", label: "Espanha" },
-  { value: "FR", label: "França" },
-  { value: "OTHER", label: "Outro" },
-];
-
-const TIPOS = ["Bar", "Restaurante", "Café", "Fast Casual", "Outro"] as const;
+// ---------------------------------------------------------------------------
+// Component
+// ---------------------------------------------------------------------------
 
 export function OnboardingAssistantPage() {
-  const { t } = useTranslation();
   const navigate = useNavigate();
-  const {
-    state,
-    stateLoading,
-    stateError,
-    initializeOnboarding,
-    completeStep,
-    progressPercent,
-    isOnboarding,
-  } = useOnboarding();
+  const { session, loading: authLoading } = useAuth();
 
-  const [restaurantName, setRestaurantName] = useState("");
+  const [step, setStep] = useState(1);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [initialCheck, setInitialCheck] = useState(true);
 
-  // Form data for multi-step (persisted in step payloads)
-  const [setupData, setSetupData] = useState<Record<string, unknown>>({
-    pais: "PT",
-    tipo: "Restaurante",
-    numMesas: "",
-    usaImpressora: false,
-    usaKDS: false,
-    numUsuarios: "",
-    ownerName: "",
-    ownerEmail: "",
-    menuProducts: "",
-    staffCount: "",
-    paymentMethod: "card",
-  });
+  // Form state
+  const [restaurantName, setRestaurantName] = useState("");
+  const [restaurantType, setRestaurantType] = useState("restaurante");
+  const [country, setCountry] = useState(() => inferCountry());
+  const [taxId, setTaxId] = useState("");
+  const [phone, setPhone] = useState("");
+  const [address, setAddress] = useState("");
+  const [city, setCity] = useState("");
+  const [postalCode, setPostalCode] = useState("");
+  const [logoUrl, setLogoUrl] = useState<string | null>(null);
 
-  const currentStep = state?.current_step ?? "welcome";
-  const currentIndex = STEPS_ORDER.indexOf(
-    currentStep as (typeof STEPS_ORDER)[number],
-  );
-  const nextStep =
-    currentIndex >= 0 && currentIndex < STEPS_ORDER.length - 1
-      ? STEPS_ORDER[currentIndex + 1]
-      : null;
+  // Success state
+  const [created, setCreated] = useState(false);
+  const [createdRestaurantId, setCreatedRestaurantId] = useState<string | null>(null);
 
-  // Redirect to app when onboarding is complete (e.g. returning user)
+  // Redirect if already has restaurant
   useEffect(() => {
-    if (!stateLoading && state?.is_complete) {
-      navigate(getPostOnboardingRedirectUrl(), { replace: true });
+    if (authLoading) return;
+    if (!session) {
+      navigate("/auth/login", { replace: true });
+      return;
     }
-  }, [state?.is_complete, stateLoading, navigate]);
 
-  // After completing "complete" step, redirect after short delay
-  useEffect(() => {
-    if (currentStep === "complete" && state?.is_complete) {
-      const t = setTimeout(() => {
-        navigate(getPostOnboardingRedirectUrl(), { replace: true });
-      }, 2000);
-      return () => clearTimeout(t);
+    let cancelled = false;
+
+    async function check() {
+      try {
+        const status = await getOnboardingStatus();
+        if (cancelled) return;
+
+        if (status.hasRestaurant && status.isOnboardingComplete) {
+          navigate("/admin/home", { replace: true });
+          return;
+        }
+      } catch {
+        // Continue to onboarding
+      } finally {
+        if (!cancelled) setInitialCheck(false);
+      }
     }
-  }, [currentStep, state?.is_complete, navigate]);
 
-  const handleCreateRestaurant = async (e: React.FormEvent) => {
-    e.preventDefault();
+    check();
+    return () => { cancelled = true; };
+  }, [session, authLoading, navigate]);
+
+  // Derived
+  const countryConfig = getCountryConfig(country);
+  const progress = Math.round((step / TOTAL_STEPS) * 100);
+
+  // ---------------------------------------------------------------------------
+  // Handlers
+  // ---------------------------------------------------------------------------
+
+  function handleBack() {
+    if (step > 1) {
+      setStep(step - 1);
+      setError(null);
+    }
+  }
+
+  function handleNextStep1() {
+    const name = restaurantName.trim();
+    if (!name || name.length < 2) {
+      setError("O nome do restaurante deve ter pelo menos 2 caracteres.");
+      return;
+    }
     setError(null);
-    const name = restaurantName.trim() || "Meu Restaurante";
+    setStep(2);
+  }
+
+  function handleNextStep2() {
+    setError(null);
+    setStep(3);
+  }
+
+  function handleNextStep3() {
+    setError(null);
+    setStep(4);
+  }
+
+  function handleNextStep4() {
+    setError(null);
+    setStep(5);
+  }
+
+  async function handleCreate() {
+    setError(null);
     setSaving(true);
+
+    const data: CreateRestaurantData = {
+      name: restaurantName.trim(),
+      country,
+      restaurantType,
+      taxId: taxId.trim() || undefined,
+      phone: phone.trim() || undefined,
+      address: address.trim() || undefined,
+      city: city.trim() || undefined,
+      postalCode: postalCode.trim() || undefined,
+      logoUrl: logoUrl ?? undefined,
+    };
+
     try {
-      await initializeOnboarding(name);
-      setRestaurantName("");
+      const result = await createRestaurant(data);
+      setCreatedRestaurantId(result.restaurantId);
+      completeOnboarding(result.restaurantId);
+      setCreated(true);
+
+      // Redirect after brief celebration
+      setTimeout(() => {
+        navigate("/admin/home", { replace: true });
+      }, 2500);
     } catch (err) {
       setError(
-        err instanceof Error ? err.message : "Erro ao criar restaurante",
+        err instanceof Error ? err.message : "Erro ao criar restaurante. Tenta novamente.",
       );
     } finally {
       setSaving(false);
     }
-  };
+  }
 
-  const handleNextStep = async (
-    step: string,
-    data: Record<string, unknown> = {},
-  ) => {
-    setError(null);
-    setSaving(true);
-    try {
-      await completeStep(step, data);
-    } catch (err) {
-      setError(
-        err instanceof Error ? err.message : "Erro ao guardar este passo",
-      );
-    } finally {
-      setSaving(false);
-    }
-  };
+  function handleLogoChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
 
-  if (stateLoading && !state) {
+    // For now, create a local URL. In production this would upload to Supabase storage.
+    const url = URL.createObjectURL(file);
+    setLogoUrl(url);
+  }
+
+  // ---------------------------------------------------------------------------
+  // Render guards
+  // ---------------------------------------------------------------------------
+
+  if (authLoading || initialCheck) {
     return (
-      <div style={styles.page}>
-        <p style={styles.subtitle}>A carregar...</p>
+      <div style={S.loading}>
+        <div style={S.spinner} />
+        <p>A carregar...</p>
+        <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
       </div>
     );
   }
 
-  // No onboarding yet: welcome + create restaurant
-  if (!state) {
+  // ---------------------------------------------------------------------------
+  // Success screen
+  // ---------------------------------------------------------------------------
+
+  if (created) {
     return (
-      <div style={styles.page}>
-        <header style={styles.header}>
-          <h1 style={styles.title}>Bem-vindo ao ChefIApp</h1>
-          <p style={styles.subtitle}>
-            Cria o teu restaurante para começar. Depois seguimos a configuração
-            em poucos passos.
-          </p>
-        </header>
-        <form style={styles.form} onSubmit={handleCreateRestaurant}>
-          <div>
-            <label style={styles.label}>Nome do restaurante</label>
-            <input
-              type="text"
-              value={restaurantName}
-              onChange={(e) => setRestaurantName(e.target.value)}
-              placeholder="Ex: A Minha Tasca"
-              style={styles.input}
-              required
-            />
+      <div style={S.page}>
+        <div style={S.container}>
+          <div style={S.success}>
+            <span style={S.successIcon}>&#10003;</span>
+            <h1 style={S.successTitle}>Restaurante criado!</h1>
+            <p style={S.successSubtitle}>
+              &laquo;{restaurantName}&raquo; esta pronto.
+              <br />
+              A redirecionar para o painel de controlo...
+            </p>
           </div>
-          {error && <p style={styles.error}>{error}</p>}
-          <button type="submit" style={styles.button} disabled={saving}>
-            {saving ? "A criar..." : "Criar restaurante"}
-          </button>
-        </form>
+          {/* Progress complete */}
+          <div style={S.progressContainer}>
+            <div style={S.progressTrack}>
+              <div style={{ ...S.progressFill, width: "100%" }} />
+            </div>
+          </div>
+        </div>
+        <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
       </div>
     );
   }
 
-  const progress = Math.max(0, Math.min(100, progressPercent));
+  // ---------------------------------------------------------------------------
+  // Wizard
+  // ---------------------------------------------------------------------------
 
   return (
-    <div style={styles.page}>
-      <div style={styles.progressBar}>
-        <div
-          style={{ ...styles.progressFill, width: `${progress}%` }}
-          role="progressbar"
-          aria-valuenow={progress}
-          aria-valuemin={0}
-          aria-valuemax={100}
-        />
+    <div style={S.page}>
+      <div style={S.container}>
+        {/* Progress */}
+        <div style={S.progressContainer}>
+          <div style={S.progressLabel}>
+            <span>Passo {step} de {TOTAL_STEPS}</span>
+            <span>{progress}%</span>
+          </div>
+          <div style={S.progressTrack}>
+            <div style={{ ...S.progressFill, width: `${progress}%` }} />
+          </div>
+        </div>
+
+        {/* ─── Step 1: Name + Type ──────────────────────────────── */}
+        {step === 1 && (
+          <>
+            <div style={S.header}>
+              <span style={S.stepNumber}>Passo 1</span>
+              <h1 style={S.title}>Como se chama o teu restaurante?</h1>
+              <p style={S.subtitle}>
+                Escolhe o nome e o tipo de estabelecimento.
+              </p>
+            </div>
+
+            <div style={S.form}>
+              <div style={S.field}>
+                <label style={S.label}>Nome do restaurante</label>
+                <input
+                  type="text"
+                  value={restaurantName}
+                  onChange={(e) => setRestaurantName(e.target.value)}
+                  placeholder="Ex: A Minha Tasca"
+                  style={S.input}
+                  autoFocus
+                  maxLength={200}
+                />
+              </div>
+
+              <div style={S.field}>
+                <label style={S.label}>Tipo de estabelecimento</label>
+                <div style={S.typeGrid}>
+                  {RESTAURANT_TYPES.map((t) => (
+                    <div
+                      key={t.value}
+                      style={{
+                        ...S.typeCard,
+                        ...(restaurantType === t.value
+                          ? S.typeCardActive
+                          : {}),
+                      }}
+                      onClick={() => setRestaurantType(t.value)}
+                      role="button"
+                      tabIndex={0}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter" || e.key === " ") {
+                          setRestaurantType(t.value);
+                        }
+                      }}
+                    >
+                      <span style={S.typeIcon}>{t.icon}</span>
+                      <span style={S.typeLabel}>{t.label}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {error && <p style={S.error}>{error}</p>}
+
+              <div style={S.actions}>
+                <button
+                  type="button"
+                  style={S.btnPrimary}
+                  onClick={handleNextStep1}
+                >
+                  Continuar
+                </button>
+              </div>
+            </div>
+          </>
+        )}
+
+        {/* ─── Step 2: Country ──────────────────────────────────── */}
+        {step === 2 && (
+          <>
+            <div style={S.header}>
+              <span style={S.stepNumber}>Passo 2</span>
+              <h1 style={S.title}>Em que pais operas?</h1>
+              <p style={S.subtitle}>
+                Vamos configurar moeda, fuso horario e IVA automaticamente.
+              </p>
+            </div>
+
+            <div style={S.form}>
+              <div style={S.countryGrid}>
+                {COUNTRY_OPTIONS.map((c) => (
+                  <div
+                    key={c.code}
+                    style={{
+                      ...S.countryCard,
+                      ...(country === c.code ? S.countryCardActive : {}),
+                    }}
+                    onClick={() => setCountry(c.code)}
+                    role="button"
+                    tabIndex={0}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" || e.key === " ") {
+                        setCountry(c.code);
+                      }
+                    }}
+                  >
+                    <span style={S.countryFlag}>{c.flag}</span>
+                    <div style={S.countryInfo}>
+                      <span style={S.countryName}>{c.name}</span>
+                      <span style={S.countryCurrency}>{c.currency}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Show derived config */}
+              <div style={S.reviewCard}>
+                <div style={S.reviewLabel}>Configuracao automatica</div>
+                <div style={{ fontSize: 13, color: "#a3a3a3", lineHeight: 1.6 }}>
+                  Moeda: <strong style={{ color: "#fafafa" }}>{countryConfig.currency} ({countryConfig.currencySymbol})</strong>
+                  <br />
+                  Fuso horario: <strong style={{ color: "#fafafa" }}>{countryConfig.timezone}</strong>
+                  <br />
+                  IVA: <strong style={{ color: "#fafafa" }}>{countryConfig.vatRates.join("%, ")}%</strong>
+                  <br />
+                  Sistema fiscal: <strong style={{ color: "#fafafa" }}>{countryConfig.fiscalSystem.toUpperCase()}</strong>
+                </div>
+              </div>
+
+              {error && <p style={S.error}>{error}</p>}
+
+              <div style={S.actions}>
+                <button
+                  type="button"
+                  style={S.btnSecondary}
+                  onClick={handleBack}
+                >
+                  Voltar
+                </button>
+                <button
+                  type="button"
+                  style={S.btnPrimary}
+                  onClick={handleNextStep2}
+                >
+                  Continuar
+                </button>
+              </div>
+            </div>
+          </>
+        )}
+
+        {/* ─── Step 3: Tax ID + Contact ─────────────────────────── */}
+        {step === 3 && (
+          <>
+            <div style={S.header}>
+              <span style={S.stepNumber}>Passo 3</span>
+              <h1 style={S.title}>Dados fiscais e contacto</h1>
+              <p style={S.subtitle}>
+                Opcional agora -- podes completar depois nas definicoes.
+              </p>
+            </div>
+
+            <div style={S.form}>
+              <div style={S.field}>
+                <label style={S.label}>
+                  NIF / Tax ID{" "}
+                  <span style={{ color: "#525252", fontWeight: 400 }}>
+                    (opcional)
+                  </span>
+                </label>
+                <input
+                  type="text"
+                  value={taxId}
+                  onChange={(e) => setTaxId(e.target.value)}
+                  placeholder={
+                    country === "PT"
+                      ? "Ex: 123456789"
+                      : country === "BR"
+                        ? "Ex: 12.345.678/0001-90"
+                        : "Tax ID"
+                  }
+                  style={S.input}
+                  autoFocus
+                />
+              </div>
+
+              <div style={S.field}>
+                <label style={S.label}>
+                  Telefone{" "}
+                  <span style={{ color: "#525252", fontWeight: 400 }}>
+                    (opcional)
+                  </span>
+                </label>
+                <input
+                  type="tel"
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
+                  placeholder={`${countryConfig.phonePrefix} ...`}
+                  style={S.input}
+                />
+              </div>
+
+              <div style={S.field}>
+                <label style={S.label}>
+                  Morada{" "}
+                  <span style={{ color: "#525252", fontWeight: 400 }}>
+                    (opcional)
+                  </span>
+                </label>
+                <input
+                  type="text"
+                  value={address}
+                  onChange={(e) => setAddress(e.target.value)}
+                  placeholder="Rua, numero..."
+                  style={S.input}
+                />
+              </div>
+
+              <div style={{ display: "flex", gap: 12 }}>
+                <div style={{ ...S.field, flex: 2 }}>
+                  <label style={S.label}>Cidade</label>
+                  <input
+                    type="text"
+                    value={city}
+                    onChange={(e) => setCity(e.target.value)}
+                    placeholder="Cidade"
+                    style={S.input}
+                  />
+                </div>
+                <div style={{ ...S.field, flex: 1 }}>
+                  <label style={S.label}>Cod. Postal</label>
+                  <input
+                    type="text"
+                    value={postalCode}
+                    onChange={(e) => setPostalCode(e.target.value)}
+                    placeholder={country === "PT" ? "1000-001" : "00000"}
+                    style={S.input}
+                  />
+                </div>
+              </div>
+
+              {error && <p style={S.error}>{error}</p>}
+
+              <div style={S.actions}>
+                <button
+                  type="button"
+                  style={S.btnSecondary}
+                  onClick={handleBack}
+                >
+                  Voltar
+                </button>
+                <button
+                  type="button"
+                  style={S.btnPrimary}
+                  onClick={handleNextStep3}
+                >
+                  Continuar
+                </button>
+              </div>
+
+              <p style={S.skipText}>
+                Todos os campos sao opcionais neste passo.
+              </p>
+            </div>
+          </>
+        )}
+
+        {/* ─── Step 4: Logo Upload ──────────────────────────────── */}
+        {step === 4 && (
+          <>
+            <div style={S.header}>
+              <span style={S.stepNumber}>Passo 4</span>
+              <h1 style={S.title}>Logo do restaurante</h1>
+              <p style={S.subtitle}>
+                Adiciona o logo que aparecera nos recibos e no menu digital.
+                Podes saltar este passo.
+              </p>
+            </div>
+
+            <div style={S.form}>
+              <label
+                htmlFor="logo-upload"
+                style={{
+                  ...S.logoUpload,
+                  ...(logoUrl ? S.logoUploadActive : {}),
+                }}
+              >
+                {logoUrl ? (
+                  <img
+                    src={logoUrl}
+                    alt="Logo preview"
+                    style={S.logoPreview}
+                  />
+                ) : (
+                  <>
+                    <span style={{ fontSize: 32, color: "#525252" }}>+</span>
+                    <span
+                      style={{
+                        fontSize: 13,
+                        color: "#737373",
+                      }}
+                    >
+                      Clica para carregar imagem
+                    </span>
+                    <span
+                      style={{
+                        fontSize: 11,
+                        color: "#525252",
+                      }}
+                    >
+                      PNG, JPG, SVG (max. 2MB)
+                    </span>
+                  </>
+                )}
+              </label>
+              <input
+                id="logo-upload"
+                type="file"
+                accept="image/png,image/jpeg,image/svg+xml"
+                onChange={handleLogoChange}
+                style={{ display: "none" }}
+              />
+
+              {logoUrl && (
+                <button
+                  type="button"
+                  style={{
+                    ...S.btnSecondary,
+                    fontSize: 12,
+                    minHeight: 36,
+                    padding: "8px 16px",
+                    alignSelf: "center",
+                  }}
+                  onClick={() => setLogoUrl(null)}
+                >
+                  Remover logo
+                </button>
+              )}
+
+              {error && <p style={S.error}>{error}</p>}
+
+              <div style={S.actions}>
+                <button
+                  type="button"
+                  style={S.btnSecondary}
+                  onClick={handleBack}
+                >
+                  Voltar
+                </button>
+                <button
+                  type="button"
+                  style={S.btnPrimary}
+                  onClick={handleNextStep4}
+                >
+                  {logoUrl ? "Continuar" : "Saltar"}
+                </button>
+              </div>
+            </div>
+          </>
+        )}
+
+        {/* ─── Step 5: Review & Create ──────────────────────────── */}
+        {step === 5 && (
+          <>
+            <div style={S.header}>
+              <span style={S.stepNumber}>Passo 5</span>
+              <h1 style={S.title}>Confirma e cria</h1>
+              <p style={S.subtitle}>
+                Revisa os dados antes de criar o restaurante.
+                Podes alterar tudo depois.
+              </p>
+            </div>
+
+            <div style={S.review}>
+              {/* Restaurant info */}
+              <div style={S.reviewCard}>
+                <div style={S.reviewLabel}>Restaurante</div>
+                <div style={S.reviewValue}>{restaurantName}</div>
+                <div style={{ fontSize: 13, color: "#a3a3a3", marginTop: 4 }}>
+                  {RESTAURANT_TYPES.find((t) => t.value === restaurantType)?.label ?? restaurantType}
+                </div>
+              </div>
+
+              {/* Country + config */}
+              <div style={S.reviewCard}>
+                <div style={S.reviewLabel}>Pais e configuracao</div>
+                <div style={S.reviewValue}>
+                  {getFlagEmoji(country)}{" "}
+                  {COUNTRY_CONFIGS[country]?.name ?? country}
+                </div>
+                <div style={{ fontSize: 13, color: "#a3a3a3", marginTop: 4 }}>
+                  {countryConfig.currency} ({countryConfig.currencySymbol})
+                  {" "}&middot;{" "}
+                  {countryConfig.timezone}
+                  {" "}&middot;{" "}
+                  IVA {countryConfig.vatRates[0] ?? 0}%
+                </div>
+              </div>
+
+              {/* Tax & Contact */}
+              {(taxId || phone || address) && (
+                <div style={S.reviewCard}>
+                  <div style={S.reviewLabel}>Dados fiscais e contacto</div>
+                  {taxId && (
+                    <div style={{ fontSize: 13, color: "#d4d4d4" }}>
+                      NIF: {taxId}
+                    </div>
+                  )}
+                  {phone && (
+                    <div style={{ fontSize: 13, color: "#d4d4d4" }}>
+                      Tel: {phone}
+                    </div>
+                  )}
+                  {address && (
+                    <div style={{ fontSize: 13, color: "#d4d4d4" }}>
+                      {address}
+                      {city ? `, ${city}` : ""}
+                      {postalCode ? ` ${postalCode}` : ""}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Logo */}
+              {logoUrl && (
+                <div style={S.reviewCard}>
+                  <div style={S.reviewLabel}>Logo</div>
+                  <img
+                    src={logoUrl}
+                    alt="Logo"
+                    style={{
+                      width: 48,
+                      height: 48,
+                      borderRadius: 12,
+                      objectFit: "cover",
+                      marginTop: 4,
+                    }}
+                  />
+                </div>
+              )}
+
+              {error && <p style={S.error}>{error}</p>}
+
+              <div style={S.actions}>
+                <button
+                  type="button"
+                  style={S.btnSecondary}
+                  onClick={handleBack}
+                >
+                  Voltar
+                </button>
+                <button
+                  type="button"
+                  style={{
+                    ...S.btnPrimary,
+                    ...(saving ? S.btnDisabled : {}),
+                  }}
+                  disabled={saving}
+                  onClick={handleCreate}
+                >
+                  {saving ? "A criar..." : "Criar restaurante"}
+                </button>
+              </div>
+            </div>
+          </>
+        )}
       </div>
-      <header style={styles.header}>
-        <h1 style={styles.title}>Configuração guiada</h1>
-        <p style={styles.subtitle}>
-          Passo {currentIndex + 1} de {STEPS_ORDER.length}:{" "}
-          {currentStep.replace(/_/g, " ")}
-        </p>
-      </header>
 
-      {currentStep === "welcome" && (
-        <>
-          <p style={styles.subtitle}>
-            O teu restaurante &quot;{state.restaurant_name}&quot; foi criado.
-            Responde às perguntas seguintes para ativar TPV e equipa.
-          </p>
-          {error && <p style={styles.error}>{error}</p>}
-          <button
-            type="button"
-            style={styles.button}
-            disabled={saving}
-            onClick={() => handleNextStep("restaurant_setup", {})}
-          >
-            {saving ? t("common:saving") : t("common:continue")}
-          </button>
-        </>
-      )}
-
-      {currentStep === "restaurant_setup" && (
-        <form
-          style={styles.form}
-          onSubmit={(e) => {
-            e.preventDefault();
-            handleNextStep("legal_info", {
-              pais: setupData.pais,
-              tipo: setupData.tipo,
-              numMesas: setupData.numMesas,
-            });
-          }}
-        >
-          <div>
-            <label style={styles.label}>País</label>
-            <select
-              value={String(setupData.pais)}
-              onChange={(e) =>
-                setSetupData((s) => ({ ...s, pais: e.target.value }))
-              }
-              style={styles.select}
-            >
-              {PAISES.map((p) => (
-                <option key={p.value} value={p.value}>
-                  {p.label}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div>
-            <label style={styles.label}>Tipo de estabelecimento</label>
-            <select
-              value={String(setupData.tipo)}
-              onChange={(e) =>
-                setSetupData((s) => ({ ...s, tipo: e.target.value }))
-              }
-              style={styles.select}
-            >
-              {TIPOS.map((t) => (
-                <option key={t} value={t}>
-                  {t}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div>
-            <label style={styles.label}>Número de mesas (estimativa)</label>
-            <input
-              type="number"
-              min={0}
-              value={String(setupData.numMesas)}
-              onChange={(e) =>
-                setSetupData((s) => ({ ...s, numMesas: e.target.value }))
-              }
-              placeholder="Ex: 10"
-              style={styles.input}
-            />
-          </div>
-          {error && <p style={styles.error}>{error}</p>}
-          <button type="submit" style={styles.button} disabled={saving}>
-            {saving ? t("common:saving") : t("common:continue")}
-          </button>
-        </form>
-      )}
-
-      {currentStep === "legal_info" && (
-        <form
-          style={styles.form}
-          onSubmit={(e) => {
-            e.preventDefault();
-            handleNextStep("menu", {
-              ownerName: setupData.ownerName,
-              ownerEmail: setupData.ownerEmail,
-            });
-          }}
-        >
-          <div>
-            <label style={styles.label}>Nome do responsável (opcional)</label>
-            <input
-              type="text"
-              value={String(setupData.ownerName ?? "")}
-              onChange={(e) =>
-                setSetupData((s) => ({ ...s, ownerName: e.target.value }))
-              }
-              style={styles.input}
-            />
-          </div>
-          <div>
-            <label style={styles.label}>Email (opcional)</label>
-            <input
-              type="email"
-              value={String(setupData.ownerEmail ?? "")}
-              onChange={(e) =>
-                setSetupData((s) => ({ ...s, ownerEmail: e.target.value }))
-              }
-              style={styles.input}
-            />
-          </div>
-          {error && <p style={styles.error}>{error}</p>}
-          <button type="submit" style={styles.button} disabled={saving}>
-            {saving ? t("common:saving") : t("common:continue")}
-          </button>
-        </form>
-      )}
-
-      {currentStep === "menu" && (
-        <form
-          style={styles.form}
-          onSubmit={(e) => {
-            e.preventDefault();
-            handleNextStep("staff", {
-              menuProducts: setupData.menuProducts,
-            });
-          }}
-        >
-          <div>
-            <label style={styles.label}>
-              Quantos produtos no menu? (estimativa, opcional)
-            </label>
-            <input
-              type="number"
-              min={0}
-              value={String(setupData.menuProducts ?? "")}
-              onChange={(e) =>
-                setSetupData((s) => ({ ...s, menuProducts: e.target.value }))
-              }
-              placeholder="Ex: 20"
-              style={styles.input}
-            />
-          </div>
-          {error && <p style={styles.error}>{error}</p>}
-          <button type="submit" style={styles.button} disabled={saving}>
-            {saving ? t("common:saving") : t("common:continue")}
-          </button>
-        </form>
-      )}
-
-      {currentStep === "staff" && (
-        <form
-          style={styles.form}
-          onSubmit={(e) => {
-            e.preventDefault();
-            handleNextStep("payment", {
-              staffCount: setupData.numUsuarios,
-            });
-          }}
-        >
-          <div>
-            <label style={styles.label}>
-              Quantos colaboradores? (estimativa)
-            </label>
-            <input
-              type="number"
-              min={1}
-              value={String(setupData.numUsuarios ?? "")}
-              onChange={(e) =>
-                setSetupData((s) => ({ ...s, numUsuarios: e.target.value }))
-              }
-              placeholder="Ex: 3"
-              style={styles.input}
-            />
-          </div>
-          {error && <p style={styles.error}>{error}</p>}
-          <button type="submit" style={styles.button} disabled={saving}>
-            {saving ? t("common:saving") : t("common:continue")}
-          </button>
-        </form>
-      )}
-
-      {currentStep === "payment" && (
-        <form
-          style={styles.form}
-          onSubmit={(e) => {
-            e.preventDefault();
-            handleNextStep("devices", {
-              paymentMethod: setupData.paymentMethod,
-            });
-          }}
-        >
-          <div>
-            <label style={styles.label}>Método de pagamento principal</label>
-            <select
-              value={String(setupData.paymentMethod ?? "card")}
-              onChange={(e) =>
-                setSetupData((s) => ({ ...s, paymentMethod: e.target.value }))
-              }
-              style={styles.select}
-            >
-              <option value="card">Cartão (TPV)</option>
-              <option value="cash">Numerário</option>
-              <option value="mbway">MB Way</option>
-              <option value="both">Cartão + Numerário</option>
-            </select>
-          </div>
-          {error && <p style={styles.error}>{error}</p>}
-          <button type="submit" style={styles.button} disabled={saving}>
-            {saving ? t("common:saving") : t("common:continue")}
-          </button>
-        </form>
-      )}
-
-      {currentStep === "devices" && (
-        <form
-          style={styles.form}
-          onSubmit={(e) => {
-            e.preventDefault();
-            handleNextStep("verification", {
-              usaImpressora: setupData.usaImpressora,
-              usaKDS: setupData.usaKDS,
-            });
-          }}
-        >
-          <div style={styles.row}>
-            <input
-              type="checkbox"
-              id="impressora"
-              checked={Boolean(setupData.usaImpressora)}
-              onChange={(e) =>
-                setSetupData((s) => ({
-                  ...s,
-                  usaImpressora: e.target.checked,
-                }))
-              }
-              style={styles.checkbox}
-            />
-            <label style={styles.label} htmlFor="impressora">
-              Usa impressora?
-            </label>
-          </div>
-          <div style={styles.row}>
-            <input
-              type="checkbox"
-              id="kds"
-              checked={Boolean(setupData.usaKDS)}
-              onChange={(e) =>
-                setSetupData((s) => ({ ...s, usaKDS: e.target.checked }))
-              }
-              style={styles.checkbox}
-            />
-            <label style={styles.label} htmlFor="kds">
-              Vai usar KDS (ecrã cozinha)?
-            </label>
-          </div>
-          {error && <p style={styles.error}>{error}</p>}
-          <button type="submit" style={styles.button} disabled={saving}>
-            {saving ? t("common:saving") : t("common:continue")}
-          </button>
-        </form>
-      )}
-
-      {currentStep === "verification" && (
-        <>
-          <p style={styles.subtitle}>
-            Confirma os dados e clica em &quot;Concluir&quot; para ativar o teu
-            restaurante.
-          </p>
-          {error && <p style={styles.error}>{error}</p>}
-          <button
-            type="button"
-            style={styles.button}
-            disabled={saving}
-            onClick={() => handleNextStep("complete", {})}
-          >
-            {saving ? t("common:saving") : t("common:finishSetup")}
-          </button>
-        </>
-      )}
-
-      {currentStep === "complete" && (
-        <>
-          <p style={styles.subtitle}>
-            Parabéns! O teu restaurante está pronto. Redirecionando para o
-            centro de operações...
-          </p>
-          <div style={styles.progressBar}>
-            <div
-              style={{ ...styles.progressFill, width: "100%" }}
-              role="progressbar"
-              aria-valuenow={100}
-              aria-valuemin={0}
-              aria-valuemax={100}
-            />
-          </div>
-        </>
-      )}
-
-      {stateError && <p style={styles.error}>{stateError.message}</p>}
+      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
     </div>
   );
 }

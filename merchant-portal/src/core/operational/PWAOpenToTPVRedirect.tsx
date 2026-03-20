@@ -83,6 +83,21 @@ export function PWAOpenToTPVRedirect({
     return <>{children}</>;
   }
 
+  // Only redirect to TPV/KDS when running as PWA (standalone) or Electron.
+  // In a normal browser, the landing page should ALWAYS show at /.
+  const standalone = isStandalone();
+  const isElectron = typeof window !== "undefined" && (
+    (window as Record<string, unknown>).__CHEFIAPP_ELECTRON === true ||
+    navigator.userAgent.includes("Electron")
+  );
+
+  if (!standalone && !isElectron) {
+    Logger.debug(
+      `[PWA-Guard] PWAOpenToTPVRedirect: normal browser → showing landing page`,
+    );
+    return <>{children}</>;
+  }
+
   const device = getInstalledDevice();
   if (!device || (device.module_id !== "tpv" && device.module_id !== "kds")) {
     return <>{children}</>;
@@ -91,7 +106,7 @@ export function PWAOpenToTPVRedirect({
   Logger.debug(
     `[PWA-Guard] PWAOpenToTPVRedirect: REDIRECTING from ${pathname} to ${to}`,
   );
-  // Raiz: sempre ir para TPV/KDS quando instalado (browser ou PWA).
+  // PWA/Electron: ir para TPV/KDS quando instalado.
   if (pathname === "/") {
     return <Navigate to={to} replace />;
   }
