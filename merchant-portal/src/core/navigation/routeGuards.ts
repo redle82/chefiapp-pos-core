@@ -22,7 +22,7 @@ export interface RuntimeLike {
 }
 
 /**
- * Destino canónico após "entrada" (path de entrada = /auth/phone).
+ * Destino canónico após "entrada" (path de entrada = /auth/email).
  * Chama resolveNextRoute e retorna o path para onde o utilizador deve ir.
  */
 export function resolveEntryRoute(
@@ -33,13 +33,13 @@ export function resolveEntryRoute(
     isAuthenticated: session.isAuthenticated,
     hasOrganization: runtime.hasOrganization ?? false,
     hasRestaurant: runtime.hasRestaurant ?? runtime.hasOrganization,
-    currentPath: "/auth/phone",
+    currentPath: "/auth/email",
     systemState: runtime.systemState,
     activated: runtime.activated,
   };
   const decision = resolveNextRoute(state);
   if (decision.type === "REDIRECT") return decision.to;
-  return "/auth/phone";
+  return "/auth/email";
 }
 
 /**

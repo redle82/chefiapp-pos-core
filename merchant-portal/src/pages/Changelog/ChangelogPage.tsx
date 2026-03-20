@@ -115,7 +115,7 @@ export function ChangelogPage() {
             <span className="text-sm font-semibold text-white">ChefIApp</span>
           </Link>
           <Link
-            to="/auth/phone"
+            to="/auth/email"
             className="text-sm font-medium text-amber-500 hover:text-amber-400 transition-colors"
           >
             Testar grátis

@@ -122,7 +122,7 @@ export function VerifyCodePage() {
         </div>
 
         <div className={styles.centerHint}>
-          <Link to="/auth/phone" className={styles.link}>
+          <Link to="/auth/email" className={styles.link}>
             ← Voltar ao login
           </Link>
         </div>

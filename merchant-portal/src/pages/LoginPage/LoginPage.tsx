@@ -174,7 +174,7 @@ export function LoginPage() {
                 Entrar com email
               </Link>
               <span className={styles.dot}>·</span>
-              <Link to="/auth/phone" className={styles.secondaryLink}>
+              <Link to="/auth/email" className={styles.secondaryLink}>
                 Entrar com telefone
               </Link>
             </div>

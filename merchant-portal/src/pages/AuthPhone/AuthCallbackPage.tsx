@@ -60,7 +60,7 @@ export function AuthCallbackPage() {
         </div>
         {error && (
           <button
-            onClick={() => navigate("/auth/phone")}
+            onClick={() => navigate("/auth/email")}
             className={styles.button}
           >
             Voltar ao login

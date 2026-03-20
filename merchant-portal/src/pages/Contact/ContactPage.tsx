@@ -88,7 +88,7 @@ export function ContactPage() {
           ChefIApp
         </Link>
         <Link
-          to="/auth/phone"
+          to="/auth/email"
           style={{
             background: "#f59e0b",
             color: "#000",
@@ -187,7 +187,7 @@ export function ContactPage() {
           </a>
 
           <Link
-            to="/auth/phone"
+            to="/auth/email"
             style={{
               display: "flex",
               flexDirection: "column",

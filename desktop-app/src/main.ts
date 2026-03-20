@@ -71,7 +71,70 @@ const DESKTOP_BRIDGE_PORT = Number(
 const FRONTEND_INDEX_PATH = app.isPackaged
   ? path.join(process.resourcesPath, "frontend", "index.html")
   : path.join(app.getAppPath(), "resources", "frontend", "index.html");
+const FRONTEND_DIR = app.isPackaged
+  ? path.join(process.resourcesPath, "frontend")
+  : path.join(app.getAppPath(), "resources", "frontend");
 const HAS_BUNDLED_FRONTEND = !IS_DEV && existsSync(FRONTEND_INDEX_PATH);
+
+/**
+ * Local HTTP server for bundled frontend.
+ * file:// protocol breaks React Router (navigate("/x") → file:///x).
+ * Instead, serve the frontend via localhost HTTP so all SPA routing works.
+ */
+let LOCAL_FRONTEND_URL = "";
+
+async function startLocalFrontendServer(): Promise<string> {
+  if (IS_DEV || LOCAL_FRONTEND_URL) return LOCAL_FRONTEND_URL || DEV_SERVER_URL;
+
+  const { createReadStream, existsSync: fsExists } = await import("node:fs");
+  const mimeTypes: Record<string, string> = {
+    ".html": "text/html", ".js": "application/javascript", ".css": "text/css",
+    ".json": "application/json", ".png": "image/png", ".jpg": "image/jpeg",
+    ".svg": "image/svg+xml", ".ico": "image/x-icon", ".woff2": "font/woff2",
+    ".woff": "font/woff", ".ttf": "font/ttf", ".map": "application/json",
+    ".webp": "image/webp", ".webmanifest": "application/manifest+json",
+  };
+
+  return new Promise((resolve) => {
+    const server = http.createServer((req, res) => {
+      const url = new URL(req.url || "/", "http://localhost");
+      const pathname = decodeURIComponent(url.pathname);
+      let filePath = path.join(FRONTEND_DIR, pathname === "/" ? "index.html" : pathname);
+
+      // Only SPA fallback for navigation requests (no extension = HTML route)
+      // NEVER fallback for .js, .css, .json, .map, .png etc — return 404 instead
+      if (!fsExists(filePath)) {
+        const ext = path.extname(filePath);
+        if (ext && ext !== ".html") {
+          // Asset not found — return proper 404
+          res.writeHead(404, { "Content-Type": "text/plain" });
+          res.end(`Not found: ${pathname}`);
+          return;
+        }
+        // SPA fallback: serve index.html for HTML routes
+        filePath = path.join(FRONTEND_DIR, "index.html");
+      }
+
+      const ext = path.extname(filePath);
+      const contentType = mimeTypes[ext] || "application/octet-stream";
+
+      res.writeHead(200, { "Content-Type": contentType });
+      createReadStream(filePath).pipe(res).on("error", () => {
+        res.writeHead(404, { "Content-Type": "text/plain" });
+        res.end("Not found");
+      });
+    });
+
+    server.listen(0, "127.0.0.1", () => {
+      const addr = server.address();
+      if (addr && typeof addr === "object") {
+        LOCAL_FRONTEND_URL = `http://127.0.0.1:${addr.port}`;
+        log.info(`[frontend-server] Serving from ${LOCAL_FRONTEND_URL} (dir: ${FRONTEND_DIR})`);
+        resolve(LOCAL_FRONTEND_URL);
+      }
+    });
+  });
+}
 
 /**
  * True only in development. Packaged builds must always use bundled frontend.
@@ -1103,16 +1166,17 @@ function getPreloadPath(): string {
 }
 
 /**
- * Resolve the URL to load in the BrowserWindow.
- * Dev: Vite dev server. Prod: local file served via custom protocol or file://.
+ * Resolve the URL for a route.
+ * Dev: Vite dev server. Prod: app:// protocol via electron-serve.
  */
 function resolveUrl(route: string): string {
   if (USE_DEV_SERVER) {
     return `${DEV_SERVER_URL}${route}`;
   }
-  // Production: load from packaged frontend dist
-  return FRONTEND_INDEX_PATH;
+  // Production: local HTTP server serving bundled frontend (SPA routing works)
+  return `${LOCAL_FRONTEND_URL}${route}`;
 }
+
 
 function createWindow(
   config: typeof TPV_WINDOW | typeof KDS_WINDOW,
@@ -1169,9 +1233,7 @@ function createWindow(
         if (USE_DEV_SERVER) {
           void win.webContents.loadURL(`${DEV_SERVER_URL}${allowedRoute}`);
         } else {
-          void win.webContents.loadFile(resolveUrl("/"), {
-            hash: allowedRoute,
-          });
+          void win.webContents.loadURL(resolveUrl(allowedRoute));
         }
         log.info("[boot] forced back to", {
           route: allowedRoute,
@@ -1189,9 +1251,7 @@ function createWindow(
         if (USE_DEV_SERVER) {
           void win.webContents.loadURL(`${DEV_SERVER_URL}${allowedRoute}`);
         } else {
-          void win.webContents.loadFile(resolveUrl("/"), {
-            hash: allowedRoute,
-          });
+          void win.webContents.loadURL(resolveUrl(allowedRoute));
         }
       }
       return { action: "deny" };
@@ -1214,9 +1274,7 @@ function createWindow(
     if (USE_DEV_SERVER) {
       void win.webContents.loadURL(`${DEV_SERVER_URL}${allowedRoute}`);
     } else {
-      void win.webContents.loadFile(resolveUrl("/"), {
-        hash: allowedRoute,
-      });
+      void win.webContents.loadURL(resolveUrl(allowedRoute));
     }
     log.info("[boot] forced back to", {
       route: allowedRoute,
@@ -1357,7 +1415,7 @@ function createWindow(
       if (USE_DEV_SERVER) {
         void win.webContents.loadURL(`${DEV_SERVER_URL}${allowedRoute}`);
       } else {
-        void win.webContents.loadFile(resolveUrl("/"), { hash: allowedRoute });
+        void win.webContents.loadURL(resolveUrl(allowedRoute));
       }
       log.info("[boot] forced back to", {
         route: allowedRoute,
@@ -1432,7 +1490,7 @@ async function loadApp(): Promise<void> {
     ? terminal.terminalType === "KDS"
       ? "/op/kds"
       : "/op/tpv"
-    : "/electron/setup";
+    : "/op/tpv";
 
   const pairedModule: OperationalModule | null = terminal
     ? terminal.terminalType === "KDS"
@@ -1489,11 +1547,11 @@ async function loadApp(): Promise<void> {
       `Loading paired terminal: ${terminal.terminalType} (${terminal.terminalId})`,
     );
 
-    const loadedUrl = USE_DEV_SERVER ? resolveUrl(route) : `file:// (hash: ${route})`;
+    const loadedUrl = USE_DEV_SERVER ? resolveUrl(route) : resolveUrl(route);
     if (USE_DEV_SERVER) {
       await mainWindow.loadURL(resolveUrl(route));
     } else {
-      await mainWindow.loadFile(resolveUrl("/"), { hash: route });
+      await mainWindow.loadURL(resolveUrl(route));
     }
     log.info("[boot] frontend loaded", { url: loadedUrl, useDevServer: USE_DEV_SERVER });
     // Restaurar layout de painéis KDS previamente abertos neste terminal.
@@ -1508,11 +1566,11 @@ async function loadApp(): Promise<void> {
       hasMismatch,
     });
 
-    const loadedUrl = USE_DEV_SERVER ? resolveUrl(route) : `file:// (hash: ${route})`;
+    const loadedUrl = USE_DEV_SERVER ? resolveUrl(route) : resolveUrl(route);
     if (USE_DEV_SERVER) {
       await mainWindow.loadURL(resolveUrl(route));
     } else {
-      await mainWindow.loadFile(resolveUrl("/"), { hash: route });
+      await mainWindow.loadURL(resolveUrl(route));
     }
     log.info("[boot] frontend loaded (setup)", { url: loadedUrl, useDevServer: USE_DEV_SERVER });
   }
@@ -1633,7 +1691,7 @@ ipcMain.handle(
     if (USE_DEV_SERVER) {
       await targetWindow.loadURL(`${DEV_SERVER_URL}${route}`);
     } else {
-      await targetWindow.loadFile(resolveUrl("/"), { hash: route });
+      await targetWindow.loadURL(resolveUrl(route));
     }
   },
 );
@@ -1727,18 +1785,14 @@ async function openKdsPanelInternal(
     if (USE_DEV_SERVER) {
       void win.webContents.loadURL(`${DEV_SERVER_URL}${route}${search}`);
     } else {
-      void win.webContents.loadFile(resolveUrl("/"), {
-        hash: `${route}${search}`,
-      });
+      void win.webContents.loadURL(resolveUrl(`${route}${search}`));
     }
   });
 
   if (USE_DEV_SERVER) {
     await win.loadURL(`${DEV_SERVER_URL}${route}${search}`);
   } else {
-    await win.loadFile(resolveUrl("/"), {
-      hash: `${route}${search}`,
-    });
+    await win.loadURL(resolveUrl(`${route}${search}`));
   }
 }
 
@@ -1783,7 +1837,7 @@ function handleDeepLink(url: string): void {
         if (USE_DEV_SERVER) {
           void win.loadURL(`${DEV_SERVER_URL}${setupRoute}`);
         } else {
-          void win.loadFile(resolveUrl("/"), { hash: setupRoute });
+          void win.loadURL(resolveUrl(setupRoute));
         }
       }
       return;
@@ -1850,7 +1904,7 @@ function handleDeepLink(url: string): void {
         if (USE_DEV_SERVER) {
           void targetWindow.loadURL(`${DEV_SERVER_URL}${route}`);
         } else {
-          void targetWindow.loadFile(resolveUrl("/"), { hash: route });
+          void targetWindow.loadURL(resolveUrl(route));
         }
         targetWindow.focus();
       } else {
@@ -1896,11 +1950,17 @@ app.on("second-instance", (_event, argv) => {
 // ─── App Lifecycle ──────────────────────────────────────────────────────
 
 app.whenReady().then(async () => {
+  // Start local HTTP server for bundled frontend (must be before any window creation)
+  if (!IS_DEV) {
+    await startLocalFrontendServer();
+  }
+
   log.info(`${APP_NAME} v${app.getVersion()} starting`, {
     isDev: IS_DEV,
     useDevServer: USE_DEV_SERVER,
     hasBundledFrontend: HAS_BUNDLED_FRONTEND,
     frontendIndexPath: FRONTEND_INDEX_PATH,
+    localFrontendUrl: LOCAL_FRONTEND_URL,
   });
 
   if (app.isPackaged && !HAS_BUNDLED_FRONTEND) {

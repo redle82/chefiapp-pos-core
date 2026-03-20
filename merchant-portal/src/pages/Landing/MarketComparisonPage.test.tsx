@@ -63,7 +63,7 @@ describe("MarketComparisonPage analytics", () => {
       expect.objectContaining({
         page: "compare",
         cta: "try_now",
-        destination: "/auth/phone",
+        destination: "/auth/email",
       }),
     );
   });

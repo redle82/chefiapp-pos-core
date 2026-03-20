@@ -87,7 +87,7 @@ export function BlogQuandoAbrirFecharCaixaPage() {
             <span className="text-sm font-semibold text-white">ChefIApp</span>
           </Link>
           <Link
-            to="/auth/phone"
+            to="/auth/email"
             className="text-sm font-medium text-amber-500 hover:text-amber-400 transition-colors"
           >
             Testar grátis
@@ -191,7 +191,7 @@ export function BlogQuandoAbrirFecharCaixaPage() {
             única verdade?
           </p>
           <Link
-            to="/auth/phone"
+            to="/auth/email"
             className="inline-flex items-center justify-center px-8 py-4 text-base font-bold rounded-xl bg-amber-500 text-black hover:bg-amber-400 transition-colors duration-200 hover:shadow-lg hover:shadow-amber-500/20"
           >
             Começar 14 dias grátis

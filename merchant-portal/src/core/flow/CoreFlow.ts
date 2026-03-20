@@ -131,10 +131,11 @@ export function resolveNextRoute(state: UserState): FlowDecision {
   if (!isAuthenticated) {
     Logger.debug(`[CoreFlow] 🛑 Not Authenticated at: ${currentPath}`);
 
-    // Landing, Auth (telefone) e trial guide são públicas
+    // Landing, Auth e trial guide são públicas
     if (
       currentPath === "/" ||
       currentPath === "/auth" ||
+      currentPath === "/auth/email" ||
       currentPath === "/auth/phone" ||
       currentPath === "/auth/verify" ||
       currentPath === "/trial-guide" ||
@@ -143,7 +144,7 @@ export function resolveNextRoute(state: UserState): FlowDecision {
       return { type: "ALLOW" };
 
     // Qualquer outra rota requer autenticação
-    return { type: "REDIRECT", to: "/auth/phone", reason: "Auth required" };
+    return { type: "REDIRECT", to: "/auth/email", reason: "Auth required" };
   }
 
   // Se autenticado e está em /auth ou /, redireciona para o fluxo correto
@@ -223,6 +224,7 @@ export function resolveNextRoute(state: UserState): FlowDecision {
   // 🎯 REDIRECIONAMENTO DE ENTRADA (3 camadas: not_activated → Centro de Ativação; activated → dashboard/last area)
   if (
     currentPath === "/auth" ||
+    currentPath === "/auth/email" ||
     currentPath === "/auth/phone" ||
     currentPath === "/auth/verify" ||
     currentPath === "/" ||

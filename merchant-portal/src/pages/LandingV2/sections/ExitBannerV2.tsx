@@ -2,7 +2,7 @@
  * ExitBannerV2 — "Falta um passo" (conversão, uma vez por sessão).
  *
  * Barra fixa no fundo, dismissível. Não bloqueia conteúdo.
- * TECNICAS_AVANCADAS §3: uma mensagem única, link para /auth/phone, sem insistência.
+ * TECNICAS_AVANCADAS §3: uma mensagem única, link para /auth/email, sem insistência.
  */
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
@@ -51,7 +51,7 @@ export function ExitBannerV2({
       <div className="max-w-4xl mx-auto flex flex-wrap items-center justify-center gap-3 sm:gap-4">
         <span className="text-sm text-neutral-300">{message}</span>
         <Link
-          to="/auth/phone"
+          to="/auth/email"
           className="inline-flex items-center justify-center px-5 py-2.5 text-sm font-semibold rounded-lg bg-amber-500 text-black hover:bg-amber-400 transition-colors shrink-0"
         >
           {cta}
