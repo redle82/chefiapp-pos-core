@@ -52,19 +52,24 @@ if (!Sentry.getClient()) {
 // ─── Sentry Real-World Metrics ──────────────────────────────────────────────
 // Métricas reais que simulam comportamento de produção com clientes
 // Visíveis em: https://goldmonkeystudio.sentry.io/explore/metrics/
-// Safe wrapper: algumas versões do Sentry não exportam metrics.increment/distribution/gauge.
+// Safe wrapper: Sentry v8+ removed the top-level metrics namespace.
+// Cast via `any` so Rollup does not statically trace the property chain
+// (which would emit "increment is not exported" warnings at build time).
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const _sentryAny = Sentry as any;
+const _metrics = _sentryAny.metrics;
 const safeMetrics = {
   increment:
-    typeof Sentry.metrics?.increment === "function"
-      ? Sentry.metrics.increment.bind(Sentry.metrics)
+    typeof _metrics?.increment === "function"
+      ? _metrics.increment.bind(_metrics)
       : () => {},
   distribution:
-    typeof Sentry.metrics?.distribution === "function"
-      ? Sentry.metrics.distribution.bind(Sentry.metrics)
+    typeof _metrics?.distribution === "function"
+      ? _metrics.distribution.bind(_metrics)
       : () => {},
   gauge:
-    typeof Sentry.metrics?.gauge === "function"
-      ? Sentry.metrics.gauge.bind(Sentry.metrics)
+    typeof _metrics?.gauge === "function"
+      ? _metrics.gauge.bind(_metrics)
       : () => {},
 };
 
