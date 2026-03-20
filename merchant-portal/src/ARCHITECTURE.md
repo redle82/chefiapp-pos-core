@@ -1,4 +1,7 @@
-# Merchant Portal — Architecture Guide
+# Merchant Portal — Architecture Guide (LEGACY)
+
+> **Superseded by `merchant-portal/ARCHITECTURE.md`.**
+> This file is kept for reference. The canonical version is at the root of merchant-portal.
 
 ## Directory Structure
 

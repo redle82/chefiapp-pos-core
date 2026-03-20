@@ -3,6 +3,7 @@ import { useRestaurantIdentity } from "../../../../core/identity/useRestaurantId
 import { useRestaurantRuntime } from "../../../../context/RestaurantRuntimeContext";
 import { OSCopy } from "../../../../ui/design-system/sovereign/OSCopy";
 import { colors } from "../../../../ui/design-system/tokens/colors";
+import { SystemHealthWidget } from "../../monitoring/components/SystemHealthWidget";
 import { DashboardLayout } from "../components/DashboardLayout";
 import { DonutCard } from "../components/DonutCard";
 import { GeneralStatsCard } from "../components/GeneralStatsCard";
@@ -103,6 +104,10 @@ export function DashboardHomePage() {
             onSeeAlerts={() => navigate("/alerts")}
             onSeeTasks={() => navigate("/tasks")}
           />
+        </div>
+
+        <div className="command-centre-card command-centre-card-full">
+          <SystemHealthWidget />
         </div>
       </section>
     </DashboardLayout>

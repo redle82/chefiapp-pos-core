@@ -1,0 +1,133 @@
+.page {
+  padding: 24px;
+}
+
+.widgetRow {
+  margin-bottom: 24px;
+}
+
+.sectionTitle {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0 0 12px 0;
+}
+
+.metricsSection {
+  margin-bottom: 24px;
+}
+
+.metricsGroup {
+  margin-bottom: 16px;
+}
+
+.groupTitle {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  margin: 0 0 8px 0;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.metricsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 8px;
+}
+
+.metricCard {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  border-radius: 8px;
+  background-color: var(--card-bg-on-dark, var(--surface-elevated));
+  border: 1px solid var(--surface-border, rgba(255, 255, 255, 0.06));
+}
+
+.metricName {
+  font-size: 12px;
+  color: var(--text-secondary);
+  font-family: "SF Mono", "Fira Code", monospace;
+}
+
+.metricValue {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-primary);
+  font-variant-numeric: tabular-nums;
+}
+
+.emptyState {
+  font-size: 13px;
+  color: var(--text-tertiary);
+  padding: 16px;
+  text-align: center;
+  background-color: var(--surface-elevated);
+  border-radius: 8px;
+  border: 1px dashed var(--surface-border, rgba(255, 255, 255, 0.08));
+}
+
+.alertsSection {
+  margin-bottom: 24px;
+}
+
+.alertList {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.alertItem {
+  padding: 12px 14px;
+  border-radius: 8px;
+  background-color: var(--surface-elevated);
+  border-left: 3px solid;
+}
+
+.alertCritical {
+  border-left-color: #ef4444;
+}
+
+.alertWarning {
+  border-left-color: #f59e0b;
+}
+
+.alertHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 4px;
+}
+
+.alertSeverity {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+}
+
+.alertCritical .alertSeverity {
+  color: #ef4444;
+}
+
+.alertWarning .alertSeverity {
+  color: #f59e0b;
+}
+
+.alertTime {
+  font-size: 11px;
+  color: var(--text-tertiary);
+}
+
+.alertName {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.alertMessage {
+  font-size: 12px;
+  color: var(--text-secondary);
+  margin-top: 2px;
+}

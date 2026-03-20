@@ -1,6 +1,10 @@
-# Arquitetura merchant-portal
+# Arquitetura merchant-portal (LEGACY)
 
-> Documento canónico da arquitetura do merchant-portal.
+> **This file is superseded by `merchant-portal/ARCHITECTURE.md`.**
+> The canonical architecture document now lives at the root of merchant-portal.
+> This file is kept for historical reference only.
+
+> Documento original da arquitetura do merchant-portal.
 > Atualizado durante refatoração cirúrgica.
 
 ## Visão Geral

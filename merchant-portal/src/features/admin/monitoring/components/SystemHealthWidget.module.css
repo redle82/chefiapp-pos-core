@@ -1,0 +1,185 @@
+.widget {
+  padding: 20px;
+  border: 1px solid var(--surface-border, rgba(255, 255, 255, 0.08));
+  border-radius: 12px;
+  background-color: var(--card-bg-on-dark, var(--surface-elevated));
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+
+.title {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.overallBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.badgeHealthy {
+  background-color: rgba(34, 197, 94, 0.15);
+  color: #22c55e;
+}
+
+.badgeDegraded {
+  background-color: rgba(245, 158, 11, 0.15);
+  color: #f59e0b;
+}
+
+.badgeDown {
+  background-color: rgba(239, 68, 68, 0.15);
+  color: #ef4444;
+}
+
+.indicator {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
+.indicatorHealthy {
+  background-color: #22c55e;
+}
+
+.indicatorDegraded {
+  background-color: #f59e0b;
+}
+
+.indicatorDown {
+  background-color: #ef4444;
+}
+
+.serviceList {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.serviceRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 12px;
+  border-radius: 8px;
+  background-color: var(--surface-base, rgba(255, 255, 255, 0.03));
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+
+.serviceRow:hover {
+  background-color: var(--surface-hover, rgba(255, 255, 255, 0.06));
+}
+
+.serviceLeft {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.serviceName {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.serviceRight {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.latency {
+  font-size: 11px;
+  color: var(--text-tertiary);
+  font-variant-numeric: tabular-nums;
+}
+
+.statusPill {
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.statusHealthy {
+  background-color: rgba(34, 197, 94, 0.12);
+  color: #22c55e;
+}
+
+.statusDegraded {
+  background-color: rgba(245, 158, 11, 0.12);
+  color: #f59e0b;
+}
+
+.statusDown {
+  background-color: rgba(239, 68, 68, 0.12);
+  color: #ef4444;
+}
+
+.detailsPanel {
+  margin-top: 4px;
+  padding: 8px 12px;
+  border-radius: 6px;
+  background-color: var(--surface-base, rgba(0, 0, 0, 0.2));
+  font-size: 11px;
+  color: var(--text-secondary);
+  font-family: "SF Mono", "Fira Code", monospace;
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+
+.footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--surface-border, rgba(255, 255, 255, 0.06));
+}
+
+.lastCheck {
+  font-size: 11px;
+  color: var(--text-tertiary);
+}
+
+.refreshBtn {
+  background: none;
+  border: 1px solid var(--surface-border, rgba(255, 255, 255, 0.12));
+  border-radius: 6px;
+  padding: 4px 10px;
+  font-size: 11px;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+
+.refreshBtn:hover {
+  background-color: var(--surface-hover, rgba(255, 255, 255, 0.06));
+}
+
+.refreshBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.loading {
+  text-align: center;
+  padding: 24px;
+  font-size: 13px;
+  color: var(--text-tertiary);
+}
