@@ -147,27 +147,27 @@ export function logRuntimeStatus(): void {
 // RESTAURANT ID GUARDS
 // ============================================================================
 
-/** IDs that are ONLY valid in trial/demo mode (hardcoded, seed, or trial) */
-const DEMO_ONLY_RESTAURANT_IDS = new Set([
+/** IDs that are ONLY valid in trial mode (hardcoded, seed, or trial) */
+const TRIAL_ONLY_RESTAURANT_IDS = new Set([
   "trial-restaurant-id",
   "mock-restaurant-id",
 ]);
 
-/** UUID prefix pattern for seed/demo data */
+/** UUID prefix pattern for seed/trial data */
 const SEED_UUID_PREFIX = "00000000-0000-0000-0000-";
 
 /**
  * Assert that a restaurant ID is valid for the current runtime mode.
  * In production, seed/trial/mock IDs are FORBIDDEN.
  *
- * @throws Error if a demo-only restaurant ID is used in production
+ * @throws Error if a trial-only restaurant ID is used in production
  */
 export function assertValidRestaurantId(restaurantId: string): void {
   if (!RUNTIME.isProduction) return;
 
-  if (DEMO_ONLY_RESTAURANT_IDS.has(restaurantId)) {
+  if (TRIAL_ONLY_RESTAURANT_IDS.has(restaurantId)) {
     throw new Error(
-      `[PRODUCTION_VIOLATION] Demo restaurant ID "${restaurantId}" used in production mode. ` +
+      `[PRODUCTION_VIOLATION] Trial restaurant ID "${restaurantId}" used in production mode. ` +
         `A real restaurant must be created via onboarding.`,
     );
   }
@@ -181,11 +181,11 @@ export function assertValidRestaurantId(restaurantId: string): void {
 }
 
 // ============================================================================
-// DEMO FLAGS GUARD
+// TRIAL FLAGS GUARD
 // ============================================================================
 
 /**
- * Validate that demo flags are correctly set for the current runtime mode.
+ * Validate that trial/dev flags are correctly set for the current runtime mode.
  * Returns an array of violations (empty = all good).
  */
 export function validateDemoFlags(): string[] {

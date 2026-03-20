@@ -66,7 +66,7 @@ export function getOperatorProfile(
 }
 
 /**
- * Códigos do Demo Guide para "Inserir Código" — um por papel.
+ * Códigos do Trial Guide para "Inserir Código" — um por papel.
  * Funcionam com ?debug=1 na URL (modo mock). Formato: CHEF-XXXX-XX.
  */
 export const TRIAL_GUIDE_CODES: Record<StaffRole, string> = {

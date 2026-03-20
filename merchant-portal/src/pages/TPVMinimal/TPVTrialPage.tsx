@@ -1,5 +1,5 @@
 /**
- * TPVTrialPage — TPV em Free Trial com Demo Guide ativo
+ * TPVTrialPage — TPV em Free Trial com Trial Guide ativo
  *
  * Acessível por /op/tpv?mode=trial.
  */

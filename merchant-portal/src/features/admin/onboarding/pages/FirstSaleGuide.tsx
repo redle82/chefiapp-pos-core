@@ -333,11 +333,11 @@ export function FirstSaleGuide() {
             marginBottom: 16,
           }}
         >
-          Usa o modo demonstração — o TPV é carregado com produtos de exemplo e
+          Usa o modo de avaliação — o TPV é carregado com produtos de exemplo e
           o pagamento é simulado.
         </div>
-        <Button variant="secondary" onClick={() => navigate("/tpv?demo=1")}>
-          🎮 Abrir TPV em Modo Demo
+        <Button variant="secondary" onClick={() => navigate("/op/tpv?mode=trial")}>
+          🎮 Abrir TPV em Modo Trial
         </Button>
       </div>
 

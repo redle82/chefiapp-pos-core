@@ -34,3 +34,4 @@ assets/*.css
 tests/e2e/.auth/
 .stryker-tmp/
 .stryker-tmp/
+.env*.local

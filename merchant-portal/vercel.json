@@ -1,6 +1,6 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "installCommand": "pnpm install",
+  "installCommand": "npm install --legacy-peer-deps",
   "outputDirectory": "dist",
   "rewrites": [
     { "source": "/api/(.*)", "destination": "/api/$1" },
@@ -9,7 +9,7 @@
   "crons": [
     {
       "path": "/api/cron/close-stale-shifts",
-      "schedule": "0 */2 * * *"
+      "schedule": "0 4 * * *"
     }
   ],
   "headers": [

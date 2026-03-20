@@ -14,6 +14,7 @@ import { MentorPage } from "../features/mentorship";
 import { AboutPage } from "../pages/About/AboutPage";
 import { PhoneLoginPage } from "../pages/AuthPhone/PhoneLoginPage";
 import { VerifyCodePage } from "../pages/AuthPhone/VerifyCodePage";
+import { AuthCallbackPage } from "../pages/AuthPhone/AuthCallbackPage";
 import { BillingSuccessPage } from "../pages/Billing/BillingSuccessPage";
 import { BlogIndexPage } from "../pages/Blog/BlogIndexPage";
 import { BlogQuandoAbrirFecharCaixaPage } from "../pages/Blog/BlogQuandoAbrirFecharCaixaPage";
@@ -136,6 +137,7 @@ export const MarketingRoutesFragment = (
     <Route path="/auth/login" element={<Suspense fallback={<AuthFallback />}><LoginPage /></Suspense>} />
     <Route path="/auth/phone" element={<PhoneLoginPage />} />
     <Route path="/auth/verify" element={<VerifyCodePage />} />
+    <Route path="/auth/callback" element={<AuthCallbackPage />} />
     <Route path="/auth/email" element={<Suspense fallback={<AuthFallback />}><AuthPage /></Suspense>} />
     <Route path="/bootstrap" element={<BootstrapPage />} />
     {/* NAVIGATION_CONTRACT: /setup/restaurant-minimal only in app tree → redirect to /app/activation */}

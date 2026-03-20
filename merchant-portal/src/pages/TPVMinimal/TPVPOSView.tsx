@@ -95,7 +95,7 @@ export function TPVPOSView() {
   const outletContext = useOutletContext<{ searchQuery?: string }>();
   const searchQuery = outletContext?.searchQuery ?? "";
   const [searchParams] = useSearchParams();
-  const isDemoMode = searchParams.get("demo") === "1";
+  const isTrialMode = searchParams.get("mode") === "trial" || runtime?.productMode === "trial";
   const tableParam = searchParams.get("table") ?? null;
   const tableIdParam = searchParams.get("tableId") ?? null;
 
@@ -163,30 +163,30 @@ export function TPVPOSView() {
     }
   }, [tableParam]);
 
-  // Skip gate in demo mode
+  // Skip gate in trial mode
   useEffect(() => {
-    if (isDemoMode) {
+    if (isTrialMode) {
       setOrderMode("take_away");
       setContextChosen(true);
     }
-  }, [isDemoMode]);
+  }, [isTrialMode]);
 
-  // Demo mode: pre-fill cart with example restaurant items
+  // Trial mode: pre-fill cart with example restaurant items
   useEffect(() => {
-    if (!isDemoMode) return;
-    const demoCategory = EXAMPLE_MENUS.restaurant.categories[1]; // Pratos Principais
-    const demoItems = demoCategory.items.slice(0, 2);
+    if (!isTrialMode) return;
+    const trialCategory = EXAMPLE_MENUS.restaurant.categories[1]; // Pratos Principais
+    const trialItems = trialCategory.items.slice(0, 2);
     setCart(
-      demoItems.map((item, i) => ({
-        product_id: `demo-${i}`,
+      trialItems.map((item, i) => ({
+        product_id: `trial-${i}`,
         name: item.name,
-        subtitle: demoCategory.name,
+        subtitle: trialCategory.name,
         quantity: 1,
         unit_price: item.price,
         image_url: undefined,
       })),
     );
-  }, [isDemoMode]);
+  }, [isTrialMode]);
 
   // Carregar menu (categorias + produtos)
   useEffect(() => {
@@ -389,13 +389,13 @@ export function TPVPOSView() {
   };
 
   // ─── Confirmar + Pagar (takeaway ou após enviar cozinha) ────────
-  // Step 1: open tip modal (or skip in demo mode)
+  // Step 1: open tip modal (or skip in trial mode)
   const handleProceed = () => {
     if (cart.length === 0 && !isSentToKitchen) return;
 
-    // Demo mode: simulate payment without backend — show full receipt
-    if (isDemoMode) {
-      const demoOrderId = `DEMO-${Date.now().toString(36)}`;
+    // Trial mode: simulate payment without backend — show full receipt
+    if (isTrialMode) {
+      const demoOrderId = `TRIAL-${Date.now().toString(36)}`;
       const receiptSnapshot = buildReceiptSnapshot(demoOrderId);
       setLastReceipt(receiptSnapshot);
       saveReceipt(restaurantId, receiptSnapshot).catch(() => {});
@@ -768,8 +768,8 @@ export function TPVPOSView() {
 
   return (
     <div className="tpv-container">
-      {/* Demo mode banner — small, non-intrusive */}
-      {isDemoMode && (
+      {/* Trial mode banner — small, non-intrusive */}
+      {isTrialMode && (
         <div
           style={{
             position: "fixed",
@@ -791,7 +791,7 @@ export function TPVPOSView() {
         >
           <span>🧪</span>
           <span>
-            {t("posView.demoBanner")}
+            {t("posView.trialBanner")}
           </span>
         </div>
       )}

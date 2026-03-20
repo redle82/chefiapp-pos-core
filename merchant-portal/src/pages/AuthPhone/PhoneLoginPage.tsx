@@ -1,11 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
-import { getAuthActions } from "../../core/auth/authAdapter";
-import {
-  BackendType,
-  getBackendConfigured,
-  getBackendType,
-} from "../../core/infra/backendAdapter";
+import { signInWithEmailOtp, signInWithGoogle } from "../../core/auth/supabaseAuth";
+import { getBackendConfigured } from "../../core/infra/backendAdapter";
 import { GlobalLoadingView } from "../../ui/design-system/components";
 import styles from "./AuthPhone.module.css";
 
@@ -13,9 +9,11 @@ const SIGNUP_INTENT_KEY = "chefiapp_signup_intent";
 
 export function PhoneLoginPage() {
   const [searchParams] = useSearchParams();
-  const [phone, setPhone] = useState("");
+  const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
+  const [googleLoading, setGoogleLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [sent, setSent] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -29,39 +27,58 @@ export function PhoneLoginPage() {
   }, [searchParams]);
 
   const hasBackend = getBackendConfigured();
-  const isDocker = getBackendType() === BackendType.docker;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
 
-    if (!phone.trim()) {
-      setError("Indica o teu telefone.");
+    const cleaned = email.trim().toLowerCase();
+    if (!cleaned || !cleaned.includes("@")) {
+      setError("Introduz um email válido.");
       return;
     }
 
-    if (!hasBackend || !isDocker) {
-      setError(
-        "Backend não configurado para login por telefone. Verifica a configuração do Core.",
-      );
+    if (!hasBackend) {
+      setError("Backend não configurado. Verifica VITE_CORE_URL e VITE_CORE_ANON_KEY.");
       return;
     }
 
     setLoading(true);
     try {
-      try {
-        window.localStorage.setItem("chefiapp_owner_phone", phone.trim());
-      } catch {
-        // ignore storage errors
+      const result = await signInWithEmailOtp(cleaned);
+      if ("error" in result) {
+        setError(result.error.message);
+        return;
       }
-      getAuthActions().signIn();
-      navigate("/auth/verify", { replace: true });
+      // Save email for verify page
+      try {
+        window.localStorage.setItem("chefiapp_auth_email", cleaned);
+      } catch {
+        // ignore
+      }
+      setSent(true);
     } catch (err: unknown) {
-      const msg =
-        err instanceof Error ? err.message : "Erro ao entrar. Tente de novo.";
+      const msg = err instanceof Error ? err.message : "Erro ao enviar código. Tente de novo.";
       setError(msg);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleGoogleLogin = async () => {
+    setError(null);
+    setGoogleLoading(true);
+    try {
+      const result = await signInWithGoogle();
+      if ("error" in result) {
+        setError(result.error.message);
+      }
+      // OAuth redirects automatically
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Erro ao entrar com Google.";
+      setError(msg);
+    } finally {
+      setGoogleLoading(false);
     }
   };
 
@@ -77,43 +94,105 @@ export function PhoneLoginPage() {
     );
   }
 
+  // Success state — code sent
+  if (sent) {
+    return (
+      <div className={styles.page} data-testid="auth-code-sent">
+        <div className={styles.card}>
+          <div className={styles.header}>
+            <img src="/logo-chefiapp-clean.png" alt="ChefIApp" className={styles.logo} />
+            <h1 className={styles.title}>Verifica o teu email</h1>
+            <p className={styles.subtitle}>
+              Enviámos um código de 6 dígitos para <strong>{email}</strong>.
+              <br />Verifica a caixa de entrada (e spam).
+            </p>
+          </div>
+          <button
+            onClick={() => navigate("/auth/verify")}
+            className={styles.button}
+          >
+            Introduzir código
+          </button>
+          <div className={styles.centerHint}>
+            <button
+              type="button"
+              onClick={() => { setSent(false); setError(null); }}
+              style={{ background: "none", border: "none", color: "#f59e0b", cursor: "pointer", fontSize: "14px" }}
+            >
+              Usar outro email
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className={styles.page} data-testid="auth-phone-form">
       <div className={styles.card}>
         <div className={styles.header}>
-          <img
-            src="/logo-chefiapp-clean.png"
-            alt="ChefIApp"
-            className={styles.logo}
-          />
-          <h1 className={styles.title}>Entrar com telefone</h1>
+          <img src="/logo-chefiapp-clean.png" alt="ChefIApp" className={styles.logo} />
+          <h1 className={styles.title}>Entrar no ChefIApp</h1>
           <p className={styles.subtitle}>
-            Introduz o teu número. Enviamos um código por SMS.
+            Sem password. Enviamos um código por email.
           </p>
+        </div>
+
+        {/* Google button first — most convenient */}
+        <button
+          type="button"
+          onClick={handleGoogleLogin}
+          disabled={googleLoading}
+          style={{
+            width: "100%",
+            padding: "14px",
+            borderRadius: "8px",
+            border: "1px solid #44403c",
+            background: "#1c1917",
+            color: "#fff",
+            fontSize: "15px",
+            fontWeight: 500,
+            cursor: googleLoading ? "not-allowed" : "pointer",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: "10px",
+            opacity: googleLoading ? 0.6 : 1,
+            marginBottom: "16px",
+          }}
+        >
+          <svg width="18" height="18" viewBox="0 0 24 24">
+            <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z"/>
+            <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+            <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+            <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+          </svg>
+          {googleLoading ? "A entrar..." : "Continuar com Google"}
+        </button>
+
+        <div style={{ display: "flex", alignItems: "center", gap: "12px", margin: "4px 0 16px" }}>
+          <div style={{ flex: 1, height: "1px", background: "#44403c" }} />
+          <span style={{ color: "#a3a3a3", fontSize: "13px" }}>ou</span>
+          <div style={{ flex: 1, height: "1px", background: "#44403c" }} />
         </div>
 
         <form onSubmit={handleSubmit}>
           {error && <p className={styles.error}>{error}</p>}
-          <label className={styles.label}>Telefone</label>
+          <label className={styles.label}>Email</label>
           <input
-            type="tel"
-            value={phone}
-            onChange={(e) => setPhone(e.target.value)}
-            placeholder="+351 912 345 678"
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            placeholder="o-teu@email.com"
             required
             className={styles.input}
             data-testid="auth-phone-input"
+            autoComplete="email"
           />
           <button type="submit" disabled={loading} className={styles.button}>
-            {loading ? "A enviar..." : "Receber código"}
+            {loading ? "A enviar código..." : "Receber código por email"}
           </button>
         </form>
-
-        <div className={styles.centerHint}>
-          <Link to="/auth/email" className={styles.link}>
-            Prefiro entrar com email
-          </Link>
-        </div>
 
         <Link to="/" className={styles.backLink}>
           ← Voltar à landing

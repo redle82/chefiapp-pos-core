@@ -345,7 +345,7 @@
     "verifying": "Verifying…",
     "connect": "Connect",
     "unknownError": "Unknown error",
-    "demoGuideCodesLabel": "Test codes",
+    "trialGuideCodesLabel": "Test codes",
     "loadingPeople": "Loading employees…",
     "noPeopleConfigured": "No employees configured",
     "choosePersonDesc": "Choose your profile to continue",
