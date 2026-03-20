@@ -6,6 +6,7 @@ import { LOGOUT_IN_PROGRESS_KEY } from "../../../../core/auth/authKeycloak";
 import { useAuth } from "../../../../core/auth/useAuth";
 import { useRestaurantIdentity } from "../../../../core/identity/useRestaurantIdentity";
 import { SOFIA_RESTAURANT_ID } from "../../../../core/readiness/operationalRestaurant";
+import { clearInstalledDevice } from "../../../../core/storage/installedDeviceStorage";
 import { useTenant } from "../../../../core/tenant/TenantContext";
 import {
   resolveOperatorProfile,
@@ -266,8 +267,31 @@ export function AdminTopbar() {
 
               <div className={styles.dropdownDivider} />
 
-              {/* Logout */}
+              {/* Reset device + Logout */}
               <div className={styles.dropdownSection}>
+                <button
+                  type="button"
+                  className={styles.dropdownItem}
+                  onClick={() => {
+                    clearInstalledDevice();
+                    localStorage.removeItem("chefiapp_terminal_type");
+                    setMenuOpen(false);
+                    window.location.href = "/";
+                  }}
+                >
+                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                    <path
+                      d="M2 4h12M5 4V3a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v1M6 7v5M10 7v5M3 4l1 9a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1l1-9"
+                      stroke="currentColor"
+                      strokeWidth="1.3"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                  </svg>
+                  {t("topbar.resetDevice", {
+                    defaultValue: "Desinstalar dispositivo",
+                  })}
+                </button>
                 <button
                   type="button"
                   className={`${styles.dropdownItem} ${styles.dropdownItemDanger}`}
