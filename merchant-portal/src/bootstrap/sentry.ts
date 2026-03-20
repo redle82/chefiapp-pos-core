@@ -3,18 +3,25 @@ import * as Sentry from "@sentry/react";
 const DEFAULT_SENTRY_DSN =
   "https://c507891630be22946aae6f4dc35daa2b@o4509651128942592.ingest.us.sentry.io/4510930062475264";
 
+// Sentry v8+ removed the top-level metrics namespace.
+// Use generic function signatures so the file compiles regardless of Sentry version.
+type MetricFn = (name: string, value?: number, data?: Record<string, unknown>) => void;
+
 export interface SafeMetrics {
-  increment: typeof Sentry.metrics.increment | (() => void);
-  distribution: typeof Sentry.metrics.distribution | (() => void);
-  gauge: typeof Sentry.metrics.gauge | (() => void);
+  increment: MetricFn;
+  distribution: MetricFn;
+  gauge: MetricFn;
 }
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type SentryMetricsLike = Record<string, any> | undefined;
 
 interface SentryLike {
   getClient(): unknown;
   init(options: Record<string, unknown>): void;
   browserTracingIntegration(): unknown;
   replayIntegration(): unknown;
-  metrics?: typeof Sentry.metrics;
+  metrics?: SentryMetricsLike;
 }
 
 export function shouldInitSentry(options: {
@@ -55,7 +62,7 @@ export function initAppSentry(options: {
 }
 
 export function createSafeMetrics(
-  sentry: Pick<SentryLike, "metrics"> = Sentry,
+  sentry: { metrics?: SentryMetricsLike } = Sentry as { metrics?: SentryMetricsLike },
 ): SafeMetrics {
   return {
     increment:
