@@ -1,0 +1,493 @@
+/* ───────────────────────────────────────────────────────
+   TPVKitchenPage — CSS Modules
+   Extracted from inline styles for lint compliance.
+   Dynamic conditional styles (isSelected, acting, etc.)
+   remain as inline style={}.
+   ─────────────────────────────────────────────────────── */
+
+/* ---- Design tokens (mirror of TPV_COLORS) ---- */
+:root {
+  --tpv-bg: #0a0a0a;
+  --tpv-panel: #141414;
+  --tpv-panel-alt: #1e1e1e;
+  --tpv-panel-dim: #141414;
+  --tpv-text: #fafafa;
+  --tpv-text-muted: #8a8a8a;
+  --tpv-text-dim: #737373;
+  --tpv-accent: #f97316;
+  --tpv-accent-soft: rgba(249, 115, 22, 0.15);
+  --tpv-border: rgba(255, 255, 255, 0.06);
+  --tpv-radius: 16px;
+  --tpv-radius-sm: 10px;
+  --tpv-radius-xs: 8px;
+}
+
+/* ---- Layout: loading screen ---- */
+.loadingScreen {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--tpv-text-dim);
+  font-size: 14px;
+}
+
+/* ---- Layout: root wrapper ---- */
+.root {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 16px;
+  background-color: var(--tpv-bg);
+  overflow: hidden;
+}
+
+/* ---- Error banner ---- */
+.errorBanner {
+  padding: 10px 16px;
+  background-color: rgba(239, 68, 68, 0.15);
+  border: 1px solid rgba(239, 68, 68, 0.4);
+  border-radius: var(--tpv-radius-xs);
+  color: #fca5a5;
+  font-size: 14px;
+  font-weight: 500;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.errorCloseBtn {
+  background: none;
+  border: none;
+  color: #fca5a5;
+  cursor: pointer;
+  font-size: 16px;
+  padding: 0 4px;
+}
+
+/* ---- Header bar ---- */
+.headerBar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.headerLeft {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.headerTitle {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--tpv-text);
+}
+
+/* ---- Stats badges ---- */
+.statBadge {
+  padding: 2px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.statTotal {
+  composes: statBadge;
+  background-color: var(--tpv-panel-alt);
+  color: var(--tpv-text-muted);
+}
+
+.statDelayed {
+  composes: statBadge;
+  background-color: rgba(239, 68, 68, 0.15);
+  color: #ef4444;
+}
+
+.statAttention {
+  composes: statBadge;
+  background-color: rgba(234, 179, 8, 0.15);
+  color: #eab308;
+}
+
+/* ---- Filter / station buttons ---- */
+.filterRow {
+  display: flex;
+  gap: 6px;
+}
+
+.filterBtn {
+  padding: 6px 12px;
+  border-radius: var(--tpv-radius-sm);
+  border: 1px solid var(--tpv-border);
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  background-color: var(--tpv-panel-alt);
+  color: var(--tpv-text-muted);
+  transition: all 0.15s ease;
+}
+
+.filterBtnActive {
+  composes: filterBtn;
+  border-color: transparent;
+  font-weight: 700;
+  background-color: var(--tpv-accent);
+  color: #0a0a0a;
+}
+
+/* ---- Origin filter buttons ---- */
+.originRow {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.originBtn {
+  padding: 4px 10px;
+  border-radius: 999px;
+  border: 1px solid var(--tpv-border);
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  background-color: var(--tpv-panel-alt);
+  color: var(--tpv-text-muted);
+  transition: all 0.15s ease;
+}
+
+.originBtnActive {
+  composes: originBtn;
+  border-color: transparent;
+  background-color: var(--tpv-accent-soft);
+  color: var(--tpv-accent);
+}
+
+/* ---- 3-column grid ---- */
+.grid {
+  display: grid;
+  grid-template-columns: 320px minmax(0, 1fr) 300px;
+  gap: 16px;
+  flex: 1;
+  min-height: 0;
+}
+
+/* ---- Panel (shared by 3 columns) ---- */
+.panel {
+  background-color: var(--tpv-panel);
+  border-radius: var(--tpv-radius);
+  border: 1px solid var(--tpv-border);
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+/* ---- Panel headers ---- */
+.panelHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.panelHeaderLarge {
+  composes: panelHeader;
+  margin-bottom: 12px;
+}
+
+.panelTitle {
+  margin: 0;
+  font-size: 15px;
+  color: var(--tpv-text);
+}
+
+.panelSubtext {
+  font-size: 12px;
+  color: var(--tpv-text-muted);
+}
+
+/* ---- Empty states ---- */
+.emptyState {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  color: var(--tpv-text-dim);
+}
+
+.emptyIcon {
+  font-size: 28px;
+}
+
+.emptyLabel {
+  font-size: 13px;
+}
+
+/* ---- Order list (left panel) ---- */
+.orderList {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  overflow: auto;
+  margin-top: 12px;
+  padding-right: 4px;
+}
+
+/* ---- Order card (row in left panel) ---- */
+.orderCard {
+  text-align: left;
+  padding: 12px;
+  border-radius: 12px;
+  color: var(--tpv-text);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  cursor: pointer;
+}
+
+.orderCardRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.orderCardRowWrap {
+  composes: orderCardRow;
+  flex-wrap: wrap;
+}
+
+.orderNumber {
+  font-size: 14px;
+  font-weight: 700;
+}
+
+/* ---- Status badge (dynamic bg/color via style) ---- */
+.statusBadge {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 999px;
+}
+
+.statusBadgeLg {
+  font-size: 12px;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 999px;
+}
+
+/* ---- Order card meta ---- */
+.orderItemCount {
+  font-size: 12px;
+  color: var(--tpv-text-muted);
+}
+
+.orderAge {
+  font-size: 12px;
+  color: var(--tpv-text-dim);
+}
+
+.orderTotal {
+  font-size: 13px;
+  font-weight: 700;
+}
+
+/* ---- Details panel (center) ---- */
+.detailHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.detailCol {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.detailOrderTitle {
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.detailTableNo {
+  font-size: 12px;
+  color: var(--tpv-text-muted);
+}
+
+/* ---- Items scroll area ---- */
+.itemsArea {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  overflow: auto;
+  padding-right: 4px;
+}
+
+/* ---- Item row ---- */
+.itemRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 10px;
+  border-radius: var(--tpv-radius-sm);
+  background-color: var(--tpv-panel-alt);
+  border: 1px solid var(--tpv-border);
+  font-size: 13px;
+}
+
+.itemLeft {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  min-width: 0;
+}
+
+.itemQty {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--tpv-text-muted);
+  min-width: 20px;
+}
+
+.itemName {
+  color: var(--tpv-text);
+  font-size: 14px;
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ---- Station badges (dynamic bg/color via style) ---- */
+.stationBadge {
+  font-size: 10px;
+  padding: 2px 6px;
+  border-radius: 6px;
+  font-weight: 700;
+}
+
+/* ---- Item actions area ---- */
+.itemRight {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* ---- Action buttons ---- */
+.actionBtn {
+  padding: 8px 12px;
+  border-radius: var(--tpv-radius-sm);
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.actionBtnPrimary {
+  composes: actionBtn;
+  border: 1px solid transparent;
+  background-color: var(--tpv-accent);
+  color: #0a0a0a;
+}
+
+.actionBtnGhost {
+  composes: actionBtn;
+  border: 1px solid var(--tpv-border);
+  background-color: var(--tpv-panel-alt);
+  color: var(--tpv-text);
+}
+
+.actionBtnSuccess {
+  composes: actionBtn;
+  border: 1px solid transparent;
+  background-color: #22c55e;
+  color: #0a0a0a;
+}
+
+/* ---- Order summary ---- */
+.summaryArea {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--tpv-border);
+  display: grid;
+  gap: 6px;
+}
+
+.summaryRow {
+  display: flex;
+  justify-content: space-between;
+}
+
+.summaryLabel {
+  color: var(--tpv-text-muted);
+}
+
+.summaryValue {
+  font-weight: 600;
+}
+
+.summaryTotalRow {
+  composes: summaryRow;
+  font-size: 15px;
+  font-weight: 700;
+}
+
+/* ---- Detail action bar ---- */
+.detailActions {
+  margin-top: 12px;
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+/* ---- Info panel (right) ---- */
+.infoContent {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.infoCard {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 12px;
+  border-radius: 12px;
+  background-color: var(--tpv-panel-alt);
+  border: 1px solid var(--tpv-border);
+}
+
+.infoCardLabel {
+  font-size: 12px;
+  color: var(--tpv-text-muted);
+}
+
+.infoCardValue {
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.infoCardDetail {
+  font-size: 13px;
+  color: var(--tpv-text-muted);
+}
+
+.infoCardDetailDim {
+  font-size: 12px;
+  color: var(--tpv-text-dim);
+}
+
+.infoCardNotes {
+  font-size: 13px;
+  color: var(--tpv-text);
+}
