@@ -23,7 +23,7 @@ export function SignupIntentRedirect() {
       }
 
       sessionStorage.removeItem("chefiapp_signup_intent");
-      navigate("/welcome", { replace: true });
+      navigate("/setup/start", { replace: true });
     } catch {
       // ignore
     }

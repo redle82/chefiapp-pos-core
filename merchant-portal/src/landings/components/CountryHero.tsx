@@ -39,7 +39,7 @@ export function CountryHero({ country, segment }: CountryHeroProps) {
         </p>
         <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
           <Link
-            to="/auth/phone"
+            to="/auth/email"
             className="inline-flex items-center justify-center px-8 py-4 text-base font-bold rounded-xl bg-amber-500 text-black hover:bg-amber-400 transition-all"
           >
             {segmentCopy.ctaPrimary}

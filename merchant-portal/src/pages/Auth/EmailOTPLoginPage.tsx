@@ -252,8 +252,8 @@ export function EmailOTPLoginPage() {
 
       // Session is now active -- AuthProvider will pick it up via onAuthStateChange.
       // Navigate based on context. The AuthProvider + CoreFlow will handle the
-      // final destination (welcome/onboarding if no restaurant, admin/tpv if ready).
-      navigate("/welcome", { replace: true });
+      // final destination (setup/start if no restaurant, admin/tpv if ready).
+      navigate("/setup/start", { replace: true });
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Erro ao verificar codigo.";
       setError(msg);

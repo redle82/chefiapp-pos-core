@@ -148,7 +148,7 @@ function SignupIntentRedirect() {
       )
         return;
       sessionStorage.removeItem("chefiapp_signup_intent");
-      navigate("/welcome", { replace: true });
+      navigate("/setup/start", { replace: true });
     } catch {
       // ignore
     }

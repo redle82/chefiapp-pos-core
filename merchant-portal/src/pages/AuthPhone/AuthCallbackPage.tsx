@@ -29,7 +29,7 @@ export function AuthCallbackPage() {
         if (session) {
           clearTimeout(timer);
           clearInterval(checkSession);
-          navigate("/welcome", { replace: true });
+          navigate("/setup/start", { replace: true });
         }
       } catch {
         // keep waiting

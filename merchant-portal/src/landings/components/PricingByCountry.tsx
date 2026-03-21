@@ -185,7 +185,7 @@ export function PricingByCountry({
                   <span className="text-neutral-500 text-sm">{period}</span>
                 </div>
                 <Link
-                  to="/auth/phone"
+                  to="/auth/email"
                   onClick={() => handleConversionClick(key)}
                   className="block w-full text-center py-3 rounded-lg bg-amber-500 text-black font-semibold hover:bg-amber-400 transition-colors"
                 >

@@ -39,7 +39,7 @@ export function VerifyCodePage() {
         return;
       }
       // Success — session is now active
-      navigate("/welcome", { replace: true });
+      navigate("/setup/start", { replace: true });
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Erro ao verificar código.";
       setError(msg);

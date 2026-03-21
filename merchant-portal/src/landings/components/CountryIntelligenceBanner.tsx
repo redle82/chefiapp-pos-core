@@ -111,7 +111,7 @@ export function CountryIntelligenceBanner({
           {message}
         </p>
         <Link
-          to="/auth/phone"
+          to="/auth/email"
           onClick={handleClick}
           className="shrink-0 px-4 py-2 rounded-lg bg-amber-500 text-black text-sm font-semibold hover:bg-amber-400 transition-colors"
         >
