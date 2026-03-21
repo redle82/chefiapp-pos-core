@@ -23,6 +23,8 @@ import { TPVHeader } from "./components/TPVHeader";
 import { TPVLockScreen } from "./components/TPVLockScreen";
 import { TPVNotificationBar } from "./components/TPVNotificationBar";
 import { TPVSidebar } from "./components/TPVSidebar";
+import { TPVActivationChecklist } from "../../components/tpv/TPVActivationChecklist";
+import { useOperationalActivation } from "../../core/setup/useOperationalActivation";
 import { OperatorProvider, useOperator } from "./context/OperatorContext";
 import { useAutoLock } from "./hooks/useAutoLock";
 import { useTPVEventBridge } from "./hooks/useTPVEventBridge";
@@ -137,6 +139,11 @@ function TPVLayoutInner() {
   const restaurantId = useTPVRestaurantId();
   const { operator, isLocked, isSessionLocked, unlock, lock, lockSession, unlockSession } = useOperator();
 
+  // Operational activation: show checklist overlay when restaurant is not yet operational
+  const { isOperational: isRestaurantOperational } = useOperationalActivation();
+  const [activationSkipped, setActivationSkipped] = useState(false);
+  const showActivation = !isRestaurantOperational && !activationSkipped;
+
   // Auto-lock: exempt KDS / customer display routes
   const exempt = isAutoLockExempt(location.pathname);
   const { idleState, resetIdle } = useAutoLock({
@@ -223,6 +230,21 @@ function TPVLayoutInner() {
     >
       {/* Skip navigation links for keyboard users */}
       <SkipLinks />
+
+      {/* Operational activation checklist — shown before TPV is operational */}
+      {showActivation && (
+        <TPVActivationChecklist
+          onSkip={() => setActivationSkipped(true)}
+          onAction={(key) => {
+            if (key === "open-shift") {
+              // Will be handled by the shift opening flow
+              setActivationSkipped(true);
+            } else if (key === "test-order") {
+              setActivationSkipped(true);
+            }
+          }}
+        />
+      )}
 
       {/* ARIA live region for dynamic announcements */}
       <LiveRegion message={a11yAnnouncement} />
