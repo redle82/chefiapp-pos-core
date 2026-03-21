@@ -3,7 +3,15 @@
  * Única fonte de strings traduzíveis da landing. Ver LANDING_CANON.md.
  */
 
-import { getCurrencySymbol } from "../../../core/currency/CurrencyService";
+// Lazy currency symbol to avoid TDZ crash in production bundle
+function cs(): string {
+  try {
+    const mod = require("../../../core/currency/CurrencyService");
+    return mod.cs();
+  } catch {
+    return "€";
+  }
+}
 
 export type LandingLocale = "pt" | "en" | "es";
 
@@ -335,7 +343,7 @@ const copy = {
         stats: [
           { value: "< 25 min", label: "Setup completo" },
           { value: "17", label: "Componentes activos" },
-          { value: `0${getCurrencySymbol()}`, label: "Custo de setup" },
+          { value: `0${cs()}`, label: "Custo de setup" },
           { value: "1º dia", label: "Primeira venda" },
         ],
       },
@@ -446,13 +454,13 @@ const copy = {
       ],
       synthesis: {
         exampleLabel: "Cenário ilustrativo",
-        revenue: `${getCurrencySymbol()}80.000 / mês`,
+        revenue: `${cs()}80.000 / mês`,
         revenueSub: "Restaurante em casa cheia",
-        recoverable: `${getCurrencySymbol()}8.400 / mês`,
+        recoverable: `${cs()}8.400 / mês`,
         recoverableSub: "Margem recuperável que hoje não chega ao banco.",
         body1:
           "Combinando estes vazamentos, um restaurante deste porte pode estar a perder entre",
-        body1Highlight: `${getCurrencySymbol()}6.000 e ${getCurrencySymbol()}12.000 por mês`,
+        body1Highlight: `${cs()}6.000 e ${cs()}12.000 por mês`,
         body1End: "em margem que nunca aparece no fecho de caixa.",
         body2: "O ChefIApp™ OS existe para fechar estes vazamentos —",
         body2End: "durante o serviço, não depois.",
@@ -468,13 +476,13 @@ const copy = {
         },
         {
           type: "static" as const,
-          value: `0 ${getCurrencySymbol()}`,
+          value: `0 ${cs()}`,
           label: "Custo de hardware",
         },
         {
           type: "animated" as const,
           target: 79,
-          suffix: ` ${getCurrencySymbol()}`,
+          suffix: ` ${cs()}`,
           label: "Tudo incluído",
         },
         {
@@ -525,7 +533,7 @@ const copy = {
         },
         {
           aspect: "Custo de hardware",
-          traditional: `${getCurrencySymbol()}2.000-${getCurrencySymbol()}5.000 em equipamento`,
+          traditional: `${cs()}2.000-${cs()}5.000 em equipamento`,
           chefiapp: "Funciona no tablet ou PC que já tens",
         },
         {
@@ -1055,7 +1063,7 @@ const copy = {
         stats: [
           { value: "< 25 min", label: "Full setup" },
           { value: "17", label: "Active components" },
-          { value: `0${getCurrencySymbol()}`, label: "Setup cost" },
+          { value: `0${cs()}`, label: "Setup cost" },
           { value: "Day 1", label: "First sale" },
         ],
       },
@@ -1166,13 +1174,13 @@ const copy = {
       ],
       synthesis: {
         exampleLabel: "Illustrative scenario",
-        revenue: `${getCurrencySymbol()}80,000 / month`,
+        revenue: `${cs()}80,000 / month`,
         revenueSub: "Restaurant at full capacity",
-        recoverable: `${getCurrencySymbol()}8,400 / month`,
+        recoverable: `${cs()}8,400 / month`,
         recoverableSub: "Recoverable margin that never reaches the bank today.",
         body1:
           "Combining these leaks, a restaurant this size can be losing between",
-        body1Highlight: `${getCurrencySymbol()}6,000 and ${getCurrencySymbol()}12,000 per month`,
+        body1Highlight: `${cs()}6,000 and ${cs()}12,000 per month`,
         body1End: "in margin that never shows up at closing.",
         body2: "ChefIApp™ OS exists to close these leaks —",
         body2End: "during service, not after.",
@@ -1188,13 +1196,13 @@ const copy = {
         },
         {
           type: "static" as const,
-          value: `${getCurrencySymbol()}0`,
+          value: `${cs()}0`,
           label: "Hardware cost",
         },
         {
           type: "animated" as const,
           target: 79,
-          suffix: ` ${getCurrencySymbol()}`,
+          suffix: ` ${cs()}`,
           label: "All included",
         },
         { type: "static" as const, value: "24/7", label: "Operating system" },
@@ -1240,7 +1248,7 @@ const copy = {
         },
         {
           aspect: "Hardware cost",
-          traditional: `${getCurrencySymbol()}2,000–${getCurrencySymbol()}5,000 in equipment`,
+          traditional: `${cs()}2,000–${cs()}5,000 in equipment`,
           chefiapp: "Runs on the tablet or PC you already have",
         },
         {
@@ -1781,7 +1789,7 @@ const copy = {
         stats: [
           { value: "< 25 min", label: "Setup completo" },
           { value: "17", label: "Componentes activos" },
-          { value: `0${getCurrencySymbol()}`, label: "Costo de setup" },
+          { value: `0${cs()}`, label: "Costo de setup" },
           { value: "1º día", label: "Primera venta" },
         ],
       },
@@ -1892,13 +1900,13 @@ const copy = {
       ],
       synthesis: {
         exampleLabel: "Escenario ilustrativo",
-        revenue: `80.000 ${getCurrencySymbol()} / mes`,
+        revenue: `80.000 ${cs()} / mes`,
         revenueSub: "Restaurante a casa llena",
-        recoverable: `8.400 ${getCurrencySymbol()} / mes`,
+        recoverable: `8.400 ${cs()} / mes`,
         recoverableSub: "Margen recuperable que hoy no llega al banco.",
         body1:
           "Combinando estos vazamentos, un restaurante de este tamaño puede estar perdiendo entre",
-        body1Highlight: `6.000 ${getCurrencySymbol()} y 12.000 ${getCurrencySymbol()} al mes`,
+        body1Highlight: `6.000 ${cs()} y 12.000 ${cs()} al mes`,
         body1End: "en margen que nunca aparece en el cierre de caja.",
         body2: "ChefIApp™ OS existe para cerrar estos vazamentos —",
         body2End: "durante el servicio, no después.",
@@ -1914,13 +1922,13 @@ const copy = {
         },
         {
           type: "static" as const,
-          value: `0 ${getCurrencySymbol()}`,
+          value: `0 ${cs()}`,
           label: "Coste de hardware",
         },
         {
           type: "animated" as const,
           target: 79,
-          suffix: ` ${getCurrencySymbol()}`,
+          suffix: ` ${cs()}`,
           label: "Todo incluido",
         },
         { type: "static" as const, value: "24/7", label: "Sistema operativo" },
@@ -1967,7 +1975,7 @@ const copy = {
         },
         {
           aspect: "Coste de hardware",
-          traditional: `2.000–5.000 ${getCurrencySymbol()} en equipo`,
+          traditional: `2.000–5.000 ${cs()} en equipo`,
           chefiapp: "Funciona en la tablet o PC que ya tienes",
         },
         {
