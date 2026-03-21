@@ -1,0 +1,355 @@
+name: Automation Dispatch Contract
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Path-scoped: runs ONLY when the automation contract surface changes.
+# No Docker Compose, no full-stack boot — runs in ~60s on ubuntu-latest.
+#
+# What it validates:
+#   1. Schema: gm_automation_events migration is valid SQL + applies cleanly
+#   2. Contract: dispatcher V1.1 persists to Core DB (storage: "core")
+#   3. Dedup:    same idempotency_key → same dispatch_id, no duplicate rows
+#   4. Integrity: exactly 1 row in DB after 2 identical calls
+# ─────────────────────────────────────────────────────────────────────────────
+
+on:
+  pull_request:
+    branches: [main, develop]
+    paths:
+      - "server/integration-gateway.ts"
+      - "docker-core/schema/migrations/20260226103000_gm_automation_events.sql"
+      - "docker-core/schema/ci-automation-contract.sql"
+      - "docker-core/schema/core_schema.sql"
+      - "scripts/validate-automation-persistence.sh"
+  push:
+    branches: [main]
+    paths:
+      - "server/integration-gateway.ts"
+      - "docker-core/schema/migrations/20260226103000_gm_automation_events.sql"
+  # Allow manual trigger for on-demand validation
+  workflow_dispatch:
+
+concurrency:
+  group: automation-contract-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # ── Job 1: Schema-only check (fast, no services) ────────────────────────────
+  schema-contract:
+    name: Schema — Migration Syntax & Idempotency
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:15-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: chefiapp_ci
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 10
+        ports:
+          - 5432:5432
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install psql client
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq postgresql-client
+
+      - name: Apply minimal CI schema
+        env:
+          PGPASSWORD: postgres
+        run: |
+          psql -h localhost -U postgres -d chefiapp_ci \
+            -f docker-core/schema/ci-automation-contract.sql
+          echo "✔ Minimal schema applied"
+
+      - name: Apply actual migration (idempotency check)
+        env:
+          PGPASSWORD: postgres
+        run: |
+          psql -h localhost -U postgres -d chefiapp_ci \
+            -f docker-core/schema/migrations/20260226103000_gm_automation_events.sql
+          echo "✔ Migration applied (first time)"
+
+          # Apply again — must be idempotent (IF NOT EXISTS throughout)
+          psql -h localhost -U postgres -d chefiapp_ci \
+            -f docker-core/schema/migrations/20260226103000_gm_automation_events.sql
+          echo "✔ Migration idempotent (second apply clean)"
+
+      - name: Verify table structure
+        env:
+          PGPASSWORD: postgres
+        run: |
+          COUNT=$(psql -h localhost -U postgres -d chefiapp_ci -tAq \
+            -c "SELECT COUNT(*) FROM information_schema.columns WHERE table_name = 'gm_automation_events';")
+          echo "  gm_automation_events column count: ${COUNT}"
+          [ "$COUNT" -ge 14 ] || (echo "❌ Column count too low: ${COUNT}" && exit 1)
+
+          # Verify UNIQUE index on idempotency_key
+          IDX=$(psql -h localhost -U postgres -d chefiapp_ci -tAq \
+            -c "SELECT indexname FROM pg_indexes WHERE tablename = 'gm_automation_events' AND indexname = 'uq_gm_automation_events_idempotency';")
+          [ -n "$IDX" ] || (echo "❌ UNIQUE index missing on idempotency_key" && exit 1)
+          echo "✔ UNIQUE constraint on idempotency_key confirmed"
+
+          # Verify CHECK constraint on trigger
+          CHK=$(psql -h localhost -U postgres -d chefiapp_ci -tAq \
+            -c "SELECT COUNT(*) FROM pg_constraint WHERE conname = 'chk_gm_automation_events_trigger' AND contype = 'c';")
+          [ "$CHK" -eq 1 ] || (echo "❌ CHECK constraint on trigger missing" && exit 1)
+          echo "✔ CHECK constraint on trigger confirmed"
+
+      - name: Verify UNIQUE constraint rejects duplicates
+        env:
+          PGPASSWORD: postgres
+        run: |
+          # Seed minimal restaurant
+          psql -h localhost -U postgres -d chefiapp_ci -c \
+            "INSERT INTO public.gm_restaurants (id, name, status) VALUES
+             ('a1b2c3d4-e5f6-4a7b-8c9d-e0f123456789', 'CI Test Restaurant', 'draft');"
+
+          # Insert event
+          psql -h localhost -U postgres -d chefiapp_ci -c \
+            "INSERT INTO public.gm_automation_events
+             (id, restaurant_id, trigger, score, classification, recommended_action, idempotency_key)
+             VALUES (gen_random_uuid(), 'a1b2c3d4-e5f6-4a7b-8c9d-e0f123456789',
+                     'activation_velocity_low', 42, 'at_risk',
+                     '{\"title\":\"Test\"}'::jsonb, 'ci-schema-dedup-test-key');"
+          echo "✔ First insert OK"
+
+          # Duplicate must fail
+          set +e
+          psql -h localhost -U postgres -d chefiapp_ci -c \
+            "INSERT INTO public.gm_automation_events
+             (id, restaurant_id, trigger, score, classification, recommended_action, idempotency_key)
+             VALUES (gen_random_uuid(), 'a1b2c3d4-e5f6-4a7b-8c9d-e0f123456789',
+                     'activation_velocity_low', 42, 'at_risk',
+                     '{\"title\":\"Test\"}'::jsonb, 'ci-schema-dedup-test-key');" 2>&1 | grep -q "unique"
+          DUPE_REJECTED=$?
+          set -e
+          [ "$DUPE_REJECTED" -eq 0 ] || (echo "❌ Duplicate insert was NOT rejected" && exit 1)
+          echo "✔ Duplicate idempotency_key correctly rejected by DB"
+
+  # ── Job 2: Full dispatch contract (Postgres + PostgREST + ts-node gateway) ──
+  dispatch-contract:
+    name: Dispatch Contract — storage:core + dedup E2E
+    runs-on: ubuntu-latest
+    needs: schema-contract
+
+    services:
+      postgres:
+        image: postgres:15-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: chefiapp_ci
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 10
+        ports:
+          - 5432:5432
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - name: Install psql client
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq postgresql-client
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Apply CI schema
+        env:
+          PGPASSWORD: postgres
+        run: |
+          psql -h localhost -U postgres -d chefiapp_ci \
+            -f docker-core/schema/ci-automation-contract.sql
+          psql -h localhost -U postgres -d chefiapp_ci \
+            -f docker-core/schema/migrations/20260226103000_gm_automation_events.sql
+          echo "✔ Schema ready"
+
+      - name: Start PostgREST (--network host → reaches postgres on localhost:5432)
+        run: |
+          docker run -d \
+            --name postgrest-ci \
+            --network host \
+            -e PGRST_DB_URI="postgres://postgres:postgres@localhost:5432/chefiapp_ci" \
+            -e PGRST_DB_SCHEMA="public" \
+            -e PGRST_DB_ANON_ROLE="postgres" \
+            -e PGRST_JWT_SECRET="chefiapp-ci-jwt-secret-key-minimum-32-chars" \
+            -e PGRST_SERVER_PORT="3000" \
+            postgrest/postgrest:v12.0.2
+          echo "PostgREST container started"
+
+      - name: Wait for PostgREST
+        run: |
+          for i in $(seq 1 30); do
+            if curl -sf http://localhost:3000/ -o /dev/null; then
+              echo "✔ PostgREST ready (attempt ${i})"
+              break
+            fi
+            echo "  waiting for PostgREST... (${i}/30)"
+            sleep 2
+          done
+          curl -sf http://localhost:3000/ -o /dev/null || (echo "❌ PostgREST did not start" && exit 1)
+
+      - name: Seed test restaurant via PostgREST
+        run: |
+          curl -sf -XPOST http://localhost:3000/gm_restaurants \
+            -H "Content-Type: application/json" \
+            -H "apikey: chefiapp-ci-jwt-secret-key-minimum-32-chars" \
+            -H "Authorization: Bearer chefiapp-ci-jwt-secret-key-minimum-32-chars" \
+            -d '{"id":"a1b2c3d4-e5f6-4a7b-8c9d-e0f123456789","name":"CI Test Restaurant","status":"draft"}' \
+            -o /dev/null
+          echo "✔ Test restaurant seeded"
+
+      - name: Start integration gateway
+        env:
+          PORT: "4320"
+          CORE_URL: "http://localhost:3000"
+          CORE_SERVICE_KEY: "chefiapp-ci-jwt-secret-key-minimum-32-chars"
+          INTERNAL_API_TOKEN: "chefiapp-internal-token-dev"
+          NODE_ENV: "development"
+        run: |
+          npx ts-node server/integration-gateway.ts &
+          echo $! > /tmp/gateway.pid
+          echo "Gateway PID: $(cat /tmp/gateway.pid)"
+
+      - name: Wait for gateway
+        run: |
+          for i in $(seq 1 30); do
+            if curl -sf http://localhost:4320/health -o /dev/null; then
+              echo "✔ Gateway ready (attempt ${i})"
+              break
+            fi
+            echo "  waiting for gateway... (${i}/30)"
+            sleep 2
+          done
+          curl -sf http://localhost:4320/health || (echo "❌ Gateway did not start" && exit 1)
+
+      - name: Smoke — Call 1 (first dispatch, expect 202 + storage:core)
+        id: call1
+        run: |
+          IDEMPOTENCY_KEY="ci:automation:contract:$(date +%s)"
+          echo "IDEMPOTENCY_KEY=${IDEMPOTENCY_KEY}" >> $GITHUB_ENV
+
+          BODY=$(cat <<'EOF'
+          {
+            "restaurant_id": "a1b2c3d4-e5f6-4a7b-8c9d-e0f123456789",
+            "trigger": "activation_velocity_low",
+            "score": 38.5,
+            "classification": "at_risk",
+            "recommended_action": {
+              "title": "Activate online ordering",
+              "reason": "Velocity dropped below activation threshold",
+              "automation": "onboarding_push_v1"
+            }
+          }
+          EOF
+          )
+
+          RESP=$(curl -sf -w "\n__STATUS:%{http_code}" -XPOST http://localhost:4320/internal/automation/dispatch \
+            -H "Content-Type: application/json" \
+            -H "X-Internal-Token: chefiapp-internal-token-dev" \
+            -H "X-Idempotency-Key: ${IDEMPOTENCY_KEY}" \
+            -d "$BODY")
+
+          echo "Response: $(echo "$RESP" | sed '/^__STATUS:/d')"
+
+          HTTP_STATUS=$(echo "$RESP" | grep '__STATUS:' | cut -d: -f2)
+          JSON=$(echo "$RESP" | sed '/^__STATUS:/d')
+
+          STORAGE=$(echo "$JSON" | python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get('storage','?'))")
+          DEDUPED=$(echo "$JSON" | python3 -c "import sys,json; d=json.load(sys.stdin); print(str(d.get('deduped','')).lower())")
+          DISPATCH_ID=$(echo "$JSON" | python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get('dispatch_id',''))")
+
+          echo "DISPATCH_ID=${DISPATCH_ID}" >> $GITHUB_ENV
+
+          echo "  HTTP: ${HTTP_STATUS} | storage: ${STORAGE} | deduped: ${DEDUPED}"
+
+          [ "$HTTP_STATUS" = "202" ] || (echo "❌ Expected 202, got: ${HTTP_STATUS}" && exit 1)
+          [ "$STORAGE" = "core" ]    || (echo "❌ Expected storage:core, got: ${STORAGE} — is CORE_SERVICE_KEY set?" && exit 1)
+          [ "$DEDUPED" = "false" ]   || (echo "❌ Expected deduped:false on first call, got: ${DEDUPED}" && exit 1)
+
+          echo "✔ Call 1: 202 + storage:core + deduped:false"
+
+      - name: Smoke — Call 2 (repeat, expect 200 + deduped:true + same dispatch_id)
+        run: |
+          BODY=$(cat <<'EOF'
+          {
+            "restaurant_id": "a1b2c3d4-e5f6-4a7b-8c9d-e0f123456789",
+            "trigger": "activation_velocity_low",
+            "score": 38.5,
+            "classification": "at_risk",
+            "recommended_action": {
+              "title": "Activate online ordering",
+              "reason": "Velocity dropped below activation threshold",
+              "automation": "onboarding_push_v1"
+            }
+          }
+          EOF
+          )
+
+          RESP=$(curl -sf -w "\n__STATUS:%{http_code}" -XPOST http://localhost:4320/internal/automation/dispatch \
+            -H "Content-Type: application/json" \
+            -H "X-Internal-Token: chefiapp-internal-token-dev" \
+            -H "X-Idempotency-Key: ${{ env.IDEMPOTENCY_KEY }}" \
+            -d "$BODY")
+
+          echo "Response: $(echo "$RESP" | sed '/^__STATUS:/d')"
+
+          HTTP_STATUS=$(echo "$RESP" | grep '__STATUS:' | cut -d: -f2)
+          JSON=$(echo "$RESP" | sed '/^__STATUS:/d')
+
+          DEDUPED=$(echo "$JSON" | python3 -c "import sys,json; d=json.load(sys.stdin); print(str(d.get('deduped','')).lower())")
+          DISPATCH_ID2=$(echo "$JSON" | python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get('dispatch_id',''))")
+
+          echo "  HTTP: ${HTTP_STATUS} | deduped: ${DEDUPED} | dispatch_id: ${DISPATCH_ID2}"
+
+          [ "$HTTP_STATUS" = "200" ] || (echo "❌ Expected 200, got: ${HTTP_STATUS}" && exit 1)
+          [ "$DEDUPED" = "true" ]    || (echo "❌ Expected deduped:true, got: ${DEDUPED}" && exit 1)
+          [ "$DISPATCH_ID2" = "${{ env.DISPATCH_ID }}" ] || \
+            (echo "❌ dispatch_id mismatch: call1=${{ env.DISPATCH_ID }} call2=${DISPATCH_ID2}" && exit 1)
+
+          echo "✔ Call 2: 200 + deduped:true + same dispatch_id"
+
+      - name: DB integrity — exactly 1 row for idempotency_key
+        env:
+          PGPASSWORD: postgres
+        run: |
+          ROW_COUNT=$(psql -h localhost -U postgres -d chefiapp_ci -tAq \
+            -c "SELECT COUNT(*) FROM public.gm_automation_events WHERE idempotency_key = '${{ env.IDEMPOTENCY_KEY }}';")
+
+          echo "  Rows for idempotency_key: ${ROW_COUNT}"
+          [ "$ROW_COUNT" = "1" ] || (echo "❌ Expected 1 row, found ${ROW_COUNT}" && exit 1)
+          echo "✔ Exactly 1 row in DB — no duplicate inserts"
+
+          # Show the row for audit trail in logs
+          psql -h localhost -U postgres -d chefiapp_ci \
+            -c "SELECT id, restaurant_id, trigger, classification, status, idempotency_key, created_at FROM public.gm_automation_events WHERE idempotency_key = '${{ env.IDEMPOTENCY_KEY }}';"
+
+      - name: Stop gateway
+        if: always()
+        run: |
+          [ -f /tmp/gateway.pid ] && kill $(cat /tmp/gateway.pid) 2>/dev/null || true
+          echo "Gateway stopped"
+
+      - name: Stop PostgREST
+        if: always()
+        run: docker rm -f postgrest-ci 2>/dev/null || true

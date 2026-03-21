@@ -1,0 +1,1 @@
+ALTER TABLE public.billing_configs ENABLE ROW LEVEL SECURITY;

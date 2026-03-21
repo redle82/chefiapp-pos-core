@@ -1,0 +1,1 @@
+ALTER TABLE public.gm_tables ENABLE ROW LEVEL SECURITY;

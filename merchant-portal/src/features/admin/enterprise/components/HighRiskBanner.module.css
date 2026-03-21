@@ -1,0 +1,17 @@
+@keyframes highRiskPulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.85;
+  }
+}
+
+.banner {
+  padding: 16px;
+  border-radius: 8px;
+  background-color: rgba(239, 83, 80, 0.2);
+  border-left: 4px solid #c62828;
+  animation: highRiskPulse 2s ease-in-out infinite;
+}

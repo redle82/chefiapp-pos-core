@@ -1,0 +1,36 @@
+/* RequireAuth — identity verification loading screen */
+
+.loadingScreen {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  flex-direction: column;
+  gap: 16px;
+  background: #0b0b0c;
+  color: #32d74b;
+}
+
+.spinner {
+  width: 24px;
+  height: 24px;
+  border: 2px solid rgba(50, 215, 75, 0.2);
+  border-top-color: #32d74b;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+.label {
+  font-size: 12px;
+  letter-spacing: 1px;
+  opacity: 0.8;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}

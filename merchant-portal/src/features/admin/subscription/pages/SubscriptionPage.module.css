@@ -1,0 +1,217 @@
+/* SubscriptionPage.module.css — Extracted from inline styles */
+
+.pageWrapper {
+  width: 100%;
+  max-width: 960px;
+  margin: 0;
+}
+
+/* --- Loading / Error full-page states --- */
+
+.loadingState {
+  padding: 32px;
+  color: var(--text-secondary);
+  font-size: 14px;
+}
+
+.errorState {
+  padding: 32px;
+  color: var(--color-error);
+  font-size: 14px;
+}
+
+/* --- Alert boxes --- */
+
+.alertWarning {
+  margin-bottom: 16px;
+  padding: 12px;
+  border-radius: 8px;
+  background-color: var(--status-warning-bg, #fff3cd);
+  color: var(--text-primary);
+  font-size: 14px;
+}
+
+.alertError {
+  margin-bottom: 16px;
+  padding: 12px;
+  border-radius: 8px;
+  background-color: var(--status-error-bg, #f8d7da);
+  color: var(--text-primary);
+  font-size: 14px;
+}
+
+.alertErrorCode {
+  font-size: 12px;
+}
+
+/* --- Status row (badge + stripe test mode) --- */
+
+.statusRow {
+  margin-top: -8px;
+  margin-bottom: 16px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.stripeTestBadge {
+  padding: 2px 8px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--color-info);
+  background: var(--status-info-bg);
+  border-radius: 4px;
+}
+
+/* --- Section headings --- */
+
+.section {
+  margin-bottom: 24px;
+}
+
+.sectionTitle {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0 0 12px 0;
+}
+
+.sectionTitleSmall {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0 0 8px 0;
+}
+
+.sectionDescription {
+  margin: 0 0 12px 0;
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+/* --- Plan cards grid --- */
+
+.plansGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 12px;
+}
+
+/* --- Usage meters container --- */
+
+.usageContainer {
+  border: 1px solid var(--surface-border);
+  border-radius: 12px;
+  padding: 0 16px;
+  background-color: var(--card-bg-on-dark);
+}
+
+/* --- Summary + Payment 2-col grid --- */
+
+.twoColGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+/* --- Skeleton loading placeholders --- */
+
+.skeletonWrapper {
+  width: 100%;
+  max-width: 960px;
+  margin: 0;
+  padding-top: 8px;
+}
+
+.skeletonHeader {
+  margin-bottom: 24px;
+}
+
+.skeletonLine {
+  height: 14px;
+  border-radius: 8px;
+  background: var(--surface-border, rgba(255, 255, 255, 0.06));
+  margin-bottom: 8px;
+}
+
+.skeletonLineWide {
+  composes: skeletonLine;
+  width: 40%;
+  height: 24px;
+}
+
+.skeletonLineNarrow {
+  composes: skeletonLine;
+  width: 60%;
+}
+
+.skeletonSection {
+  margin-bottom: 24px;
+}
+
+.skeletonSectionTitle {
+  composes: skeletonLine;
+  width: 20%;
+  height: 16px;
+  margin-bottom: 12px;
+}
+
+.skeletonCardsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 12px;
+}
+
+.skeletonCard {
+  height: 200px;
+  border-radius: 12px;
+  border: 1px solid var(--surface-border, rgba(255, 255, 255, 0.06));
+  background: var(--card-bg-on-dark, rgba(255, 255, 255, 0.02));
+  animation: skeletonShimmer 1.5s ease-in-out infinite;
+}
+
+.skeletonUsageBar {
+  height: 48px;
+  border-radius: 12px;
+  border: 1px solid var(--surface-border, rgba(255, 255, 255, 0.06));
+  background: var(--card-bg-on-dark, rgba(255, 255, 255, 0.02));
+  animation: skeletonShimmer 1.5s ease-in-out infinite;
+  animation-delay: 0.2s;
+}
+
+.skeletonTwoCol {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 16px;
+}
+
+.skeletonTwoColCard {
+  height: 140px;
+  border-radius: 12px;
+  border: 1px solid var(--surface-border, rgba(255, 255, 255, 0.06));
+  background: var(--card-bg-on-dark, rgba(255, 255, 255, 0.02));
+  animation: skeletonShimmer 1.5s ease-in-out infinite;
+  animation-delay: 0.3s;
+}
+
+@keyframes skeletonShimmer {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .skeletonCard,
+  .skeletonUsageBar,
+  .skeletonTwoColCard {
+    animation: none;
+    opacity: 0.7;
+  }
+}

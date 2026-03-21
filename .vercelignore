@@ -1,0 +1,18 @@
+# Reduz upload para vercel deploy (CLI)
+# Git deploys usam o repo completo — este ficheiro ajuda em deploys manuais
+
+mobile-app/
+tests/
+docs/archive/
+docker-core/
+*.md
+!README.md
+!AGENTS.md
+.cursor/
+.idea/
+.vscode/
+coverage/
+test-results/
+playwright-report/
+*.log
+.DS_Store
