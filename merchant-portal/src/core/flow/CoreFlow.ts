@@ -90,6 +90,7 @@ export function isActivationLayerPath(path: string): boolean {
   return (
     path === "/welcome" ||
     path.startsWith("/onboarding") ||
+    path.startsWith("/setup") ||
     path === "/app/activation"
   );
 }
@@ -159,7 +160,8 @@ export function resolveNextRoute(state: UserState): FlowDecision {
       currentPath === "/bootstrap" ||
       currentPath === "/setup/restaurant-minimal" ||
       currentPath === "/welcome" ||
-      currentPath.startsWith("/onboarding")
+      currentPath.startsWith("/onboarding") ||
+      currentPath.startsWith("/setup")
     )
       return { type: "ALLOW" };
     if (
@@ -169,8 +171,8 @@ export function resolveNextRoute(state: UserState): FlowDecision {
       return { type: "ALLOW" };
     return {
       type: "REDIRECT",
-      to: "/welcome",
-      reason: "No org → Bem-vindo (primeira tela pós-auth)",
+      to: "/setup/start",
+      reason: "No org → Setup start (primeira tela pós-auth)",
     };
   }
 

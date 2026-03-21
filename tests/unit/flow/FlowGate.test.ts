@@ -31,7 +31,7 @@ describe("FlowGate - resolveNextRoute (Lógica de Decisão)", () => {
       const decision = resolveNextRoute(state);
       expect(decision.type).toBe("REDIRECT");
       if (decision.type === "REDIRECT") {
-        expect(decision.to).toBe("/auth/phone");
+        expect(decision.to).toBe("/auth/email");
       }
     });
 
@@ -80,7 +80,7 @@ describe("FlowGate - resolveNextRoute (Lógica de Decisão)", () => {
       const decision = resolveNextRoute(state);
       expect(decision.type).toBe("REDIRECT");
       if (decision.type === "REDIRECT") {
-        expect(decision.to).toBe("/welcome");
+        expect(decision.to).toBe("/setup/start");
       }
     });
 
@@ -251,7 +251,7 @@ describe("FlowGate - resolveNextRoute (Lógica de Decisão)", () => {
       const decision = resolveNextRoute(state);
       expect(decision.type).toBe("REDIRECT");
       if (decision.type === "REDIRECT") {
-        expect(decision.to).toBe("/auth/phone");
+        expect(decision.to).toBe("/auth/email");
       }
     });
   });

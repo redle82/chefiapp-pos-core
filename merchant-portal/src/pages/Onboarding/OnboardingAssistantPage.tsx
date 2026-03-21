@@ -13,7 +13,7 @@
  *   3. gm_restaurant_members -- INSERT owner membership
  *   4. gm_onboarding_state -- INSERT tracker
  *
- * Then redirects to /admin/home.
+ * Then redirects to /onboarding/ritual-open (ceremonial activation).
  */
 
 import { useEffect, useState } from "react";
@@ -494,9 +494,9 @@ export function OnboardingAssistantPage() {
       completeOnboarding(result.restaurantId);
       setCreated(true);
 
-      // Redirect after brief celebration
+      // Redirect to Ritual Open — the ceremonial "your restaurant is alive" moment
       setTimeout(() => {
-        navigate("/admin/home", { replace: true });
+        navigate("/onboarding/ritual-open", { replace: true });
       }, 2500);
     } catch (err) {
       setError(

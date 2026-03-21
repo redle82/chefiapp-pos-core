@@ -82,9 +82,9 @@ describe("resolveBootDestination — public bypass", () => {
 });
 
 describe("resolveBootDestination — not authenticated", () => {
-  it("anonymous on /auth/phone → ALLOW (visitor-allowed path)", () => {
+  it("anonymous on /auth/email → ALLOW (visitor-allowed path)", () => {
     const result = resolveBootDestination(
-      makeInput({ auth: AUTH_ANON, tenant: TENANT_NONE, pathname: "/auth/phone" }),
+      makeInput({ auth: AUTH_ANON, tenant: TENANT_NONE, pathname: "/auth/email" }),
     );
     expect(result.type).toBe("ALLOW");
     expect(result.reasonCode).toBe("AUTH_ANONYMOUS_PUBLIC");
@@ -125,13 +125,13 @@ describe("resolveBootDestination — authenticated, no org", () => {
     expect(result.reasonCode).toBe("LIFECYCLE_BOOTSTRAP_REQUIRED");
   });
 
-  it("user on /app/dashboard → REDIRECT to /welcome (no org)", () => {
+  it("user on /app/dashboard → REDIRECT to /setup/start (no org)", () => {
     const result = resolveBootDestination(
       makeInput({ auth: AUTH_USER, tenant: TENANT_NONE, pathname: "/app/dashboard" }),
     );
     expect(result.type).toBe("REDIRECT");
     expect(result.reasonCode).toBe("TENANT_NONE");
-    expect("to" in result && result.to).toBe("/welcome");
+    expect("to" in result && result.to).toBe("/setup/start");
   });
 });
 

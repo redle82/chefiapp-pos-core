@@ -5,6 +5,7 @@
  */
 import { Fragment, lazy } from "react";
 import { Navigate, Outlet, Route } from "react-router-dom";
+import { SetupRoutesFragment } from "./modules/SetupRoutes";
 import { ManagementAdvisor } from "../components/onboarding/ManagementAdvisor";
 import { BrowserBlockGuard } from "../components/operational/BrowserBlockGuard";
 import { ElectronAdminGuard } from "../components/operational/ElectronAdminGuard";
@@ -427,9 +428,7 @@ const BillingPage = lazy(() =>
     default: m.BillingPage,
   })),
 );
-const BootstrapPage = lazy(() =>
-  import("../pages/BootstrapPage").then((m) => ({ default: m.BootstrapPage })),
-);
+// BootstrapPage removed — redirects to /setup?section=identity (Sprint 2)
 const CoreResetPage = lazy(() =>
   import("../pages/CoreReset/CoreResetPage").then((m) => ({
     default: m.CoreResetPage,
@@ -525,11 +524,7 @@ const MenuBuilderMinimal = lazy(() =>
     default: m.MenuBuilderMinimal,
   })),
 );
-const OnboardingAssistantPage = lazy(() =>
-  import("../pages/Onboarding/OnboardingAssistantPage").then((m) => ({
-    default: m.OnboardingAssistantPage,
-  })),
-);
+// OnboardingAssistantPage removed — redirects to /setup (Sprint 2)
 const MenuDemo = lazy(() =>
   import("../features/admin/onboarding/pages/MenuDemo").then((m) => ({
     default: m.MenuDemo,
@@ -820,11 +815,7 @@ const WaiterHomePage = lazy(() =>
     default: m.WaiterHomePage,
   })),
 );
-const WelcomePage = lazy(() =>
-  import("../pages/Welcome/WelcomePage").then((m) => ({
-    default: m.WelcomePage,
-  })),
-);
+// WelcomePage removed — redirects to /setup/start (Sprint 2)
 const ElectronSetupPage = lazy(() =>
   import("../pages/ElectronSetup/ElectronSetupPage").then((m) => ({
     default: m.ElectronSetupPage,
@@ -844,24 +835,28 @@ export const OperationalRoutesFragment = (
     <Route path="/order/:restaurantId" element={<CustomerMenuPage />} />
     <Route path="/track/:orderId" element={<TrackOrderPage />} />
 
-    <Route path="/welcome" element={<WelcomePage />} />
-    <Route path="/onboarding" element={<OnboardingAssistantPage />} />
+    {/* Legacy redirects → canonical /setup/* */}
+    <Route path="/welcome" element={<Navigate to="/setup/start" replace />} />
+    <Route path="/onboarding" element={<Navigate to="/setup" replace />} />
     <Route
       path="/app/onboarding"
-      element={<Navigate to="/onboarding" replace />}
+      element={<Navigate to="/setup" replace />}
     />
     <Route path="/app/onboarding/menu-demo" element={<MenuDemo />} />
     <Route path="/app/onboarding/first-sale" element={<FirstSaleGuide />} />
     <Route path="/app/activation" element={<ActivationCenterPage />} />
-    <Route path="/bootstrap" element={<BootstrapPage />} />
+    <Route path="/bootstrap" element={<Navigate to="/setup?section=identity" replace />} />
     <Route path="/app/select-tenant" element={<SelectTenantPage />} />
     {/* App operacional único: /app → home do shell (Home | Operação | TPV | KDS | Mais) */}
     <Route path="/app" element={<Navigate to="/app/staff/home" replace />} />
     {/* NAVIGATION_CONTRACT: rota antiga no app → Centro de Ativação */}
     <Route
       path="/setup/restaurant-minimal"
-      element={<Navigate to="/app/activation" replace />}
+      element={<Navigate to="/setup" replace />}
     />
+
+    {/* ── Setup / Implantação do Restaurante (/setup/*) ──────────────── */}
+    {SetupRoutesFragment}
 
     <Route element={<RoleGate />}>
       {/* ── BrowserBlockGuard: TPV (desktop only) ── */}

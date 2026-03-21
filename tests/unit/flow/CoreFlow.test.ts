@@ -34,7 +34,7 @@ describe("CoreFlow - resolveNextRoute", () => {
       const decision = resolveNextRoute(state);
       expect(decision.type).toBe("REDIRECT");
       if (decision.type === "REDIRECT") {
-        expect(decision.to).toBe("/auth/phone");
+        expect(decision.to).toBe("/auth/email");
         expect(decision.reason).toContain("Auth required");
       }
     });
@@ -84,7 +84,7 @@ describe("CoreFlow - resolveNextRoute", () => {
       const decision = resolveNextRoute(state);
       expect(decision.type).toBe("REDIRECT");
       if (decision.type === "REDIRECT") {
-        expect(decision.to).toBe("/welcome");
+        expect(decision.to).toBe("/setup/start");
       }
     });
 
