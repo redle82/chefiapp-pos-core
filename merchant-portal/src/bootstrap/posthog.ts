@@ -33,8 +33,10 @@ export async function initAppPostHog(): Promise<PostHogInstance | null> {
   }
 
   try {
-    // Dynamic import to avoid bundling posthog-js when not installed
-    const posthogModule = await import("posthog-js");
+    // Dynamic import with variable to prevent Vite from resolving at build time.
+    // posthog-js is optional — if not installed, this fails gracefully.
+    const pkg = "posthog-js";
+    const posthogModule = await import(/* @vite-ignore */ pkg);
     const posthog = posthogModule.default;
 
     posthog.init(apiKey, {
