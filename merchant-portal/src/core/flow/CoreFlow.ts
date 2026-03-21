@@ -91,6 +91,7 @@ export function isActivationLayerPath(path: string): boolean {
     path === "/welcome" ||
     path.startsWith("/onboarding") ||
     path.startsWith("/setup") ||
+    path.startsWith("/install") ||
     path === "/app/activation"
   );
 }

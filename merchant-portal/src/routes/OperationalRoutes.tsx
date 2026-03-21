@@ -5,6 +5,7 @@
  */
 import { Fragment, lazy } from "react";
 import { Navigate, Outlet, Route } from "react-router-dom";
+import { InstallRoutesFragment } from "./modules/InstallRoutes";
 import { SetupRoutesFragment } from "./modules/SetupRoutes";
 import { ManagementAdvisor } from "../components/onboarding/ManagementAdvisor";
 import { BrowserBlockGuard } from "../components/operational/BrowserBlockGuard";
@@ -857,6 +858,9 @@ export const OperationalRoutesFragment = (
 
     {/* ── Setup / Implantação do Restaurante (/setup/*) ──────────────── */}
     {SetupRoutesFragment}
+
+    {/* ── Install / Instalação do TPV (/install/*) ─────────────────── */}
+    {InstallRoutesFragment}
 
     <Route element={<RoleGate />}>
       {/* ── BrowserBlockGuard: TPV (desktop only) ── */}
