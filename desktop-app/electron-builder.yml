@@ -1,13 +1,14 @@
 # electron-builder configuration
 # Ref: https://www.electron.build/configuration
+#
+# ChefIApp Desktop is a thin Electron shell that loads chefiapp.com.
+# No frontend is bundled — assets are served by Vercel CDN.
 
 appId: com.chefiapp.desktop
 productName: ChefIApp Desktop
 copyright: Copyright © 2025 ChefIApp
 asar: true
 
-# Explicit version so electron-builder doesn't need to find it
-# in local node_modules (pnpm hoists to workspace root).
 electronVersion: "37.3.1"
 
 directories:
@@ -16,16 +17,13 @@ directories:
 
 files:
   - dist-electron/**/*
-  - resources/frontend/**/*
   - assets/*.png
   - assets/*.icns
   - assets/*.ico
-  - node_modules/**/*
   - package.json
 
 # ── macOS ────────────────────────────────────────────────────────
 
-# Ícone: PNG 512×512 (ou maior); electron-builder gera .icns no build
 mac:
   category: public.app-category.business
   target:
@@ -38,13 +36,7 @@ mac:
         - arm64
         - x64
   icon: assets/icon.png
-  # No code signing in P0 — uncomment for production:
-  # identity: "Developer ID Application: ..."
-  # hardenedRuntime: true
-  # entitlements: entitlements.mac.plist
-  # entitlementsInherit: entitlements.mac.plist
 
-# DMG: janela clássica "arrastar app para Aplicativos" (logo à esquerda, pasta à direita)
 dmg:
   title: "${productName} ${version}"
   icon: assets/icon.png
@@ -60,7 +52,7 @@ dmg:
       type: link
       path: /Applications
 
-# ── Windows (future) ────────────────────────────────────────────
+# ── Windows ──────────────────────────────────────────────────────
 
 win:
   target:
@@ -83,11 +75,3 @@ protocols:
     schemes:
       - chefiapp-pos
       - chefiapp
-
-# ── Extra Resources ─────────────────────────────────────────────
-
-extraResources:
-  - from: resources/frontend
-    to: frontend
-    filter:
-      - "**/*"

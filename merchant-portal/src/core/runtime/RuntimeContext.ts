@@ -53,6 +53,16 @@ export function getRuntimeModeFromEnv(env: NodeJS.ProcessEnv): RuntimeMode {
 }
 
 function detectRuntimeMode(): RuntimeMode {
+  // 1. Check Vite env vars (replaced at build time by Vite)
+  //    In production builds, import.meta.env.PROD === true
+  const viteProd = import.meta.env?.PROD;
+  const viteRuntimeMode = import.meta.env?.VITE_RUNTIME_MODE;
+
+  if (viteRuntimeMode === "production") return "production";
+  if (viteRuntimeMode === "trial") return "trial";
+  if (viteProd) return "production";
+
+  // 2. Node.js fallback (for tests, scripts, server-side)
   const env =
     typeof process !== "undefined" ? process.env : ({} as NodeJS.ProcessEnv);
   return getRuntimeModeFromEnv(env);

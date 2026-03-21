@@ -2,25 +2,23 @@
   "name": "desktop-app",
   "version": "0.1.0",
   "private": true,
-  "description": "ChefIApp Desktop — Electron shell for TPV/KDS",
+  "description": "ChefIApp Desktop — Electron shell that loads chefiapp.com",
   "author": "Goldmonkey Empire",
   "license": "ISC",
   "main": "dist-electron/main.js",
   "scripts": {
+    "start": "NODE_ENV=development electron .",
     "build": "tsc -p tsconfig.json",
-    "build:electron": "tsc -p tsconfig.json",
+    "typecheck": "tsc --noEmit",
     "prepare-icons": "node scripts/build-icons.mjs",
-    "dist:mac": "npm run prepare-icons && npx electron-builder --mac",
-    "dist:win": "npx electron-builder --win"
+    "dist:mac": "npm run build && npm run prepare-icons && npx electron-builder --mac",
+    "dist:win": "npm run build && npx electron-builder --win"
   },
-  "dependencies": {
-    "electron-log": "^5.2.4",
-    "electron-serve": "^2.1.1",
-    "electron-store": "^8.2.0"
-  },
+  "dependencies": {},
   "devDependencies": {
     "electron": "^37.3.1",
     "@types/electron": "^1.6.12",
-    "electron-builder": "^25.1.8"
+    "electron-builder": "^25.1.8",
+    "typescript": "^5.7.0"
   }
 }

@@ -31,9 +31,16 @@ export const CTABannerV2 = ({
       )}
 
       <div className="relative max-w-4xl mx-auto px-6 text-center">
-        <h2 className="text-2xl md:text-4xl font-bold tracking-tight mb-8">
-          {headline}
-        </h2>
+        <div className="flex items-center justify-center gap-3 mb-8">
+          <img
+            src="/logo-chefiapp-clean.png"
+            alt="ChefIApp"
+            className="w-8 h-8 rounded-lg shadow-[0_0_16px_rgba(245,158,11,0.25)]"
+          />
+          <h2 className="text-2xl md:text-4xl font-bold tracking-tight">
+            {headline}
+          </h2>
+        </div>
         <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
           <Link
             to="/auth/email"

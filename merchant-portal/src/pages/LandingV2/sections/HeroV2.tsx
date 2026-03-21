@@ -67,14 +67,26 @@ export const HeroV2 = () => {
         }`}
       >
         <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-2">
+          <a
+            href="#"
+            onClick={(e) => {
+              e.preventDefault();
+              window.scrollTo({ top: 0, behavior: "smooth" });
+            }}
+            className="flex items-center gap-2.5 group"
+          >
             <img
               src="/logo-chefiapp-clean.png"
               alt="ChefIApp"
-              className="w-6 h-6 rounded"
+              className="w-8 h-8 rounded-lg shadow-[0_0_12px_rgba(245,158,11,0.25)] group-hover:shadow-[0_0_20px_rgba(245,158,11,0.4)] transition-shadow duration-300"
             />
-            <span className="text-sm font-semibold text-white">ChefIApp</span>
-          </div>
+            <span className="text-sm font-bold text-white">
+              ChefIApp
+              <span className="font-normal text-neutral-500 ml-0.5">
+                ™ OS
+              </span>
+            </span>
+          </a>
 
           <div className="hidden md:flex items-center gap-8">
             {navLinks.map((link) => {
@@ -184,6 +196,25 @@ export const HeroV2 = () => {
         {mobileOpen && (
           <div className="md:hidden border-t border-white/5 bg-[#0a0a0a]/95 backdrop-blur-xl">
             <div className="px-6 py-4 space-y-1">
+              {/* Mobile brand header */}
+              <div className="flex items-center gap-3 pb-4 mb-2 border-b border-white/5">
+                <img
+                  src="/logo-chefiapp-clean.png"
+                  alt="ChefIApp"
+                  className="w-10 h-10 rounded-lg shadow-[0_0_16px_rgba(245,158,11,0.3)]"
+                />
+                <div>
+                  <span className="text-base font-bold text-white block">
+                    ChefIApp
+                    <span className="font-normal text-neutral-500 ml-0.5">
+                      ™ OS
+                    </span>
+                  </span>
+                  <span className="text-xs text-neutral-500">
+                    Sistema Operacional do Restaurante
+                  </span>
+                </div>
+              </div>
               {navLinks.map((link) => {
                 const className =
                   "block py-3 text-sm text-neutral-300 hover:text-white transition-colors";
@@ -258,6 +289,26 @@ export const HeroV2 = () => {
           <div className="grid md:grid-cols-2 gap-12 md:gap-16 items-center">
             {/* Left: Copy */}
             <div className="max-w-xl">
+              {/* Hero brand mark */}
+              <div className="mb-8">
+                <div className="inline-block relative">
+                  <div className="absolute -inset-3 bg-amber-500/15 rounded-full blur-xl animate-pulse-glow" />
+                  <img
+                    src="/logo-chefiapp-clean.png"
+                    alt="ChefIApp"
+                    className="relative w-20 h-20 rounded-2xl shadow-[0_0_30px_rgba(245,158,11,0.3)] ring-2 ring-amber-500/20"
+                  />
+                </div>
+                <h2 className="mt-5 text-2xl sm:text-3xl font-extrabold tracking-tight">
+                  <span className="bg-linear-to-r from-amber-400 via-amber-500 to-orange-500 bg-clip-text text-transparent">
+                    ChefIApp™ OS
+                  </span>
+                </h2>
+                <p className="text-sm text-neutral-400 mt-1">
+                  Sistema Operacional do Restaurante
+                </p>
+              </div>
+
               {/* Badge */}
               <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-amber-500/10 border border-amber-500/20 mb-8 backdrop-blur-sm">
                 <span className="relative flex h-2 w-2">
