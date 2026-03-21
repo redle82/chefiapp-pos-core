@@ -1,0 +1,1 @@
+ALTER TABLE public.gm_ingredients ENABLE ROW LEVEL SECURITY;

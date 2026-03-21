@@ -1,0 +1,1 @@
+ALTER TABLE public.gm_order_items ENABLE ROW LEVEL SECURITY;

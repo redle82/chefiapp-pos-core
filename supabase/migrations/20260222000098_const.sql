@@ -1,0 +1,1 @@
+ALTER TABLE public.gm_tasks ADD CONSTRAINT gm_tasks_task_type_check CHECK (task_type = ANY (ARRAY['ATRASO_ITEM'::text, 'ACUMULO_BAR'::text, 'ENTREGA_PENDENTE'::text, 'ITEM_CRITICO'::text, 'PEDIDO_ESQUECIDO'::text, 'ESTOQUE_CRITICO'::text, 'RUPTURA_PREVISTA'::text, 'EQUIPAMENTO_CHECK'::text, 'PEDIDO_NOVO'::text, 'MODO_INTERNO'::text]));

@@ -1,0 +1,1 @@
+ALTER TABLE public.gm_terminals ENABLE ROW LEVEL SECURITY;

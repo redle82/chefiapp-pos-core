@@ -1,0 +1,1 @@
+ALTER TABLE public.gm_locations ENABLE ROW LEVEL SECURITY;

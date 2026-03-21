@@ -1,0 +1,1 @@
+ALTER TABLE public.webhook_events ENABLE ROW LEVEL SECURITY;

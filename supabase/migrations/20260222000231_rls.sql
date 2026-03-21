@@ -1,0 +1,1 @@
+ALTER TABLE public.gm_restaurants ENABLE ROW LEVEL SECURITY;

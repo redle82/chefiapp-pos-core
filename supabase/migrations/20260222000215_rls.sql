@@ -1,0 +1,1 @@
+ALTER TABLE public.event_store ENABLE ROW LEVEL SECURITY;
