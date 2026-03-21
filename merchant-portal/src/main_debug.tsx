@@ -5,6 +5,7 @@ import { StrictMode, useCallback, useState } from "react";
 import { createRoot } from "react-dom/client";
 import { BrowserRouter } from "react-router-dom";
 import App from "./App";
+import { initAnalytics } from "./bootstrap/analytics";
 import "./config"; // Load first so CONFIG is ready before any chunk (avoids "Cannot access before initialization")
 import { GlobalUIStateProvider } from "./context/GlobalUIStateContext";
 import {
@@ -48,6 +49,10 @@ if (!Sentry.getClient()) {
   Sentry.setTag("app", "merchant-portal");
   if (typeof window !== "undefined") (window as any).Sentry = Sentry;
 }
+
+// Sentry init handled above; initAnalytics() wires FunnelTracker adapters
+// for both Sentry and PostHog (see bootstrap/analytics.ts).
+initAnalytics({ entry: "main_debug" });
 
 // ─── Sentry Real-World Metrics ──────────────────────────────────────────────
 // Métricas reais que simulam comportamento de produção com clientes

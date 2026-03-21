@@ -8,6 +8,7 @@ import * as Sentry from "@sentry/react";
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
+import { initAnalytics } from "./bootstrap/analytics";
 import "./index.css";
 import { BlogComoEscolherPOSPage } from "./pages/Blog/BlogComoEscolherPOSPage";
 import { BlogComparacaoPage } from "./pages/Blog/BlogComparacaoPage";
@@ -46,6 +47,10 @@ Sentry.init({
     Sentry.replayIntegration(),
   ],
 });
+
+// Sentry init handled above; initAnalytics() wires FunnelTracker adapters
+// for both Sentry and PostHog (see bootstrap/analytics.ts).
+initAnalytics({ entry: "marketing" });
 
 // Boot metric for marketing entry
 Sentry.metrics.increment("app.boot", 1, { tags: { entry: "marketing" } });

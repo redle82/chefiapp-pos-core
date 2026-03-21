@@ -15,6 +15,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { signInWithEmailOtp, verifyEmailOtp } from "../../core/auth/supabaseAuth";
+import { identifyAuthenticatedUser } from "../../bootstrap/analytics";
 import { useAuth } from "../../core/auth/useAuth";
 import { CONFIG } from "../../config";
 import { getBackendConfigured } from "../../core/infra/backendAdapter";
@@ -251,6 +252,11 @@ export function EmailOTPLoginPage() {
       }
 
       // Session is now active -- AuthProvider will pick it up via onAuthStateChange.
+      // Identify user across analytics providers (Sentry + PostHog).
+      if (result.user) {
+        identifyAuthenticatedUser(result.user.id, { email: result.user.email });
+      }
+
       // Navigate based on context. The AuthProvider + CoreFlow will handle the
       // final destination (setup/start if no restaurant, admin/tpv if ready).
       navigate("/setup/start", { replace: true });
