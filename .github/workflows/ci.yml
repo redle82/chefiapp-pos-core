@@ -144,7 +144,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v8
         with:
           name: merchant-portal-dist
           path: merchant-portal/dist/
@@ -204,7 +204,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v8
         with:
           name: merchant-portal-dist
           path: merchant-portal/dist/
@@ -271,7 +271,7 @@ jobs:
         run: SKIP_HEALTH=1 bash scripts/e2e/boot-integrity-gate.sh
 
       - name: Download build artifact
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: merchant-portal-dist
           path: merchant-portal/dist/
@@ -370,7 +370,7 @@ jobs:
         run: cd merchant-portal && npx playwright install --with-deps chromium
 
       - name: Download build artifact
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: merchant-portal-dist
           path: merchant-portal/dist/
