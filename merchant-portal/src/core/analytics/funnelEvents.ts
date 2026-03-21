@@ -60,6 +60,12 @@ export type FunnelEvent =
       properties: { testsRun: number; testsFailed: number; failures: string[] };
     }
 
+  // ── Recovery ──────────────────────────────────────────────
+  | { name: "recovery_diagnosed"; properties: { action: string; severity: string } }
+  | { name: "recovery_retry_started"; properties: { target: string; retryCount: number } }
+  | { name: "recovery_completed"; properties: { target: string; durationMs: number } }
+  | { name: "stalled_detected"; properties: { level: string; inactiveHours: number; setupProgress: number } }
+
   // ── Final ──────────────────────────────────────────────────
   | {
       name: "restaurant_operational";

@@ -70,8 +70,10 @@ const DEFAULT_TESTS: CommissioningTest[] = [
 export class CommissioningEngine {
   private tests: CommissioningTest[];
   private runners: Map<CommissioningTestId, TestRunner> = new Map();
+  private retryCounts: Map<CommissioningTestId, number> = new Map();
   private onProgress?: ProgressCallback;
   private startedAt: number = 0;
+  private static MAX_RETRIES = 3;
 
   constructor(onProgress?: ProgressCallback) {
     this.tests = DEFAULT_TESTS.map((t) => ({ ...t }));
@@ -221,8 +223,25 @@ export class CommissioningEngine {
     return this.tests.find((t) => t.id === testId)!;
   }
 
+  async retryFailed(): Promise<CommissioningResult> {
+    const failedTests = this.tests.filter((t) => t.status === "failed");
+
+    for (const test of failedTests) {
+      const retryCount = this.retryCounts.get(test.id) ?? 0;
+      if (retryCount >= CommissioningEngine.MAX_RETRIES) {
+        continue; // Max retries reached
+      }
+
+      this.retryCounts.set(test.id, retryCount + 1);
+      await this.runSingle(test.id);
+    }
+
+    return this.getResult();
+  }
+
   reset(): void {
     this.tests = DEFAULT_TESTS.map((t) => ({ ...t }));
+    this.retryCounts.clear();
     this.startedAt = 0;
     this.emitProgress();
   }
