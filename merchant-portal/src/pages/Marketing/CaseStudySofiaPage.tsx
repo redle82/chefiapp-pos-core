@@ -229,7 +229,7 @@ function usePageMeta() {
  * COMPONENT
  * ──────────────────────────────────────────────────────────────────────── */
 
-export default function CaseStudySofiaPage() {
+export function CaseStudySofiaPage() {
   usePageMeta();
 
   return (
