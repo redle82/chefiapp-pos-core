@@ -4,7 +4,7 @@
  */
 import { Link } from "react-router-dom";
 import { useCurrency } from "../../../core/currency/useCurrency";
-import { CANONICAL_MONTHLY_PRICE_EUR } from "../../../core/pricing/canonicalPrice";
+import { PRICE_ESSENCIAL } from "../../../core/pricing/canonicalPrice";
 import { useLandingLocale } from "../i18n/LandingLocaleContext";
 import { getPricing } from "../i18n/landingV2Copy";
 
@@ -55,8 +55,9 @@ export const PricingV2 = () => {
 
               <div className="mb-8">
                 <div className="flex items-baseline gap-1 mb-2">
+                  <span className="text-neutral-400 text-lg mr-1">a partir de</span>
                   <span className="text-5xl md:text-7xl font-black bg-linear-to-b from-white to-neutral-400 bg-clip-text text-transparent tabular-nums">
-                    {CANONICAL_MONTHLY_PRICE_EUR}
+                    {PRICE_ESSENCIAL}
                     {symbol}
                   </span>
                   <span className="text-neutral-500 text-lg">{p.perMonth}</span>
@@ -115,6 +116,13 @@ export const PricingV2 = () => {
               <p className="text-center text-xs text-neutral-600 mt-4">
                 {p.footerLine}
               </p>
+
+              <Link
+                to="/pricing"
+                className="block text-center text-sm text-amber-500/70 hover:text-amber-500 transition-colors mt-3"
+              >
+                Ver todos os planos →
+              </Link>
             </div>
           </div>
         </div>
