@@ -35,6 +35,8 @@ import { ProductFirstLandingPage } from "../pages/Landing/ProductFirstLandingPag
 import { LandingSpainPage } from "../pages/Landing/LandingSpainPage";
 import { LandingUKPage } from "../pages/Landing/LandingUKPage";
 import { LandingIrelandPage } from "../pages/Landing/LandingIrelandPage";
+import { LandingAustraliaPage } from "../pages/Landing/LandingAustraliaPage";
+import { LandingNZPage } from "../pages/Landing/LandingNZPage";
 import { GastroLandingPage } from "../pages/LandingGastro/GastroLandingPage";
 import { LandingLocaleProvider } from "../pages/LandingV2/i18n/LandingLocaleContext";
 import { OfficialLandingPage } from "../pages/LandingV2/LandingV2Page";
@@ -102,6 +104,10 @@ export const MarketingRoutesFragment = (
     <Route path="/uk" element={<LandingUKPage />} />
     <Route path="/ireland" element={<LandingIrelandPage />} />
     <Route path="/ie" element={<LandingIrelandPage />} />
+    <Route path="/au" element={<LandingAustraliaPage />} />
+    <Route path="/australia" element={<LandingAustraliaPage />} />
+    <Route path="/nz" element={<LandingNZPage />} />
+    <Route path="/new-zealand" element={<LandingNZPage />} />
     <Route path="/blog" element={<BlogIndexPage />} />
     <Route
       path="/blog/tpv-restaurantes"
