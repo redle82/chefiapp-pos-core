@@ -9,7 +9,6 @@ tests/
 testsprite_tests/
 testsprite_uiux/
 docs/archive/
-docker-core/
 insforge-crm/
 *.md
 !README.md
