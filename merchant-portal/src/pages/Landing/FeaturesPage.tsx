@@ -3,290 +3,407 @@
  * NÃO carrega Runtime nem Core. Funciona offline.
  *
  * Design system: bg-[#0b0b0f], glassmorphism cards, amber-500 accent.
+ *
+ * 130+ funcionalidades organizadas em 12 módulos.
  */
 import { useEffect } from "react";
 import { Link } from "react-router-dom";
 import {
-  BarChart3,
-  ChefHat,
-  CreditCard,
   Monitor,
-  Shield,
+  ChefHat,
   Smartphone,
+  BarChart3,
+  CreditCard,
+  Shield,
+  Users,
+  CalendarDays,
+  ShoppingCart,
+  Package,
+  Bell,
+  Trophy,
   ArrowLeft,
-  type LucideIcon,
+  ArrowRight,
+  Check,
 } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 
 /* ------------------------------------------------------------------ */
 /*  Data                                                               */
 /* ------------------------------------------------------------------ */
 
 interface FeatureGroup {
+  icon: LucideIcon;
   title: string;
   description: string;
-  icon: LucideIcon;
-  items: string[];
+  features: string[];
 }
 
 const FEATURE_GROUPS: FeatureGroup[] = [
   {
-    title: "Operação no salão",
-    description:
-      "Tudo o que a equipa de sala precisa para servir rápido e sem erros.",
     icon: Monitor,
-    items: [
-      "TPV com fluxo mesa, balcão e takeaway",
-      "Divisão de conta, desconto e fecho rápido",
+    title: "TPV — Ponto de Venda",
+    description: "O coração operacional do restaurante",
+    features: [
+      "Venda em mesa, balcão e takeaway",
+      "Divisão de conta inteligente",
+      "Descontos e promoções por produto",
+      "Atalhos de pico configuráveis",
       "Estado de pedidos em tempo real",
-      "Atalhos de operação para pico de serviço",
+      "Quick Order — pedido rápido sem mesa",
+      "Multi-método de pagamento por pedido",
+      "Fecho de caixa auditável",
+      "Modo offline — funciona sem internet",
+      "Ecrã de cliente integrado",
     ],
   },
   {
-    title: "Cozinha e despacho",
-    description:
-      "Visibilidade total entre sala e cozinha, sem gritos nem papéis.",
     icon: ChefHat,
-    items: [
-      "KDS em tempo real com priorização visual",
-      "Marcação de pronto e histórico de tempo",
-      "Sincronização imediata TPV ↔ cozinha",
-      "Visibilidade por estação e equipa",
+    title: "KDS — Ecrã de Cozinha",
+    description: "Despacho inteligente sem papel",
+    features: [
+      "Pedidos em tempo real no ecrã",
+      "Marcação de pronto por item",
+      "Sincronização TPV ↔ Cozinha",
+      "Visibilidade por estação (cozinha, bar, expo)",
+      "Tempo de preparação por pedido",
+      "Alertas de pedidos atrasados",
+      "Ecrã de expedição dedicado",
+      "Ecrã de delivery separado",
+      "Histórico de tempos por prato",
     ],
   },
   {
-    title: "AppStaff",
-    description:
-      "Cada colaborador com a informação certa no momento certo.",
     icon: Smartphone,
-    items: [
-      "Clock-in por QR code",
-      "Tarefas atribuídas por função",
-      "Comunicação interna integrada",
+    title: "AppStaff — App da Equipa",
+    description: "6 apps numa só para toda a equipa",
+    features: [
+      "Clock-in via QR code",
+      "Tarefas por função e turno",
+      "Dashboard do manager",
+      "Dashboard do dono/owner",
+      "Dashboard de cozinha",
+      "Dashboard de operação",
+      "Dashboard de tarefas",
+      "Dashboard de limpeza",
+      "Comunicação interna",
       "Métricas pessoais de desempenho",
+      "Scanner mode para inventário",
+      "Checklists de abertura/fecho",
+      "Notificações push em tempo real",
+      "Histórico pessoal de turnos",
     ],
   },
   {
-    title: "Gestão e análise",
-    description:
-      "Dashboard para o dono e relatórios que se geram sozinhos.",
     icon: BarChart3,
-    items: [
-      "Dashboard do dono com métricas do dia",
-      "Relatórios automáticos por turno e período",
-      "Alertas operacionais configuráveis",
-      "Histórico completo de turnos e vendas",
+    title: "Dashboard e Análise",
+    description: "Visão total do negócio em tempo real",
+    features: [
+      "Dashboard do dono com KPIs do dia",
+      "Relatórios automáticos de vendas",
+      "Histórico de turnos e caixas",
+      "Relatórios por período personalizável",
+      "Exportação CSV de qualquer relatório",
+      "Métricas por produto e categoria",
+      "Análise de horários de pico",
+      "Controlo de desperdício",
     ],
   },
   {
-    title: "Pagamentos",
-    description:
-      "Multimétodo, auditável e integrado com Stripe.",
     icon: CreditCard,
-    items: [
-      "Multimétodo: dinheiro, cartão, MB WAY",
-      "Stripe integrado para pagamentos online",
-      "Fecho de caixa auditável e reconciliação",
-      "Relatório de movimentos por sessão",
+    title: "Pagamentos",
+    description: "Todos os métodos, zero taxas extra",
+    features: [
+      "Dinheiro, cartão, MB WAY",
+      "Stripe integrado nativamente",
+      "Pagamento parcial / divisão",
+      "Reconciliação automática",
+      "Fecho de caixa com auditoria",
+      "Recibos fiscais automáticos",
+      "Compliance fiscal PT/ES",
+      "Sem taxa por transacção do ChefiApp",
     ],
   },
   {
-    title: "Infraestrutura",
-    description:
-      "Segurança, performance e resiliência de nível enterprise.",
+    icon: CalendarDays,
+    title: "Reservas",
+    description: "Sistema de reservas integrado, sem terceiros",
+    features: [
+      "Motor de reservas nativo",
+      "Gestão de slots e capacidade",
+      "Confirmação automática",
+      "Controlo de no-show",
+      "Integrado com o mapa de mesas",
+      "Visível na página pública do restaurante",
+    ],
+  },
+  {
+    icon: Package,
+    title: "Inventário Avançado",
+    description: "Controlo de stock com inteligência operacional",
+    features: [
+      "Motor de inventário completo",
+      "Mapeamento de receitas → ingredientes",
+      "Rastreio de desperdício (WasteTracking)",
+      "HungerEngine — previsão de consumo",
+      "MetabolicEngine — metabolismo do restaurante",
+      "Inventário automatizado por vendas",
+      "Lista de compras automática",
+      "Alertas de stock baixo",
+    ],
+  },
+  {
+    icon: ShoppingCart,
+    title: "Pedidos Online e QR",
+    description: "Canais digitais sem comissões",
+    features: [
+      "Pedidos via QR code na mesa",
+      "Página pública do restaurante",
+      "Menu digital acessível por link",
+      "Pedidos takeaway online",
+      "Tracking de estado pelo cliente",
+      "Sem comissão por pedido",
+    ],
+  },
+  {
+    icon: Bell,
+    title: "Alertas e Notificações",
+    description: "O sistema avisa antes que o problema aconteça",
+    features: [
+      "Motor de alertas com runbooks",
+      "Thresholds configuráveis",
+      "Alertas operacionais em tempo real",
+      "Notificações push para staff",
+      "Notificações por email",
+      "Templates de email profissionais",
+      "Alertas de pedidos atrasados",
+      "Alertas de stock crítico",
+    ],
+  },
+  {
+    icon: Trophy,
+    title: "Gamificação e Loyalty",
+    description: "Fidelização de clientes e motivação da equipa",
+    features: [
+      "Sistema de pontos de fidelidade",
+      "Programa de loyalty integrado",
+      "Gamificação para staff (XP, badges)",
+      "Sessões com pontuação",
+      "Métricas de desempenho gamificadas",
+      "Widget de XP no AppStaff",
+    ],
+  },
+  {
+    icon: Users,
+    title: "Gestão de Equipa",
+    description: "Pessoas, turnos, funções e permissões",
+    features: [
+      "Gestão completa de funcionários",
+      "Turnos e escalas",
+      "Papéis e permissões por função",
+      "Clock-in/out com QR",
+      "Histórico de presenças",
+      "Tarefas atribuídas por turno",
+      "Colaboração em tempo real",
+      "Pulse — estado da equipa ao vivo",
+    ],
+  },
+  {
     icon: Shield,
-    items: [
-      "RLS por restaurante (isolamento total)",
-      "Offline-first — funciona sem internet",
-      "Multi-idioma (PT, EN, ES, FR)",
+    title: "Infraestrutura e Segurança",
+    description: "Arquitectura de nível enterprise",
+    features: [
+      "RLS — isolamento total por restaurante",
+      "Offline-first (PWA completa)",
+      "Multi-idioma nativo (PT, EN, ES, FR)",
+      "Multi-currency",
+      "Multi-unidade / multi-localização",
+      "Feature flags por restaurante",
       "Actualizações contínuas sem downtime",
+      "Audit trail completo",
+      "Encriptação TLS",
+      "Funciona em qualquer device",
+      "Sem hardware proprietário",
+      "API e contratos abertos",
+      "Impressão térmica integrada",
+      "5+ ecrãs dedicados (Kitchen, Bar, Expo, Delivery, Customer)",
     ],
   },
 ];
 
 /* ------------------------------------------------------------------ */
-/*  SEO                                                                */
-/* ------------------------------------------------------------------ */
-
-function useSEO() {
-  useEffect(() => {
-    document.title = "Funcionalidades | ChefiApp — Sistema POS para restauração";
-
-    const setMeta = (name: string, content: string) => {
-      let el = document.querySelector(`meta[name="${name}"]`) as HTMLMetaElement | null;
-      if (!el) {
-        el = document.createElement("meta");
-        el.name = name;
-        document.head.appendChild(el);
-      }
-      el.content = content;
-    };
-
-    const setOG = (property: string, content: string) => {
-      let el = document.querySelector(
-        `meta[property="${property}"]`,
-      ) as HTMLMetaElement | null;
-      if (!el) {
-        el = document.createElement("meta");
-        el.setAttribute("property", property);
-        document.head.appendChild(el);
-      }
-      el.content = content;
-    };
-
-    const desc =
-      "Descubra tudo o que o ChefiApp oferece: TPV, KDS, AppStaff, gestão, pagamentos e infraestrutura de nível enterprise para restauração.";
-
-    setMeta("description", desc);
-    setOG("og:title", "Funcionalidades | ChefiApp");
-    setOG("og:description", desc);
-    setOG("og:type", "website");
-    setOG("og:url", "https://chefiapp.com/features");
-  }, []);
-}
-
-/* ------------------------------------------------------------------ */
-/*  Components                                                         */
-/* ------------------------------------------------------------------ */
-
-function FeatureCard({ group }: { group: FeatureGroup }) {
-  const Icon = group.icon;
-
-  return (
-    <article className="group relative flex flex-col gap-4 rounded-2xl border border-white/10 bg-white/5 p-6 backdrop-blur-sm transition-colors duration-300 hover:border-amber-500/30 hover:bg-white/[0.07]">
-      {/* Icon */}
-      <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-amber-500/10">
-        <Icon className="h-5 w-5 text-amber-500" />
-      </div>
-
-      {/* Title + description */}
-      <div>
-        <h3 className="mb-1 text-lg font-bold text-white">{group.title}</h3>
-        <p className="text-sm leading-relaxed text-neutral-400">
-          {group.description}
-        </p>
-      </div>
-
-      {/* Items */}
-      <ul className="mt-auto flex flex-col gap-2.5">
-        {group.items.map((item) => (
-          <li
-            key={item}
-            className="flex items-start gap-2 text-sm leading-relaxed text-neutral-300"
-          >
-            <span className="mt-1.5 block h-1.5 w-1.5 flex-shrink-0 rounded-full bg-amber-500/60" />
-            {item}
-          </li>
-        ))}
-      </ul>
-    </article>
-  );
-}
-
-/* ------------------------------------------------------------------ */
 /*  Page                                                               */
 /* ------------------------------------------------------------------ */
 
-export function FeaturesPage() {
-  useSEO();
+export default function FeaturesPage() {
+  useEffect(() => {
+    document.title = "Funcionalidades — ChefiApp™ OS";
+    const setMeta = (name: string, content: string, property = false) => {
+      const attr = property ? "property" : "name";
+      let tag = document.querySelector(
+        `meta[${attr}="${name}"]`,
+      ) as HTMLMetaElement | null;
+      if (!tag) {
+        tag = document.createElement("meta");
+        tag.setAttribute(attr, name);
+        document.head.appendChild(tag);
+      }
+      tag.content = content;
+    };
+    setMeta(
+      "description",
+      "Todas as funcionalidades do ChefiApp: TPV, KDS, AppStaff, reservas, inventário, gamificação, loyalty, alertas e muito mais. Tudo incluído num só plano.",
+    );
+    setMeta(
+      "og:title",
+      "Funcionalidades — ChefiApp™ OS",
+      true,
+    );
+    setMeta(
+      "og:description",
+      "130+ funcionalidades num sistema operacional completo para restaurantes.",
+      true,
+    );
+  }, []);
 
   return (
-    <div className="relative min-h-screen overflow-hidden bg-[#0b0b0f] text-white">
-      {/* ── Ambient glow ─────────────────────────────────── */}
-      <div
-        aria-hidden
-        className="pointer-events-none absolute -left-40 -top-40 h-[500px] w-[500px] rounded-full bg-amber-500/10 blur-[160px]"
-      />
-      <div
-        aria-hidden
-        className="pointer-events-none absolute -bottom-60 -right-40 h-[600px] w-[600px] rounded-full bg-amber-500/5 blur-[200px]"
-      />
+    <div className="min-h-screen bg-[#0b0b0f] text-white">
+      {/* Ambient glow */}
+      <div className="fixed inset-0 pointer-events-none overflow-hidden">
+        <div className="absolute top-[-20%] left-[-10%] w-[600px] h-[600px] bg-amber-500/5 rounded-full blur-[120px]" />
+        <div className="absolute bottom-[-20%] right-[-10%] w-[500px] h-[500px] bg-amber-500/3 rounded-full blur-[100px]" />
+      </div>
 
-      {/* ── Sticky header ────────────────────────────────── */}
-      <header className="sticky top-0 z-50 border-b border-white/5 bg-[#0b0b0f]/80 backdrop-blur-md">
-        <div className="mx-auto flex max-w-6xl items-center justify-between px-5 py-3">
-          <div className="flex items-center gap-4">
-            <Link
-              to="/"
-              className="flex items-center gap-1.5 text-sm text-neutral-400 no-underline transition-colors hover:text-white"
-            >
-              <ArrowLeft className="h-4 w-4" />
-              Voltar
-            </Link>
-            <span className="hidden text-xs text-neutral-600 sm:inline">|</span>
-            <Link
-              to="/"
-              className="hidden text-base font-bold tracking-tight text-white no-underline sm:inline"
-            >
-              Chefi<span className="text-amber-500">App</span>
-            </Link>
-          </div>
-
+      {/* Header */}
+      <header className="sticky top-0 z-50 bg-[#0b0b0f]/80 backdrop-blur-md border-b border-white/10">
+        <div className="container mx-auto px-4 md:px-6 flex items-center justify-between h-14">
+          <Link
+            to="/"
+            className="flex items-center gap-2 text-white/60 hover:text-white text-sm transition-colors"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            ChefiApp™ OS
+          </Link>
           <Link
             to="/auth/email"
-            className="rounded-lg bg-amber-500 px-4 py-2 text-sm font-bold text-neutral-900 no-underline transition-colors hover:bg-amber-400"
+            className="inline-flex items-center px-4 py-2 text-sm font-semibold rounded-lg bg-amber-500 text-black hover:bg-amber-400 transition-colors"
           >
             Começar grátis
           </Link>
         </div>
       </header>
 
-      {/* ── Hero ─────────────────────────────────────────── */}
-      <section className="relative mx-auto max-w-6xl px-5 pb-4 pt-16 text-center md:pt-24">
-        <span className="mb-4 inline-block rounded-full border border-amber-500/20 bg-amber-500/10 px-4 py-1 text-xs font-medium tracking-wide text-amber-400">
-          PLATAFORMA COMPLETA
-        </span>
-        <h1 className="mx-auto mb-4 max-w-3xl text-3xl font-extrabold leading-tight tracking-tight md:text-5xl">
-          Funcionalidades do{" "}
-          <span className="text-amber-500">ChefiApp</span>
-        </h1>
-        <p className="mx-auto max-w-2xl text-base leading-relaxed text-neutral-400 md:text-lg">
-          Tudo o que um restaurante precisa para operar, gerir e crescer
-          — numa única plataforma pensada para a realidade da restauração.
-        </p>
-      </section>
-
-      {/* ── Feature grid ─────────────────────────────────── */}
-      <section className="relative mx-auto max-w-6xl px-5 py-12 md:py-16">
-        <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-3">
-          {FEATURE_GROUPS.map((group) => (
-            <FeatureCard key={group.title} group={group} />
-          ))}
-        </div>
-      </section>
-
-      {/* ── Bottom CTA bar ───────────────────────────────── */}
-      <section className="relative mx-auto max-w-6xl px-5 pb-16">
-        <div className="flex flex-col items-center justify-between gap-5 rounded-2xl border border-white/10 bg-white/5 px-6 py-6 backdrop-blur-sm sm:flex-row">
-          <p className="m-0 text-center text-sm text-neutral-400 sm:text-left">
-            Quer ver como nos comparamos com a concorrência?
+      <div className="relative container mx-auto px-4 md:px-6 py-16">
+        {/* Hero */}
+        <div className="text-center mb-16">
+          <p className="text-amber-500 text-sm font-semibold tracking-widest uppercase mb-3">
+            Sistema Operacional Completo
           </p>
-          <div className="flex flex-wrap items-center justify-center gap-3">
+          <h1 className="text-3xl md:text-5xl font-bold mb-4">
+            Tudo o que o{" "}
+            <span className="bg-gradient-to-r from-amber-400 to-amber-600 bg-clip-text text-transparent">
+              ChefiApp
+            </span>{" "}
+            faz
+          </h1>
+          <p className="text-white/60 text-lg max-w-2xl mx-auto">
+            130+ funcionalidades integradas num só sistema. Sem módulos extra,
+            sem add-ons pagos, sem surpresas. Tudo incluído nos 79 €/mês.
+          </p>
+
+          {/* Stats strip */}
+          <div className="flex flex-wrap justify-center gap-8 mt-8">
+            {[
+              { value: "130+", label: "Funcionalidades" },
+              { value: "12", label: "Módulos integrados" },
+              { value: "5+", label: "Superfícies (TPV, KDS, Staff...)" },
+              { value: "4", label: "Idiomas nativos" },
+            ].map((s) => (
+              <div key={s.label} className="text-center">
+                <div className="text-2xl font-bold text-amber-500">
+                  {s.value}
+                </div>
+                <div className="text-xs text-white/40">{s.label}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Feature Groups Grid */}
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {FEATURE_GROUPS.map((group) => {
+            const Icon = group.icon;
+            return (
+              <div
+                key={group.title}
+                className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-6 hover:border-amber-500/20 transition-colors"
+              >
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="w-10 h-10 rounded-xl bg-amber-500/10 flex items-center justify-center">
+                    <Icon className="w-5 h-5 text-amber-500" />
+                  </div>
+                  <div>
+                    <h2 className="text-lg font-bold text-white">
+                      {group.title}
+                    </h2>
+                    <p className="text-xs text-white/40">{group.description}</p>
+                  </div>
+                </div>
+                <ul className="space-y-1.5 mt-4">
+                  {group.features.map((f) => (
+                    <li
+                      key={f}
+                      className="flex items-start gap-2 text-sm text-white/70"
+                    >
+                      <Check className="w-3.5 h-3.5 text-amber-500 mt-0.5 shrink-0" />
+                      {f}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Bottom CTA */}
+        <div className="mt-16 bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-8 text-center">
+          <h3 className="text-xl font-bold mb-2">
+            Tudo isto por{" "}
+            <span className="text-amber-500">79 €/mês</span>
+          </h3>
+          <p className="text-white/50 text-sm mb-6">
+            Sem módulos extra. Sem taxas por transacção. Sem surpresas.
+          </p>
+          <div className="flex flex-wrap justify-center gap-4">
             <Link
               to="/compare"
-              className="rounded-lg border border-white/10 bg-white/5 px-4 py-2.5 text-sm text-white no-underline transition-colors hover:bg-white/10"
+              className="px-6 py-3 text-sm font-medium rounded-xl border border-white/10 text-white/70 hover:text-white hover:border-white/20 transition-colors"
             >
-              Comparativo
+              Comparar com o mercado
             </Link>
             <Link
               to="/pricing"
-              className="rounded-lg border border-white/10 bg-white/5 px-4 py-2.5 text-sm text-white no-underline transition-colors hover:bg-white/10"
+              className="px-6 py-3 text-sm font-medium rounded-xl border border-white/10 text-white/70 hover:text-white hover:border-white/20 transition-colors"
             >
-              Ver planos
+              Ver preços
             </Link>
             <Link
               to="/auth/email"
-              className="rounded-lg bg-amber-500 px-4 py-2.5 text-sm font-bold text-neutral-900 no-underline transition-colors hover:bg-amber-400"
+              className="px-6 py-3 text-sm font-semibold rounded-xl bg-amber-500 text-black hover:bg-amber-400 transition-colors inline-flex items-center gap-2"
             >
-              Começar grátis
+              Começar 14 dias grátis
+              <ArrowRight className="w-4 h-4" />
             </Link>
           </div>
         </div>
-      </section>
 
-      {/* ── Footer line ──────────────────────────────────── */}
-      <footer className="border-t border-white/5 py-6 text-center text-xs text-neutral-600">
-        &copy; {new Date().getFullYear()} ChefiApp — Sistema POS para restauração
-      </footer>
+        {/* Footer */}
+        <div className="text-center mt-12 text-xs text-white/20">
+          © 2024-{new Date().getFullYear()} ChefiApp™ OS · goldmonkey.studio
+        </div>
+      </div>
     </div>
   );
 }
+
+// Named export alias for backward compatibility
+export { FeaturesPage };
