@@ -22,6 +22,9 @@ import { BlogQuandoAbrirFecharCaixaPage } from "../pages/Blog/BlogQuandoAbrirFec
 import { BlogTPVRestaurantesPage } from "../pages/Blog/BlogTPVRestaurantesPage";
 import { BlogTPVVsPOSFiscalPage } from "../pages/Blog/BlogTPVVsPOSFiscalPage";
 import { BlogComparacaoPage } from "../pages/Blog/BlogComparacaoPage";
+import { BlogComoEscolherPOSPage } from "../pages/Blog/BlogComoEscolherPOSPage";
+import { BlogComplianceFiscalPage } from "../pages/Blog/BlogComplianceFiscalPage";
+import { BlogGestaoKDSPage } from "../pages/Blog/BlogGestaoKDSPage";
 import { BootstrapPage } from "../pages/BootstrapPage";
 import { ChangelogPage } from "../pages/Changelog/ChangelogPage";
 import { HelpStartLocalPage } from "../pages/HelpStartLocalPage";
@@ -106,6 +109,18 @@ export const MarketingRoutesFragment = (
     <Route
       path="/blog/chefiapp-vs-concorrencia"
       element={<BlogComparacaoPage />}
+    />
+    <Route
+      path="/blog/como-escolher-pos"
+      element={<BlogComoEscolherPOSPage />}
+    />
+    <Route
+      path="/blog/gestao-cozinha-kds"
+      element={<BlogGestaoKDSPage />}
+    />
+    <Route
+      path="/blog/compliance-fiscal-pt-es"
+      element={<BlogComplianceFiscalPage />}
     />
     <Route path="/changelog" element={<ChangelogPage />} />
     <Route path="/security" element={<SecurityPage />} />

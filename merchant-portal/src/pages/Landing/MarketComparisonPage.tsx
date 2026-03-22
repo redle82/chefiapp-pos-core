@@ -1,152 +1,179 @@
+import { useEffect } from "react";
 import { Link } from "react-router-dom";
+import {
+  ArrowLeft,
+  Check,
+  Minus,
+  X,
+  Zap,
+  Building2,
+  Globe,
+  Wifi,
+  ShieldCheck,
+} from "lucide-react";
 import { track } from "../../analytics/track";
 
-type CapabilityStatus = "yes" | "partial" | "limited" | "unknown";
+/* ------------------------------------------------------------------ */
+/*  Types                                                              */
+/* ------------------------------------------------------------------ */
 
-type CapabilityRow = {
-  capability: string;
-  chefiapp: CapabilityStatus;
-  toast: CapabilityStatus;
-  square: CapabilityStatus;
-  lightspeed: CapabilityStatus;
-  legacy: CapabilityStatus;
-  notes?: string;
-};
+type Status = "yes" | "partial" | "no";
 
-const rows: CapabilityRow[] = [
+interface ComparisonRow {
+  feature: string;
+  chefiapp: Status;
+  toast: Status;
+  square: Status;
+  lightspeed: Status;
+  legacy: Status;
+}
+
+/* ------------------------------------------------------------------ */
+/*  Data                                                               */
+/* ------------------------------------------------------------------ */
+
+const comparisonData: ComparisonRow[] = [
+  { feature: "TPV completo", chefiapp: "yes", toast: "yes", square: "yes", lightspeed: "yes", legacy: "partial" },
+  { feature: "KDS tempo real", chefiapp: "yes", toast: "yes", square: "partial", lightspeed: "yes", legacy: "no" },
+  { feature: "App da equipa", chefiapp: "yes", toast: "partial", square: "partial", lightspeed: "partial", legacy: "no" },
+  { feature: "Offline-first", chefiapp: "yes", toast: "yes", square: "partial", lightspeed: "partial", legacy: "no" },
+  { feature: "Multi-idioma", chefiapp: "yes", toast: "partial", square: "yes", lightspeed: "yes", legacy: "no" },
+  { feature: "Dashboard dono", chefiapp: "yes", toast: "yes", square: "yes", lightspeed: "yes", legacy: "partial" },
+  { feature: "Reservas integradas", chefiapp: "yes", toast: "partial", square: "no", lightspeed: "partial", legacy: "no" },
+  { feature: "Pedidos online", chefiapp: "yes", toast: "yes", square: "yes", lightspeed: "partial", legacy: "no" },
+  { feature: "Gestão inventário", chefiapp: "yes", toast: "partial", square: "partial", lightspeed: "yes", legacy: "partial" },
+  { feature: "Multi-unidade", chefiapp: "yes", toast: "yes", square: "yes", lightspeed: "yes", legacy: "no" },
+  { feature: "API aberta", chefiapp: "yes", toast: "partial", square: "yes", lightspeed: "yes", legacy: "no" },
+  { feature: "Sem taxa por transação", chefiapp: "yes", toast: "no", square: "no", lightspeed: "no", legacy: "yes" },
+  { feature: "Preço fixo", chefiapp: "yes", toast: "no", square: "no", lightspeed: "partial", legacy: "yes" },
+  { feature: "Suporte dedicado", chefiapp: "yes", toast: "partial", square: "partial", lightspeed: "yes", legacy: "partial" },
+  { feature: "Actualizações incluídas", chefiapp: "yes", toast: "yes", square: "yes", lightspeed: "yes", legacy: "no" },
+];
+
+const columns = [
+  { key: "chefiapp" as const, label: "ChefiApp", highlight: true },
+  { key: "toast" as const, label: "Toast", highlight: false },
+  { key: "square" as const, label: "Square", highlight: false },
+  { key: "lightspeed" as const, label: "Lightspeed", highlight: false },
+  { key: "legacy" as const, label: "POS Legacy", highlight: false },
+];
+
+interface WhenCard {
+  icon: React.ReactNode;
+  title: string;
+  description: string;
+}
+
+const whenCards: WhenCard[] = [
   {
-    capability: "TPV para salão, balcão e takeaway",
-    chefiapp: "yes",
-    toast: "yes",
-    square: "yes",
-    lightspeed: "yes",
-    legacy: "partial",
+    icon: <Zap className="h-6 w-6 text-amber-500" />,
+    title: "ChefiApp",
+    description:
+      "Quando precisa de TPV + KDS + equipa integrados num fluxo único, com preço fixo e sem taxas escondidas.",
   },
   {
-    capability: "KDS em tempo real",
-    chefiapp: "yes",
-    toast: "yes",
-    square: "partial",
-    lightspeed: "yes",
-    legacy: "limited",
+    icon: <Building2 className="h-6 w-6 text-orange-400" />,
+    title: "Toast",
+    description:
+      "Para cadeias norte-americanas que já operam no ecossistema Toast e aceitam taxas por transação.",
   },
   {
-    capability: "App mobile para equipa (staff)",
-    chefiapp: "yes",
-    toast: "partial",
-    square: "partial",
-    lightspeed: "partial",
-    legacy: "limited",
+    icon: <Globe className="h-6 w-6 text-blue-400" />,
+    title: "Square",
+    description:
+      "Para negócios pequenos que precisam de pagamentos rápidos e aceitam funcionalidades limitadas de cozinha.",
   },
   {
-    capability: "Modo offline operacional",
-    chefiapp: "yes",
-    toast: "yes",
-    square: "partial",
-    lightspeed: "partial",
-    legacy: "limited",
+    icon: <Wifi className="h-6 w-6 text-green-400" />,
+    title: "Lightspeed",
+    description:
+      "Para restaurantes com foco em inventário avançado e operações multi-unidade complexas.",
   },
   {
-    capability: "Onboarding guiado para ativação",
-    chefiapp: "yes",
-    toast: "partial",
-    square: "partial",
-    lightspeed: "partial",
-    legacy: "limited",
-  },
-  {
-    capability: "Gestão de cardápio / catálogo",
-    chefiapp: "yes",
-    toast: "yes",
-    square: "yes",
-    lightspeed: "yes",
-    legacy: "partial",
-  },
-  {
-    capability: "Inventário e scanner de operação",
-    chefiapp: "yes",
-    toast: "partial",
-    square: "partial",
-    lightspeed: "yes",
-    legacy: "limited",
-  },
-  {
-    capability: "Dashboard operacional com métricas",
-    chefiapp: "yes",
-    toast: "yes",
-    square: "partial",
-    lightspeed: "yes",
-    legacy: "limited",
-  },
-  {
-    capability: "Alertas contextuais por operação",
-    chefiapp: "yes",
-    toast: "partial",
-    square: "limited",
-    lightspeed: "partial",
-    legacy: "limited",
-  },
-  {
-    capability: "Fluxo TPV + KDS + AppStaff integrado",
-    chefiapp: "yes",
-    toast: "partial",
-    square: "limited",
-    lightspeed: "partial",
-    legacy: "limited",
-  },
-  {
-    capability: "Faturação/billing no próprio sistema",
-    chefiapp: "yes",
-    toast: "yes",
-    square: "yes",
-    lightspeed: "yes",
-    legacy: "limited",
-  },
-  {
-    capability: "Configuração de dispositivos no painel",
-    chefiapp: "yes",
-    toast: "yes",
-    square: "partial",
-    lightspeed: "yes",
-    legacy: "limited",
+    icon: <ShieldCheck className="h-6 w-6 text-white/40" />,
+    title: "POS Legacy",
+    description:
+      "Quando o hardware já está pago, a equipa conhece o sistema e não há necessidade de inovar o fluxo.",
   },
 ];
 
-const statusMap: Record<
-  CapabilityStatus,
-  { label: string; className: string }
-> = {
-  yes: {
-    label: "Sim",
-    className: "bg-emerald-500/15 text-emerald-300 ring-1 ring-emerald-500/40",
-  },
-  partial: {
-    label: "Parcial",
-    className: "bg-amber-500/15 text-amber-300 ring-1 ring-amber-500/40",
-  },
-  limited: {
-    label: "Limitado",
-    className: "bg-rose-500/15 text-rose-300 ring-1 ring-rose-500/40",
-  },
-  unknown: {
-    label: "N/D",
-    className: "bg-neutral-600/20 text-neutral-300 ring-1 ring-neutral-500/40",
-  },
-};
+/* ------------------------------------------------------------------ */
+/*  Status badge component                                             */
+/* ------------------------------------------------------------------ */
 
-function Cell({ status }: { status: CapabilityStatus }) {
-  const meta = statusMap[status];
-  return (
-    <span
-      className={`inline-flex min-w-20 justify-center rounded-md px-2 py-1 text-xs font-semibold ${meta.className}`}
-    >
-      {meta.label}
-    </span>
-  );
+function StatusBadge({ status }: { status: Status }) {
+  switch (status) {
+    case "yes":
+      return (
+        <span className="inline-flex items-center gap-1 text-sm font-semibold text-green-400">
+          <Check className="h-4 w-4" />
+          Sim
+        </span>
+      );
+    case "partial":
+      return (
+        <span className="inline-flex items-center gap-1 text-sm font-semibold text-amber-400">
+          <Minus className="h-4 w-4" />
+          Parcial
+        </span>
+      );
+    case "no":
+      return (
+        <span className="inline-flex items-center gap-1 text-sm font-semibold text-white/30">
+          <X className="h-4 w-4" />
+          Não
+        </span>
+      );
+  }
 }
 
+/* ------------------------------------------------------------------ */
+/*  Page                                                               */
+/* ------------------------------------------------------------------ */
+
 export function MarketComparisonPage() {
-  const trackCompareCtaClick = (cta: string, destination: string) => {
+  /* SEO meta tags */
+  useEffect(() => {
+    document.title =
+      "ChefiApp vs. Concorrência — Comparação de POS para Restaurantes";
+
+    const setMeta = (name: string, content: string) => {
+      let el = document.querySelector(
+        `meta[name="${name}"]`,
+      ) as HTMLMetaElement | null;
+      if (!el) {
+        el = document.createElement("meta");
+        el.name = name;
+        document.head.appendChild(el);
+      }
+      el.content = content;
+    };
+
+    const setOg = (property: string, content: string) => {
+      let el = document.querySelector(
+        `meta[property="${property}"]`,
+      ) as HTMLMetaElement | null;
+      if (!el) {
+        el = document.createElement("meta");
+        el.setAttribute("property", property);
+        document.head.appendChild(el);
+      }
+      el.content = content;
+    };
+
+    setMeta(
+      "description",
+      "Comparação honesta entre ChefiApp, Toast, Square, Lightspeed e POS Legacy. Funcionalidades, preços e quando escolher cada sistema.",
+    );
+    setOg("og:title", "ChefiApp vs. Concorrência — Comparação de POS");
+    setOg(
+      "og:description",
+      "Tabela comparativa de funcionalidades para restaurantes. Descubra qual POS é ideal para o seu negócio.",
+    );
+    setOg("og:type", "website");
+  }, []);
+
+  const trackCta = (cta: string, destination: string) => {
     track("marketing_compare_cta_click", {
       page: "compare",
       cta,
@@ -155,157 +182,179 @@ export function MarketComparisonPage() {
   };
 
   return (
-    <main className="min-h-screen bg-neutral-950 px-5 py-12 text-neutral-100 md:py-16">
-      <div className="mx-auto max-w-7xl">
-        <header className="mb-8">
+    <div className="min-h-screen bg-[#0b0b0f] text-white">
+      {/* ── Sticky header ─────────────────────────────────────── */}
+      <header className="sticky top-0 z-50 border-b border-white/10 bg-[#0b0b0f]/80 backdrop-blur-md">
+        <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3 sm:px-6">
+          <div className="flex items-center gap-4">
+            <Link
+              to="/"
+              className="flex items-center gap-1.5 text-sm text-white/50 no-underline transition-colors hover:text-white"
+            >
+              <ArrowLeft className="h-4 w-4" />
+              <span className="hidden sm:inline">Voltar</span>
+            </Link>
+            <Link
+              to="/"
+              className="text-lg font-bold tracking-tight text-white no-underline"
+            >
+              Chefi<span className="text-amber-500">App</span>
+            </Link>
+          </div>
           <Link
-            to="/landing"
-            className="mb-4 inline-block text-xs text-neutral-400 no-underline hover:text-neutral-200"
+            to="/auth/email"
+            onClick={() => trackCta("header_cta", "/auth/email")}
+            className="rounded-lg bg-amber-500 px-4 py-2 text-sm font-bold text-black no-underline transition-colors hover:bg-amber-400"
           >
-            ← Voltar à landing oficial
+            Começar grátis
           </Link>
-          <h1 className="text-3xl font-extrabold tracking-tight md:text-4xl">
-            Comparativo Técnico — ChefIApp vs Players do Mercado
-          </h1>
-          <p className="mt-3 max-w-4xl text-sm leading-relaxed text-neutral-400 md:text-base">
-            Esta página existe para comparar capacidades de operação em um plano
-            único. O foco é técnico-operacional: o que cada plataforma entrega
-            no dia a dia do restaurante.
-          </p>
-        </header>
+        </div>
+      </header>
 
-        <section className="mb-6 rounded-xl border border-neutral-800 bg-neutral-900/70 p-4 text-xs text-neutral-300 md:text-sm">
-          <p className="m-0 leading-relaxed">
-            Metodologia: baseline público e conservador, com base em materiais
-            institucionais e documentação aberta dos fornecedores. Pode mudar ao
-            longo do tempo; revisar periodicamente antes de campanhas
-            comerciais.
-          </p>
-        </section>
+      {/* ── Hero ──────────────────────────────────────────────── */}
+      <section className="px-4 pb-12 pt-16 text-center sm:px-6 md:pb-16 md:pt-24">
+        <h1 className="mx-auto max-w-3xl text-3xl font-extrabold tracking-tight sm:text-4xl md:text-5xl">
+          ChefiApp vs.{" "}
+          <span className="bg-gradient-to-r from-amber-400 to-amber-600 bg-clip-text text-transparent">
+            A concorrência
+          </span>
+        </h1>
+        <p className="mx-auto mt-4 max-w-xl text-base text-white/50 sm:text-lg">
+          Comparação honesta de funcionalidades entre os principais sistemas POS
+          para restaurantes.
+        </p>
+      </section>
 
-        <section className="overflow-x-auto rounded-xl border border-neutral-800 bg-neutral-900/60">
-          <table className="min-w-full w-full border-collapse text-sm">
-            <thead>
-              <tr className="border-b border-neutral-800 bg-neutral-900">
-                <th className="px-4 py-3 text-left font-semibold text-neutral-200">
-                  Capacidade
-                </th>
-                <th className="px-3 py-3 text-center font-semibold text-amber-300">
-                  ChefIApp
-                </th>
-                <th className="px-3 py-3 text-center font-semibold text-neutral-300">
-                  Toast
-                </th>
-                <th className="px-3 py-3 text-center font-semibold text-neutral-300">
-                  Square
-                </th>
-                <th className="px-3 py-3 text-center font-semibold text-neutral-300">
-                  Lightspeed
-                </th>
-                <th className="px-3 py-3 text-center font-semibold text-neutral-300">
-                  POS legado
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {rows.map((row) => (
-                <tr
-                  key={row.capability}
-                  className="border-b border-neutral-800/80"
-                >
-                  <td className="px-4 py-3 text-neutral-200">
-                    {row.capability}
-                  </td>
-                  <td className="px-3 py-3 text-center">
-                    <Cell status={row.chefiapp} />
-                  </td>
-                  <td className="px-3 py-3 text-center">
-                    <Cell status={row.toast} />
-                  </td>
-                  <td className="px-3 py-3 text-center">
-                    <Cell status={row.square} />
-                  </td>
-                  <td className="px-3 py-3 text-center">
-                    <Cell status={row.lightspeed} />
-                  </td>
-                  <td className="px-3 py-3 text-center">
-                    <Cell status={row.legacy} />
-                  </td>
+      {/* ── Comparison table ──────────────────────────────────── */}
+      <section className="px-4 sm:px-6">
+        <div className="mx-auto max-w-7xl overflow-hidden rounded-2xl border border-white/10 bg-white/5 backdrop-blur-sm">
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[700px] border-collapse text-sm">
+              <thead>
+                <tr className="border-b border-white/10">
+                  <th className="sticky left-0 z-10 bg-[#0b0b0f] px-4 py-4 text-left text-xs font-semibold uppercase tracking-wider text-white/50 sm:px-6">
+                    Funcionalidade
+                  </th>
+                  {columns.map((col) => (
+                    <th
+                      key={col.key}
+                      className={`px-3 py-4 text-center text-xs font-semibold uppercase tracking-wider sm:px-4 ${
+                        col.highlight
+                          ? "border-x border-amber-500/30 bg-amber-500/5 text-amber-500"
+                          : "text-white/50"
+                      }`}
+                    >
+                      {col.label}
+                    </th>
+                  ))}
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </section>
+              </thead>
+              <tbody>
+                {comparisonData.map((row, i) => (
+                  <tr
+                    key={row.feature}
+                    className={`border-b border-white/5 transition-colors hover:bg-white/[0.02] ${
+                      i === comparisonData.length - 1 ? "border-b-0" : ""
+                    }`}
+                  >
+                    <td className="sticky left-0 z-10 bg-[#0b0b0f] px-4 py-3.5 font-medium text-white/80 sm:px-6">
+                      {row.feature}
+                    </td>
+                    {columns.map((col) => (
+                      <td
+                        key={col.key}
+                        className={`px-3 py-3.5 text-center sm:px-4 ${
+                          col.highlight
+                            ? "border-x border-amber-500/30 bg-amber-500/5"
+                            : ""
+                        }`}
+                      >
+                        <StatusBadge status={row[col.key]} />
+                      </td>
+                    ))}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
 
-        <section className="mt-6 grid gap-4 rounded-xl border border-neutral-800 bg-neutral-900/60 p-5 md:grid-cols-2">
-          <div>
-            <h2 className="mb-2 text-lg font-semibold">Leitura estratégica</h2>
-            <ul className="grid gap-2 pl-5 text-sm text-neutral-300">
-              <li>ChefIApp concentra operação integrada em um fluxo único.</li>
-              <li>
-                Diferencial central: convergência TPV + KDS + AppStaff com
-                contexto operacional.
-              </li>
-              <li>
-                Modelo orientado a restaurantes que precisam velocidade no chão
-                de loja.
-              </li>
-            </ul>
-            <h3 className="mb-2 mt-4 text-base font-semibold">
-              Quando escolher ChefIApp
-            </h3>
-            <ul className="grid gap-2 pl-5 text-sm text-neutral-300">
-              <li>
-                Quando TPV + KDS + equipa precisam operar como um sistema único.
-              </li>
-              <li>
-                Quando o tempo de serviço no pico é prioridade de negócio.
-              </li>
-              <li>
-                Quando quer ativação rápida sem depender de múltiplos módulos
-                isolados.
-              </li>
-            </ul>
+      {/* ── When to choose each system ────────────────────────── */}
+      <section className="px-4 py-16 sm:px-6 md:py-24">
+        <div className="mx-auto max-w-7xl">
+          <h2 className="mb-10 text-center text-2xl font-bold tracking-tight sm:text-3xl">
+            Quando escolher cada sistema
+          </h2>
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
+            {whenCards.map((card) => (
+              <div
+                key={card.title}
+                className="rounded-2xl border border-white/10 bg-white/5 p-6 backdrop-blur-sm transition-colors hover:border-white/20"
+              >
+                <div className="mb-4">{card.icon}</div>
+                <h3 className="mb-2 text-base font-bold">{card.title}</h3>
+                <p className="text-sm leading-relaxed text-white/50">
+                  {card.description}
+                </p>
+              </div>
+            ))}
           </div>
-          <div>
-            <h2 className="mb-2 text-lg font-semibold">Próximos passos</h2>
-            <p className="mb-3 text-sm text-neutral-400">
-              Faça um teste real de operação com o seu fluxo e compare tempo de
-              atendimento, qualidade de despacho e estabilidade do turno.
-            </p>
-            <div className="flex flex-wrap gap-2">
-              <Link
-                to="/features"
-                onClick={() => trackCompareCtaClick("features", "/features")}
-                className="rounded-lg border border-neutral-700 bg-neutral-800 px-3.5 py-2 text-sm text-neutral-100 no-underline hover:bg-neutral-700"
-              >
-                Ver funcionalidades
-              </Link>
-              <Link
-                to="/landing"
-                onClick={() => trackCompareCtaClick("contact_team", "/landing")}
-                className="rounded-lg border border-neutral-700 bg-neutral-800 px-3.5 py-2 text-sm text-neutral-100 no-underline hover:bg-neutral-700"
-              >
-                Falar com equipa
-              </Link>
-              <Link
-                to="/pricing"
-                onClick={() => trackCompareCtaClick("pricing", "/pricing")}
-                className="rounded-lg border border-neutral-700 bg-neutral-800 px-3.5 py-2 text-sm text-neutral-100 no-underline hover:bg-neutral-700"
-              >
-                Ver planos
-              </Link>
-              <Link
-                to="/auth/email"
-                onClick={() => trackCompareCtaClick("try_now", "/auth/email")}
-                className="rounded-lg bg-amber-500 px-3.5 py-2 text-sm font-bold text-neutral-900 no-underline hover:bg-amber-400"
-              >
-                Testar agora
-              </Link>
-            </div>
+        </div>
+      </section>
+
+      {/* ── Methodology disclaimer ────────────────────────────── */}
+      <section className="px-4 sm:px-6">
+        <div className="mx-auto max-w-3xl rounded-2xl border border-white/10 bg-white/5 p-6 backdrop-blur-sm">
+          <h3 className="mb-2 text-sm font-semibold uppercase tracking-wider text-white/40">
+            Metodologia
+          </h3>
+          <p className="text-sm leading-relaxed text-white/50">
+            Esta comparação baseia-se em documentação pública, materiais
+            institucionais e testes directos realizados pela equipa ChefiApp. Os
+            dados são conservadores e reflectem o baseline público de cada
+            plataforma. As funcionalidades podem mudar ao longo do tempo. Última
+            revisão: Março 2026.
+          </p>
+        </div>
+      </section>
+
+      {/* ── Bottom CTA bar ────────────────────────────────────── */}
+      <section className="px-4 py-16 sm:px-6 md:py-24">
+        <div className="mx-auto max-w-3xl rounded-2xl border border-white/10 bg-white/5 p-8 text-center backdrop-blur-sm sm:p-12">
+          <h2 className="mb-3 text-2xl font-bold sm:text-3xl">
+            Pronto para experimentar?
+          </h2>
+          <p className="mb-8 text-white/50">
+            Sem compromisso. Sem cartão de crédito. Configure o seu restaurante
+            em minutos.
+          </p>
+          <div className="flex flex-col items-center justify-center gap-3 sm:flex-row sm:gap-4">
+            <Link
+              to="/pricing"
+              onClick={() => trackCta("bottom_pricing", "/pricing")}
+              className="w-full rounded-xl border border-white/10 bg-white/5 px-6 py-3 text-sm font-semibold text-white no-underline transition-colors hover:bg-white/10 sm:w-auto"
+            >
+              Ver preços
+            </Link>
+            <Link
+              to="/auth/email"
+              onClick={() => trackCta("bottom_start_free", "/auth/email")}
+              className="w-full rounded-xl bg-amber-500 px-6 py-3 text-sm font-bold text-black no-underline transition-colors hover:bg-amber-400 sm:w-auto"
+            >
+              Começar grátis
+            </Link>
           </div>
-        </section>
-      </div>
-    </main>
+        </div>
+      </section>
+
+      {/* ── Footer line ───────────────────────────────────────── */}
+      <footer className="border-t border-white/5 px-4 py-6 text-center sm:px-6">
+        <p className="text-xs text-white/30">
+          &copy; {new Date().getFullYear()} ChefiApp. Todos os direitos
+          reservados.
+        </p>
+      </footer>
+    </div>
   );
 }
