@@ -1,6 +1,6 @@
 /**
  * Fonte única de verdade para os preços canónicos exibidos ao visitante.
- * 3 tiers: Essencial (49€), Profissional (99€), Enterprise (199€).
+ * 4 tiers: Essencial (49€), Profissional (99€), Enterprise (199€), Custom (sob consulta).
  */
 
 /* ─── Tier Prices ─── */
@@ -23,15 +23,27 @@ export function getCanonicalMonthlyPriceLabel(): string {
   }
 }
 
+/* ─── Enterprise Limits ─── */
+export const ENTERPRISE_LIMITS = {
+  locations: 10,
+  staff: 200,
+  devices: 20,
+} as const;
+
 /* ─── Tier Definitions ─── */
 export interface PricingTier {
-  id: "essencial" | "profissional" | "enterprise";
+  id: "essencial" | "profissional" | "enterprise" | "custom";
   name: string;
-  price: number;
+  price: number | null; // null = sob consulta
   tagline: string;
   popular: boolean;
   features: string[];
   notIncluded: string[];
+  limits?: {
+    locations?: number | string;
+    staff?: number | string;
+    devices?: number | string;
+  };
 }
 
 export const PRICING_TIERS: PricingTier[] = [
@@ -41,6 +53,11 @@ export const PRICING_TIERS: PricingTier[] = [
     price: PRICE_ESSENCIAL,
     tagline: "Para quem está a começar",
     popular: false,
+    limits: {
+      locations: 1,
+      staff: "Ilimitado",
+      devices: 3,
+    },
     features: [
       "TPV completo (mesa + balcão + takeaway)",
       "1 ecrã KDS",
@@ -51,6 +68,7 @@ export const PRICING_TIERS: PricingTier[] = [
       "Funciona offline (PWA)",
       "1 idioma",
       "1 localização",
+      "Até 3 dispositivos",
       "Centro de ajuda + email",
       "Actualizações contínuas",
     ],
@@ -71,6 +89,11 @@ export const PRICING_TIERS: PricingTier[] = [
     price: PRICE_PROFISSIONAL,
     tagline: "Para restaurantes que querem controlo total",
     popular: true,
+    limits: {
+      locations: 2,
+      staff: "Ilimitado",
+      devices: 10,
+    },
     features: [
       "Tudo do Essencial +",
       "KDS ilimitados (cozinha, bar, expo)",
@@ -86,33 +109,65 @@ export const PRICING_TIERS: PricingTier[] = [
       "Loyalty / pontos de fidelidade",
       "Ecrã de cliente",
       "Até 2 localizações",
+      "Até 10 dispositivos",
       "Centro de ajuda + email",
     ],
     notIncluded: [
-      "Localizações ilimitadas",
+      "Mais de 2 localizações",
       "Dashboard multi-unidade",
       "API aberta",
+      "White-label",
     ],
   },
   {
     id: "enterprise",
     name: "Enterprise",
     price: PRICE_ENTERPRISE,
-    tagline: "Para operações multi-unidade",
+    tagline: "Para operações de maior escala",
     popular: false,
+    limits: {
+      locations: ENTERPRISE_LIMITS.locations,
+      staff: ENTERPRISE_LIMITS.staff,
+      devices: ENTERPRISE_LIMITS.devices,
+    },
     features: [
       "Tudo do Profissional +",
-      "Localizações ilimitadas",
+      "Até 10 localizações",
+      "Até 200 funcionários",
+      "Até 20 dispositivos operacionais",
       "Dashboard multi-unidade centralizado",
       "API aberta para integrações",
       "White-label na página pública",
+      "Permissões avançadas por localização",
       "Exportação avançada de dados",
       "Centro de ajuda + email",
     ],
     notIncluded: [
-      "Hardware físico",
-      "Consultoria presencial",
+      "Mais de 10 localizações",
+      "Operações multi-brand",
       "Integrações custom sob medida",
+      "Onboarding assistido dedicado",
     ],
+  },
+  {
+    id: "custom",
+    name: "Custom",
+    price: null,
+    tagline: "Para grupos e operações complexas",
+    popular: false,
+    limits: {
+      locations: "Sem limite",
+      staff: "Sem limite",
+      devices: "Sem limite",
+    },
+    features: [
+      "Tudo do Enterprise +",
+      "Localizações sem limite",
+      "Operações multi-brand",
+      "Integrações custom sob medida",
+      "Onboarding assistido dedicado",
+      "Arquitectura e pricing sob consulta",
+    ],
+    notIncluded: [],
   },
 ];

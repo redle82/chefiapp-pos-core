@@ -131,34 +131,59 @@ function TierCard({ tier }: { tier: PricingTier }) {
         <p className="text-sm text-neutral-500 mb-4">{tier.tagline}</p>
 
         {/* Price */}
-        <div className="flex items-baseline gap-1 mb-1">
-          <span
-            className={`text-4xl md:text-5xl font-black tabular-nums ${
-              tier.popular
-                ? "bg-gradient-to-b from-white to-neutral-400 bg-clip-text text-transparent"
-                : "text-white"
-            }`}
-          >
-            {tier.price}€
-          </span>
-          <span className="text-neutral-500">/mês</span>
-        </div>
-        <p className="text-neutral-500 text-xs mb-6">
-          após 14 dias de teste gratuito
-        </p>
+        {tier.price !== null ? (
+          <>
+            <div className="flex items-baseline gap-1 mb-1">
+              <span
+                className={`text-4xl md:text-5xl font-black tabular-nums ${
+                  tier.popular
+                    ? "bg-gradient-to-b from-white to-neutral-400 bg-clip-text text-transparent"
+                    : "text-white"
+                }`}
+              >
+                {tier.price}€
+              </span>
+              <span className="text-neutral-500">/mês</span>
+            </div>
+            <p className="text-neutral-500 text-xs mb-6">
+              após 14 dias de teste gratuito
+            </p>
+          </>
+        ) : (
+          <>
+            <div className="mb-1">
+              <span className="text-3xl md:text-4xl font-black text-white">
+                Sob consulta
+              </span>
+            </div>
+            <p className="text-neutral-500 text-xs mb-6">
+              arquitectura e pricing personalizado
+            </p>
+          </>
+        )}
 
         {/* CTA */}
-        <Link
-          to="/auth/email"
-          className={`group flex items-center justify-center w-full px-6 py-3 text-sm font-bold rounded-xl transition-all duration-300 hover:-translate-y-0.5 mb-6 ${
-            tier.popular
-              ? "bg-amber-500 text-black hover:bg-amber-400 shadow-lg shadow-amber-500/20 hover:shadow-xl hover:shadow-amber-500/30"
-              : "border border-white/10 text-white hover:border-amber-500/30 hover:bg-white/5"
-          }`}
-        >
-          Começar 14 dias grátis
-          <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform duration-200" />
-        </Link>
+        {tier.id === "custom" ? (
+          <a
+            href="mailto:contacto@chefiapp.com"
+            className="group flex items-center justify-center w-full px-6 py-3 text-sm font-bold rounded-xl transition-all duration-300 hover:-translate-y-0.5 mb-6 border border-white/10 text-white hover:border-amber-500/30 hover:bg-white/5"
+          >
+            Falar connosco
+            <Mail className="w-4 h-4 ml-2" />
+          </a>
+        ) : (
+          <Link
+            to="/auth/email"
+            className={`group flex items-center justify-center w-full px-6 py-3 text-sm font-bold rounded-xl transition-all duration-300 hover:-translate-y-0.5 mb-6 ${
+              tier.popular
+                ? "bg-amber-500 text-black hover:bg-amber-400 shadow-lg shadow-amber-500/20 hover:shadow-xl hover:shadow-amber-500/30"
+                : "border border-white/10 text-white hover:border-amber-500/30 hover:bg-white/5"
+            }`}
+          >
+            Começar 14 dias grátis
+            <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform duration-200" />
+          </Link>
+        )}
 
         {/* Features */}
         <div className="space-y-2.5">
@@ -264,7 +289,7 @@ function usePageMeta(title: string, description: string) {
 export function PricingPage() {
   usePageMeta(
     "Preços — ChefiApp | Sistema operacional para restaurantes",
-    `ChefiApp — 3 planos, tudo incluído. A partir de ${PRICE_ESSENCIAL} €/mês após 14 dias grátis. TPV, KDS, dashboard, alertas e mais. Sem surpresas, sem taxas.`,
+    `ChefiApp — do essencial ao enterprise. A partir de ${PRICE_ESSENCIAL} €/mês após 14 dias grátis. TPV, KDS, dashboard, alertas e mais. Sem surpresas, sem taxas.`,
   );
 
   return (
@@ -290,7 +315,7 @@ export function PricingPage() {
             <h1 className="text-3xl md:text-5xl font-bold tracking-tight mb-4">
               Um sistema.{" "}
               <span className="bg-gradient-to-r from-amber-400 via-amber-500 to-orange-500 bg-clip-text text-transparent">
-                Três planos.
+                O plano certo para ti.
               </span>
             </h1>
             <p className="text-neutral-400 text-lg">
@@ -316,7 +341,7 @@ export function PricingPage() {
 
       {/* ── Pricing Cards ── */}
       <section className="relative px-6 pb-16">
-        <div className="max-w-5xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-6 items-start">
+        <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5 items-start">
           {PRICING_TIERS.map((tier) => (
             <TierCard key={tier.id} tier={tier} />
           ))}
