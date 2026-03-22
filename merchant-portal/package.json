@@ -80,7 +80,7 @@
   "devDependencies": {
     "@capacitor/assets": "^3.0.5",
     "@capacitor/cli": "^8.0.1",
-    "@eslint/js": "^9.39.1",
+    "@eslint/js": "^10.0.1",
     "@playwright/test": "^1.57.0",
     "@stryker-mutator/core": "^9.5.1",
     "@stryker-mutator/typescript-checker": "^9.5.1",
