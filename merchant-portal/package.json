@@ -68,7 +68,7 @@
     "react-helmet-async": "^2.0.5",
     "react-i18next": "^16.5.4",
     "react-qr-code": "^2.0.18",
-    "react-router-dom": "^7.11.0",
+    "react-router-dom": "^7.13.1",
     "recharts": "^3.6.0",
     "@supabase/functions-js": "^2.99.1",
     "@supabase/supabase-js": "^2.38.0",
