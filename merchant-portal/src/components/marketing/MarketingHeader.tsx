@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Menu, X } from "lucide-react";
+import { MarketSelector } from "./MarketSelector";
 
 const NAV_LINKS = [
   { label: "Features", to: "/features" },
@@ -33,6 +34,7 @@ export function MarketingHeader() {
         </nav>
 
         <div className="flex items-center gap-3">
+          <MarketSelector />
           <Link
             to="/auth/email"
             className="hidden sm:inline-flex items-center px-4 py-2 text-sm font-semibold rounded-lg bg-amber-500 text-black hover:bg-amber-400 transition-colors"
@@ -62,6 +64,10 @@ export function MarketingHeader() {
               {link.label}
             </Link>
           ))}
+          <div className="flex items-center gap-2 py-2">
+            <MarketSelector />
+            <span className="text-xs text-white/40">Change market</span>
+          </div>
           <Link
             to="/auth/email"
             onClick={() => setMenuOpen(false)}

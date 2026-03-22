@@ -29,6 +29,7 @@ import { ToastProvider } from "./context/ToastContext";
 import { AuthProvider } from "./core/auth/AuthProvider";
 import { useAuth } from "./core/auth/useAuth";
 import { FlowGate } from "./core/flow/FlowGate";
+import { MarketProvider } from "./core/market/MarketContext";
 import { deriveLifecycle } from "./core/lifecycle/Lifecycle";
 import { usePWAStaffHomeToTPVRedirect } from "./core/operational/PWAOpenToTPVRedirect";
 import { TRIAL_RESTAURANT_ID } from "./core/readiness/operationalRestaurant";
@@ -182,6 +183,7 @@ function App() {
   return (
     <ToastProvider>
       <ErrorBoundary context="Root">
+        <MarketProvider>
         <AuthProvider>
           <SentryTagsSync />
           <SignupIntentRedirect />
@@ -198,6 +200,7 @@ function App() {
             </Routes>
           </Suspense>
         </AuthProvider>
+        </MarketProvider>
       </ErrorBoundary>
     </ToastProvider>
   );

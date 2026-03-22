@@ -18,6 +18,7 @@
 
 import { Fragment } from "react";
 import { Navigate, Route } from "react-router-dom";
+import { MarketGuard } from "../../core/market/MarketGuard";
 import { SetupShell } from "../../pages/Setup/SetupShell";
 import { SetupStartPage } from "../../pages/Setup/SetupStartPage";
 import { SetupReviewPage } from "../../pages/Setup/SetupReviewPage";
@@ -25,11 +26,11 @@ import { OnboardingRitualPage } from "../../pages/Onboarding/OnboardingRitualPag
 
 export const SetupRoutesFragment = (
   <Fragment>
-    {/* ── Setup flow ────────────────────────────────────── */}
-    <Route path="/setup/start" element={<SetupStartPage />} />
-    <Route path="/setup" element={<SetupShell />} />
-    <Route path="/setup/review" element={<SetupReviewPage />} />
-    <Route path="/setup/activate" element={<OnboardingRitualPage />} />
+    {/* ── Setup flow (guarded by market onboarding capability) ── */}
+    <Route path="/setup/start" element={<MarketGuard requires="onboarding"><SetupStartPage /></MarketGuard>} />
+    <Route path="/setup" element={<MarketGuard requires="onboarding"><SetupShell /></MarketGuard>} />
+    <Route path="/setup/review" element={<MarketGuard requires="onboarding"><SetupReviewPage /></MarketGuard>} />
+    <Route path="/setup/activate" element={<MarketGuard requires="onboarding"><OnboardingRitualPage /></MarketGuard>} />
 
     {/* ── Section deep-links (redirect to shell with ?section=) ── */}
     <Route
