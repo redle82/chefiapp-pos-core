@@ -1,7 +1,7 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "installCommand": "npm install --legacy-peer-deps",
-  "buildCommand": "cd merchant-portal && npm run build",
+  "installCommand": "pnpm install --no-frozen-lockfile",
+  "buildCommand": "cd merchant-portal && pnpm run build",
   "outputDirectory": "merchant-portal/dist",
   "rewrites": [
     { "source": "/api/(.*)", "destination": "/api/$1" },
