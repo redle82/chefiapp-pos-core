@@ -25,6 +25,10 @@ import { BlogComparacaoPage } from "../pages/Blog/BlogComparacaoPage";
 import { BlogComoEscolherPOSPage } from "../pages/Blog/BlogComoEscolherPOSPage";
 import { BlogComplianceFiscalPage } from "../pages/Blog/BlogComplianceFiscalPage";
 import { BlogGestaoKDSPage } from "../pages/Blog/BlogGestaoKDSPage";
+import { BlogSeasonalRestaurantSetupPage } from "../pages/Blog/BlogSeasonalRestaurantSetupPage";
+import { BlogPOSCostUKPage } from "../pages/Blog/BlogPOSCostUKPage";
+import { BlogRestaurantOSConceptPage } from "../pages/Blog/BlogRestaurantOSConceptPage";
+import { CaseStudySofiaPage } from "../pages/Marketing/CaseStudySofiaPage";
 import { BootstrapPage } from "../pages/BootstrapPage";
 import { ChangelogPage } from "../pages/Changelog/ChangelogPage";
 import { HelpStartLocalPage } from "../pages/HelpStartLocalPage";
@@ -137,6 +141,10 @@ export const MarketingRoutesFragment = (
       path="/blog/compliance-fiscal-pt-es"
       element={<BlogComplianceFiscalPage />}
     />
+    <Route path="/blog/seasonal-restaurant-setup" element={<BlogSeasonalRestaurantSetupPage />} />
+    <Route path="/blog/true-cost-pos-uk" element={<BlogPOSCostUKPage />} />
+    <Route path="/blog/restaurant-operating-system" element={<BlogRestaurantOSConceptPage />} />
+    <Route path="/case-study/sofia-gastrobar" element={<CaseStudySofiaPage />} />
     <Route path="/changelog" element={<ChangelogPage />} />
     <Route path="/security" element={<SecurityPage />} />
     <Route path="/about" element={<AboutPage />} />
