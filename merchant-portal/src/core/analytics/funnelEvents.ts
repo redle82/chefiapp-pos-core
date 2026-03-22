@@ -66,6 +66,18 @@ export type FunnelEvent =
   | { name: "recovery_completed"; properties: { target: string; durationMs: number } }
   | { name: "stalled_detected"; properties: { level: string; inactiveHours: number; setupProgress: number } }
 
+  // ── Market / Geo ──────────────────────────────────────────
+  | { name: "geo_detected"; properties: { countryCode: string; resolvedBy: string; marketStatus: string } }
+  | { name: "locale_auto_selected"; properties: { language: string; resolvedBy: string } }
+  | { name: "locale_manually_changed"; properties: { language: string; previousLanguage: string } }
+  | { name: "market_status_resolved"; properties: { countryCode: string; status: string } }
+  | { name: "restricted_market_hit"; properties: { countryCode: string; route: string } }
+  | { name: "blocked_market_hit"; properties: { countryCode: string; route: string } }
+  | { name: "onboarding_blocked_by_market"; properties: { countryCode: string } }
+  | { name: "pricing_blocked_by_market"; properties: { countryCode: string } }
+  | { name: "install_blocked_by_market"; properties: { countryCode: string } }
+  | { name: "waitlist_joined"; properties: { countryCode: string; email: string } }
+  | { name: "country_manually_changed"; properties: { from: string; to: string } }
   // ── Final ──────────────────────────────────────────────────
   | {
       name: "restaurant_operational";
