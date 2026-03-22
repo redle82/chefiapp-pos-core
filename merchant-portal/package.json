@@ -58,7 +58,7 @@
     "@types/uuid": "^10.0.0",
     "buffer": "^6.0.3",
     "dotenv": "^17.2.3",
-    "framer-motion": "^12.23.26",
+    "framer-motion": "^12.38.0",
     "i18next": "^25.8.7",
     "idb": "^8.0.3",
     "lucide-react": "^0.562.0",
