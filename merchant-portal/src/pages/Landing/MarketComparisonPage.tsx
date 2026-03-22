@@ -7,8 +7,6 @@ import {
   X,
   Zap,
   Building2,
-  Globe,
-  Wifi,
   ShieldCheck,
 } from "lucide-react";
 import { track } from "../../analytics/track";
@@ -22,9 +20,9 @@ type Status = "yes" | "partial" | "no";
 interface ComparisonRow {
   feature: string;
   chefiapp: Status;
-  toast: Status;
-  square: Status;
-  lightspeed: Status;
+  leaderA: Status;
+  leaderB: Status;
+  leaderC: Status;
   legacy: Status;
 }
 
@@ -33,29 +31,30 @@ interface ComparisonRow {
 /* ------------------------------------------------------------------ */
 
 const comparisonData: ComparisonRow[] = [
-  { feature: "TPV completo", chefiapp: "yes", toast: "yes", square: "yes", lightspeed: "yes", legacy: "partial" },
-  { feature: "KDS tempo real", chefiapp: "yes", toast: "yes", square: "partial", lightspeed: "yes", legacy: "no" },
-  { feature: "App da equipa", chefiapp: "yes", toast: "partial", square: "partial", lightspeed: "partial", legacy: "no" },
-  { feature: "Offline-first", chefiapp: "yes", toast: "yes", square: "partial", lightspeed: "partial", legacy: "no" },
-  { feature: "Multi-idioma", chefiapp: "yes", toast: "partial", square: "yes", lightspeed: "yes", legacy: "no" },
-  { feature: "Dashboard dono", chefiapp: "yes", toast: "yes", square: "yes", lightspeed: "yes", legacy: "partial" },
-  { feature: "Reservas integradas", chefiapp: "yes", toast: "partial", square: "no", lightspeed: "partial", legacy: "no" },
-  { feature: "Pedidos online", chefiapp: "yes", toast: "yes", square: "yes", lightspeed: "partial", legacy: "no" },
-  { feature: "Gestão inventário", chefiapp: "yes", toast: "partial", square: "partial", lightspeed: "yes", legacy: "partial" },
-  { feature: "Multi-unidade", chefiapp: "yes", toast: "yes", square: "yes", lightspeed: "yes", legacy: "no" },
-  { feature: "API aberta", chefiapp: "yes", toast: "partial", square: "yes", lightspeed: "yes", legacy: "no" },
-  { feature: "Sem taxa por transação", chefiapp: "yes", toast: "no", square: "no", lightspeed: "no", legacy: "yes" },
-  { feature: "Preço fixo", chefiapp: "yes", toast: "no", square: "no", lightspeed: "partial", legacy: "yes" },
-  { feature: "Suporte dedicado", chefiapp: "yes", toast: "partial", square: "partial", lightspeed: "yes", legacy: "partial" },
-  { feature: "Actualizações incluídas", chefiapp: "yes", toast: "yes", square: "yes", lightspeed: "yes", legacy: "no" },
+  { feature: "TPV completo (mesa + balcão + takeaway)", chefiapp: "yes", leaderA: "yes", leaderB: "yes", leaderC: "yes", legacy: "partial" },
+  { feature: "KDS — ecrã de cozinha em tempo real", chefiapp: "yes", leaderA: "yes", leaderB: "partial", leaderC: "yes", legacy: "no" },
+  { feature: "App da equipa integrada", chefiapp: "yes", leaderA: "partial", leaderB: "partial", leaderC: "partial", legacy: "no" },
+  { feature: "Funciona offline (PWA)", chefiapp: "yes", leaderA: "yes", leaderB: "partial", leaderC: "partial", legacy: "no" },
+  { feature: "Multi-idioma nativo", chefiapp: "yes", leaderA: "partial", leaderB: "yes", leaderC: "yes", legacy: "no" },
+  { feature: "Dashboard do dono", chefiapp: "yes", leaderA: "yes", leaderB: "yes", leaderC: "yes", legacy: "partial" },
+  { feature: "Reservas integradas", chefiapp: "yes", leaderA: "partial", leaderB: "no", leaderC: "partial", legacy: "no" },
+  { feature: "Pedidos online", chefiapp: "yes", leaderA: "yes", leaderB: "yes", leaderC: "partial", legacy: "no" },
+  { feature: "Gestão de inventário", chefiapp: "yes", leaderA: "partial", leaderB: "partial", leaderC: "yes", legacy: "partial" },
+  { feature: "Multi-unidade", chefiapp: "yes", leaderA: "yes", leaderB: "yes", leaderC: "yes", legacy: "no" },
+  { feature: "API aberta", chefiapp: "yes", leaderA: "partial", leaderB: "yes", leaderC: "yes", legacy: "no" },
+  { feature: "Sem taxa por transacção", chefiapp: "yes", leaderA: "no", leaderB: "no", leaderC: "no", legacy: "yes" },
+  { feature: "Preço fixo sem surpresas", chefiapp: "yes", leaderA: "no", leaderB: "no", leaderC: "partial", legacy: "yes" },
+  { feature: "Sem hardware proprietário", chefiapp: "yes", leaderA: "no", leaderB: "partial", leaderC: "no", legacy: "no" },
+  { feature: "Tudo incluído no plano base", chefiapp: "yes", leaderA: "no", leaderB: "no", leaderC: "no", legacy: "partial" },
+  { feature: "Actualizações contínuas incluídas", chefiapp: "yes", leaderA: "yes", leaderB: "yes", leaderC: "yes", legacy: "no" },
 ];
 
 const columns = [
   { key: "chefiapp" as const, label: "ChefiApp", highlight: true },
-  { key: "toast" as const, label: "Toast", highlight: false },
-  { key: "square" as const, label: "Square", highlight: false },
-  { key: "lightspeed" as const, label: "Lightspeed", highlight: false },
-  { key: "legacy" as const, label: "POS Legacy", highlight: false },
+  { key: "leaderA" as const, label: "Líder A", highlight: false },
+  { key: "leaderB" as const, label: "Líder B", highlight: false },
+  { key: "leaderC" as const, label: "Líder C", highlight: false },
+  { key: "legacy" as const, label: "POS Tradicional", highlight: false },
 ];
 
 interface WhenCard {
@@ -69,31 +68,19 @@ const whenCards: WhenCard[] = [
     icon: <Zap className="h-6 w-6 text-amber-500" />,
     title: "ChefiApp",
     description:
-      "Quando precisa de TPV + KDS + equipa integrados num fluxo único, com preço fixo e sem taxas escondidas.",
+      "Quando precisa de tudo integrado — TPV, KDS, equipa, reservas — com preço fixo, sem taxas e sem hardware obrigatório.",
   },
   {
-    icon: <Building2 className="h-6 w-6 text-orange-400" />,
-    title: "Toast",
+    icon: <Building2 className="h-6 w-6 text-white/50" />,
+    title: "Líderes de mercado cloud",
     description:
-      "Para cadeias norte-americanas que já operam no ecossistema Toast e aceitam taxas por transação.",
-  },
-  {
-    icon: <Globe className="h-6 w-6 text-blue-400" />,
-    title: "Square",
-    description:
-      "Para negócios pequenos que precisam de pagamentos rápidos e aceitam funcionalidades limitadas de cozinha.",
-  },
-  {
-    icon: <Wifi className="h-6 w-6 text-green-400" />,
-    title: "Lightspeed",
-    description:
-      "Para restaurantes com foco em inventário avançado e operações multi-unidade complexas.",
+      "Quando já opera num ecossistema específico e aceita pagar taxas por transacção e add-ons por funcionalidade.",
   },
   {
     icon: <ShieldCheck className="h-6 w-6 text-white/40" />,
-    title: "POS Legacy",
+    title: "POS tradicional",
     description:
-      "Quando o hardware já está pago, a equipa conhece o sistema e não há necessidade de inovar o fluxo.",
+      "Quando o hardware já está pago, a equipa conhece o sistema e não há necessidade de inovar o fluxo operacional.",
   },
 ];
 
@@ -135,7 +122,7 @@ export function MarketComparisonPage() {
   /* SEO meta tags */
   useEffect(() => {
     document.title =
-      "ChefiApp vs. Concorrência — Comparação de POS para Restaurantes";
+      "ChefiApp vs. Líderes de Mercado — Comparação de POS para Restaurantes";
 
     const setMeta = (name: string, content: string) => {
       let el = document.querySelector(
@@ -163,12 +150,12 @@ export function MarketComparisonPage() {
 
     setMeta(
       "description",
-      "Comparação honesta entre ChefiApp, Toast, Square, Lightspeed e POS Legacy. Funcionalidades, preços e quando escolher cada sistema.",
+      "Comparação honesta entre ChefiApp e os líderes de mercado. Funcionalidades incluídas, custos reais e quando escolher cada tipo de sistema.",
     );
-    setOg("og:title", "ChefiApp vs. Concorrência — Comparação de POS");
+    setOg("og:title", "ChefiApp vs. Líderes de Mercado — Comparação de POS");
     setOg(
       "og:description",
-      "Tabela comparativa de funcionalidades para restaurantes. Descubra qual POS é ideal para o seu negócio.",
+      "Tabela comparativa de funcionalidades para restaurantes. Descubra porque o ChefiApp inclui tudo num único plano.",
     );
     setOg("og:type", "website");
   }, []);
@@ -216,12 +203,12 @@ export function MarketComparisonPage() {
         <h1 className="mx-auto max-w-3xl text-3xl font-extrabold tracking-tight sm:text-4xl md:text-5xl">
           ChefiApp vs.{" "}
           <span className="bg-gradient-to-r from-amber-400 to-amber-600 bg-clip-text text-transparent">
-            A concorrência
+            Líderes de mercado
           </span>
         </h1>
         <p className="mx-auto mt-4 max-w-xl text-base text-white/50 sm:text-lg">
-          Comparação honesta de funcionalidades entre os principais sistemas POS
-          para restaurantes.
+          Comparação honesta de funcionalidades entre o ChefiApp e os principais
+          sistemas POS para restaurantes.
         </p>
       </section>
 
@@ -286,7 +273,7 @@ export function MarketComparisonPage() {
           <h2 className="mb-10 text-center text-2xl font-bold tracking-tight sm:text-3xl">
             Quando escolher cada sistema
           </h2>
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
+          <div className="grid gap-4 sm:grid-cols-3">
             {whenCards.map((card) => (
               <div
                 key={card.title}
@@ -310,11 +297,12 @@ export function MarketComparisonPage() {
             Metodologia
           </h3>
           <p className="text-sm leading-relaxed text-white/50">
-            Esta comparação baseia-se em documentação pública, materiais
-            institucionais e testes directos realizados pela equipa ChefiApp. Os
-            dados são conservadores e reflectem o baseline público de cada
-            plataforma. As funcionalidades podem mudar ao longo do tempo. Última
-            revisão: Março 2026.
+            Esta comparação baseia-se em documentação pública e materiais
+            institucionais dos principais sistemas POS do mercado. Os dados são
+            conservadores e reflectem o baseline público de cada categoria.
+            "Líder A/B/C" representam os sistemas cloud mais adoptados
+            globalmente. As funcionalidades podem mudar ao longo do tempo.
+            Última revisão: Março 2026.
           </p>
         </div>
       </section>

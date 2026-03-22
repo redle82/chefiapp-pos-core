@@ -56,30 +56,30 @@ const NOT_INCLUDED = [
   "Integrações custom sob medida",
 ] as const;
 
-/* ─── Competitors ─── */
+/* ─── Market comparison ─── */
 const COMPETITORS = [
   {
     name: "ChefiApp",
     price: `${CANONICAL_MONTHLY_PRICE_EUR} €/mês`,
-    note: "Tudo incluído",
+    note: "Tudo incluído, sem taxas",
     highlight: true,
   },
   {
-    name: "Toast",
-    price: "~69 $/mês + taxas",
-    note: "Taxas adicionais",
+    name: "Líder de mercado A",
+    price: "~69–165 $/mês + taxas",
+    note: "Taxas de 2.5–3% por transacção",
     highlight: false,
   },
   {
-    name: "Square",
-    price: "~60 $/mês + hardware",
-    note: "Hardware obrigatório",
+    name: "Líder de mercado B",
+    price: "~49–99 $/mês + hardware",
+    note: "Hardware proprietário obrigatório",
     highlight: false,
   },
   {
-    name: "Lightspeed",
-    price: "~69 $/mês",
-    note: "Módulos extra pagos",
+    name: "Líder de mercado C",
+    price: "~89–109 $/mês",
+    note: "Módulos extra pagos separadamente",
     highlight: false,
   },
 ] as const;
