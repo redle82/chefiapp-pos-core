@@ -1,10 +1,16 @@
 # Reduz upload para vercel deploy (CLI)
 # Git deploys usam o repo completo — este ficheiro ajuda em deploys manuais
 
+node_modules/
+.claude/
 mobile-app/
+desktop-app/
 tests/
+testsprite_tests/
+testsprite_uiux/
 docs/archive/
 docker-core/
+insforge-crm/
 *.md
 !README.md
 !AGENTS.md
@@ -15,4 +21,6 @@ coverage/
 test-results/
 playwright-report/
 *.log
+*.pdf
+*.docx
 .DS_Store
